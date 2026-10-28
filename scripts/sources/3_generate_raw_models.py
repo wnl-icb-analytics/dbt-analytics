@@ -349,10 +349,17 @@ def main():
         os.makedirs(raw_dir, exist_ok=True)
 
         for table in source['tables']:
+
             # Keep original case for source reference
             table_name = table['name']
+
             # Use sanitised name for file names
             table_name_safe = sanitise_filename(table_name)
+            # For UKHFD Data Dictionary, remove "dim_" and "_scd"
+            if source_name == 'ukhfd_data_dictionary':
+                table_name_safe = table_name_safe.replace("dim_", "")
+                table_name_safe = table_name_safe.replace("_scd", "")
+
             columns = [col['name'] for col in table.get('columns', [])]
             if not columns:
                 continue  # Skip tables with no columns listed
@@ -417,6 +424,7 @@ select
 from {{{{ source('{source_ref_name}', '{table_name}') }}}}"""
 
             # Create model name with prefix and safe table name
+
             model_name = f"{prefix}_{table_name_safe}"
             out_path = os.path.join(raw_dir, f'{model_name}.sql')
 

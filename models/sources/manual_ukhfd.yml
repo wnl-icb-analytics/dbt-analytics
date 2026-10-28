@@ -1,4012 +1,1975 @@
 version: 2
-
 sources:
-  - name: ukhfd_ecds_data_dictionary
-    database: '"UKHFD"'
-    schema: '"Data_Dictionary"'
-    description: National data dictionary reference dimensions.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: emergency_care_department_type
-        identifier: '"dim_Emergency_Care_Department_Type_SCD"'
-        description: Emergency care department type codes and descriptions; Is_Latest marks the current row per code.
-        columns:
-          - name: Main_Code_Text
-            quote: true
-          - name: Main_Description
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-      - name: emergency_care_attendance_category
-        identifier: '"dim_Emergency_Care_Attendance_Category_SCD"'
-        description: Emergency care attendance category codes and descriptions; Is_Latest marks the current row per code.
-        columns:
-          - name: Main_Code_Text
-            quote: true
-          - name: Main_Description
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-      - name: uec_activity_type
-        identifier: '"dim_Urgent_And_Emergency_Care_Activity_Type_SCD"'
-        description: Urgent and emergency care activity type codes and descriptions; Is_Latest marks the current row per code.
-        columns:
-          - name: Main_Code_Text
-            quote: true
-          - name: Main_Description
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-      - name: mental_health_act_legal_status_classification
-        identifier: '"dim_Mental_Health_Act_Legal_Status_Classification_Code_SCD"'
-        description: Mental Health Act legal status classification codes and descriptions; Is_Latest marks the current row per code.
-        columns:
-          - name: Main_Code_Text
-            quote: true
-          - name: Main_Description
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-
-  - name: ukhfd_geo
-    database: '"UKHFD"'
-    schema: '"Old_LSOA_To_New_LSOA_To_LAD"'
-    description: ONS lookup bridging retired 2011 LSOAs to 2021 LSOAs and their LAD.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: old_lsoa_to_new_lsoa_map
-        identifier: '"dim_Map_SCD"'
-        description: One row per (old LSOA, new LSOA) pair per snapshot; Is_Latest marks the current mapping.
-        columns:
-          - name: Old_LSOA_Code
-            quote: true
-          - name: New_LSOA_Code
-            quote: true
-          - name: LAD_Code
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-
-  - name: ukhfd_ods
-    database: '"UKHFD"'
-    schema: '"ODS"'
-    description: National ODS organisation reference dimensions.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: all_gp_and_gdp_practices
-        identifier: '"dim_All_GP_and_GDP_Practices_SCD"'
-        description: All GP and general dental practices nationally (epraccur-style SCD); Is_Latest marks the current row per organisation.
-        columns:
-          - name: Organisation_Code
-            quote: true
-          - name: Organisation_Name
-            quote: true
-          - name: Postcode
-            quote: true
-          - name: Open_Date
-            quote: true
-          - name: Close_Date
-            quote: true
-          - name: Status_Code
-            quote: true
-          - name: Parent_Organisation_Code
-            quote: true
-          - name: Prescribing_Setting
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-
-      - name: closed_organisations
-        identifier: '"dim_Orgs_Closed_Since_1991_SCD"'
-        description: ODS closed organisation and site archive since 1991, including historical revisions.
-        columns:
-          - name: Organisation_Code
-            quote: true
-          - name: Organisation_Name
-            quote: true
-          - name: National_Grouping_Code
-            quote: true
-          - name: High_Level_Health_Authority_Code
-            quote: true
-          - name: Address_Line_1
-            quote: true
-          - name: Address_Line_2
-            quote: true
-          - name: Address_Line_3
-            quote: true
-          - name: Address_Line_4
-            quote: true
-          - name: Address_Line_5
-            quote: true
-          - name: Postcode
-            quote: true
-          - name: Open_Date
-            quote: true
-          - name: Close_Date
-            quote: true
-          - name: Unused_Field_13
-            quote: true
-          - name: Organisation_Sub_Type_Code
-            quote: true
-          - name: Parent_Organisation_Code
-            quote: true
-          - name: Join_Parent_Date
-            quote: true
-          - name: Left_Parent_Date
-            quote: true
-          - name: Contact_Telephone_Number
-            quote: true
-          - name: Unused_Field_19
-            quote: true
-          - name: Unused_Field_20
-            quote: true
-          - name: Unused_Field_21
-            quote: true
-          - name: Amended_Record_Indicator
-            quote: true
-          - name: Wave_Number
-            quote: true
-          - name: Unused_Field_24
-            quote: true
-          - name: Unused_Field_25
-            quote: true
-          - name: Unused_Field_26
-            quote: true
-          - name: Unused_Field_27
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-          - name: Char_8_ASCII_Index
-            quote: true
-
-      - name: gp_practices_and_prescribing_ccs
-        identifier: '"dim_GP_Practices_And_Prescribing_CCs_SCD"'
-        description: ODS epraccur file of GP practices and prescribing cost centres in England and Wales (SCD); Is_Latest marks the current row per organisation.
-        columns:
-          - name: Organisation_Code
-            quote: true
-          - name: Organisation_Name
-            quote: true
-          - name: National_Grouping_Code
-            quote: true
-          - name: High_Level_Health_Authority_Code
-            quote: true
-          - name: Address_Line_1
-            quote: true
-          - name: Address_Line_2
-            quote: true
-          - name: Address_Line_3
-            quote: true
-          - name: Address_Line_4
-            quote: true
-          - name: Address_Line_5
-            quote: true
-          - name: Postcode
-            quote: true
-          - name: Open_Date
-            quote: true
-          - name: Close_Date
-            quote: true
-          - name: Status_Code
-            quote: true
-          - name: Parent_Organisation_Code
-            quote: true
-          - name: Join_Parent_Date
-            quote: true
-          - name: Left_Parent_Date
-            quote: true
-          - name: Contact_Telephone_Number
-            quote: true
-          - name: Prescribing_Setting
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-
-  - name: ukhfd_ods_dse
-    database: '"UKHFD"'
-    schema: '"ODS_DSE"'
-    description: ODS Data Search and Export (DSE) files as daily snapshots.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: pcn_core_partner_details
-        identifier: '"dim_Epcn_CorePartnerDetails"'
-        description: ODS ePCN core partner details - practice to PCN relationships, one row per relationship per daily snapshot.
-        columns:
-          - name: Partner_Organisation_Code
-            quote: true
-          - name: Partner_Name
-            quote: true
-          - name: Practice_Parent_Sub_ICB_Location_Code
-            quote: true
-          - name: PCN_Code
-            quote: true
-          - name: PCN_Name
-            quote: true
-          - name: PCN_Parent_Sub_ICB_Location_Code
-            quote: true
-          - name: Practice_to_PCN_Relationship_Start_Date
-            quote: true
-          - name: Practice_to_PCN_Relationship_End_Date
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: DataSourceFileForThisSnapshot_Version
-            quote: true
-
-  - name: ukhfd_demography
-    database: '"UKHFD"'
-    schema: '"Demography"'
-    description: UKHFD Demography schema, including GP-registered patient counts and the English Indices of Deprivation by LSOA.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: registered_patients_by_gp_practice
-        identifier: '"fact_No_Of_Patients_Regd_At_GP_Prac_Regions_5Yr_AgeBand"'
-        description: Registered patient counts by organisation (GP practice, PCN, ICB and other geographies), sex and 5-year age band per monthly snapshot.
-        columns:
-          - name: Org_Type
-            quote: true
-          - name: Org_Code
-            quote: true
-          - name: ONS_Code
-            quote: true
-          - name: Sex
-            quote: true
-          - name: Age_Band
-            quote: true
-          - name: Number_Of_Patients
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: DataSourceFileForThisSnapshot_Version
-            quote: true
-          - name: Report_Period_Length
-            quote: true
-          - name: Unique_ID
-            quote: true
-          - name: AuditKey
-            quote: true
-      - name: domains_of_deprivation_by_lsoa
-        identifier: '"fact_Domains_Of_Deprivation_By_LSOA_V3"'
-        description: English Indices of Deprivation File 7 measures in long form, one row per LSOA, measure and release snapshot.
-        columns:
-          - name: LSOA_Code
-            quote: true
-          - name: LSOA_Code_Year
-            quote: true
-          - name: Measure_Name
-            quote: true
-          - name: Measure_Value
-            quote: true
-          - name: Measure_Value_Str
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: DataSourceFileForThisSnapshot_Version
-            quote: true
-          - name: Report_Period_Length
-            quote: true
-          - name: Unique_ID
-            quote: true
-          - name: AuditKey
-            quote: true
-      - name: index_of_multiple_deprivation_by_lsoa
-        identifier: '"fact_Index_Of_Multiple_Deprivation_By_LSOA"'
-        description: Overall IMD score, rank and decile with the local authority supplied with each release, one row per LSOA and release snapshot.
-        columns:
-          - name: LSOA_Code
-            quote: true
-          - name: IMD_Score
-            quote: true
-          - name: IMD_Rank
-            quote: true
-          - name: IMD_Decile
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: DataSourceFileForThisSnapshot_Version
-            quote: true
-          - name: Report_Period_Length
-            quote: true
-          - name: Unique_ID
-            quote: true
-          - name: AuditKey
-            quote: true
-          - name: LA_District_Code
-            quote: true
-          - name: LSOA_Code_2021
-            quote: true
-          - name: LAD_Code_2024
-            quote: true
-          - name: LSOA_Code_Year
-            quote: true
-      - name: registered_patients_by_gp_practice_lsoa_2021
-        identifier: '"fact_No_Of_Patients_Regd_At_GP_Practice_LSOA_2021_Level"'
-        description: Registered patient counts by GP Practice, sex and 2021 LSOA per monthly snapshot
-        columns:
-          - name: GP_Practice_Code
-            quote: true
-          - name: LSOA_Code
-            quote: true
-          - name: Census_Year
-            quote: true
-          - name: Sex
-            quote: true
-          - name: Size
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: DataSourceFileForThisSnapshot_Version
-            quote: true
-          - name: Report_Period_Length
-            quote: true
-          - name: Unique_ID
-            quote: true
-          - name: AuditKey
-            quote: true
-
-  - name: ukhfd_comm_allocations
-    database: '"UKHFD"'
-    schema: '"Comm_Allocations"'
-    description: UK Health Funding Dataset commissioning allocation inputs.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: weighted_regs_by_gp_practice_base
-        identifier: '"fact_Weighted_Regs_By_GP_Practice_Base"'
-        description: Practice-level need indices and weighted populations by allocation base year.
-        columns:
-          - name: Title
-            quote: true
-          - name: GP_Practice_Code
-            quote: true
-          - name: Metric_Name
-            quote: true
-          - name: Metric_Value
-            quote: true
-          - name: Metric_Value_Str
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: DataSourceFileForThisSnapshot_Version
-            quote: true
-          - name: Report_Period_Length
-            quote: true
-          - name: Unique_ID
-            quote: true
-          - name: AuditKey
-            quote: true
-
-  - name: ukhfd_pbr
-    database: '"UKHFD"'
-    schema: '"PbR_v2"'
-    description: NHS payment reference data collected by the UK Health Funding Dataset.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: market_forces_factor_values
-        identifier: '"dim_MFF_Values"'
-        description: Provider Market Forces Factor values from NHS tariff and payment workbooks.
-        columns:
-          - name: Organisation_Code
-            quote: true
-          - name: Organisation_Name
-            quote: true
-          - name: MFF_Value
-            quote: true
-          - name: MFF_Value_Year_2
-            quote: true
-          - name: MFF_Value_Year_3
-            quote: true
-          - name: MFF_Value_Year_4
-            quote: true
-          - name: MFF_Value_Year_5
-            quote: true
-          - name: Notes
-            quote: true
-          - name: File_Name
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-
-  - name: ukhfd_data_dictionary
-    database: '"UKHFD"'
-    schema: '"Data_Dictionary"'
-    description: NHS Data Model and Dictionary terminology history held in UKHFD.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_data_dictionary
-    tables:
-      - name: attendance_status
-        identifier: '"dim_Attendance_Status_SCD"'
-        description: Attendance status code definitions and their UKHFD history.
-        columns: &ukhfd_data_dictionary_columns
-          - name: Attr_Name
-            quote: true
-          - name: Valid_From
-            quote: true
-          - name: Valid_To
-            quote: true
-          - name: Main_Code_Text
-            quote: true
-          - name: Sub_Code1_Text
-            quote: true
-          - name: Sub_Code2_Text
-            quote: true
-          - name: Sub_Code3_Text
-            quote: true
-          - name: Major_Category
-            quote: true
-          - name: Category
-            quote: true
-          - name: Main_Description
-            quote: true
-          - name: Main_Description_60_Chars
-            quote: true
-          - name: Sub1_Description
-            quote: true
-          - name: Sub2_Description
-            quote: true
-          - name: Sub3_Description
-            quote: true
-          - name: Notes
-            quote: true
-          - name: In_Source_Table
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: activity_location_type
-        identifier: '"dim_Activity_Location_Type_Code_SCD"'
-        description: Activity location type code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: diagnosis_scheme_in_use
-        identifier: '"dim_Diagnosis_Scheme_In_Use_SCD"'
-        description: Diagnosis coding schemes, including retired definitions.
-        columns: *ukhfd_data_dictionary_columns
-      - name: consultation_mechanism
-        identifier: '"dim_Consultation_Mechanism_SCD"'
-        description: Consultation mechanism code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_source_of_referral
-        identifier: '"dim_Source_Of_Referral_For_Mental_Health_Services_Data_Set_SCD"'
-        description: MHSDS source-of-referral code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mental_health_source_of_referral_legacy
-        identifier: '"dim_Source_Of_Referral_For_Mental_Health_SCD"'
-        description: Retired mental-health source-of-referral definitions used by older records.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_service_or_team_type
-        identifier: '"dim_Service_Or_Team_Type_For_Mental_Health_SCD"'
-        description: Mental-health service or team type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_source_of_referral
-        identifier: '"dim_Source_Of_Referral_For_Community_SCD"'
-        description: Community source-of-referral definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_service_or_team_type
-        identifier: '"dim_Service_Or_Team_Type_Referred_To_For_Community_Care_SCD"'
-        description: Community service or team type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: care_contact_subject
-        identifier: '"dim_Care_Contact_Subject_SCD"'
-        description: Care contact subject definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: planned_care_contact_indicator
-        identifier: '"dim_Planned_Care_Contact_Indicator_SCD"'
-        description: Planned care contact indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: consultation_type
-        identifier: '"dim_Consultation_Type_SCD"'
-        description: Consultation type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: consultation_medium_used
-        identifier: '"dim_Consultation_Medium_Used_SCD"'
-        description: Consultation medium definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: care_contact_patient_therapy_mode
-        identifier: '"dim_Care_Contact_Patient_Therapy_Mode_SCD"'
-        description: Care contact patient therapy mode definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: care_contact_cancellation_reason
-        identifier: '"dim_Care_Contact_Cancellation_Reason_SCD"'
-        description: Care contact cancellation reason definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: administrative_category
-        identifier: '"dim_Administrative_Category_Code_SCD"'
-        description: Administrative category definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: place_of_safety_indicator
-        identifier: '"dim_Place_Of_Safety_Indicator_SCD"'
-        description: Place of safety indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: group_therapy_indicator
-        identifier: '"dim_Group_Therapy_Indicator_SCD"'
-        description: Group therapy indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: interpreter_present_indicator
-        identifier: '"dim_Interpreter_Present_At_Care_Contact_Indication_Code_SCD"'
-        description: Care contact interpreter indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_perinatal_partner_assessment_offer_indicator
-        identifier: '"dim_Community_Perinatal_Mental_Health_Partner_Assessment_Offer_Indicator_SCD"'
-        description: Perinatal partner assessment offer indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: reasonable_adjustment_made_indicator
-        identifier: '"dim_Reasonable_Adjustment_Made_Indicator_SCD"'
-        description: Reasonable adjustment made indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: reason_patient_no_imca
-        identifier: '"dim_Reason_Patient_Does_Not_Have_Independent_Mental_Capacity_Advocate_SCD"'
-        description: Reasons a patient does not have an IMCA and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: reason_patient_no_imha
-        identifier: '"dim_Reason_Patient_Does_Not_Have_Independent_Mental_Health_Advocate_SCD"'
-        description: Reasons a patient does not have an IMHA and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_service_or_team_intended_age_group
-        identifier: '"dim_Mental_Health_Service_Or_Team_Intended_Patient_Age_Group_SCD"'
-        description: Mental health service or team intended age group definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: clinical_response_priority_type
-        identifier: '"dim_Clinical_Response_Priority_Type_SCD"'
-        description: Clinical response priority definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_reason_for_referral
-        identifier: '"dim_Reason_For_Referral_To_Mental_Health_SCD"'
-        description: Mental health referral reason definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_referring_care_professional_type
-        identifier: '"dim_Referring_Care_Professional_Type_Mental_Health_SCD"'
-        description: Referring care professional type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_referring_care_professional_staff_group
-        identifier: '"dim_Referring_Care_Professional_Staff_Group_For_Mental_Health_SCD"'
-        description: Referring care professional staff group definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_referring_care_professional_staff_group_legacy
-        identifier: '"dim_Referring_Care_Professional_Staff_Group_For_Mental_Health_And_Community_Care_SCD"'
-        description: Retired mental health and community referrer staff group definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: referral_rejection_reason
-        identifier: '"dim_Referral_Rejection_Reason_SCD"'
-        description: Referral rejection reason definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: referral_closure_reason
-        identifier: '"dim_Referral_Closure_Reason_SCD"'
-        description: Referral closure reason definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_out_of_area_referral_reason
-        identifier: '"dim_Reason_For_Out_Of_Area_Referral_For_Adult_Acute_Mental_Health_SCD"'
-        description: Out-of-area referral reason definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: onward_referral_reason
-        identifier: '"dim_Onward_Referral_Reason_SCD"'
-        description: Onward referral reason definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: language_code
-        identifier: '"dim_Language_Code_SCD"'
-        description: NHS communication-method language extensions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: child_protection_plan_indicator
-        identifier: '"dim_Child_Protection_Plan_Indication_Code_SCD"'
-        description: Child protection plan indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: looked_after_child_indicator
-        identifier: '"dim_Looked_After_Child_Indicator_SCD"'
-        description: Looked-after-child indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mental_health_admitted_patient_classification_type
-        identifier: '"dim_Mental_Health_Admitted_Patient_Classification_Type_SCD"'
-        description: Mental health admitted patient classification type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: admission_source
-        identifier: '"dim_Admission_Source_SCD"'
-        description: Admission source definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: source_of_admission_legacy
-        identifier: '"dim_Source_Of_Admission_SCD"'
-        description: Retired source of admission definitions used by historical MHSDS records.
-        columns: *ukhfd_data_dictionary_columns
-      - name: admission_method
-        identifier: '"dim_Admission_Method_SCD"'
-        description: Admission method definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: planned_destination_of_discharge
-        identifier: '"dim_Planned_Destination_Of_Discharge_SCD"'
-        description: Planned discharge destination definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: destination_of_discharge
-        identifier: '"dim_Destination_Of_Discharge_SCD"'
-        description: Discharge destination definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: discharge_destination_legacy
-        identifier: '"dim_Discharge_Destination_SCD"'
-        description: Retired discharge destination definitions used by historical MHSDS records.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ward_intended_sex_of_patients
-        identifier: '"dim_Ward_Intended_Sex_Of_Patients_SCD"'
-        description: Ward intended sex definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ward_intended_clinical_care_intensity
-        identifier: '"dim_Ward_Intended_Clinical_Care_Intensity_SCD"'
-        description: Ward intended clinical care intensity definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ward_intended_age_group_for_mental_health
-        identifier: '"dim_Ward_Intended_Age_Group_For_Mental_Health_SCD"'
-        description: Mental health ward intended age group definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ward_setting_type_for_mental_health
-        identifier: '"dim_Ward_Setting_Type_For_Mental_Health_SCD"'
-        description: Mental health ward setting definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ward_security_level
-        identifier: '"dim_Ward_Security_Level_SCD"'
-        description: Ward security level definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: locked_ward_indicator
-        identifier: '"dim_Locked_Ward_Indicator_SCD"'
-        description: Locked ward indicator definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_care_professional_staff_group
-        identifier: '"dim_Care_Professional_Staff_Group_For_Mental_Health_SCD"'
-        description: Mental health care professional staff group definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: main_specialty_code
-        identifier: '"dim_Main_Specialty_Code_SCD"'
-        description: Main specialty code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: professional_registration_body_code
-        identifier: '"dim_Professional_Registration_Body_Code_SCD"'
-        description: Professional registration body definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: care_professional_job_role_code
-        identifier: '"dim_Job_Role_Code_SCD"'
-        description: Care professional job role definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: finding_scheme
-        identifier: '"dim_Finding_Scheme_In_Use_SCD"'
-        description: Finding coding scheme definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: observation_scheme
-        identifier: '"dim_Observation_Scheme_In_Use_SCD"'
-        description: Observation coding scheme definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-
-      - name: method_of_discharge
-        identifier: '"dim_Method_Of_Discharge_SCD"'
-        description: Discharge method definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: discharge_method_legacy
-        identifier: '"dim_Discharge_Method_SCD"'
-        description: Legacy discharge method definitions, including retired codes.
-        columns: *ukhfd_data_dictionary_columns
-      - name: priority_type
-        identifier: '"dim_Priority_Type_SCD"'
-        description: National priority type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_reason_for_referral
-        identifier: '"dim_Reason_For_Referral_To_Community_Care_SCD"'
-        description: National csds reason for referral definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_referring_staff_group
-        identifier: '"dim_Care_Professional_Staff_Group_For_Community_Care_SCD"'
-        description: National csds referring staff group definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_waiting_time_measurement_type
-        identifier: '"dim_Waiting_Time_Measurement_Type_For_Community_Care_SCD"'
-        description: National csds waiting time measurement type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: procedure_scheme_in_use
-        identifier: '"dim_Procedure_Scheme_In_Use_SCD"'
-        description: National procedure scheme in use definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_community_care_activity_type
-        identifier: '"dim_Community_Care_Activity_Type_SCD"'
-        description: National csds community care activity type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_community_care_activity_type_legacy
-        identifier: '"dim_Community_Care_Activity_Type_Code_SCD"'
-        description: National csds community care activity type legacy definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: childhood_immunisation_type
-        identifier: '"dim_Childhood_Immunisation_Type_SCD"'
-        description: Childhood immunisation type definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: breastfeeding_status
-        identifier: '"dim_Breastfeeding_Status_SCD"'
-        description: Breastfeeding status definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: newborn_hearing_screening_outcome
-        identifier: '"dim_Newborn_Hearing_Screening_Outcome_SCD"'
-        description: Newborn hearing screening outcome definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: newborn_hearing_audiology_outcome
-        identifier: '"dim_Newborn_Hearing_Audiology_Outcome_SCD"'
-        description: Newborn hearing audiology outcome definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: newborn_blood_spot_test_outcome_status
-        identifier: '"dim_Newborn_Blood_Spot_Test_Outcome_Status_SCD"'
-        description: Newborn blood spot test outcome status definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: csds_referral_closure_reason_legacy
-        identifier: '"dim_Referral_Closure_Reason_For_Community_Care_SCD"'
-        description: National csds referral closure reason legacy definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: accommodation_status
-        identifier: '"dim_Accommodation_Status_Code_SCD"'
-        description: National accommodation status definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: accommodation_type
-        identifier: '"dim_Accommodation_Type_SCD"'
-        description: National accommodation type definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: settled_accommodation_indicator
-        identifier: '"dim_Settled_Accommodation_Indicator_SCD"'
-        description: National settled accommodation definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_employment_status
-        identifier: '"dim_Employment_Status_For_Mental_Health_SCD"'
-        description: National employment status definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_employment_contract_type
-        identifier: '"dim_Patient_Primary_Employment_Contract_Type_For_Mental_Health_SCD"'
-        description: National employment contract type definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: disability
-        identifier: '"dim_Disability_Code_SCD"'
-        description: National disability definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: disability_impact_perception
-        identifier: '"dim_Disability_Impact_Perception_SCD"'
-        description: National disability impact definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_care_plan_type
-        identifier: '"dim_Care_Plan_Type_For_Mental_Health_SCD"'
-        description: National care plan type definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: care_plan_agreed_by
-        identifier: '"dim_Care_Plan_Agreed_By_SCD"'
-        description: National care plan agreed by definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: care_plan_content_agreed_by
-        identifier: '"dim_Care_Plan_Content_Agreed_By_SCD"'
-        description: National care plan content agreed by definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: family_involved_in_care_plan_indicator
-        identifier: '"dim_Family_Involved_In_Care_Plan_Indicator_SCD"'
-        description: National family care plan involvement definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: family_not_involved_in_care_plan_reason
-        identifier: '"dim_Family_Not_Involved_In_Care_Plan_Reason_SCD"'
-        description: National family care plan exclusion reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: gender_identity
-        identifier: '"dim_Gender_Identity_Code_SCD"'
-        description: National gender identity definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: gender_identity_same_at_birth_indicator
-        identifier: '"dim_Gender_Identity_Same_At_Birth_Indicator_SCD"'
-        description: National gender same at birth definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: person_stated_gender
-        identifier: '"dim_Person_Stated_Gender_Code_SCD"'
-        description: National person stated gender definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_group_session_type
-        identifier: '"dim_Group_Session_Type_For_Mental_Health_SCD"'
-        description: National group session type definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_drop_in_outcome
-        identifier: '"dim_Mental_Health_Drop_In_Contact_Outcome_SCD"'
-        description: National drop in outcome definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: indirect_activity_person_consulted_type
-        identifier: '"dim_Indirect_Activity_Person_Consulted_Type_SCD"'
-        description: National indirect activity person consulted definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: community_treatment_order_end_reason
-        identifier: '"dim_Community_Treatment_Order_End_Reason_SCD"'
-        description: National community treatment order end reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: legal_status_start_reason
-        identifier: '"dim_Mental_Health_Act_Legal_Status_Classification_Assignment_Period_Start_Reason_SCD"'
-        description: National legal status assignment period start reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: legal_status_end_reason
-        identifier: '"dim_Mental_Health_Act_Legal_Status_Classification_Assignment_Period_End_Reason_SCD"'
-        description: National legal status assignment period end reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mental_category
-        identifier: '"dim_Mental_Health_Act_2007_Mental_Category_SCD"'
-        description: National Mental Health Act 2007 mental category definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: restrictive_intervention_reason
-        identifier: '"dim_Restrictive_Intervention_Reason_SCD"'
-        description: National restrictive intervention reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: restrictive_intervention_type
-        identifier: '"dim_Restrictive_Intervention_Type_SCD"'
-        description: National restrictive intervention type definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: restrictive_intervention_review_held_indicator
-        identifier: '"dim_Restrictive_Intervention_Post_Incident_Review_Held_Indicator_SCD"'
-        description: National post incident review held definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: restrictive_intervention_review_not_held_reason
-        identifier: '"dim_Restrictive_Intervention_Post_Incident_Review_Not_Held_Reason_For_Patient_SCD"'
-        description: National post incident review not held reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: restrictive_intervention_restraint_injury_indicator
-        identifier: '"dim_Restrictive_Intervention_Restraint_Injury_Indicator_SCD"'
-        description: National restraint injury definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_leave_of_absence_end_reason
-        identifier: '"dim_Mental_Health_Leave_Of_Absence_End_Reason_SCD"'
-        description: National leave of absence end reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_absence_without_leave_end_reason
-        identifier: '"dim_Mental_Health_Absence_Without_Leave_End_Reason_SCD"'
-        description: National absence without leave end reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_escorted_leave
-        identifier: '"dim_Escorted_Mental_Health_Leave_Of_Absence_Indicator_SCD"'
-        description: National escorted leave definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_discharge_readiness_delay_reason
-        identifier: '"dim_Mental_Health_Clinically_Ready_For_Discharge_Period_Delay_Reason_SCD"'
-        description: National discharge readiness delay reason definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: mhsds_discharge_readiness_attribution
-        identifier: '"dim_Mental_Health_Clinically_Ready_For_Discharge_Period_Attributable_To_Indication_Code_SCD"'
-        description: National discharge readiness attribution definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-      - name: waiting_time_measurement_type
-        identifier: '"dim_Waiting_Time_Measurement_Type_SCD"'
-        description: National waiting time measurement type definitions and their UKHFD history.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-
-      - name: employment_status
-        identifier: '"dim_Employment_Status_SCD"'
-        description: National employment status definitions, including employed, unemployed, inactive and stated-status
-          codes.
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-
-      - name: weekly_hours_worked
-        identifier: '"dim_Weekly_Hours_Worked_SCD"'
-        description: National weekly working-hours bands and stated-status codes with their
-          UKHFD history
-        columns:
-        - name: Attr_Name
-          quote: true
-        - name: Valid_From
-          quote: true
-        - name: Valid_To
-          quote: true
-        - name: Main_Code_Text
-          quote: true
-        - name: Sub_Code1_Text
-          quote: true
-        - name: Sub_Code2_Text
-          quote: true
-        - name: Sub_Code3_Text
-          quote: true
-        - name: Major_Category
-          quote: true
-        - name: Category
-          quote: true
-        - name: Main_Description
-          quote: true
-        - name: Main_Description_60_Chars
-          quote: true
-        - name: Sub1_Description
-          quote: true
-        - name: Sub2_Description
-          quote: true
-        - name: Sub3_Description
-          quote: true
-        - name: Notes
-          quote: true
-        - name: In_Source_Table
-          quote: true
-        - name: Unique_Column
-          quote: true
-        - name: Import_Date
-          quote: true
-        - name: Created_Date
-          quote: true
-        - name: Is_Latest
-          quote: true
-        - name: Effective_From
-          quote: true
-        - name: Effective_To
-          quote: true
-
-      - name: patient_classification
-        identifier: '"dim_Patient_Classification_SCD"'
-        description: Patient classification definitions for admitted patient care and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: treatment_function_code
-        identifier: '"dim_Treatment_Function_Code_SCD"'
-        description: Treatment function code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: outcome_of_attendance
-        identifier: '"dim_Outcome_Of_Attendance_SCD"'
-        description: Outpatient outcome of attendance definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: first_attendance
-        identifier: '"dim_First_Attendance_SCD"'
-        description: Outpatient first attendance definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: attended_or_did_not_attend
-        identifier: '"dim_Attended_Or_Did_Not_Attend_SCD"'
-        description: Attended or did not attend definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: source_of_referral_for_out_patients
-        identifier: '"dim_Source_Of_Referral_For_Out_Patients_SCD"'
-        description: Outpatient source of referral definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ethnic_category_code
-        identifier: '"dim_Ethnic_Category_Code_SCD"'
-        description: Ethnic category code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: ethnic_category_code_2001
-        identifier: '"dim_Ethnic_Category_Code_2001_SCD"'
-        description: 2001 Census ethnic category code definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: out_patient_attendance_outcome
-        identifier: '"dim_Out_Patient_Attendance_Outcome_SCD"'
-        description: Outpatient attendance outcome definitions (current code list, codes 1-5) and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: person_gender_code
-        identifier: '"dim_Person_Gender_Code_SCD"'
-        description: Person gender code definitions (codes 0, 1, 2, 9) and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-
-  - name: ukhfd_other
-    database: '"UKHFD"'
-    schema: '"Other"'
-    description: Shared reference data held in UKHFD.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_other
-    tables:
-      - name: ucum_units
-        identifier: '"dim_Unified_Code_For_Units_Of_Measure_SCD"'
-        description: UCUM expressions and their UKHFD definition history.
-        columns:
-          - name: Code
-            quote: true
-          - name: Descriptive_Name
-            quote: true
-          - name: Code_System
-            quote: true
-          - name: Definition
-            quote: true
-          - name: Date_Created
-            quote: true
-          - name: Synonym
-            quote: true
-          - name: Status
-            quote: true
-          - name: Kind_Of_Quantity
-            quote: true
-          - name: Date_Revised
-            quote: true
-          - name: ConceptID
-            quote: true
-          - name: Dimension
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: iso_language_codes
-        identifier: '"dim_ISO_Language_Codes_SCD"'
-        description: ISO 639 language codes and their UKHFD history.
-        columns:
-          - name: ISO_639_2_Code
-            quote: true
-          - name: ISO_639_1_Code
-            quote: true
-          - name: English_Name_Of_Language
-            quote: true
-          - name: French_Name_Of_Language
-            quote: true
-          - name: German_Name_Of_Language
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-  - name: ukhfd_ods_api
-    database: '"UKHFD"'
-    schema: '"ODS_API"'
-    description: Organisation Data Service API register and its UKHFD definition history.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: organisation
-        identifier: '"dim_Organisation_SCD"'
-        description: Full ODS organisation and site register, including historical definitions
-          and closed organisations.
-        columns:
-          - name: register_id
-            quote: true
-          - name: Name
-            quote: true
-          - name: OrgId_Root
-            quote: true
-          - name: OrgId_assigningAuthorityName
-            quote: true
-          - name: OrgId_extension
-            quote: true
-          - name: OrgRecordClass
-            quote: true
-          - name: Status
-            quote: true
-          - name: AddrLn1
-            quote: true
-          - name: AddrLn2
-            quote: true
-          - name: AddrLn3
-            quote: true
-          - name: Town
-            quote: true
-          - name: County
-            quote: true
-          - name: PostCode
-            quote: true
-          - name: Country
-            quote: true
-          - name: UPRN
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: LastChangeDate
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-          - name: Char_8_ASCII_Index
-            quote: true
-
-  - name: ukhfd_read_codes
-    database: '"UKHFD"'
-    schema: '"Read_Codes"'
-    description: Historical national Read code terminology definitions.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-    - name: read_v2_terms
-      identifier: '"dim_KV2_SCD"'
-      description: Read v2 term definitions, including historical revisions
-      columns:
-      - name: Term_Key
-        quote: true
-      - name: Uniquifier
-        quote: true
-      - name: Term_30
-        quote: true
-      - name: Term_60
-        quote: true
-      - name: Term_198
-        quote: true
-      - name: Term_Code
-        quote: true
-      - name: Language_Code
-        quote: true
-      - name: Read_Code
-        quote: true
-      - name: Status_Flag
-        quote: true
-      - name: Source_File_Name
-        quote: true
-      - name: Unique_Column
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: ctv3_terms
-      identifier: '"dim_CV3_Terms_SCD"'
-      description: CTV3 term identifiers and text, including historical revisions
-      columns:
-      - name: Term_ID
-        quote: true
-      - name: Term_Status
-        quote: true
-      - name: Term_30
-        quote: true
-      - name: Term_60
-        quote: true
-      - name: Term_198
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-    - name: ctv3_concepts
-      identifier: '"dim_CV3_Concept_SCD"'
-      description: CTV3 concept identifiers and status, including historical revisions
-      columns:
-      - name: Read_Code
-        quote: true
-      - name: Concept_Status
-        quote: true
-      - name: Linguistic_Role
-        quote: true
-      - name: Subject_Type
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-  - name: ukhfd_read_data_migration
-    database: '"UKHFD"'
-    schema: '"Read_Data_Migration"'
-    description: NHS Data Migration (TRUD) Read v2 / CTV3 maps and subsets; final release 2020.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-    - name: ctv3_to_cre_map
-      identifier: '"dim_CTV3_CRE_Map_SCD"'
-      description: CTV3 concept to CRE maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: CTV3_Concept_ID
-        quote: true
-      - name: CRE_ID
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: ctv3_to_read_v2_map
-      identifier: '"dim_CTV3_RCT_Map_SCD"'
-      description: CTV3 concept and term to Read v2 maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: CTV3_Concept_ID
-        quote: true
-      - name: CTV3_TermID
-        quote: true
-      - name: CTV3_Term_Type
-        quote: true
-      - name: V2_Concept_ID
-        quote: true
-      - name: V2_Term_ID
-        quote: true
-      - name: Map_Type
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: Is_Assured
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: ctv3_to_snomed_map
-      identifier: '"dim_CTV3_SCT_Map2_SCD"'
-      description: CTV3 concept and term to SNOMED CT maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: CTV3_Concept_ID
-        quote: true
-      - name: CTV3_TermID
-        quote: true
-      - name: CTV3_Term_Type
-        quote: true
-      - name: SCT_Concept_ID
-        quote: true
-      - name: SCT_Description_ID
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: Is_Assured
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: ctv3_codes_with_values_alt_maps
-      identifier: '"dim_Codes_With_Values_Alt_Maps_CTV3_SCD"'
-      description: Alternative observable SNOMED CT maps for CTV3 codes with values, including historical revisions.
-      columns:
-      - name: CTV3ID
-        quote: true
-      - name: TermCode
-        quote: true
-      - name: Observable_ConceptID
-        quote: true
-      - name: Observable_DescriptionID
-        quote: true
-      - name: Use_Alternate
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_codes_with_values_alt_maps
-      identifier: '"dim_Codes_With_Values_Alt_Maps_READ2_SCD"'
-      description: Alternative observable SNOMED CT maps for Read v2 codes with values, including historical revisions.
-      columns:
-      - name: READCODE
-        quote: true
-      - name: TermCode
-        quote: true
-      - name: Observable_ConceptID
-        quote: true
-      - name: Observable_DescriptionID
-        quote: true
-      - name: Use_Alternate
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: gp_subset_blacklist
-      identifier: '"dim_GP_Subset_Blacklist_SCD"'
-      description: GP subset blacklist entries and reasons, including historical revisions.
-      columns:
-      - name: SCUI
-        quote: true
-      - name: STUI
-        quote: true
-      - name: Map
-        quote: true
-      - name: Term
-        quote: true
-      - name: Reason
-        quote: true
-      - name: Unique_Column
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_to_cre_map
-      identifier: '"dim_RCT_CRE_Map_SCD"'
-      description: Read v2 concept and term to CRE maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: V2_Concept_ID
-        quote: true
-      - name: V2_Term_ID
-        quote: true
-      - name: CRE_ID
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_to_ctv3_map
-      identifier: '"dim_RCT_CTV3_Map_SCD"'
-      description: Read v2 concept and term to CTV3 maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: V2_Concept_ID
-        quote: true
-      - name: V2_Term_ID
-        quote: true
-      - name: CTV3_Term_ID
-        quote: true
-      - name: CTV3_Term_Type
-        quote: true
-      - name: CTV3_Concept_ID
-        quote: true
-      - name: Use_CTV3_Term_ID
-        quote: true
-      - name: Stat
-        quote: true
-      - name: Map_Type
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: Is_assured
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_to_snomed_map_reviewed
-      identifier: '"dim_RCT_SCT_Map_Reviewed_SCD"'
-      description: Reviewed Read v2 to SNOMED CT map rankings, including historical revisions.
-      columns:
-      - name: RC
-        quote: true
-      - name: TC
-        quote: true
-      - name: Rank
-        quote: true
-      - name: Unique_Column
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_ctv3_map
-      identifier: '"dim_RC_Map_SCD"'
-      description: Read v2 to CTV3 concept maps, including historical revisions.
-      columns:
-      - name: Read_Code
-        quote: true
-      - name: Concept_ID
-        quote: true
-      - name: Map_ID
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_to_snomed_map
-      identifier: '"dim_RC_SCT_Map2_SCD"'
-      description: Read v2 code and term to SNOMED CT maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: Read_Code
-        quote: true
-      - name: Term_Code
-        quote: true
-      - name: Concept_ID
-        quote: true
-      - name: Description_ID
-        quote: true
-      - name: Is_Assured
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_to_snomed_map_enhanced
-      identifier: '"dim_RC_SCT_Map_Enhanced_SCD"'
-      description: Enhanced Read v2 to SNOMED CT maps with term identifiers, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: Read_Code
-        quote: true
-      - name: Term_Code
-        quote: true
-      - name: Concept_ID
-        quote: true
-      - name: T30_ID
-        quote: true
-      - name: T60_ID
-        quote: true
-      - name: T198_ID
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_to_snomed_map_v1
-      identifier: '"dim_RC_SCT_Map_SCD"'
-      description: First-version Read v2 code and term to SNOMED CT concept maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: Read_Code
-        quote: true
-      - name: Term_Code
-        quote: true
-      - name: Concept_ID
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: read_v2_term_to_snomed_map
-      identifier: '"dim_RC_Term_SCT_Map_SCD"'
-      description: Read v2 term text to SNOMED CT concept maps, including historical revisions.
-      columns:
-      - name: Read_Code
-        quote: true
-      - name: Term
-        quote: true
-      - name: Concept_ID
-        quote: true
-      - name: Map_ID
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: primary_care_refset
-      identifier: '"dim_Ref_Set_Primary_Care_SCD"'
-      description: Primary care reference set members and linked components, including historical revisions.
-      columns:
-      - name: ID
-        quote: true
-      - name: Effective_Time
-        quote: true
-      - name: Active
-        quote: true
-      - name: Module_ID
-        quote: true
-      - name: Ref_Set_ID
-        quote: true
-      - name: Referenced_Component_ID
-        quote: true
-      - name: Linked_Component_ID
-        quote: true
-      - name: Linked_String_1
-        quote: true
-      - name: Linked_String_2
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: snomed_to_cre_map
-      identifier: '"dim_SCT_CRE_Map_SCD"'
-      description: SNOMED CT concept to CRE maps, including historical revisions.
-      columns:
-      - name: Map_ID
-        quote: true
-      - name: SCT_Concept_ID
-        quote: true
-      - name: CRE_ID
-        quote: true
-      - name: Map_Status
-        quote: true
-      - name: Effective_Date
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: uk_legacy_navigation_subset_members
-      identifier: '"dim_Subset_Members_UK_Legacy_Navigation_SCD"'
-      description: UK legacy navigation subset members, including historical revisions.
-      columns:
-      - name: Subset_ID
-        quote: true
-      - name: Member_ID
-        quote: true
-      - name: Member_Status
-        quote: true
-      - name: Linked_ID
-        quote: true
-      - name: Unique_Column
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-    - name: uk_legacy_navigation_subsets
-      identifier: '"dim_Subsets_UK_Legacy_Navigation_SCD"'
-      description: UK legacy navigation subset definitions, including historical revisions.
-      columns:
-      - name: Subset_ID
-        quote: true
-      - name: Subset_Original_ID
-        quote: true
-      - name: Subset_Version
-        quote: true
-      - name: Subset_Name
-        quote: true
-      - name: Subset_Type
-        quote: true
-      - name: Language_Code
-        quote: true
-      - name: Subset_Realm_ID
-        quote: true
-      - name: Context_ID
-        quote: true
-      - name: In_Source_Data
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: Is_Latest
-        quote: true
-      - name: Effective_From
-        quote: true
-      - name: Effective_To
-        quote: true
-
-  - name: ukhfd_pss
-    database: '"UKHFD"'
-    schema: '"Prescribed_Specialised_Services"'
-    description: PSS reference tables including Service Line and National Programme Code
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_pss
-    tables:
-    - name: summary_of_id_code_sets
-      identifier: '"dim_Summary_Of_ID_Code_Sets"'
-      description: 
-      columns:
-      - name: ADMIMETH_APC_Only
-        quote: true
-      - name: ATTENDED_NAC_Only
-        quote: true
-      - name: CLASSPAT_APC_Only
-        quote: true
-      - name: CSNum_Use_Of_Equal_Sign_Exclusion_APC_Only
-        quote: true
-      - name: Commissioned_By
-        quote: true
-      - name: Created_Date
-        quote: true
-      - name: File_Name
-        quote: true
-      - name: Flag_Number
-        quote: true
-      - name: ICD10_And_OPCS4_Combination_Required
-        quote: true
-      - name: ICD10_Qualifiers
-        quote: true
-      - name: ICD10_Triggering_Position
-        quote: true
-      - name: ICD10_Triggers_Count
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: MAINSPEF_Count
-        quote: true
-      - name: NPoC_Category
-        quote: true
-      - name: New_Service_Lines
-        quote: true
-      - name: No_Of_Identification_Rules
-        quote: true
-      - name: OPCS4_And_OPCS4_Combination_Required
-        quote: true
-      - name: OPCS4_Triggering_Position
-        quote: true
-      - name: OPCS4_Triggers_Count
-        quote: true
-      - name: OPCS_Qualifiers
-        quote: true
-      - name: PS_Flag
-        quote: true
-      - name: Prescribed_Service_Line
-        quote: true
-      - name: Provider_Eligibility_Count
-        quote: true
-      - name: Qualifying_Age
-        quote: true
-      - name: Qualifying_Age_Check
-        quote: true
-      - name: Qualifying_Gender
-        quote: true
-      - name: REFSOURC_NAC_Only
-        quote: true
-      - name: Service_Line_Hierarchy
-        quote: true
-      - name: Setting
-        quote: true
-      - name: Sub_Rule_Number
-        quote: true
-      - name: TRETSPEF_Count
-        quote: true
-      - name: Unique_Column
-        quote: true
-    - name: service_line_hierarchy
-      identifier: '"dim_Service_Line_Hierarchy"'
-      description: Service line hierarchy information.
-      columns:
-      - name: Service_Line
-        quote: true
-      - name: Service_Line_Description
-        quote: true
-      - name: Applicable_In_Setting_1
-        quote: true
-      - name: Applicable_In_Setting_2
-        quote: true
-      - name: APC_Episode_Spell_Hierarchies
-        quote: true
-      - name: APC_Percentage_Top_Up
-        quote: true
-      - name: NAC_Hierarchy
-        quote: true
-      - name: File_Name
-        quote: true
-      - name: Import_Date
-        quote: true
-      - name: Created_Date
-        quote: true
-
-  - name: ukhfd_ecds_etos
-    database: '"UKHFD"'
-    schema: '"ECDS_TOS"'
-    description: Emergency Care Data Set Enhanced Technical Output Specification (ETOS) releases held in UKHFD.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_ecds_etos
-    tables:
-      - name: code_sets
-        identifier: '"dim_Code_Sets"'
-        description: ECDS ETOS code set members, one row per release file, code set sheet and SNOMED code.
-        columns:
-          - name: Sheet_Name
-            quote: true
-          - name: ECDS_UniqueID
-            quote: true
-          - name: Sort1
-            quote: true
-          - name: Sort2
-            quote: true
-          - name: Sort3
-            quote: true
-          - name: ECDS_Group1
-            quote: true
-          - name: ECDS_Group2
-            quote: true
-          - name: ECDS_Group3
-            quote: true
-          - name: ECDS_Description
-            quote: true
-          - name: ECDS_SearchTerms
-            quote: true
-          - name: SNOMED_Code
-            quote: true
-          - name: SNOMED_Description
-            quote: true
-          - name: SNOMED_TERM
-            quote: true
-          - name: Flag_Inj
-            quote: true
-          - name: Flag_AEC
-            quote: true
-          - name: Flag_Allergy
-            quote: true
-          - name: Flag_NotifiableDisease
-            quote: true
-          - name: Flag_Injury
-            quote: true
-          - name: Flag_Male
-            quote: true
-          - name: Flag_Female
-            quote: true
-          - name: Parent_Term
-            quote: true
-          - name: Maps_To_Self
-            quote: true
-          - name: ECDS_Notes
-            quote: true
-          - name: Notes
-            quote: true
-          - name: CDS10_Mapping_Diagnosis_Condition
-            quote: true
-          - name: CDS10_Mapping_Sub_Analysis_Code
-            quote: true
-          - name: CDS10_Mapping_Anatomical_Area
-            quote: true
-          - name: CDS_Code_Mapping_Used_For_HRG_Grouping
-            quote: true
-          - name: PbR_Category
-            quote: true
-          - name: CDS_Investigation_Mapping_That_Is_Used_For_HRG_Grouping
-            quote: true
-          - name: CDS_Treatment_Mapping_That_Is_Used_For_HRG_Grouping
-            quote: true
-          - name: ICD10_Mapping
-            quote: true
-          - name: Valid_From
-            quote: true
-          - name: Valid_To
-            quote: true
-          - name: Notes_For_Completing_The_Observation_Value_Field
-            quote: true
-          - name: Flag_SDEC
-            quote: true
-          - name: Core_List_Term
-            quote: true
-          - name: Core_List_Term_Description
-            quote: true
-          - name: Chief_Complaint_Core_List
-            quote: true
-          - name: Chief_Complaint_Max_List
-            quote: true
-          - name: SNOMED_UK_Preferred_Term
-            quote: true
-          - name: SNOMED_Fully_Specified_Name
-            quote: true
-          - name: Flag_ADS
-            quote: true
-          - name: Sort4
-            quote: true
-          - name: ICD10_Description
-            quote: true
-          - name: ICD11_Mapping
-            quote: true
-          - name: ICD11_Description
-            quote: true
-          - name: REFSET_UniqueID
-            quote: true
-          - name: Flag_Pain
-            quote: true
-          - name: ICD10_Code
-            quote: true
-          - name: Charlson
-            quote: true
-          - name: Elixhauser
-            quote: true
-          - name: File_Name
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-
-  - name: ukhfd_pbr_hrg
-    database: '"UKHFD"'
-    schema: '"PbR"'
-    description: Healthcare Resource Group (HRG) reference data held in UKHFD.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_pbr
-    tables:
-      - name: all_hrgs
-        identifier: '"dim_All_HRGs_SCD"'
-        description: HRG codes and names across HRG4+ releases; Is_Latest marks the newest row per code.
-        columns:
-          - name: HRG_Code
-            quote: true
-          - name: HRG_Name
-            quote: true
-          - name: Source_Table
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: hrg4_chapter
-        identifier: '"dim_HRG4_Chapter"'
-        description: HRG4 chapter labels by financial year, from HRG4+ grouper code-to-group files.
-        columns:
-          - name: HRG4Chapter
-            quote: true
-          - name: HRG4ChapterDescription
-            quote: true
-          - name: File_Name
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: hrg4_subchapter
-        identifier: '"dim_HRG4_SubChapter"'
-        description: HRG4 subchapter labels by financial year, from HRG4+ grouper code-to-group files.
-        columns:
-          - name: HRGChapter
-            quote: true
-          - name: HRG4SubChapter
-            quote: true
-          - name: HRG4SubChapterDescription
-            quote: true
-          - name: File_Name
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-  - name: ukhfd_ons_codes
-    database: '"UKHFD"'
-    schema: '"ONS_Codes"'
-    description: ONS Register of Geographic Codes reference data held in UKHFD.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_ons_codes
-    tables:
-      - name: equivalents
-        identifier: '"dim_Equivalents"'
-        description: ONS geography codes with names, equivalent codes, status and introduction and termination dates.
-        columns:
-          - name: Geography_Code
-            quote: true
-          - name: Geography_Name
-            quote: true
-          - name: Geography_Name_Welsh
-            quote: true
-          - name: ONS_Geography_Code
-            quote: true
-          - name: ONS_Geography_Name
-            quote: true
-          - name: DCLG_Geography_Code
-            quote: true
-          - name: DCLG_Geography_Name
-            quote: true
-          - name: DH_Geography_Code
-            quote: true
-          - name: DH_Geography_Name
-            quote: true
-          - name: Scottish_Geography_Code
-            quote: true
-          - name: Scottish_Geography_Name
-            quote: true
-          - name: NI_Geography_Code
-            quote: true
-          - name: NI_Geography_Name
-            quote: true
-          - name: WG_Geography_Code
-            quote: true
-          - name: WG_Geography_Name
-            quote: true
-          - name: WG_Geography_Name_Welsh
-            quote: true
-          - name: Date_Of_Introduction
-            quote: true
-          - name: Date_Of_Termination
-            quote: true
-          - name: Entity_Code
-            quote: true
-          - name: Year
-            quote: true
-          - name: Status
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-
-  - name: ukhfd_ordnance_survey
-    database: '"UKHFD"'
-    schema: '"Ordnance_Survey"'
-    description: ONS boundary datasets held in UKHFD. Geometry columns are not declared.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_ordnance_survey
-    tables:
-      - name: lsoa_2011
-        identifier: '"dim_LSOA_2011"'
-        description: One row per LSOA on 2011 boundaries with its ONS code and name.
-        columns:
-          - name: ID
-            quote: true
-          - name: LSOA11CD
-            quote: true
-          - name: LSOA11NM
-            quote: true
-      - name: lsoa_2021
-        identifier: '"dim_LSOA_DEC_2021_EW_BFE"'
-        description: One row per LSOA on December 2021 boundaries with its ONS code and name.
-        columns:
-          - name: ID
-            quote: true
-          - name: LSOA21CD
-            quote: true
-          - name: LSOA21NM
-            quote: true
-          - name: GlobalID
-            quote: true
-
-  - name: ukhfd_dsc_sc
-    database: '"UKHFD"'
-    schema: '"DSC_SC"'
-    description: NHS England specialised commissioning code lists used in contract monitoring (SLAM) submissions, with UKHFD snapshot history.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd_dsc_sc
-    tables:
-      - name: commissioned_service_category
-        identifier: '"dim_Commissioned_Service_Cat_Code_Lookup_SCD"'
-        description: Commissioned Service Category Code values and their UKHFD snapshot history.
-        columns:
-          - name: Commissioned_Service_Category_Code
-            quote: true
-          - name: Commissioned_Service_Category_Code_Description
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: service_code
-        identifier: '"dim_Service_Code_Lookup_SCD"'
-        description: NHS England specialised service codes from the service code workbook, with UKHFD snapshot history.
-        columns:
-          - name: Service_Code
-            quote: true
-          - name: Service_Code_Description
-            quote: true
-          - name: Service_Code_Including_Description
-            quote: true
-          - name: Service_Category_Description
-            quote: true
-          - name: NPOC_Category_And_CRG
-            quote: true
-          - name: Highly_Specialised_Service
-            quote: true
-          - name: Identified_By_PS_Operational_Tool
-            quote: true
-          - name: Identified_By_PS_Operational_Tool_Year_Ending
-            quote: true
-          - name: Notes
-            quote: true
-          - name: Effective_From_Taken_From_Source_File
-            quote: true
-          - name: Effective_To_Taken_From_Source_File
-            quote: true
-          - name: Is_Current_Taken_From_Source_File
-            quote: true
-          - name: ICB_Delegation_Status
-            quote: true
-          - name: Grouping
-            quote: true
-          - name: Amended_Record_Indicator
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Effective_Snapshot_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-  - name: ukhfd_dmd
-    database: '"UKHFD"'
-    schema: '"DMPlusD"'
-    description: NHS Dictionary of Medicines and Devices (dm+d), slowly changing national product tables.
-    config:
-      meta:
-        domain: shared
-        raw_prefix: raw_ukhfd
-    tables:
-      - name: dmd_vmp
-        description: Generic medicinal products with strength and dose form, with UKHFD snapshot history
-        identifier: '"dim_VMP_Virtual_Medicinal_Products_SCD"'
-        columns:
-          - name: VMPS_Id
-            quote: true
-          - name: VPID
-            quote: true
-          - name: VPIDDT
-            quote: true
-          - name: VPIDPREV
-            quote: true
-          - name: VTMID
-            quote: true
-          - name: INVALID
-            quote: true
-          - name: NM
-            quote: true
-          - name: ABBREVNM
-            quote: true
-          - name: BASISCD
-            quote: true
-          - name: NMDT
-            quote: true
-          - name: NMPREV
-            quote: true
-          - name: BASIS_PREVCD
-            quote: true
-          - name: NMCHANGECD
-            quote: true
-          - name: COMBPRODCD
-            quote: true
-          - name: PRES_STATCD
-            quote: true
-          - name: SUG_F
-            quote: true
-          - name: GLU_F
-            quote: true
-          - name: PRES_F
-            quote: true
-          - name: CFC_F
-            quote: true
-          - name: NON_AVAILCD
-            quote: true
-          - name: NON_AVAILDT
-            quote: true
-          - name: DF_INDCD
-            quote: true
-          - name: UDFS
-            quote: true
-          - name: UDFS_UOMCD
-            quote: true
-          - name: UNIT_DOSE_UOMCD
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: dmd_amp
-        description: Branded or supplier-specific medicinal products, with UKHFD snapshot history
-        identifier: '"dim_AMP_Actual_Medicinal_Products_SCD"'
-        columns:
-          - name: AMPS_Id
-            quote: true
-          - name: APID
-            quote: true
-          - name: INVALID
-            quote: true
-          - name: VPID
-            quote: true
-          - name: NM
-            quote: true
-          - name: ABBREVNM
-            quote: true
-          - name: DESC
-            quote: true
-          - name: NMDT
-            quote: true
-          - name: NM_PREV
-            quote: true
-          - name: SUPPCD
-            quote: true
-          - name: LIC_AUTHCD
-            quote: true
-          - name: LIC_AUTH_PREVCD
-            quote: true
-          - name: LIC_AUTHCHANGECD
-            quote: true
-          - name: LIC_AUTHCHANGEDT
-            quote: true
-          - name: COMBPRODCD
-            quote: true
-          - name: FLAVOURCD
-            quote: true
-          - name: CSM
-            quote: true
-          - name: PARALLEL_IMPORT
-            quote: true
-          - name: AVAIL_RESTRICTCD
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: dmd_vmp_drug_form
-        description: Dose-form assignments for virtual medicinal products, with UKHFD snapshot history
-        identifier: '"dim_VMP_Drug_Form_SCD"'
-        columns:
-          - name: VPID
-            quote: true
-          - name: FORMCD
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: dmd_lookup_form
-        description: dm+d dose-form lookup codes and descriptions, with UKHFD snapshot history
-        identifier: '"dim_Lookup_Form_SCD"'
-        columns:
-          - name: CD
-            quote: true
-          - name: CDDT
-            quote: true
-          - name: CDPREV
-            quote: true
-          - name: DESC
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: dmd_vmp_ingredient
-        description: Active ingredient substances and strengths for virtual products, with UKHFD snapshot history
-        identifier: '"dim_VMP_Virtual_Product_Ingredient_SCD"'
-        columns:
-          - name: VPID
-            quote: true
-          - name: ISID
-            quote: true
-          - name: BASIS_STRNTCD
-            quote: true
-          - name: BS_SUBID
-            quote: true
-          - name: STRNT_NMRTR_VAL
-            quote: true
-          - name: STRNT_NMRTR_UOMCD
-            quote: true
-          - name: STRNT_DNMTR_VAL
-            quote: true
-          - name: STRNT_DNMTR_UOMCD
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
-      - name: dmd_vtm
-        description: Virtual therapeutic moieties independent of strength and form, with UKHFD snapshot history
-        identifier: '"dim_VTM_Virtual_Therapeutic_Moiety_SCD"'
-        columns:
-          - name: VTMID
-            quote: true
-          - name: INVALID
-            quote: true
-          - name: NM
-            quote: true
-          - name: ABBREVNM
-            quote: true
-          - name: VTMIDPREV
-            quote: true
-          - name: VTMIDDT
-            quote: true
-          - name: Unique_Column
-            quote: true
-          - name: In_Source_Data
-            quote: true
-          - name: Import_Date
-            quote: true
-          - name: Created_Date
-            quote: true
-          - name: Is_Latest
-            quote: true
-          - name: Effective_From
-            quote: true
-          - name: Effective_To
-            quote: true
+- name: ukhfd_ecds_data_dictionary
+  database: '"UKHFD"'
+  schema: '"Data_Dictionary"'
+  description: National data dictionary reference dimensions.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: emergency_care_department_type
+    identifier: '"dim_Emergency_Care_Department_Type_SCD"'
+    description: Emergency care department type codes and descriptions; Is_Latest
+      marks the current row per code.
+    columns:
+    - name: Main_Code_Text
+      quote: true
+      data_type: TEXT
+    - name: Main_Description
+      quote: true
+      data_type: TEXT
+    - name: Is_Latest
+      quote: true
+      data_type: NUMBER(38,0)
+    - name: Effective_From
+      quote: true
+      data_type: TIMESTAMP_NTZ
+  - name: emergency_care_attendance_category
+    identifier: '"dim_Emergency_Care_Attendance_Category_SCD"'
+    description: Emergency care attendance category codes and descriptions; Is_Latest
+      marks the current row per code.
+    columns:
+    - name: Main_Code_Text
+      quote: true
+      data_type: TEXT
+    - name: Main_Description
+      quote: true
+      data_type: TEXT
+    - name: Is_Latest
+      quote: true
+      data_type: NUMBER(38,0)
+    - name: Effective_From
+      quote: true
+      data_type: TIMESTAMP_NTZ
+  - name: uec_activity_type
+    identifier: '"dim_Urgent_And_Emergency_Care_Activity_Type_SCD"'
+    description: Urgent and emergency care activity type codes and descriptions; Is_Latest
+      marks the current row per code.
+    columns:
+    - name: Main_Code_Text
+      quote: true
+      data_type: TEXT
+    - name: Main_Description
+      quote: true
+      data_type: TEXT
+    - name: Is_Latest
+      quote: true
+      data_type: NUMBER(38,0)
+    - name: Effective_From
+      quote: true
+      data_type: TIMESTAMP_NTZ
+  - name: mental_health_act_legal_status_classification
+    identifier: '"dim_Mental_Health_Act_Legal_Status_Classification_Code_SCD"'
+    description: Mental Health Act legal status classification codes and descriptions;
+      Is_Latest marks the current row per code.
+    columns:
+    - name: Main_Code_Text
+      quote: true
+      data_type: TEXT
+    - name: Main_Description
+      quote: true
+      data_type: TEXT
+    - name: Is_Latest
+      quote: true
+      data_type: NUMBER(38,0)
+    - name: Effective_From
+      quote: true
+      data_type: TIMESTAMP_NTZ
+- name: ukhfd_geo
+  database: '"UKHFD"'
+  schema: '"Old_LSOA_To_New_LSOA_To_LAD"'
+  description: ONS lookup bridging retired 2011 LSOAs to 2021 LSOAs and their LAD.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: old_lsoa_to_new_lsoa_map
+    identifier: '"dim_Map_SCD"'
+    description: One row per (old LSOA, new LSOA) pair per snapshot; Is_Latest marks
+      the current mapping.
+    columns:
+    - name: Old_LSOA_Code
+      quote: true
+    - name: New_LSOA_Code
+      quote: true
+    - name: LAD_Code
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_ods
+  database: '"UKHFD"'
+  schema: '"ODS"'
+  description: National ODS organisation reference dimensions.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: all_gp_and_gdp_practices
+    identifier: '"dim_All_GP_and_GDP_Practices_SCD"'
+    description: All GP and general dental practices nationally (epraccur-style SCD);
+      Is_Latest marks the current row per organisation.
+    columns:
+    - name: Organisation_Code
+      quote: true
+    - name: Organisation_Name
+      quote: true
+    - name: Postcode
+      quote: true
+    - name: Open_Date
+      quote: true
+    - name: Close_Date
+      quote: true
+    - name: Status_Code
+      quote: true
+    - name: Parent_Organisation_Code
+      quote: true
+    - name: Prescribing_Setting
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: closed_organisations
+    identifier: '"dim_Orgs_Closed_Since_1991_SCD"'
+    description: ODS closed organisation and site archive since 1991, including historical
+      revisions.
+    columns:
+    - name: Organisation_Code
+      quote: true
+    - name: Organisation_Name
+      quote: true
+    - name: National_Grouping_Code
+      quote: true
+    - name: High_Level_Health_Authority_Code
+      quote: true
+    - name: Address_Line_1
+      quote: true
+    - name: Address_Line_2
+      quote: true
+    - name: Address_Line_3
+      quote: true
+    - name: Address_Line_4
+      quote: true
+    - name: Address_Line_5
+      quote: true
+    - name: Postcode
+      quote: true
+    - name: Open_Date
+      quote: true
+    - name: Close_Date
+      quote: true
+    - name: Unused_Field_13
+      quote: true
+    - name: Organisation_Sub_Type_Code
+      quote: true
+    - name: Parent_Organisation_Code
+      quote: true
+    - name: Join_Parent_Date
+      quote: true
+    - name: Left_Parent_Date
+      quote: true
+    - name: Contact_Telephone_Number
+      quote: true
+    - name: Unused_Field_19
+      quote: true
+    - name: Unused_Field_20
+      quote: true
+    - name: Unused_Field_21
+      quote: true
+    - name: Amended_Record_Indicator
+      quote: true
+    - name: Wave_Number
+      quote: true
+    - name: Unused_Field_24
+      quote: true
+    - name: Unused_Field_25
+      quote: true
+    - name: Unused_Field_26
+      quote: true
+    - name: Unused_Field_27
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+    - name: Char_8_ASCII_Index
+      quote: true
+  - name: gp_practices_and_prescribing_ccs
+    identifier: '"dim_GP_Practices_And_Prescribing_CCs_SCD"'
+    description: ODS epraccur file of GP practices and prescribing cost centres in
+      England and Wales (SCD); Is_Latest marks the current row per organisation.
+    columns:
+    - name: Organisation_Code
+      quote: true
+    - name: Organisation_Name
+      quote: true
+    - name: National_Grouping_Code
+      quote: true
+    - name: High_Level_Health_Authority_Code
+      quote: true
+    - name: Address_Line_1
+      quote: true
+    - name: Address_Line_2
+      quote: true
+    - name: Address_Line_3
+      quote: true
+    - name: Address_Line_4
+      quote: true
+    - name: Address_Line_5
+      quote: true
+    - name: Postcode
+      quote: true
+    - name: Open_Date
+      quote: true
+    - name: Close_Date
+      quote: true
+    - name: Status_Code
+      quote: true
+    - name: Parent_Organisation_Code
+      quote: true
+    - name: Join_Parent_Date
+      quote: true
+    - name: Left_Parent_Date
+      quote: true
+    - name: Contact_Telephone_Number
+      quote: true
+    - name: Prescribing_Setting
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_ods_dse
+  database: '"UKHFD"'
+  schema: '"ODS_DSE"'
+  description: ODS Data Search and Export (DSE) files as daily snapshots.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: pcn_core_partner_details
+    identifier: '"dim_Epcn_CorePartnerDetails"'
+    description: ODS ePCN core partner details - practice to PCN relationships, one
+      row per relationship per daily snapshot.
+    columns:
+    - name: Partner_Organisation_Code
+      quote: true
+    - name: Partner_Name
+      quote: true
+    - name: Practice_Parent_Sub_ICB_Location_Code
+      quote: true
+    - name: PCN_Code
+      quote: true
+    - name: PCN_Name
+      quote: true
+    - name: PCN_Parent_Sub_ICB_Location_Code
+      quote: true
+    - name: Practice_to_PCN_Relationship_Start_Date
+      quote: true
+    - name: Practice_to_PCN_Relationship_End_Date
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: DataSourceFileForThisSnapshot_Version
+      quote: true
+- name: ukhfd_demography
+  database: '"UKHFD"'
+  schema: '"Demography"'
+  description: UKHFD Demography schema, including GP-registered patient counts and
+    the English Indices of Deprivation by LSOA.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: registered_patients_by_gp_practice
+    identifier: '"fact_No_Of_Patients_Regd_At_GP_Prac_Regions_5Yr_AgeBand"'
+    description: Registered patient counts by organisation (GP practice, PCN, ICB
+      and other geographies), sex and 5-year age band per monthly snapshot.
+    columns:
+    - name: Org_Type
+      quote: true
+    - name: Org_Code
+      quote: true
+    - name: ONS_Code
+      quote: true
+    - name: Sex
+      quote: true
+    - name: Age_Band
+      quote: true
+    - name: Number_Of_Patients
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: DataSourceFileForThisSnapshot_Version
+      quote: true
+    - name: Report_Period_Length
+      quote: true
+    - name: Unique_ID
+      quote: true
+    - name: AuditKey
+      quote: true
+  - name: domains_of_deprivation_by_lsoa
+    identifier: '"fact_Domains_Of_Deprivation_By_LSOA_V3"'
+    description: English Indices of Deprivation File 7 measures in long form, one
+      row per LSOA, measure and release snapshot.
+    columns:
+    - name: LSOA_Code
+      quote: true
+    - name: LSOA_Code_Year
+      quote: true
+    - name: Measure_Name
+      quote: true
+    - name: Measure_Value
+      quote: true
+    - name: Measure_Value_Str
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: DataSourceFileForThisSnapshot_Version
+      quote: true
+    - name: Report_Period_Length
+      quote: true
+    - name: Unique_ID
+      quote: true
+    - name: AuditKey
+      quote: true
+  - name: index_of_multiple_deprivation_by_lsoa
+    identifier: '"fact_Index_Of_Multiple_Deprivation_By_LSOA"'
+    description: Overall IMD score, rank and decile with the local authority supplied
+      with each release, one row per LSOA and release snapshot.
+    columns:
+    - name: LSOA_Code
+      quote: true
+    - name: IMD_Score
+      quote: true
+    - name: IMD_Rank
+      quote: true
+    - name: IMD_Decile
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: DataSourceFileForThisSnapshot_Version
+      quote: true
+    - name: Report_Period_Length
+      quote: true
+    - name: Unique_ID
+      quote: true
+    - name: AuditKey
+      quote: true
+    - name: LA_District_Code
+      quote: true
+    - name: LSOA_Code_2021
+      quote: true
+    - name: LAD_Code_2024
+      quote: true
+    - name: LSOA_Code_Year
+      quote: true
+  - name: registered_patients_by_gp_practice_lsoa_2021
+    identifier: '"fact_No_Of_Patients_Regd_At_GP_Practice_LSOA_2021_Level"'
+    description: Registered patient counts by GP Practice, sex and 2021 LSOA per monthly
+      snapshot
+    columns:
+    - name: GP_Practice_Code
+      quote: true
+    - name: LSOA_Code
+      quote: true
+    - name: Census_Year
+      quote: true
+    - name: Sex
+      quote: true
+    - name: Size
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: DataSourceFileForThisSnapshot_Version
+      quote: true
+    - name: Report_Period_Length
+      quote: true
+    - name: Unique_ID
+      quote: true
+    - name: AuditKey
+      quote: true
+- name: ukhfd_comm_allocations
+  database: '"UKHFD"'
+  schema: '"Comm_Allocations"'
+  description: UK Health Funding Dataset commissioning allocation inputs.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: weighted_regs_by_gp_practice_base
+    identifier: '"fact_Weighted_Regs_By_GP_Practice_Base"'
+    description: Practice-level need indices and weighted populations by allocation
+      base year.
+    columns:
+    - name: Title
+      quote: true
+    - name: GP_Practice_Code
+      quote: true
+    - name: Metric_Name
+      quote: true
+    - name: Metric_Value
+      quote: true
+    - name: Metric_Value_Str
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: DataSourceFileForThisSnapshot_Version
+      quote: true
+    - name: Report_Period_Length
+      quote: true
+    - name: Unique_ID
+      quote: true
+    - name: AuditKey
+      quote: true
+- name: ukhfd_pbr
+  database: '"UKHFD"'
+  schema: '"PbR_v2"'
+  description: NHS payment reference data collected by the UK Health Funding Dataset.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: market_forces_factor_values
+    identifier: '"dim_MFF_Values"'
+    description: Provider Market Forces Factor values from NHS tariff and payment
+      workbooks.
+    columns:
+    - name: Organisation_Code
+      quote: true
+    - name: Organisation_Name
+      quote: true
+    - name: MFF_Value
+      quote: true
+    - name: MFF_Value_Year_2
+      quote: true
+    - name: MFF_Value_Year_3
+      quote: true
+    - name: MFF_Value_Year_4
+      quote: true
+    - name: MFF_Value_Year_5
+      quote: true
+    - name: Notes
+      quote: true
+    - name: File_Name
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+- name: ukhfd_other
+  database: '"UKHFD"'
+  schema: '"Other"'
+  description: Shared reference data held in UKHFD.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_other
+  tables:
+  - name: ucum_units
+    identifier: '"dim_Unified_Code_For_Units_Of_Measure_SCD"'
+    description: UCUM expressions and their UKHFD definition history.
+    columns:
+    - name: Code
+      quote: true
+    - name: Descriptive_Name
+      quote: true
+    - name: Code_System
+      quote: true
+    - name: Definition
+      quote: true
+    - name: Date_Created
+      quote: true
+    - name: Synonym
+      quote: true
+    - name: Status
+      quote: true
+    - name: Kind_Of_Quantity
+      quote: true
+    - name: Date_Revised
+      quote: true
+    - name: ConceptID
+      quote: true
+    - name: Dimension
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: iso_language_codes
+    identifier: '"dim_ISO_Language_Codes_SCD"'
+    description: ISO 639 language codes and their UKHFD history.
+    columns:
+    - name: ISO_639_2_Code
+      quote: true
+    - name: ISO_639_1_Code
+      quote: true
+    - name: English_Name_Of_Language
+      quote: true
+    - name: French_Name_Of_Language
+      quote: true
+    - name: German_Name_Of_Language
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_ods_api
+  database: '"UKHFD"'
+  schema: '"ODS_API"'
+  description: Organisation Data Service API register and its UKHFD definition history.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: organisation
+    identifier: '"dim_Organisation_SCD"'
+    description: Full ODS organisation and site register, including historical definitions
+      and closed organisations.
+    columns:
+    - name: register_id
+      quote: true
+    - name: Name
+      quote: true
+    - name: OrgId_Root
+      quote: true
+    - name: OrgId_assigningAuthorityName
+      quote: true
+    - name: OrgId_extension
+      quote: true
+    - name: OrgRecordClass
+      quote: true
+    - name: Status
+      quote: true
+    - name: AddrLn1
+      quote: true
+    - name: AddrLn2
+      quote: true
+    - name: AddrLn3
+      quote: true
+    - name: Town
+      quote: true
+    - name: County
+      quote: true
+    - name: PostCode
+      quote: true
+    - name: Country
+      quote: true
+    - name: UPRN
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: LastChangeDate
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+    - name: Char_8_ASCII_Index
+      quote: true
+- name: ukhfd_read_codes
+  database: '"UKHFD"'
+  schema: '"Read_Codes"'
+  description: Historical national Read code terminology definitions.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: read_v2_terms
+    identifier: '"dim_KV2_SCD"'
+    description: Read v2 term definitions, including historical revisions
+    columns:
+    - name: Term_Key
+      quote: true
+    - name: Uniquifier
+      quote: true
+    - name: Term_30
+      quote: true
+    - name: Term_60
+      quote: true
+    - name: Term_198
+      quote: true
+    - name: Term_Code
+      quote: true
+    - name: Language_Code
+      quote: true
+    - name: Read_Code
+      quote: true
+    - name: Status_Flag
+      quote: true
+    - name: Source_File_Name
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: ctv3_terms
+    identifier: '"dim_CV3_Terms_SCD"'
+    description: CTV3 term identifiers and text, including historical revisions
+    columns:
+    - name: Term_ID
+      quote: true
+    - name: Term_Status
+      quote: true
+    - name: Term_30
+      quote: true
+    - name: Term_60
+      quote: true
+    - name: Term_198
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: ctv3_concepts
+    identifier: '"dim_CV3_Concept_SCD"'
+    description: CTV3 concept identifiers and status, including historical revisions
+    columns:
+    - name: Read_Code
+      quote: true
+    - name: Concept_Status
+      quote: true
+    - name: Linguistic_Role
+      quote: true
+    - name: Subject_Type
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_read_data_migration
+  database: '"UKHFD"'
+  schema: '"Read_Data_Migration"'
+  description: NHS Data Migration (TRUD) Read v2 / CTV3 maps and subsets; final release
+    2020.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: ctv3_to_cre_map
+    identifier: '"dim_CTV3_CRE_Map_SCD"'
+    description: CTV3 concept to CRE maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: CTV3_Concept_ID
+      quote: true
+    - name: CRE_ID
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: ctv3_to_read_v2_map
+    identifier: '"dim_CTV3_RCT_Map_SCD"'
+    description: CTV3 concept and term to Read v2 maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: CTV3_Concept_ID
+      quote: true
+    - name: CTV3_TermID
+      quote: true
+    - name: CTV3_Term_Type
+      quote: true
+    - name: V2_Concept_ID
+      quote: true
+    - name: V2_Term_ID
+      quote: true
+    - name: Map_Type
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: Is_Assured
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: ctv3_to_snomed_map
+    identifier: '"dim_CTV3_SCT_Map2_SCD"'
+    description: CTV3 concept and term to SNOMED CT maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: CTV3_Concept_ID
+      quote: true
+    - name: CTV3_TermID
+      quote: true
+    - name: CTV3_Term_Type
+      quote: true
+    - name: SCT_Concept_ID
+      quote: true
+    - name: SCT_Description_ID
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: Is_Assured
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: ctv3_codes_with_values_alt_maps
+    identifier: '"dim_Codes_With_Values_Alt_Maps_CTV3_SCD"'
+    description: Alternative observable SNOMED CT maps for CTV3 codes with values,
+      including historical revisions.
+    columns:
+    - name: CTV3ID
+      quote: true
+    - name: TermCode
+      quote: true
+    - name: Observable_ConceptID
+      quote: true
+    - name: Observable_DescriptionID
+      quote: true
+    - name: Use_Alternate
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_codes_with_values_alt_maps
+    identifier: '"dim_Codes_With_Values_Alt_Maps_READ2_SCD"'
+    description: Alternative observable SNOMED CT maps for Read v2 codes with values,
+      including historical revisions.
+    columns:
+    - name: READCODE
+      quote: true
+    - name: TermCode
+      quote: true
+    - name: Observable_ConceptID
+      quote: true
+    - name: Observable_DescriptionID
+      quote: true
+    - name: Use_Alternate
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: gp_subset_blacklist
+    identifier: '"dim_GP_Subset_Blacklist_SCD"'
+    description: GP subset blacklist entries and reasons, including historical revisions.
+    columns:
+    - name: SCUI
+      quote: true
+    - name: STUI
+      quote: true
+    - name: Map
+      quote: true
+    - name: Term
+      quote: true
+    - name: Reason
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_to_cre_map
+    identifier: '"dim_RCT_CRE_Map_SCD"'
+    description: Read v2 concept and term to CRE maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: V2_Concept_ID
+      quote: true
+    - name: V2_Term_ID
+      quote: true
+    - name: CRE_ID
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_to_ctv3_map
+    identifier: '"dim_RCT_CTV3_Map_SCD"'
+    description: Read v2 concept and term to CTV3 maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: V2_Concept_ID
+      quote: true
+    - name: V2_Term_ID
+      quote: true
+    - name: CTV3_Term_ID
+      quote: true
+    - name: CTV3_Term_Type
+      quote: true
+    - name: CTV3_Concept_ID
+      quote: true
+    - name: Use_CTV3_Term_ID
+      quote: true
+    - name: Stat
+      quote: true
+    - name: Map_Type
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: Is_assured
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_to_snomed_map_reviewed
+    identifier: '"dim_RCT_SCT_Map_Reviewed_SCD"'
+    description: Reviewed Read v2 to SNOMED CT map rankings, including historical
+      revisions.
+    columns:
+    - name: RC
+      quote: true
+    - name: TC
+      quote: true
+    - name: Rank
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_ctv3_map
+    identifier: '"dim_RC_Map_SCD"'
+    description: Read v2 to CTV3 concept maps, including historical revisions.
+    columns:
+    - name: Read_Code
+      quote: true
+    - name: Concept_ID
+      quote: true
+    - name: Map_ID
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_to_snomed_map
+    identifier: '"dim_RC_SCT_Map2_SCD"'
+    description: Read v2 code and term to SNOMED CT maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: Read_Code
+      quote: true
+    - name: Term_Code
+      quote: true
+    - name: Concept_ID
+      quote: true
+    - name: Description_ID
+      quote: true
+    - name: Is_Assured
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_to_snomed_map_enhanced
+    identifier: '"dim_RC_SCT_Map_Enhanced_SCD"'
+    description: Enhanced Read v2 to SNOMED CT maps with term identifiers, including
+      historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: Read_Code
+      quote: true
+    - name: Term_Code
+      quote: true
+    - name: Concept_ID
+      quote: true
+    - name: T30_ID
+      quote: true
+    - name: T60_ID
+      quote: true
+    - name: T198_ID
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_to_snomed_map_v1
+    identifier: '"dim_RC_SCT_Map_SCD"'
+    description: First-version Read v2 code and term to SNOMED CT concept maps, including
+      historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: Read_Code
+      quote: true
+    - name: Term_Code
+      quote: true
+    - name: Concept_ID
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: read_v2_term_to_snomed_map
+    identifier: '"dim_RC_Term_SCT_Map_SCD"'
+    description: Read v2 term text to SNOMED CT concept maps, including historical
+      revisions.
+    columns:
+    - name: Read_Code
+      quote: true
+    - name: Term
+      quote: true
+    - name: Concept_ID
+      quote: true
+    - name: Map_ID
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: primary_care_refset
+    identifier: '"dim_Ref_Set_Primary_Care_SCD"'
+    description: Primary care reference set members and linked components, including
+      historical revisions.
+    columns:
+    - name: ID
+      quote: true
+    - name: Effective_Time
+      quote: true
+    - name: Active
+      quote: true
+    - name: Module_ID
+      quote: true
+    - name: Ref_Set_ID
+      quote: true
+    - name: Referenced_Component_ID
+      quote: true
+    - name: Linked_Component_ID
+      quote: true
+    - name: Linked_String_1
+      quote: true
+    - name: Linked_String_2
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: snomed_to_cre_map
+    identifier: '"dim_SCT_CRE_Map_SCD"'
+    description: SNOMED CT concept to CRE maps, including historical revisions.
+    columns:
+    - name: Map_ID
+      quote: true
+    - name: SCT_Concept_ID
+      quote: true
+    - name: CRE_ID
+      quote: true
+    - name: Map_Status
+      quote: true
+    - name: Effective_Date
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: uk_legacy_navigation_subset_members
+    identifier: '"dim_Subset_Members_UK_Legacy_Navigation_SCD"'
+    description: UK legacy navigation subset members, including historical revisions.
+    columns:
+    - name: Subset_ID
+      quote: true
+    - name: Member_ID
+      quote: true
+    - name: Member_Status
+      quote: true
+    - name: Linked_ID
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: uk_legacy_navigation_subsets
+    identifier: '"dim_Subsets_UK_Legacy_Navigation_SCD"'
+    description: UK legacy navigation subset definitions, including historical revisions.
+    columns:
+    - name: Subset_ID
+      quote: true
+    - name: Subset_Original_ID
+      quote: true
+    - name: Subset_Version
+      quote: true
+    - name: Subset_Name
+      quote: true
+    - name: Subset_Type
+      quote: true
+    - name: Language_Code
+      quote: true
+    - name: Subset_Realm_ID
+      quote: true
+    - name: Context_ID
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_pss
+  database: '"UKHFD"'
+  schema: '"Prescribed_Specialised_Services"'
+  description: PSS reference tables including Service Line and National Programme
+    Code
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_pss
+  tables:
+  - name: summary_of_id_code_sets
+    identifier: '"dim_Summary_Of_ID_Code_Sets"'
+    description: null
+    columns:
+    - name: ADMIMETH_APC_Only
+      quote: true
+    - name: ATTENDED_NAC_Only
+      quote: true
+    - name: CLASSPAT_APC_Only
+      quote: true
+    - name: CSNum_Use_Of_Equal_Sign_Exclusion_APC_Only
+      quote: true
+    - name: Commissioned_By
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: File_Name
+      quote: true
+    - name: Flag_Number
+      quote: true
+    - name: ICD10_And_OPCS4_Combination_Required
+      quote: true
+    - name: ICD10_Qualifiers
+      quote: true
+    - name: ICD10_Triggering_Position
+      quote: true
+    - name: ICD10_Triggers_Count
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: MAINSPEF_Count
+      quote: true
+    - name: NPoC_Category
+      quote: true
+    - name: New_Service_Lines
+      quote: true
+    - name: No_Of_Identification_Rules
+      quote: true
+    - name: OPCS4_And_OPCS4_Combination_Required
+      quote: true
+    - name: OPCS4_Triggering_Position
+      quote: true
+    - name: OPCS4_Triggers_Count
+      quote: true
+    - name: OPCS_Qualifiers
+      quote: true
+    - name: PS_Flag
+      quote: true
+    - name: Prescribed_Service_Line
+      quote: true
+    - name: Provider_Eligibility_Count
+      quote: true
+    - name: Qualifying_Age
+      quote: true
+    - name: Qualifying_Age_Check
+      quote: true
+    - name: Qualifying_Gender
+      quote: true
+    - name: REFSOURC_NAC_Only
+      quote: true
+    - name: Service_Line_Hierarchy
+      quote: true
+    - name: Setting
+      quote: true
+    - name: Sub_Rule_Number
+      quote: true
+    - name: TRETSPEF_Count
+      quote: true
+    - name: Unique_Column
+      quote: true
+  - name: service_line_hierarchy
+    identifier: '"dim_Service_Line_Hierarchy"'
+    description: Service line hierarchy information.
+    columns:
+    - name: Service_Line
+      quote: true
+    - name: Service_Line_Description
+      quote: true
+    - name: Applicable_In_Setting_1
+      quote: true
+    - name: Applicable_In_Setting_2
+      quote: true
+    - name: APC_Episode_Spell_Hierarchies
+      quote: true
+    - name: APC_Percentage_Top_Up
+      quote: true
+    - name: NAC_Hierarchy
+      quote: true
+    - name: File_Name
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+- name: ukhfd_ecds_etos
+  database: '"UKHFD"'
+  schema: '"ECDS_TOS"'
+  description: Emergency Care Data Set Enhanced Technical Output Specification (ETOS)
+    releases held in UKHFD.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_ecds_etos
+  tables:
+  - name: code_sets
+    identifier: '"dim_Code_Sets"'
+    description: ECDS ETOS code set members, one row per release file, code set sheet
+      and SNOMED code.
+    columns:
+    - name: Sheet_Name
+      quote: true
+    - name: ECDS_UniqueID
+      quote: true
+    - name: Sort1
+      quote: true
+    - name: Sort2
+      quote: true
+    - name: Sort3
+      quote: true
+    - name: ECDS_Group1
+      quote: true
+    - name: ECDS_Group2
+      quote: true
+    - name: ECDS_Group3
+      quote: true
+    - name: ECDS_Description
+      quote: true
+    - name: ECDS_SearchTerms
+      quote: true
+    - name: SNOMED_Code
+      quote: true
+    - name: SNOMED_Description
+      quote: true
+    - name: SNOMED_TERM
+      quote: true
+    - name: Flag_Inj
+      quote: true
+    - name: Flag_AEC
+      quote: true
+    - name: Flag_Allergy
+      quote: true
+    - name: Flag_NotifiableDisease
+      quote: true
+    - name: Flag_Injury
+      quote: true
+    - name: Flag_Male
+      quote: true
+    - name: Flag_Female
+      quote: true
+    - name: Parent_Term
+      quote: true
+    - name: Maps_To_Self
+      quote: true
+    - name: ECDS_Notes
+      quote: true
+    - name: Notes
+      quote: true
+    - name: CDS10_Mapping_Diagnosis_Condition
+      quote: true
+    - name: CDS10_Mapping_Sub_Analysis_Code
+      quote: true
+    - name: CDS10_Mapping_Anatomical_Area
+      quote: true
+    - name: CDS_Code_Mapping_Used_For_HRG_Grouping
+      quote: true
+    - name: PbR_Category
+      quote: true
+    - name: CDS_Investigation_Mapping_That_Is_Used_For_HRG_Grouping
+      quote: true
+    - name: CDS_Treatment_Mapping_That_Is_Used_For_HRG_Grouping
+      quote: true
+    - name: ICD10_Mapping
+      quote: true
+    - name: Valid_From
+      quote: true
+    - name: Valid_To
+      quote: true
+    - name: Notes_For_Completing_The_Observation_Value_Field
+      quote: true
+    - name: Flag_SDEC
+      quote: true
+    - name: Core_List_Term
+      quote: true
+    - name: Core_List_Term_Description
+      quote: true
+    - name: Chief_Complaint_Core_List
+      quote: true
+    - name: Chief_Complaint_Max_List
+      quote: true
+    - name: SNOMED_UK_Preferred_Term
+      quote: true
+    - name: SNOMED_Fully_Specified_Name
+      quote: true
+    - name: Flag_ADS
+      quote: true
+    - name: Sort4
+      quote: true
+    - name: ICD10_Description
+      quote: true
+    - name: ICD11_Mapping
+      quote: true
+    - name: ICD11_Description
+      quote: true
+    - name: REFSET_UniqueID
+      quote: true
+    - name: Flag_Pain
+      quote: true
+    - name: ICD10_Code
+      quote: true
+    - name: Charlson
+      quote: true
+    - name: Elixhauser
+      quote: true
+    - name: File_Name
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+- name: ukhfd_pbr_hrg
+  database: '"UKHFD"'
+  schema: '"PbR"'
+  description: Healthcare Resource Group (HRG) reference data held in UKHFD.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_pbr
+  tables:
+  - name: all_hrgs
+    identifier: '"dim_All_HRGs_SCD"'
+    description: HRG codes and names across HRG4+ releases; Is_Latest marks the newest
+      row per code.
+    columns:
+    - name: HRG_Code
+      quote: true
+    - name: HRG_Name
+      quote: true
+    - name: Source_Table
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: hrg4_chapter
+    identifier: '"dim_HRG4_Chapter"'
+    description: HRG4 chapter labels by financial year, from HRG4+ grouper code-to-group
+      files.
+    columns:
+    - name: HRG4Chapter
+      quote: true
+    - name: HRG4ChapterDescription
+      quote: true
+    - name: File_Name
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: hrg4_subchapter
+    identifier: '"dim_HRG4_SubChapter"'
+    description: HRG4 subchapter labels by financial year, from HRG4+ grouper code-to-group
+      files.
+    columns:
+    - name: HRGChapter
+      quote: true
+    - name: HRG4SubChapter
+      quote: true
+    - name: HRG4SubChapterDescription
+      quote: true
+    - name: File_Name
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_ons_codes
+  database: '"UKHFD"'
+  schema: '"ONS_Codes"'
+  description: ONS Register of Geographic Codes reference data held in UKHFD.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_ons_codes
+  tables:
+  - name: equivalents
+    identifier: '"dim_Equivalents"'
+    description: ONS geography codes with names, equivalent codes, status and introduction
+      and termination dates.
+    columns:
+    - name: Geography_Code
+      quote: true
+    - name: Geography_Name
+      quote: true
+    - name: Geography_Name_Welsh
+      quote: true
+    - name: ONS_Geography_Code
+      quote: true
+    - name: ONS_Geography_Name
+      quote: true
+    - name: DCLG_Geography_Code
+      quote: true
+    - name: DCLG_Geography_Name
+      quote: true
+    - name: DH_Geography_Code
+      quote: true
+    - name: DH_Geography_Name
+      quote: true
+    - name: Scottish_Geography_Code
+      quote: true
+    - name: Scottish_Geography_Name
+      quote: true
+    - name: NI_Geography_Code
+      quote: true
+    - name: NI_Geography_Name
+      quote: true
+    - name: WG_Geography_Code
+      quote: true
+    - name: WG_Geography_Name
+      quote: true
+    - name: WG_Geography_Name_Welsh
+      quote: true
+    - name: Date_Of_Introduction
+      quote: true
+    - name: Date_Of_Termination
+      quote: true
+    - name: Entity_Code
+      quote: true
+    - name: Year
+      quote: true
+    - name: Status
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+- name: ukhfd_ordnance_survey
+  database: '"UKHFD"'
+  schema: '"Ordnance_Survey"'
+  description: ONS boundary datasets held in UKHFD. Geometry columns are not declared.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_ordnance_survey
+  tables:
+  - name: lsoa_2011
+    identifier: '"dim_LSOA_2011"'
+    description: One row per LSOA on 2011 boundaries with its ONS code and name.
+    columns:
+    - name: ID
+      quote: true
+    - name: LSOA11CD
+      quote: true
+    - name: LSOA11NM
+      quote: true
+  - name: lsoa_2021
+    identifier: '"dim_LSOA_DEC_2021_EW_BFE"'
+    description: One row per LSOA on December 2021 boundaries with its ONS code and
+      name.
+    columns:
+    - name: ID
+      quote: true
+    - name: LSOA21CD
+      quote: true
+    - name: LSOA21NM
+      quote: true
+    - name: GlobalID
+      quote: true
+- name: ukhfd_dsc_sc
+  database: '"UKHFD"'
+  schema: '"DSC_SC"'
+  description: NHS England specialised commissioning code lists used in contract monitoring
+    (SLAM) submissions, with UKHFD snapshot history.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd_dsc_sc
+  tables:
+  - name: commissioned_service_category
+    identifier: '"dim_Commissioned_Service_Cat_Code_Lookup_SCD"'
+    description: Commissioned Service Category Code values and their UKHFD snapshot
+      history.
+    columns:
+    - name: Commissioned_Service_Category_Code
+      quote: true
+    - name: Commissioned_Service_Category_Code_Description
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: service_code
+    identifier: '"dim_Service_Code_Lookup_SCD"'
+    description: NHS England specialised service codes from the service code workbook,
+      with UKHFD snapshot history.
+    columns:
+    - name: Service_Code
+      quote: true
+    - name: Service_Code_Description
+      quote: true
+    - name: Service_Code_Including_Description
+      quote: true
+    - name: Service_Category_Description
+      quote: true
+    - name: NPOC_Category_And_CRG
+      quote: true
+    - name: Highly_Specialised_Service
+      quote: true
+    - name: Identified_By_PS_Operational_Tool
+      quote: true
+    - name: Identified_By_PS_Operational_Tool_Year_Ending
+      quote: true
+    - name: Notes
+      quote: true
+    - name: Effective_From_Taken_From_Source_File
+      quote: true
+    - name: Effective_To_Taken_From_Source_File
+      quote: true
+    - name: Is_Current_Taken_From_Source_File
+      quote: true
+    - name: ICB_Delegation_Status
+      quote: true
+    - name: Grouping
+      quote: true
+    - name: Amended_Record_Indicator
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Effective_Snapshot_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+- name: ukhfd_dmd
+  database: '"UKHFD"'
+  schema: '"DMPlusD"'
+  description: NHS Dictionary of Medicines and Devices (dm+d), slowly changing national
+    product tables.
+  config:
+    meta:
+      domain: shared
+      raw_prefix: raw_ukhfd
+  tables:
+  - name: dmd_vmp
+    description: Generic medicinal products with strength and dose form, with UKHFD
+      snapshot history
+    identifier: '"dim_VMP_Virtual_Medicinal_Products_SCD"'
+    columns:
+    - name: VMPS_Id
+      quote: true
+    - name: VPID
+      quote: true
+    - name: VPIDDT
+      quote: true
+    - name: VPIDPREV
+      quote: true
+    - name: VTMID
+      quote: true
+    - name: INVALID
+      quote: true
+    - name: NM
+      quote: true
+    - name: ABBREVNM
+      quote: true
+    - name: BASISCD
+      quote: true
+    - name: NMDT
+      quote: true
+    - name: NMPREV
+      quote: true
+    - name: BASIS_PREVCD
+      quote: true
+    - name: NMCHANGECD
+      quote: true
+    - name: COMBPRODCD
+      quote: true
+    - name: PRES_STATCD
+      quote: true
+    - name: SUG_F
+      quote: true
+    - name: GLU_F
+      quote: true
+    - name: PRES_F
+      quote: true
+    - name: CFC_F
+      quote: true
+    - name: NON_AVAILCD
+      quote: true
+    - name: NON_AVAILDT
+      quote: true
+    - name: DF_INDCD
+      quote: true
+    - name: UDFS
+      quote: true
+    - name: UDFS_UOMCD
+      quote: true
+    - name: UNIT_DOSE_UOMCD
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: dmd_amp
+    description: Branded or supplier-specific medicinal products, with UKHFD snapshot
+      history
+    identifier: '"dim_AMP_Actual_Medicinal_Products_SCD"'
+    columns:
+    - name: AMPS_Id
+      quote: true
+    - name: APID
+      quote: true
+    - name: INVALID
+      quote: true
+    - name: VPID
+      quote: true
+    - name: NM
+      quote: true
+    - name: ABBREVNM
+      quote: true
+    - name: DESC
+      quote: true
+    - name: NMDT
+      quote: true
+    - name: NM_PREV
+      quote: true
+    - name: SUPPCD
+      quote: true
+    - name: LIC_AUTHCD
+      quote: true
+    - name: LIC_AUTH_PREVCD
+      quote: true
+    - name: LIC_AUTHCHANGECD
+      quote: true
+    - name: LIC_AUTHCHANGEDT
+      quote: true
+    - name: COMBPRODCD
+      quote: true
+    - name: FLAVOURCD
+      quote: true
+    - name: CSM
+      quote: true
+    - name: PARALLEL_IMPORT
+      quote: true
+    - name: AVAIL_RESTRICTCD
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: dmd_vmp_drug_form
+    description: Dose-form assignments for virtual medicinal products, with UKHFD
+      snapshot history
+    identifier: '"dim_VMP_Drug_Form_SCD"'
+    columns:
+    - name: VPID
+      quote: true
+    - name: FORMCD
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: dmd_lookup_form
+    description: dm+d dose-form lookup codes and descriptions, with UKHFD snapshot
+      history
+    identifier: '"dim_Lookup_Form_SCD"'
+    columns:
+    - name: CD
+      quote: true
+    - name: CDDT
+      quote: true
+    - name: CDPREV
+      quote: true
+    - name: DESC
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: dmd_vmp_ingredient
+    description: Active ingredient substances and strengths for virtual products,
+      with UKHFD snapshot history
+    identifier: '"dim_VMP_Virtual_Product_Ingredient_SCD"'
+    columns:
+    - name: VPID
+      quote: true
+    - name: ISID
+      quote: true
+    - name: BASIS_STRNTCD
+      quote: true
+    - name: BS_SUBID
+      quote: true
+    - name: STRNT_NMRTR_VAL
+      quote: true
+    - name: STRNT_NMRTR_UOMCD
+      quote: true
+    - name: STRNT_DNMTR_VAL
+      quote: true
+    - name: STRNT_DNMTR_UOMCD
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
+  - name: dmd_vtm
+    description: Virtual therapeutic moieties independent of strength and form, with
+      UKHFD snapshot history
+    identifier: '"dim_VTM_Virtual_Therapeutic_Moiety_SCD"'
+    columns:
+    - name: VTMID
+      quote: true
+    - name: INVALID
+      quote: true
+    - name: NM
+      quote: true
+    - name: ABBREVNM
+      quote: true
+    - name: VTMIDPREV
+      quote: true
+    - name: VTMIDDT
+      quote: true
+    - name: Unique_Column
+      quote: true
+    - name: In_Source_Data
+      quote: true
+    - name: Import_Date
+      quote: true
+    - name: Created_Date
+      quote: true
+    - name: Is_Latest
+      quote: true
+    - name: Effective_From
+      quote: true
+    - name: Effective_To
+      quote: true
