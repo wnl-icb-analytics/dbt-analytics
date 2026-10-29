@@ -1,7 +1,7 @@
 
 models:
   - name: cltcs_cohort_data
-    description: "Expanded cohort-level dataset for C-LTCS. One row per eligible patient with trajectories, practice and demographic fields, condition flags, risk factors, activity, waiting list metrics, polypharmacy and scores."
+    description: "Expanded cohort-level dataset for C-LTCS. One row per eligible patient with trajectories, practice and demographic fields, condition flags, risk factors, activity, waiting list metrics, polypharmacy, care pathway gaps (per domain, group and item, from cltcs_gap_summary) and scores."
     config:
       meta:
         owner:
@@ -339,6 +339,14 @@ models:
         data_type: number
         description: "Alcohol risk sort key used in scoring"
 
+      - name: is_housebound
+        data_type: boolean
+        description: "Housebound status from dim_person_status_summary (false when not recorded)"
+
+      - name: has_substance_misuse
+        data_type: boolean
+        description: "Latest illicit drug use record shows a misuse pattern (int_illicit_drug_use_latest; false when no record or 'Does not misuse drugs')"
+
       - name: is_currently_pregnant
         data_type: boolean
         description: "Flag indicating current pregnancy status"
@@ -382,6 +390,10 @@ models:
       - name: care_processes_completed
         data_type: number
         description: "Count of completed diabetes care processes"
+
+      - name: care_processes_9_completed
+        data_type: number
+        description: "Count of the 9 diabetes care processes (the 8 standard processes plus retinal screening) completed in the last 12 months, from fct_person_diabetes_9_care_processes. 0 when the patient is not on the diabetes register"
 
       - name: latest_hba1c_value
         data_type: number
@@ -510,3 +522,847 @@ models:
       - name: score_frailty_adults_with_complexity
         data_type: number
         description: "Frailty sub‑score for the Adults with Complexity route from cltcs_scores. 0 when the patient was not scored in this route."
+      - name: disease_control_groups_with_gap
+        data_type: number
+        description: >
+          Number of groups in the disease control (result out of target or uncontrolled
+          respiratory disease) domain with at least one gap item. Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: disease_control_groups_assessed
+        data_type: number
+        description: >
+          Number of groups in the disease control (result out of target or uncontrolled
+          respiratory disease) domain with at least one assessable item; 0 separates
+          nothing assessable from assessed with no gaps. Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: disease_control_items_with_gap
+        data_type: number
+        description: >
+          Number of assessable items in the disease control (result out of target or
+          uncontrolled respiratory disease) domain that are gaps. Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: disease_control_items_assessed
+        data_type: number
+        description: >
+          Number of assessable items in the disease control (result out of target or
+          uncontrolled respiratory disease) domain. Null for patients outside the C-LTCS
+          adult population cohorts.
+      - name: has_gap_disease_control_diabetes
+        data_type: boolean
+        description: >
+          True when any assessable item in the diabetes group of the disease_control
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_disease_control_blood_pressure
+        data_type: boolean
+        description: >
+          True when any assessable item in the blood_pressure group of the
+          disease_control domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_disease_control_lipids
+        data_type: boolean
+        description: >
+          True when any assessable item in the lipids group of the disease_control
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_disease_control_lithium
+        data_type: boolean
+        description: >
+          True when any assessable item in the lithium group of the disease_control
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_disease_control_respiratory
+        data_type: boolean
+        description: >
+          True when any assessable item in the respiratory group of the disease_control
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: monitoring_groups_with_gap
+        data_type: number
+        description: >
+          Number of groups in the monitoring (test, review or care process not done,
+          including a missing disease control result) domain with at least one gap item.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: monitoring_groups_assessed
+        data_type: number
+        description: >
+          Number of groups in the monitoring (test, review or care process not done,
+          including a missing disease control result) domain with at least one
+          assessable item; 0 separates nothing assessable from assessed with no gaps.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: monitoring_items_with_gap
+        data_type: number
+        description: >
+          Number of assessable items in the monitoring (test, review or care process not
+          done, including a missing disease control result) domain that are gaps. Null
+          for patients outside the C-LTCS adult population cohorts.
+      - name: monitoring_items_assessed
+        data_type: number
+        description: >
+          Number of assessable items in the monitoring (test, review or care process not
+          done, including a missing disease control result) domain. Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_diabetes
+        data_type: boolean
+        description: >
+          True when any assessable item in the diabetes group of the monitoring_gaps
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_blood_pressure
+        data_type: boolean
+        description: >
+          True when any assessable item in the blood_pressure group of the
+          monitoring_gaps domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_lipids
+        data_type: boolean
+        description: >
+          True when any assessable item in the lipids group of the monitoring_gaps
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_lithium
+        data_type: boolean
+        description: >
+          True when any assessable item in the lithium group of the monitoring_gaps
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_ckd
+        data_type: boolean
+        description: >
+          True when any assessable item in the ckd group of the monitoring_gaps domain
+          is a gap, false when all are achieved, null when none is assessable. Null for
+          patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_hypothyroidism
+        data_type: boolean
+        description: >
+          True when any assessable item in the hypothyroidism group of the
+          monitoring_gaps domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_atrial_fibrillation
+        data_type: boolean
+        description: >
+          True when any assessable item in the atrial_fibrillation group of the
+          monitoring_gaps domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_copd
+        data_type: boolean
+        description: >
+          True when any assessable item in the copd group of the monitoring_gaps domain
+          is a gap, false when all are achieved, null when none is assessable. Null for
+          patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_heart_failure
+        data_type: boolean
+        description: >
+          True when any assessable item in the heart_failure group of the
+          monitoring_gaps domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_asthma
+        data_type: boolean
+        description: >
+          True when any assessable item in the asthma group of the monitoring_gaps
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_dementia
+        data_type: boolean
+        description: >
+          True when any assessable item in the dementia group of the monitoring_gaps
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_smi
+        data_type: boolean
+        description: >
+          True when any assessable item in the smi group of the monitoring_gaps domain
+          is a gap, false when all are achieved, null when none is assessable. Null for
+          patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_learning_disability
+        data_type: boolean
+        description: >
+          True when any assessable item in the learning_disability group of the
+          monitoring_gaps domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_rheumatoid_arthritis
+        data_type: boolean
+        description: >
+          True when any assessable item in the rheumatoid_arthritis group of the
+          monitoring_gaps domain is a gap, false when all are achieved, null when none
+          is assessable. Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_monitoring_cancer
+        data_type: boolean
+        description: >
+          True when any assessable item in the cancer group of the monitoring_gaps
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: treatment_optimisation_groups_with_gap
+        data_type: number
+        description: >
+          Number of groups in the treatment optimisation (indicated treatment or
+          intervention not given, or a prescribing safety gap) domain with at least one
+          gap item. Null for patients outside the C-LTCS adult population cohorts.
+      - name: treatment_optimisation_groups_assessed
+        data_type: number
+        description: >
+          Number of groups in the treatment optimisation (indicated treatment or
+          intervention not given, or a prescribing safety gap) domain with at least one
+          assessable item; 0 separates nothing assessable from assessed with no gaps.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: treatment_optimisation_items_with_gap
+        data_type: number
+        description: >
+          Number of assessable items in the treatment optimisation (indicated treatment
+          or intervention not given, or a prescribing safety gap) domain that are gaps.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: treatment_optimisation_items_assessed
+        data_type: number
+        description: >
+          Number of assessable items in the treatment optimisation (indicated treatment
+          or intervention not given, or a prescribing safety gap) domain. Null for
+          patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_treatment_optimisation_atrial_fibrillation
+        data_type: boolean
+        description: >
+          True when any assessable item in the atrial_fibrillation group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_cvd
+        data_type: boolean
+        description: >
+          True when any assessable item in the cvd group of the treatment_optimisation
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_treatment_optimisation_cvd_prevention
+        data_type: boolean
+        description: >
+          True when any assessable item in the cvd_prevention group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_ckd
+        data_type: boolean
+        description: >
+          True when any assessable item in the ckd group of the treatment_optimisation
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_treatment_optimisation_diabetes
+        data_type: boolean
+        description: >
+          True when any assessable item in the diabetes group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_heart_failure
+        data_type: boolean
+        description: >
+          True when any assessable item in the heart_failure group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_bone_health
+        data_type: boolean
+        description: >
+          True when any assessable item in the bone_health group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_copd
+        data_type: boolean
+        description: >
+          True when any assessable item in the copd group of the treatment_optimisation
+          domain is a gap, false when all are achieved, null when none is assessable.
+          Null for patients outside the C-LTCS adult population cohorts.
+      - name: has_gap_treatment_optimisation_asthma
+        data_type: boolean
+        description: >
+          True when any assessable item in the asthma group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_smoking
+        data_type: boolean
+        description: >
+          True when any assessable item in the smoking group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_alcohol
+        data_type: boolean
+        description: >
+          True when any assessable item in the alcohol group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_weight
+        data_type: boolean
+        description: >
+          True when any assessable item in the weight group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_medication_review
+        data_type: boolean
+        description: >
+          True when any assessable item in the medication_review group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: has_gap_treatment_optimisation_nsaid_safety
+        data_type: boolean
+        description: >
+          True when any assessable item in the nsaid_safety group of the
+          treatment_optimisation domain is a gap, false when all are achieved, null when
+          none is assessable. Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind179
+        data_type: boolean
+        description: >
+          IND179: Diabetes HbA1c at or below 58 mmol/mol without moderate or severe
+          frailty (NICE IND179). Domain and group: disease_control, diabetes; a result
+          not recorded in the period counts under monitoring. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind180
+        data_type: boolean
+        description: >
+          IND180: Diabetes HbA1c at or below 75 mmol/mol with moderate or severe frailty
+          (NICE IND180). Domain and group: disease_control, diabetes; a result not
+          recorded in the period counts under monitoring. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind239
+        data_type: boolean
+        description: >
+          IND239: Blood pressure below the NICE target in hypertension, aged 79 or under
+          (NICE IND239). Domain and group: disease_control, blood_pressure; a result not
+          recorded in the period counts under monitoring. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind240
+        data_type: boolean
+        description: >
+          IND240: Blood pressure below the NICE target in hypertension, aged 80 or over
+          (NICE IND240). Domain and group: disease_control, blood_pressure; a result not
+          recorded in the period counts under monitoring. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind241
+        data_type: boolean
+        description: >
+          IND241: Blood pressure below the NICE target in coronary heart disease, aged
+          79 or under (NICE IND241). Domain and group: disease_control, blood_pressure;
+          a result not recorded in the period counts under monitoring. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind242
+        data_type: boolean
+        description: >
+          IND242: Blood pressure below the NICE target in coronary heart disease, aged
+          80 or over (NICE IND242). Domain and group: disease_control, blood_pressure; a
+          result not recorded in the period counts under monitoring. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind243
+        data_type: boolean
+        description: >
+          IND243: Blood pressure below the NICE target in stroke or TIA, aged 79 or
+          under (NICE IND243). Domain and group: disease_control, blood_pressure; a
+          result not recorded in the period counts under monitoring. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind244
+        data_type: boolean
+        description: >
+          IND244: Blood pressure below the NICE target in stroke or TIA, aged 80 or over
+          (NICE IND244). Domain and group: disease_control, blood_pressure; a result not
+          recorded in the period counts under monitoring. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind245
+        data_type: boolean
+        description: >
+          IND245: Blood pressure below the NICE target in peripheral arterial disease,
+          aged 79 or under (NICE IND245). Domain and group: disease_control,
+          blood_pressure; a result not recorded in the period counts under monitoring.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind246
+        data_type: boolean
+        description: >
+          IND246: Blood pressure below the NICE target in peripheral arterial disease,
+          aged 80 or over (NICE IND246). Domain and group: disease_control,
+          blood_pressure; a result not recorded in the period counts under monitoring.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind235
+        data_type: boolean
+        description: >
+          IND235: Blood pressure control in kidney disease with ACR below 70 mg/mmol
+          (NICE IND235). Domain and group: disease_control, blood_pressure; a result not
+          recorded in the period counts under monitoring. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind264
+        data_type: boolean
+        description: >
+          IND264: Blood pressure control in kidney disease with ACR at least 70 mg/mmol
+          (NICE IND264). Domain and group: disease_control, blood_pressure; a result not
+          recorded in the period counts under monitoring. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind249
+        data_type: boolean
+        description: >
+          IND249: Blood pressure control in diabetes (NICE IND249). Domain and group:
+          disease_control, blood_pressure; a result not recorded in the period counts
+          under monitoring. True when a gap, false when achieved, null when not
+          assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind278
+        data_type: boolean
+        description: >
+          IND278: Latest LDL at most 2.0 mmol/L or non-HDL at most 2.6 mmol/L for
+          secondary prevention (NICE IND278). Domain and group: disease_control, lipids;
+          a result not recorded in the period counts under monitoring. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind87
+        data_type: boolean
+        description: >
+          IND87: Serum lithium within the therapeutic range (NICE IND87). Domain and
+          group: disease_control, lithium; a result not recorded in the period counts
+          under monitoring. True when a gap, false when achieved, null when not
+          assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind144
+        data_type: boolean
+        description: >
+          IND144: Urine albumin testing in kidney disease (NICE IND144). Domain and
+          group: monitoring_gaps, ckd. True when a gap, false when achieved, null when
+          not assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind139
+        data_type: boolean
+        description: >
+          IND139: Thyroid function testing in hypothyroidism (NICE IND139). Domain and
+          group: monitoring_gaps, hypothyroidism. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind86
+        data_type: boolean
+        description: >
+          IND86: Kidney and thyroid monitoring during lithium therapy (NICE IND86).
+          Domain and group: monitoring_gaps, lithium. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind169
+        data_type: boolean
+        description: >
+          IND169: Anticoagulant review in atrial fibrillation in the last 12 months
+          (NICE IND169). Domain and group: monitoring_gaps, atrial_fibrillation. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind191
+        data_type: boolean
+        description: >
+          IND191: COPD review with breathlessness and exacerbation records (NICE
+          IND191). Domain and group: monitoring_gaps, copd. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind195
+        data_type: boolean
+        description: >
+          IND195: Heart failure review with function and medicines assessments (NICE
+          IND195). Domain and group: monitoring_gaps, heart_failure. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind273
+        data_type: boolean
+        description: >
+          IND273: Asthma review with an action plan and exacerbation count (NICE
+          IND273). Domain and group: monitoring_gaps, asthma. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind315
+        data_type: boolean
+        description: >
+          IND315: Annual review for people with higher-risk asthma (NICE IND315). Domain
+          and group: monitoring_gaps, asthma. True when a gap, false when achieved, null
+          when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind142
+        data_type: boolean
+        description: >
+          IND142: Care planning or care plan review in dementia (NICE IND142). Domain
+          and group: monitoring_gaps, dementia. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind143
+        data_type: boolean
+        description: >
+          IND143: Care planning in severe mental illness (NICE IND143). Domain and
+          group: monitoring_gaps, smi. True when a gap, false when achieved, null when
+          not assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind248
+        data_type: boolean
+        description: >
+          IND248: Six physical health checks in severe mental illness (NICE IND248).
+          Domain and group: monitoring_gaps, smi. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind265
+        data_type: boolean
+        description: >
+          IND265: Learning disability health check and action plan (NICE IND265). Domain
+          and group: monitoring_gaps, learning_disability. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind110
+        data_type: boolean
+        description: >
+          IND110: Annual review in rheumatoid arthritis (NICE IND110). Domain and group:
+          monitoring_gaps, rheumatoid_arthritis. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind223
+        data_type: boolean
+        description: >
+          IND223: Cancer care review within twelve months of diagnosis (NICE IND223).
+          Domain and group: monitoring_gaps, cancer. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind128
+        data_type: boolean
+        description: >
+          IND128: Anticoagulant treatment in atrial fibrillation in the last 6 months
+          (NICE IND128). Domain and group: treatment_optimisation, atrial_fibrillation.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind247
+        data_type: boolean
+        description: >
+          IND247: DOAC or vitamin K antagonist treatment in atrial fibrillation in the
+          last 6 months (NICE IND247). Domain and group: treatment_optimisation,
+          atrial_fibrillation. True when a gap, false when achieved, null when not
+          assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind132
+        data_type: boolean
+        description: >
+          IND132: Antiplatelet or anticoagulant treatment for coronary heart disease in
+          the last 12 months (NICE IND132). Domain and group: treatment_optimisation,
+          cvd. True when a gap, false when achieved, null when not assessable (not in
+          the denominator or eligible group, or a NOT_ASSESSABLE result). Null for
+          patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind133
+        data_type: boolean
+        description: >
+          IND133: Antiplatelet or anticoagulant treatment for non-haemorrhagic stroke or
+          TIA in 12 months (NICE IND133). Domain and group: treatment_optimisation, cvd.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind94
+        data_type: boolean
+        description: >
+          IND94: Antiplatelet treatment in peripheral arterial disease in the last 15
+          months (NICE IND94). Domain and group: treatment_optimisation, cvd. True when
+          a gap, false when achieved, null when not assessable (not in the denominator
+          or eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind125
+        data_type: boolean
+        description: >
+          IND125: Medicines after myocardial infarction in the current financial year
+          (NICE IND125). Domain and group: treatment_optimisation, cvd. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind126
+        data_type: boolean
+        description: >
+          IND126: Medicines after myocardial infarction more than 12 months ago (NICE
+          IND126). Domain and group: treatment_optimisation, cvd. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind230
+        data_type: boolean
+        description: >
+          IND230: Lipid-lowering treatment in the last 6 months for secondary prevention
+          (NICE IND230). Domain and group: treatment_optimisation, cvd. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind229
+        data_type: boolean
+        description: >
+          IND229: Lipid-lowering treatment in the last 6 months for primary prevention
+          (NICE IND229). Domain and group: treatment_optimisation, cvd_prevention. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind130
+        data_type: boolean
+        description: >
+          IND130: ACE inhibitor or ARB treatment in kidney disease (NICE IND130). Domain
+          and group: treatment_optimisation, ckd. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind263
+        data_type: boolean
+        description: >
+          IND263: ACE inhibitor or ARB treatment in kidney disease with ACR at least 70
+          mg/mmol, without diabetes (NICE IND263). Domain and group:
+          treatment_optimisation, ckd. True when a gap, false when achieved, null when
+          not assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind324
+        data_type: boolean
+        description: >
+          IND324: SGLT2 inhibitor treatment in kidney disease (NICE IND324). Domain and
+          group: treatment_optimisation, ckd. True when a gap, false when achieved, null
+          when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind231
+        data_type: boolean
+        description: >
+          IND231: Lipid-lowering treatment in the last 6 months for chronic kidney
+          disease (NICE IND231). Domain and group: treatment_optimisation, ckd. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind134
+        data_type: boolean
+        description: >
+          IND134: ACE inhibitor or ARB treatment in diabetes (NICE IND134). Domain and
+          group: treatment_optimisation, diabetes. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_ind275
+        data_type: boolean
+        description: >
+          IND275: Lipid-lowering treatment in the last 6 months for diabetes aged 40 or
+          over (NICE IND275). Domain and group: treatment_optimisation, diabetes. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind317
+        data_type: boolean
+        description: >
+          IND317: Four classes of heart failure medicines (NICE IND317). Domain and
+          group: treatment_optimisation, heart_failure. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind91
+        data_type: boolean
+        description: >
+          IND91: Bone-sparing treatment in osteoporosis, aged 50 to 74 (NICE IND91).
+          Domain and group: treatment_optimisation, bone_health. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind92
+        data_type: boolean
+        description: >
+          IND92: Bone-sparing treatment after fracture, aged 75 or over (NICE IND92).
+          Domain and group: treatment_optimisation, bone_health. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind101
+        data_type: boolean
+        description: >
+          IND101: Pulmonary rehabilitation offered to people with COPD (NICE IND101).
+          Domain and group: treatment_optimisation, copd. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind316
+        data_type: boolean
+        description: >
+          IND316: Maintenance and reliever therapy in higher-risk asthma (NICE IND316).
+          Domain and group: treatment_optimisation, asthma. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind155
+        data_type: boolean
+        description: >
+          IND155: Stop-smoking support in severe mental illness (NICE IND155). Domain
+          and group: treatment_optimisation, smoking. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_ind157
+        data_type: boolean
+        description: >
+          IND157: Stop-smoking support for current smokers with the listed long-term
+          conditions (NICE IND157). Domain and group: treatment_optimisation, smoking.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind200
+        data_type: boolean
+        description: >
+          IND200: Brief alcohol intervention for people with severe mental illness (NICE
+          IND200). Domain and group: treatment_optimisation, alcohol. True when a gap,
+          false when achieved, null when not assessable (not in the denominator or
+          eligible group, or a NOT_ASSESSABLE result). Null for patients outside the
+          C-LTCS adult population cohorts.
+      - name: is_gap_ind202
+        data_type: boolean
+        description: >
+          IND202: Brief alcohol intervention for people with a listed long-term
+          condition (NICE IND202). Domain and group: treatment_optimisation, alcohol.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind220
+        data_type: boolean
+        description: >
+          IND220: Weight management referral, offer or declined referral for adults with
+          obesity (NICE IND220). Domain and group: treatment_optimisation, weight. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind221
+        data_type: boolean
+        description: >
+          IND221: Weight management referral for adults with obesity and hypertension or
+          diabetes (NICE IND221). Domain and group: treatment_optimisation, weight. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind207
+        data_type: boolean
+        description: >
+          IND207: Structured medication review with frailty or multimorbidity (NICE
+          IND207). Domain and group: treatment_optimisation, medication_review. True
+          when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_ind232
+        data_type: boolean
+        description: >
+          IND232: eGFR testing with long-term oral NSAID use (NICE IND232). Domain and
+          group: treatment_optimisation, nsaid_safety. True when a gap, false when
+          achieved, null when not assessable (not in the denominator or eligible group,
+          or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_egfr_overdue
+        data_type: boolean
+        description: >
+          EGFR_OVERDUE: eGFR below 60 overdue for its interval: 12 months at 45-59, 6
+          months at 30-44, 3 months below 30. Domain and group: monitoring_gaps, ckd.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_dm_cp_cholesterol
+        data_type: boolean
+        description: >
+          DM_CP_CHOLESTEROL: Diabetes care process: cholesterol in 12 months. Domain and
+          group: monitoring_gaps, diabetes. True when a gap, false when achieved, null
+          when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_dm_cp_creatinine
+        data_type: boolean
+        description: >
+          DM_CP_CREATININE: Diabetes care process: serum creatinine in 12 months. Domain
+          and group: monitoring_gaps, diabetes. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_dm_cp_acr
+        data_type: boolean
+        description: >
+          DM_CP_ACR: Diabetes care process: urine albumin to creatinine ratio in 12
+          months. Domain and group: monitoring_gaps, diabetes. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_dm_cp_foot_check
+        data_type: boolean
+        description: >
+          DM_CP_FOOT_CHECK: Diabetes care process: foot check in 12 months. Domain and
+          group: monitoring_gaps, diabetes. True when a gap, false when achieved, null
+          when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_dm_cp_bmi
+        data_type: boolean
+        description: >
+          DM_CP_BMI: Diabetes care process: BMI in 12 months. Domain and group:
+          monitoring_gaps, diabetes. True when a gap, false when achieved, null when not
+          assessable (not in the denominator or eligible group, or a NOT_ASSESSABLE
+          result). Null for patients outside the C-LTCS adult population cohorts.
+      - name: is_gap_dm_cp_smoking
+        data_type: boolean
+        description: >
+          DM_CP_SMOKING: Diabetes care process: smoking status in 12 months. Domain and
+          group: monitoring_gaps, diabetes. True when a gap, false when achieved, null
+          when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_dm_cp_retinal_screening
+        data_type: boolean
+        description: >
+          DM_CP_RETINAL_SCREENING: Diabetes care process: retinal screening in 12
+          months. Domain and group: monitoring_gaps, diabetes. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.
+      - name: is_gap_hba1c_above_90
+        data_type: boolean
+        description: >
+          HBA1C_ABOVE_90: Diabetes: latest HbA1c in 12 months above 90 mmol/mol. Domain
+          and group: disease_control, diabetes. True when a gap, false when achieved,
+          null when not assessable (not in the denominator or eligible group, or a
+          NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult population
+          cohorts.
+      - name: is_gap_copd_exacerbations
+        data_type: boolean
+        description: >
+          COPD_EXACERBATIONS: COPD: 2 or more glucocorticoid order days with a same-day
+          antibacterial in 12 months. Domain and group: disease_control, respiratory.
+          True when a gap, false when achieved, null when not assessable (not in the
+          denominator or eligible group, or a NOT_ASSESSABLE result). Null for patients
+          outside the C-LTCS adult population cohorts.
+      - name: is_gap_asthma_steroid_courses
+        data_type: boolean
+        description: >
+          ASTHMA_STEROID_COURSES: Asthma: 2 or more glucocorticoid order days in 12
+          months. Domain and group: disease_control, respiratory. True when a gap, false
+          when achieved, null when not assessable (not in the denominator or eligible
+          group, or a NOT_ASSESSABLE result). Null for patients outside the C-LTCS adult
+          population cohorts.

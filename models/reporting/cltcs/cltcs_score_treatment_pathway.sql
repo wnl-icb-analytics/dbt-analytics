@@ -14,10 +14,8 @@
 -- Non-negative count domains are log-transformed before scaling to reduce the skew of
 -- mostly-zero counts. Complexity is a weighted mix and illness_uec is already a log
 -- difference (it can be negative), so both are scaled as they are.
--- Weight on gap depth in the disease control, monitoring and optimisation domains: a group
--- with a gap scores 1 + this weight x the share of its items that are gaps. Keep below 1 so
--- breadth across conditions outranks depth within one.
-{% set gap_depth_weight = 0.5 %}
+-- The disease control, monitoring and optimisation gap scores (including the gap depth
+-- weight) come from cltcs_gap_summary.
 {% set log_domains =['disease_control', 'monitoring_gaps', 'treatment_optimisation', 'barriers', 'ltc_lcs_engagement'] %}
 -- Points per composite z unit when mapping to 0-100. 15 covers about +/-3.3 z before the
 -- score is capped at 0 or 100.
@@ -48,34 +46,6 @@ inclusion_list as (
     where meets_adults_with_complexity
 ),
 
--- each group with a gap among its assessable items (cltcs_gap_items) adds 1 for breadth,
--- plus gap_depth_weight x the share of its items that are gaps for depth. With the weight
--- below 1 a group adds less than 2, so gaps across more conditions always outrank more gaps
--- within one condition (multimorbidity dominates), and a condition with many indicators
--- cannot outweigh one with few.
-group_gaps as (
-    select person_id
-        , score_domain
-        , score_group
-        , max(iff(is_gap, 1, 0)) as has_gap
-        , avg(iff(is_gap, 1, 0)) as gap_share
-        , max(iff(is_gap, 1, 0)) + {{ gap_depth_weight }} * avg(iff(is_gap, 1, 0)) as group_gap_score
-    from {{ ref('cltcs_gap_items') }}
-    group by person_id, score_domain, score_group
-),
-
-care_pathway_scores as (
-    select person_id
-        , sum(iff(score_domain = 'disease_control', group_gap_score, 0)) as disease_control_gaps
-        , sum(iff(score_domain = 'monitoring_gaps', group_gap_score, 0)) as monitoring_gaps
-        , sum(iff(score_domain = 'treatment_optimisation', group_gap_score, 0)) as treatment_optimisation_gaps
-        , count_if(score_domain = 'disease_control') as disease_control_groups_assessed
-        , count_if(score_domain = 'monitoring_gaps') as monitoring_groups_assessed
-        , count_if(score_domain = 'treatment_optimisation') as treatment_optimisation_groups_assessed
-    from group_gaps
-    group by person_id
-),
-
 encoding_features as (
     select il.sk_patient_id
         , il.neighbourhood_code
@@ -83,12 +53,12 @@ encoding_features as (
         , pd.age
 
         -- care pathway gaps (disease control, monitoring, treatment optimisation)
-        , zeroifnull(cps.disease_control_gaps) as disease_control_gaps
-        , zeroifnull(cps.monitoring_gaps) as monitoring_gaps
-        , zeroifnull(cps.treatment_optimisation_gaps) as treatment_optimisation_gaps
-        , zeroifnull(cps.disease_control_groups_assessed) as disease_control_groups_assessed
-        , zeroifnull(cps.monitoring_groups_assessed) as monitoring_groups_assessed
-        , zeroifnull(cps.treatment_optimisation_groups_assessed) as treatment_optimisation_groups_assessed
+        , zeroifnull(gs.disease_control_gap_score) as disease_control_gaps
+        , zeroifnull(gs.monitoring_gap_score) as monitoring_gaps
+        , zeroifnull(gs.treatment_optimisation_gap_score) as treatment_optimisation_gaps
+        , zeroifnull(gs.disease_control_groups_assessed) as disease_control_groups_assessed
+        , zeroifnull(gs.monitoring_groups_assessed) as monitoring_groups_assessed
+        , zeroifnull(gs.treatment_optimisation_groups_assessed) as treatment_optimisation_groups_assessed
 
         -- risk factor status
         , zeroifnull(br.smoking_risk_sort_key) as smoking_risk_sort_key -- 0 unknown, 1 never, 2 ex, 3 current therefore unchanged
@@ -139,8 +109,8 @@ encoding_features as (
             + {{ encode_ltc_lcs_risk_group('lcs.stroke_tia_risk_group') }} as ltc_lcs_risk_group_sum
         , lcs.moc_pathway_status
       from spine il
-    left join care_pathway_scores cps
-        on il.person_id = cps.person_id
+    left join {{ ref('cltcs_gap_summary') }} gs
+        on il.person_id = gs.person_id
     left join {{ref('dim_person_conditions')}} pc
         on il.person_id =pc.person_id
     left join {{ref('fct_person_sus_uec_recent')}} aea
