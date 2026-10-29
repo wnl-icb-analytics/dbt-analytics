@@ -9,7 +9,8 @@ select
         1
     ) as data_period_month,
     mode(rp_start_date) as ingestion_date,
-    count(1) as row_count_estimate
+    count(1) as row_count_estimate,
+    data_period_month = max(data_period_month) over () as is_latest
 from {{ ref('stg_cwt_pathway_cwt001data') }}
 
 where crtpdate is not null
