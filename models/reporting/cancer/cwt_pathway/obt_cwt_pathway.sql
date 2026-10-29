@@ -235,7 +235,7 @@ left join {{ ref('stg_ukhfd_data_dictionary_cancer_fdp_method_of_communication')
 on cwt.diagnosis__fds_outcome_method_of_communication_code = diag_fomocc.main_code_text
 
 left join {{ ref('stg_ukhfd_data_dictionary_care_professional_type') }} diag_foptc
-on cwt.diagnosis__fds_outcome_method_of_communication_code = diag_foptc.main_code_text
+on cwt.diagnosis__fds_outcome_profession_type_code = diag_foptc.main_code_text
 -------------------------------------------------------------------------
 
 --Treatment lookup table joins-------------------------------------------
