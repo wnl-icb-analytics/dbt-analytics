@@ -25,6 +25,6 @@ select
 from {{ ref('raw_ukhfd_data_dictionary_cancer_treatment_modality') }} ctm
 
 left join {{ ref('cwt_cancer_treatment_modality_group')}} tg
-on ctm.main_description = tg.code
+on ctm.main_code_text = tg.code
 
 where is_latest = 1
