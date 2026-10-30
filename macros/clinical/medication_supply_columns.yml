@@ -1,0 +1,21 @@
+macros:
+  - name: medication_supply_columns
+    description: >-
+      Local estimated supply for a medication issue. Emits effective_duration_days,
+      is_duration_imputed and supply_end_date. Uses normalised recorded duration
+      from 1 to 365 days inclusive; otherwise uses 28 days and sets
+      is_duration_imputed to true. The inclusive end is the issue date plus the
+      effective duration, giving one day's grace. A supplied authorisation
+      cancellation date caps the end at the previous day. A null cancellation
+      date leaves the duration-based end unchanged. Callers must not already
+      select any of the emitted column names.
+    arguments:
+      - name: duration_days
+        type: string
+        description: SQL expression for normalised recorded duration in days.
+      - name: order_date
+        type: string
+        description: SQL expression for the issue date.
+      - name: cancellation_date
+        type: string
+        description: SQL expression for the issue's own authorisation cancellation date.

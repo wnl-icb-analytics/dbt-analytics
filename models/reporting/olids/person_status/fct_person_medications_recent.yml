@@ -21,7 +21,16 @@ models:
                 to: ref('dim_person')
                 field: person_id
       - name: medications_repeat
-        description: Array of medication objects for medicines currently on repeat. A medicine is a current repeat when its latest repeat-authorised order (int_medication_orders_repeat_current) has not run out, based on order date plus duration (28 days if missing), and that order falls in the last year. Each object contains 'medication_name' only; prescription counts are omitted because only the latest repeat order is flagged. Empty array if none.
+        description: >-
+          Array of medication objects for current repeats whose latest repeat-authorised
+          order (int_medication_orders_repeat_current) falls in the last year and has
+          supply left. Supply uses recorded duration of 1 to 365 days or a local
+          28-day fallback. Cancellation of the latest issue's authorisation ends
+          supply from that date, even if an older authorisation's issue has supply
+          left; cancellations of other authorisations are ignored; a later issue
+          from an uncancelled authorisation restarts supply. Each object contains
+          'medication_name' only; prescription counts are omitted because only the
+          latest repeat order is flagged. Empty array if none.
         data_tests:
           - not_null
 

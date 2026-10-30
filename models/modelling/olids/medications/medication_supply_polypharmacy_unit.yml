@@ -1,0 +1,215 @@
+unit_tests:
+- name: repeat_supply_duration_cancellation_boundaries
+  model: int_medication_orders_repeat_current
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: select 'SYN_REPEAT'::varchar code,'REPEAT_PRESCRIPTION'::varchar cluster_id
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: |-
+      select id::varchar id,'SYN_REPEAT'::varchar authorisation_type_code,
+       dateadd(day,cancel_days,current_date())::date cancellation_date
+       from (values ('SYN_OPEN',null),('SYN_CANCEL_TODAY',0),('SYN_CANCEL_TOMORROW',1),
+       ('SYN_CANCEL_PAST',-5),('SYN_CANCEL_BEFORE_ISSUE',-20)) v(id,cancel_days)
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select id::varchar id,person::number person_id,code::varchar mapped_concept_code,
+       dateadd(day,days,current_date())::date clinical_effective_date,
+       dateadd(hour,record_hour,current_date())::timestamp_ntz date_recorded,
+       duration::number duration_days,statement::varchar medication_statement_id
+       from (values
+       ('SYN_ONE',-244201,'SYN_A',-1,1,'SYN_OPEN',1),
+       ('SYN_365',-244202,'SYN_A',-365,365,'SYN_OPEN',1),
+       ('SYN_NULL',-244203,'SYN_A',-28,null,'SYN_OPEN',1),
+       ('SYN_ZERO',-244204,'SYN_A',-28,0,'SYN_OPEN',1),
+       ('SYN_NEGATIVE',-244205,'SYN_A',-28,-1,'SYN_OPEN',1),
+       ('SYN_366',-244206,'SYN_A',-28,366,'SYN_OPEN',1),
+       ('SYN_LONG',-244207,'SYN_A',-29,9999,'SYN_OPEN',1),
+       ('SYN_EXPIRED',-244208,'SYN_A',-2,1,'SYN_OPEN',1),
+       ('SYN_STOP_TODAY',-244209,'SYN_A',-5,28,'SYN_CANCEL_TODAY',1),
+       ('SYN_STOP_TOMORROW',-244210,'SYN_A',-5,28,'SYN_CANCEL_TOMORROW',1),
+       ('SYN_STOP_PAST',-244211,'SYN_A',-10,28,'SYN_CANCEL_PAST',1),
+       ('SYN_STOP_BEFORE',-244212,'SYN_A',-10,28,'SYN_CANCEL_BEFORE_ISSUE',1),
+       ('SYN_OLD_ACTIVE',-244213,'SYN_A',-10,365,'SYN_OPEN',1),
+       ('SYN_LATEST_STOP',-244213,'SYN_A',-5,28,'SYN_CANCEL_TODAY',1),
+       ('SYN_TIE_LONG',-244214,'SYN_A',-10,365,'SYN_OPEN',1),
+       ('SYN_TIE_SHORT',-244214,'SYN_A',-10,28,'SYN_OPEN',2),
+       ('SYN_SAME_DAY_STOP',-244215,'SYN_A',0,28,'SYN_CANCEL_TODAY',1),
+       ('SYN_FUTURE',-244216,'SYN_A',1,365,'SYN_OPEN',1),
+       ('SYN_MISSING_DATE',-244217,'SYN_A',null,365,'SYN_OPEN',1),
+       ('SYN_CANCELLED_OLD',-244218,'SYN_A',-20,365,'SYN_CANCEL_PAST',1),
+       ('SYN_RESTART',-244218,'SYN_A',-3,28,'SYN_OPEN',1),
+       ('SYN_OLDER_CANCELLED_LATER',-244219,'SYN_A',-20,28,'SYN_CANCEL_PAST',1),
+       ('SYN_NEWER_OPEN',-244219,'SYN_A',-10,28,'SYN_OPEN',1))
+       v(id,person,code,days,duration,statement,record_hour)
+  expect:
+    format: sql
+    rows: |-
+      select person::number person_id,id::varchar medication_order_id,duration::number effective_duration_days,
+       imputed::boolean is_duration_imputed,dateadd(day,end_days,current_date())::date supply_end_date
+       from (values (-244201,'SYN_ONE',1,false,0),(-244202,'SYN_365',365,false,0),
+       (-244203,'SYN_NULL',28,true,0),(-244204,'SYN_ZERO',28,true,0),
+       (-244205,'SYN_NEGATIVE',28,true,0),(-244206,'SYN_366',28,true,0),
+       (-244210,'SYN_STOP_TOMORROW',28,false,0),(-244214,'SYN_TIE_SHORT',28,false,18),
+       (-244218,'SYN_RESTART',28,false,25),(-244219,'SYN_NEWER_OPEN',28,false,18))
+       v(person,id,duration,imputed,end_days)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number person_id,null::varchar medication_order_id,null::number effective_duration_days,null::boolean
+        is_duration_imputed,null::date supply_end_date where false
+- name: polypharmacy_scope_uses_nhsbsa_chapters
+  model: int_polypharmacy_medications_list
+  given:
+  - input: ref('stg_reference_bnf_latest')
+    format: sql
+    rows: |-
+      select code::varchar snomed_code,bnf::varchar bnf_code,'SYN_NAME'::varchar bnf_name
+       from (values ('SYN_01','0107000AA000001'),('SYN_02','0201000AA000001'),('SYN_03','0309000AA000001'),
+       ('SYN_04','0401000AA000001'),('SYN_05','0503010AA000001'),('SYN_06','0602000AA000001'),
+       ('SYN_07','0703000AA000001'),('SYN_08','0801000AA000001'),('SYN_09','0901000AA000001'),
+       ('SYN_10','1003000AA000001'),('SYN_11','1101000AA000001'),('SYN_SHORT','0201000A'),
+       ('SYN_NINE','0201000AA'),('SYN_NULL',null),(null,'0201000AA000001'),
+       ('SYN_DUP','0201000AB000001'),('SYN_DUP','0201000AA000001')) v(code,bnf)
+  expect:
+    format: sql
+    rows: |-
+      select column1::varchar snomed_code,column2::varchar bnf_chemical_code from values
+       ('SYN_01','0107000AA'),('SYN_02','0201000AA'),('SYN_03','0309000AA'),('SYN_04','0401000AA'),
+       ('SYN_06','0602000AA'),('SYN_07','0703000AA'),('SYN_08','0801000AA'),('SYN_09','0901000AA'),
+       ('SYN_10','1003000AA'),('SYN_NINE','0201000AA'),('SYN_DUP','0201000AA')
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::varchar snomed_code,null::varchar bnf_chemical_code where false
+- name: polypharmacy_current_counts_chemicals_and_keeps_thresholds
+  model: int_polypharmacy_current
+  given:
+  - input: ref('int_polypharmacy_medications_current')
+    format: sql
+    rows: |-
+      select -244220::number person_id,'SYN_' || seq4()::varchar mapped_concept_code,
+       '0201000AA' || seq4()::varchar bnf_code,'0201000AA'::varchar bnf_chemical_code,
+       'SYN_BRAND'::varchar bnf_name,current_date()::date latest_order_date
+       from table(generator(rowcount => 6))
+       union all
+       select -244220,'SYN_COMPONENT','0201000AB000001','0201000AB','SYN_COMPONENT',current_date()
+       union all
+       select -244220,'SYN_COMBINATION','0201000AC000001','0201000AC','SYN_COMBINATION',current_date()
+       union all
+       select -244221,'SYN_' || seq4(),'020100' || lpad(seq4()::varchar,3,'0') || '000001',
+       '020100' || lpad(seq4()::varchar,3,'0'),'SYN_MED',current_date()
+       from table(generator(rowcount => 5))
+       union all
+       select -244222,'SYN_' || seq4(),'020100' || lpad(seq4()::varchar,3,'0') || '000001',
+       '020100' || lpad(seq4()::varchar,3,'0'),'SYN_MED',current_date()
+       from table(generator(rowcount => 10))
+       union all
+       select -244223,'SYN_' || seq4(),'020100' || lpad(seq4()::varchar,3,'0') || '000001',
+       '020100' || lpad(seq4()::varchar,3,'0'),'SYN_MED',current_date()
+       from table(generator(rowcount => 9))
+  expect:
+    format: sql
+    rows: |-
+      select column1::number person_id,column2::number medication_count,column3::boolean is_polypharmacy_5plus,
+       column4::boolean is_polypharmacy_10plus from values
+       (-244220,3,false,false),(-244221,5,true,false),(-244222,10,true,true),(-244223,9,true,false)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number person_id,null::number medication_count,null::boolean is_polypharmacy_5plus,null::boolean
+        is_polypharmacy_10plus where false
+- name: polypharmacy_history_chemical_overlap_cancellation_and_smoothing
+  model: int_polypharmacy_history
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: select 'SYN_REPEAT'::varchar code,'REPEAT_PRESCRIPTION'::varchar cluster_id
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: |-
+      select column1::varchar id,'SYN_REPEAT'::varchar authorisation_type_code,
+       dateadd(day,column2,current_date())::date cancellation_date from values
+       ('SYN_OPEN',null),('SYN_STOP',-5),('SYN_BEFORE',-20)
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select 'SYN_' || row_number() over (order by person,code,start_days) as id,
+       current_date()::timestamp_ntz date_recorded,person::number person_id,code::varchar mapped_concept_code,
+       dateadd(day,start_days,current_date())::date clinical_effective_date,duration::number duration_days,
+       statement::varchar medication_statement_id from (values
+       (-244230,'SYN_A',-40,28,'SYN_OPEN'),(-244230,'SYN_BRAND',-35,28,'SYN_OPEN'),
+       (-244230,'SYN_COMBINATION',-30,28,'SYN_OPEN'),
+       (-244231,'SYN_A',-20,5,'SYN_OPEN'),(-244231,'SYN_A',-13,5,'SYN_OPEN'),
+       (-244232,'SYN_A',-10,365,'SYN_STOP'),(-244233,'SYN_A',-10,366,'SYN_OPEN'),
+       (-244234,'SYN_A',-10,28,'SYN_BEFORE')) v(person,code,start_days,duration,statement)
+  - input: ref('int_polypharmacy_medications_list')
+    format: sql
+    rows: |-
+      select column1::varchar snomed_code,column2::varchar bnf_code,left(column2,9)::varchar bnf_chemical_code from values
+       ('SYN_A','0201000AA000001'),('SYN_BRAND','0201000AA000002'),('SYN_COMBINATION','0201000AB000001')
+  expect:
+    format: sql
+    rows: |-
+      select person::number person_id,n::number medication_count,dateadd(day,start_days,current_date())::date valid_from,
+       dateadd(day,end_days,current_date())::date valid_to from (values
+       (-244230,1,-40,-31),(-244230,2,-30,-7),(-244230,1,-6,-2),
+       (-244231,1,-20,-8),(-244232,1,-10,-6),(-244233,1,-10,18)) v(person,n,start_days,end_days)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number person_id,null::number medication_count,null::date valid_from,null::date
+        valid_to where false
+- name: polypharmacy_history_selects_same_day_issue_and_stops_product
+  model: int_polypharmacy_history
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: select 'SYN_REPEAT'::varchar code,'REPEAT_PRESCRIPTION'::varchar cluster_id
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: |-
+      select column1::varchar id,'SYN_REPEAT'::varchar authorisation_type_code,
+       dateadd(day,column2,current_date())::date cancellation_date from values
+       ('SYN_OPEN',null),('SYN_STOP',-5),('SYN_STOP_ON_ISSUE',-10)
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select id::varchar id,person::number person_id,'SYN_A'::varchar mapped_concept_code,
+       dateadd(day,start_days,current_date())::date clinical_effective_date,
+       dateadd(hour,record_hour,current_date())::timestamp_ntz date_recorded,
+       duration::number duration_days,statement::varchar medication_statement_id from (values
+       ('SYN_LONG_EARLY',-244240,-40,1,365,'SYN_OPEN'),
+       ('SYN_SHORT_LATE',-244240,-40,2,28,'SYN_OPEN'),
+       ('SYN_OLD_ACTIVE',-244241,-20,1,365,'SYN_OPEN'),
+       ('SYN_LATEST_STOP',-244241,-10,1,28,'SYN_STOP'),
+       ('SYN_BEFORE_STOP',-244242,-20,1,365,'SYN_OPEN'),
+       ('SYN_STOPPED',-244242,-10,1,28,'SYN_STOP'),
+       ('SYN_RESTART',-244242,-2,1,28,'SYN_OPEN'),
+       ('SYN_EARLIER_SUPPLY',-244243,-20,1,365,'SYN_OPEN'),
+       ('SYN_SAME_DAY_OPEN',-244243,-10,1,365,'SYN_OPEN'),
+       ('SYN_SAME_DAY_STOP',-244243,-10,2,28,'SYN_STOP_ON_ISSUE'),
+       ('SYN_NULL_TIME',-244244,-40,null,365,'SYN_OPEN'),
+       ('SYN_ID_A',-244244,-40,1,365,'SYN_OPEN'),
+       ('SYN_ID_Z',-244244,-40,1,28,'SYN_OPEN'),
+       ('SYN_LONG_OLDER',-244245,-40,1,365,'SYN_OPEN'),
+       ('SYN_SHORT_NEWER',-244245,-35,1,28,'SYN_OPEN'),
+       ('SYN_OLDER_CANCELLED_LATER',-244246,-20,1,28,'SYN_STOP'),
+       ('SYN_NEWER_OPEN',-244246,-10,1,28,'SYN_OPEN'))
+       v(id,person,start_days,record_hour,duration,statement)
+  - input: ref('int_polypharmacy_medications_list')
+    format: sql
+    rows: select 'SYN_A'::varchar snomed_code,'0201000AA'::varchar bnf_chemical_code
+  expect:
+    format: sql
+    rows: |-
+      select person::number person_id,1::number medication_count,
+       dateadd(day,start_days,current_date())::date valid_from,
+       dateadd(day,end_days,current_date())::date valid_to,current_period::boolean is_current from (values
+       (-244240,-40,-12,false),(-244241,-20,-6,false),
+       (-244242,-20,-6,false),(-244242,-2,26,true),(-244243,-20,-11,false),
+       (-244244,-40,-12,false),(-244245,-40,-7,false),(-244246,-20,18,true))
+       v(person,start_days,end_days,current_period)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number person_id,null::number medication_count,null::date valid_from,
+        null::date valid_to,null::boolean is_current where false

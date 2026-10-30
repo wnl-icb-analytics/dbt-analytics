@@ -15,12 +15,12 @@ with repeat_prescription_codes as (
 repeat_orders as (
     select
         mo.person_id,
-        mo.patient_id,
         mo.id as medication_order_id,
         mo.clinical_effective_date as order_date,
         mo.date_recorded,
         mo.duration_days as order_duration_days,
-        mo.mapped_concept_code
+        mo.mapped_concept_code,
+        {{ medication_supply_columns('mo.duration_days', 'mo.clinical_effective_date', 'ms.cancellation_date') }}
     from {{ ref('stg_olids_medication_order') }} mo
     inner join {{ ref('stg_olids_medication_statement') }} ms
         on mo.medication_statement_id = ms.id
@@ -29,33 +29,12 @@ repeat_orders as (
         and mo.clinical_effective_date <= current_date()
         and mo.mapped_concept_code is not null
 ),
-latest_dates as (
-    select person_id, mapped_concept_code, max(order_date) as latest_order_date
-    from repeat_orders
-    group by person_id, mapped_concept_code
-),
-latest_candidates as (
-    select
-        ro.*,
-        min(ro.date_recorded) over (
-            partition by ro.person_id, ro.mapped_concept_code, ro.patient_id
-        ) as record_first_recorded
-    from repeat_orders ro
-    inner join latest_dates ld
-        on ro.person_id = ld.person_id
-        and ro.mapped_concept_code = ld.mapped_concept_code
-        and ro.order_date = ld.latest_order_date
-),
 latest_orders as (
     select *
-    from latest_candidates
-    -- Same-day issues on two patient records are usually an original plus a GP2GP copy
-    -- recorded later with a default supply, so the record that entered it first wins.
-    -- Within that record, the longest supply wins.
+    from repeat_orders
     qualify row_number() over (
         partition by person_id, mapped_concept_code
-        order by record_first_recorded asc nulls last, coalesce(order_duration_days, 28) desc,
-            medication_order_id desc
+        order by order_date desc, date_recorded desc nulls last, medication_order_id desc
     ) = 1
 )
 select
@@ -63,6 +42,10 @@ select
     mapped_concept_code,
     order_date as latest_order_date,
     order_duration_days as latest_duration,
-    medication_order_id
+    medication_order_id,
+    effective_duration_days,
+    is_duration_imputed,
+    supply_end_date
 from latest_orders
-where dateadd(day, coalesce(order_duration_days, 28), order_date) >= current_date()
+-- Filtering after ranking prevents an older issue replacing a stopped latest issue.
+where supply_end_date >= current_date()

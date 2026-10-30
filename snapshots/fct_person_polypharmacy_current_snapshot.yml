@@ -2,10 +2,17 @@ snapshots:
   - name: fct_person_polypharmacy_current_snapshot
     relation: ref('fct_person_polypharmacy_current')
     description: >
-      SCD2 history of current medication burden per person, for control-cohort
-      matching. `check_cols` are the burden measures (`medication_count`,
-      `is_polypharmacy_5plus`, `is_polypharmacy_10plus`); Rows leaving the source are closed via
-      `hard_deletes: invalidate`.
+      SCD2 history of current repeat medication burden per person, for control-cohort
+      matching. Changes to medication_name_list, medication_count or either
+      polypharmacy flag create a new version. Rows leaving the source are closed
+      via hard_deletes: invalidate.
+      On deploy of this change (PR #1521), the definition changes to nine-character BNF chemicals
+      in chapters 01 to 04 and 06 to 10, bounded duration with a flagged 28-day
+      fallback, product-level cancellation and recorded-time same-day selection.
+      The first subsequent snapshot run records definition changes as new versions
+      at that run's date; it does not recalculate earlier versions.
+      cltcs_monthly_covariates selects these versions by index date for control
+      matching, so index dates either side of deployment can use different definitions.
 
     config:
       strategy: check

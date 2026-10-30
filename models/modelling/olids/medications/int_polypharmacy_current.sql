@@ -14,8 +14,8 @@ Calculates current state directly from int_polypharmacy_medications_current
 SCD table which uses smoothing and may not reflect exact current state.
 
 Polypharmacy thresholds:
-- 5+ medications: Standard polypharmacy threshold
-- 10+ medications: Severe/complex polypharmacy threshold
+- 5+ BNF chemicals: local threshold
+- 10+ BNF chemicals: medication review priority threshold
 
 Grain: One row per person with current polypharmacy-scope medications
 */
@@ -24,7 +24,7 @@ WITH current_medication_details AS (
     -- Count and aggregate current medications directly
     SELECT
         person_id,
-        COUNT(DISTINCT mapped_concept_code) AS medication_count,
+        COUNT(DISTINCT bnf_chemical_code) AS medication_count,
         ARRAY_AGG(DISTINCT bnf_code) WITHIN GROUP (ORDER BY bnf_code) AS medication_bnf_list,
         -- Filter out NULL bnf_name values to ensure array contains only valid strings
         -- Using ARRAY_COMPACT to remove NULLs after aggregation

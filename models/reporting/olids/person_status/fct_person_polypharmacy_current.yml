@@ -1,29 +1,16 @@
 models:
   - name: fct_person_polypharmacy_current
     description: |
-      Current polypharmacy status per person.
-
-      Grain: One row per person in dim_person with current polypharmacy medications
-
-      Inclusion criteria:
-      - People represented in dim_person
-      - Persons with at least 1 current polypharmacy-scope medication
-      - Repeat prescriptions only (authorisation_type = '182918009')
-      - Polypharmacy-scope medications (via int_polypharmacy_medications_list)
-      - Active supply (order date + duration >= today)
-
-      Polypharmacy scope uses exclusion-based filtering:
-      - Excludes most infections (except HIV and hepatitis antivirals)
-      - Excludes vitamins, minerals, nutrition products
-      - Excludes contraceptives, thyroid drugs, topicals
-      - Excludes devices, dressings, appliances
-      - See int_polypharmacy_medications_list for complete scope definition
-
-      Polypharmacy thresholds:
-      - Standard polypharmacy: 5+ medications
-      - Severe/complex polypharmacy: 10+ medications
-
-      Person-level snapshot for reporting. Join to demographic tables for population analysis.
+      Estimated current repeat chemical count, one row per person in dim_person
+      with at least one in-scope supply. Counts nine-character BNF chemicals in
+      chapters 01 to 04 and 06 to 10. Brands, strengths and formulations count once;
+      fixed combinations count once under their own chemical code, without splitting
+      ingredients. Uses the local supply and cancellation rules in
+      int_medication_orders_repeat_current. Five or more is a local threshold and
+      ten or more supports medication review prioritisation. Bands are 1-4, 5-9,
+      10-14 and 15+. These GP-issued repeat estimates differ from NHSBSA monthly acute
+      and repeat dispensing comparators, whose thresholds are 8, 10, 15 and 20.
+      Product arrays retain full BNF codes/names and can exceed the chemical count.
 
     config:
       meta:
@@ -40,7 +27,7 @@ models:
                 to: ref('dim_person')
                 field: person_id
       - name: medication_count
-        description: Count of current polypharmacy-scope medications
+        description: Count of distinct current nine-character BNF chemicals in scope
         data_tests:
           - not_null
           - dbt_utils.expression_is_true:
@@ -60,7 +47,7 @@ models:
         description: Earliest order date among current medications
 
       - name: is_polypharmacy_5plus
-        description: Standard polypharmacy flag (5+ medications)
+        description: Local flag for at least five current BNF chemicals
         data_tests:
           - not_null
           - accepted_values:
@@ -68,7 +55,7 @@ models:
                 values: [true, false]
 
       - name: is_polypharmacy_10plus
-        description: Severe/complex polypharmacy flag (10+ medications)
+        description: Flag for at least ten current BNF chemicals, supporting medication review prioritisation
         data_tests:
           - not_null
           - accepted_values:
