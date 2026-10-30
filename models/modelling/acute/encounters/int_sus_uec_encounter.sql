@@ -43,14 +43,6 @@ gender_codes as (
     select distinct gender_code, gender
     from {{ref('stg_dictionary_dbo_gender')}}
     ),
-commissioner_codes as (
-    select commissioner_code, commissioner_name
-    from {{ ref('stg_dictionary_dbo_commissioner') }}
-    qualify row_number() over (
-        partition by commissioner_code
-        order by coalesce(end_date, '9999-12-31'::date) desc, start_date desc
-    ) = 1
-    ),
 treatment_function_codes as (
     select bk_specialty_code, treatment_function_description
     from {{ ref('stg_dictionary_dbo_specialties') }}
@@ -242,24 +234,16 @@ select
     , core.commissioning_national_pricing_market_forces_adjustment as mff_adjustment
 
     , core.patient_residence_ccg_from_patient_postcode as residence_area_code_at_event
-    , coalesce(
-        residence_commissioner_exact.commissioner_name
-        , residence_commissioner_fallback.commissioner_name
-    ) as residence_area_name_at_event
+    , {{ sus_commissioner_organisation_name('residence_commissioner') }}
+        as residence_area_name_at_event
     , coalesce(
         core.commissioning_commissioner_assignment_commissioner
         , core.commissioning_service_agreement_commissioner
     ) as commissioner_code_at_event
     , case
         when core.commissioning_commissioner_assignment_commissioner is not null
-            then coalesce(
-                cam_commissioner_exact.commissioner_name
-                , cam_commissioner_fallback.commissioner_name
-            )
-        else coalesce(
-            registrant_commissioner_exact.commissioner_name
-            , registrant_commissioner_fallback.commissioner_name
-        )
+            then {{ sus_commissioner_organisation_name('cam_commissioner') }}
+        else {{ sus_commissioner_organisation_name('service_commissioner') }}
       end as commissioner_name_at_event
     , case
         when core.commissioning_commissioner_assignment_commissioner is not null
@@ -442,38 +426,20 @@ left join
     {{ ref('stg_dictionary_dbo_hrg') }} as dict_hrg
     on core.commissioning_grouping_health_resource_group = dict_hrg.hrg_code
 
-left join commissioner_codes as residence_commissioner_exact
-    on core.patient_residence_ccg_from_patient_postcode
-    = residence_commissioner_exact.commissioner_code
+{{ join_sus_commissioner_organisation(
+    'core.patient_residence_ccg_from_patient_postcode',
+    'residence_commissioner'
+) }}
 
-left join commissioner_codes as residence_commissioner_fallback
-    on residence_commissioner_exact.commissioner_code is null
-    and length(core.patient_residence_ccg_from_patient_postcode) = 5
-    and right(core.patient_residence_ccg_from_patient_postcode, 2) = '00'
-    and left(core.patient_residence_ccg_from_patient_postcode, 3)
-    = residence_commissioner_fallback.commissioner_code
+{{ join_sus_commissioner_organisation(
+    'core.commissioning_service_agreement_commissioner',
+    'service_commissioner'
+) }}
 
-left join commissioner_codes as registrant_commissioner_exact
-    on core.commissioning_service_agreement_commissioner
-    = registrant_commissioner_exact.commissioner_code
-
-left join commissioner_codes as registrant_commissioner_fallback
-    on registrant_commissioner_exact.commissioner_code is null
-    and length(core.commissioning_service_agreement_commissioner) = 5
-    and right(core.commissioning_service_agreement_commissioner, 2) = '00'
-    and left(core.commissioning_service_agreement_commissioner, 3)
-    = registrant_commissioner_fallback.commissioner_code
-
-left join commissioner_codes as cam_commissioner_exact
-    on core.commissioning_commissioner_assignment_commissioner
-    = cam_commissioner_exact.commissioner_code
-
-left join commissioner_codes as cam_commissioner_fallback
-    on cam_commissioner_exact.commissioner_code is null
-    and length(core.commissioning_commissioner_assignment_commissioner) = 5
-    and right(core.commissioning_commissioner_assignment_commissioner, 2) = '00'
-    and left(core.commissioning_commissioner_assignment_commissioner, 3)
-    = cam_commissioner_fallback.commissioner_code
+{{ join_sus_commissioner_organisation(
+    'core.commissioning_commissioner_assignment_commissioner',
+    'cam_commissioner'
+) }}
 
 left join treatment_function_codes as treatment_function
     on core.attendance_decision_to_admit_treatment_function_code = treatment_function.bk_specialty_code

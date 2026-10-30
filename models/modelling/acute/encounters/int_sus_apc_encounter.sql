@@ -18,7 +18,6 @@ gender_codes as (
     select distinct gender_code, gender
     from {{ref('stg_dictionary_dbo_gender')}}
     ),
-
 dominant_episode_information as (
     select
         primarykey_id,
@@ -140,6 +139,21 @@ select
     , dict_treat.specialty_name as treatment_function_code_desc
 
     /* Commissioning information */
+    , coalesce(
+        core.spell_commissioning_commissioner_assignment_commissioner
+        , core.spell_commissioning_service_agreement_commissioner
+    ) as commissioner_code_at_event
+    , case
+        when core.spell_commissioning_commissioner_assignment_commissioner is not null
+            then {{ sus_commissioner_organisation_name('cam_commissioner') }}
+        else {{ sus_commissioner_organisation_name('service_commissioner') }}
+      end as commissioner_name_at_event
+    , case
+        when core.spell_commissioning_commissioner_assignment_commissioner is not null
+            then 'CAM'
+        when core.spell_commissioning_service_agreement_commissioner is not null
+            then 'DSCRO'
+      end as commissioner_source_at_event
     , core.spell_commissioning_grouping_core_hrg as hrg_code
     , dict_hrg.hrg_description as core_hrg_desc
     , dict_hrg.hrg_chapter_key as core_hrg_chapter
@@ -190,6 +204,16 @@ left join ethnicity_codes as eth
 
 left join gender_codes as gen
     on core.spell_patient_identity_gender = gen.gender_code
+
+{{ join_sus_commissioner_organisation(
+    'core.spell_commissioning_commissioner_assignment_commissioner',
+    'cam_commissioner'
+) }}
+
+{{ join_sus_commissioner_organisation(
+    'core.spell_commissioning_service_agreement_commissioner',
+    'service_commissioner'
+) }}
 
 LEFT JOIN {{ ref('stg_dictionary_dbo_serviceprovider') }} as dict_provider
     ON core.SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER = dict_provider.service_provider_full_code

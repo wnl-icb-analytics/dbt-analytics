@@ -42,6 +42,9 @@ select
     , main_specialty_category
     , treatment_function_code
     , treatment_function_code_desc
+    , commissioner_code_at_event
+    , commissioner_name_at_event
+    , commissioner_source_at_event
     , hrg_code
     , core_hrg_desc
     , core_hrg_chapter
