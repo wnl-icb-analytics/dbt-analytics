@@ -1,18 +1,19 @@
 models:
 - name: fct_person_bone_sparing_therapy_fragility_fracture_ind92_by_month
   description: >-
-    Bone-sparing treatment after fracture, aged 75 or over (NICE IND92). One row per
-    person in the denominator at the month-end.
+    Bone-sparing treatment after fracture, aged 75 or over (NICE IND92). One row per person in the
+    denominator at the month-end.
 
-
-    People registered at the month-end aged 75 or over with a fragility fracture on or
-    after 1 April 2012. No osteoporosis diagnosis or bone scan is needed. Achieved with a
-    bone-sparing prescription in the last 6 months or current hospital treatment. Hospital
-    zoledronic acid and explicitly intravenous bisphosphonates cover 12 months; denosumab
-    and other bone-sparing treatment cover 6 months. No personalised care adjustments are
-    applied. Based on NICE TA464. Recalculated for each of the last 60 month-ends with
-    current rules, code lists and records, so later corrections can change past months.
-    Code lists: FF_COD, BSA_COD (PCD); BSADRUG_COD (NHS drug refset).
+    People registered at the month-end aged 75 or over with a fragility fracture on or after 1 April
+    2012. No osteoporosis diagnosis or bone scan is needed. Achieved with a bone-sparing
+    prescription or therapy code. Coverage is 6 months, or 12 for a dm+d zoledronic acid 5 mg
+    prescription. "Hospital therapy" includes zoledronic acid and denosumab prescriptions of any
+    issue method, including practice-issued ones. Authorisation-only and cancelled statements supply
+    no coverage; a later cancellation does not erase an issued prescription. Oncology doses count
+    and are flagged in the therapy evidence model. No personalised care adjustments are applied.
+    Based on NICE TA464. Recalculated for each of the last 60 month-ends with current rules, code
+    lists and records, so later corrections can change past months. Code lists: FF_COD, BSA_COD
+    (PCD); BSADRUG_COD (NHS drug refset).
   config:
     meta:
       owner:
@@ -36,7 +37,7 @@ models:
   - name: reporting_date
     description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: "Exclusive start of the 6-month prescription window. Hospital treatment can cover 6 or 12 months."
+    description: "Exclusive start of the 6-month treatment window. A dm+d zoledronic acid 5 mg prescription covers 12 months."
   - name: age
     description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: denominator_description
@@ -48,9 +49,9 @@ models:
   - name: latest_bone_sparing_order_date
     description: "Latest bone-sparing drug prescription by the reporting date; it may be outside the 6-month treatment window. Null when never prescribed."
   - name: latest_hospital_therapy_date
-    description: "Latest hospital bone-sparing treatment by the reporting date; it may be outside its 6- or 12-month coverage. Null when none is recorded."
+    description: "Latest therapy code or zoledronic acid or denosumab prescription of any issue method, including practice-issued ones, by the reporting date. Coverage is 6 months, or 12 for a dm+d zoledronic acid 5 mg prescription. Includes flagged oncology doses. Excludes authorisation-only and cancelled statements. May be outside coverage; null when none is recorded."
   - name: latest_record_date
-    description: "Latest prescription or hospital treatment date that establishes current bone-sparing treatment; null when no current treatment is recorded."
+    description: "Latest prescription or therapy-code date that establishes current bone-sparing treatment. Coverage is 6 months, or 12 for a dm+d zoledronic acid 5 mg prescription. Includes practice-issued zoledronic acid and denosumab prescriptions and flagged oncology doses. Authorisation-only and cancelled statements supply no coverage. Null when no current treatment is recorded."
   - name: is_in_denominator
     description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator

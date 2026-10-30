@@ -1,5 +1,5 @@
 unit_tests:
-- name: nice_bone_hospital_sources_types_brands_and_grain
+- name: nice_bone_hospital_evidence_strength_cancellation_and_grain
   model: int_bone_sparing_hospital_therapy_all
   given:
   - input: ref('stg_reference_combined_codesets')
@@ -8,8 +8,9 @@ unit_tests:
       cluster'::VARCHAR AS cluster_description, 'Synthetic therapy'::VARCHAR AS code_description FROM VALUES ('SYN_BSA_ZOL',
       'BSA_COD', 'PCD'), ('SYN_BSA_IV', 'BSA_COD', 'PCD'), ('SYN_BSA_DEN', 'BSA_COD', 'PCD'), ('SYN_BSA_IBAN', 'BSA_COD',
       'PCD'), ('SYN_BSA_OTHER', 'BSA_COD', 'PCD'), ('SYN_OTHER_SOURCE', 'BSA_COD', 'ECL_CACHE'), ('SYN_ZOL_BRAND',
-      'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS'), ('SYN_DEN_BRAND', 'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS'),
-      ('SYN_ORAL', 'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS')
+      'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS'), ('SYN_DEN_BRAND', 'nhs_drug_refsets/bsadrug_cod', 'OPENCODELISTS'),
+      ('SYN_ORAL', 'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS'),
+      ('SYN_STAT_OTHER_SOURCE', 'NHS_DRUG_REFSETS/BSADRUG_COD', 'ECL_CACHE')
   - input: ref('stg_olids_observation')
     format: sql
     rows: SELECT column1::NUMBER AS id, column2::VARCHAR AS patient_id, column3::NUMBER AS person_id, column4::DATE
@@ -32,55 +33,192 @@ unit_tests:
       acid therapy (procedure)', NULL, NULL, NULL), ('-9891', NULL, '-9891', '2026-01-01', '2026-01-01', NULL, NULL,
       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SYN_BSA_ZOL', 'Zoledronic acid therapy (procedure)', NULL,
       NULL, NULL)
-  - input: ref('stg_olids_medication_statement')
+  - input: ref('dmd_product')
     format: sql
-    rows: SELECT -9891::NUMBER AS person_id, column1::VARCHAR AS bnf_chapter, column2::VARCHAR AS bnf_section, column3::VARCHAR AS bnf_code,
-      column4::NUMBER AS id, column5::VARCHAR AS patient_id, column6::DATE AS clinical_effective_date, column7::DATE
-      AS date_recorded, column8::VARCHAR AS medication_name, column9::VARCHAR AS dose, column10::VARCHAR AS quantity_value,
-      column11::VARCHAR AS quantity_unit, column12::VARCHAR AS authorisation_type_code, column13::VARCHAR AS authorisation_type_display,
-      column14::VARCHAR AS issue_method, column15::VARCHAR AS is_active, column16::VARCHAR AS cancellation_date,
-      column17::VARCHAR AS expiry_date, column18::VARCHAR AS age_at_event, column19::VARCHAR AS mapped_concept_code,
-      column20::VARCHAR AS mapped_concept_display, column21::VARCHAR AS bnf_name FROM VALUES (NULL, NULL, '0606020V0SYNTHETIC',
-      '-9891', 'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-      NULL, NULL, NULL, 'SYN_ZOL_BRAND', 'Aclasta synthetic branded therapy', NULL), (NULL, NULL, '0606020Z0SYNTHETIC',
-      '-9892', 'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-      NULL, NULL, NULL, 'SYN_DEN_BRAND', 'Prolia synthetic branded therapy', NULL), (NULL, NULL, '0606020ASYNTHETIC',
-      '-9893', 'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-      NULL, NULL, NULL, 'SYN_ORAL', 'Synthetic oral therapy', NULL), (NULL, NULL, '0606020V0SYNTHETIC', '-9891',
-      'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-      NULL, 'SYN_ZOL_BRAND', 'Aclasta synthetic branded therapy', NULL)
+    rows: |-
+      SELECT column1::VARCHAR AS product_code, column2::VARCHAR AS vtm_id, column3::FLOAT AS unit_dose_strength_mg
+      FROM VALUES ('SYN_Z5', '777988006', 5),
+          ('SYN_Z4', '777988006', 4),
+          ('SYN_D60', '775477008', 60),
+          ('SYN_D120', '775477008', 120),
+          ('SYN_D119', '775477008', 119),
+          ('SYN_UNKNOWN', '777988006', NULL),
+          ('SYN_Z2', '134600006', 5)
+  - input: ref('int_bone_sparing_medications_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::NUMBER AS medication_order_id, column3::DATE AS order_date, column4::TIMESTAMP_NTZ AS date_recorded, column5::VARCHAR AS mapped_concept_code, column6::VARCHAR AS mapped_concept_display, column7::VARCHAR AS bnf_code
+      FROM VALUES (-9911, -9911, '2026-01-01', '2026-01-02', 'SYN_Z5', 'Synthetic misleading name 999mg', NULL),
+          (-9912, -9912, '2026-01-01', '2026-01-02', 'SYN_Z4', 'Synthetic misleading name 999mg', NULL),
+          (-9913, -9913, '2026-01-01', '2026-01-02', 'SYN_D60', 'Synthetic misleading name 999mg', NULL),
+          (-9914, -9914, '2026-01-01', '2026-01-02', 'SYN_D120', 'Synthetic misleading name 999mg', NULL),
+          (-9915, -9915, '2026-01-01', '2026-01-02', 'SYN_D119', 'Synthetic misleading name 999mg', NULL),
+          (-9916, -9916, '2026-01-01', '2026-01-02', 'SYN_UNKNOWN', 'Synthetic misleading name 999mg', NULL),
+          (-9917, -9917, '2026-01-01', '2026-01-02', 'SYN_ORAL', 'Synthetic misleading name 999mg', NULL),
+          (-9918, -9918, '2027-01-01', '2026-01-02', 'SYN_Z5', 'Synthetic misleading name 999mg', NULL),
+          (-9919, -9919, '2026-01-01', '2026-01-02', NULL, 'Synthetic BNF fallback', '0606020V0SYN'),
+          (-9920, -9920, '2026-01-01', '2026-01-02', 'SYN_Z2', 'Synthetic second zoledronic moiety', '0606020Z0SYN')
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS id, column2::NUMBER AS medication_statement_id, column3::DATE AS clinical_effective_date, column4::VARCHAR AS issue_method_description
+      FROM VALUES (-9911, -9924, '2026-01-01', 'Outside Hospital'),
+          (-9912, NULL, '2026-01-01', 'Electronic'),
+          (-9913, NULL, '2026-01-01', 'Electronic'),
+          (-9914, NULL, '2026-01-01', 'Electronic'),
+          (-9915, NULL, '2026-01-01', 'Electronic'),
+          (-9916, NULL, '2026-01-01', 'Electronic'),
+          (-9917, NULL, '2026-01-01', 'Electronic'),
+          (-9918, NULL, '2026-01-01', NULL),
+          (-9919, NULL, '2026-01-01', 'Electronic'),
+          (-9920, NULL, '2026-01-01', 'Electronic')
   - input: ref('stg_olids_patient')
     format: sql
-    rows: >-
-      SELECT 'SYNTHETIC_PATIENT'::VARCHAR AS id, -9891::NUMBER AS person_id,
-      'SYNTHETIC_KEY'::VARCHAR AS sk_patient_id
+    rows: SELECT NULL::VARCHAR AS id, NULL::NUMBER AS sk_patient_id WHERE FALSE
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: |-
+      SELECT NULL::VARCHAR AS patient_id, NULL::VARCHAR AS medication_name, NULL::VARCHAR AS dose,
+          NULL::FLOAT AS quantity_value, NULL::VARCHAR AS quantity_unit, NULL::VARCHAR AS authorisation_type_code,
+          NULL::VARCHAR AS authorisation_type_display, NULL::VARCHAR AS issue_method, NULL::BOOLEAN AS is_active,
+          NULL::DATE AS expiry_date, NULL::NUMBER AS age_at_event, NULL::VARCHAR AS bnf_chapter,
+          NULL::VARCHAR AS bnf_section, NULL::VARCHAR AS bnf_name,
+          column1::NUMBER AS id, column2::NUMBER AS person_id, column3::DATE AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded, column5::DATE AS cancellation_date, column6::VARCHAR AS mapped_concept_code, column7::VARCHAR AS mapped_concept_display, column8::VARCHAR AS bnf_code
+      FROM VALUES (-9921, -9921, '2026-01-01', '2026-01-02', NULL, 'SYN_ZOL_BRAND', 'Synthetic authorisation', '0606020V0SYN'),
+          (-9922, -9922, '2026-01-01', '2026-01-02', '2025-12-31', 'SYN_ZOL_BRAND', 'Synthetic authorisation', '0606020V0SYN'),
+          (-9923, -9923, '2026-01-01', '2026-01-02', '2026-02-01', 'SYN_ZOL_BRAND', 'Synthetic authorisation', '0606020V0SYN'),
+          (-9924, -9911, '2026-01-01', '2026-01-02', '2026-02-01', 'SYN_ZOL_BRAND', 'Synthetic authorisation', '0606020V0SYN'),
+          (-9925, -9925, NULL, '2026-01-02', NULL, 'SYN_ZOL_BRAND', 'Synthetic authorisation', '0606020V0SYN'),
+          (-9926, -9926, '2026-01-01', '2026-01-02', NULL, 'SYN_NOT_IN_LIST', 'Synthetic authorisation', '0606020V0SYN'),
+          (-9927, -9927, '2026-01-01', '2026-01-02', NULL, 'SYN_DEN_BRAND', 'Synthetic authorisation', '0606020Z0SYN'),
+          (-9928, -9928, '2026-01-01', '2026-01-02', NULL, 'SYN_STAT_OTHER_SOURCE', 'Synthetic wrong source', '0606020Z0SYN')
   expect:
     rows:
     - record_id: '-9891'
       therapy_source: PCD_OBSERVATION
       therapy_type: ZOLEDRONIC_ACID
-      coverage_months: 12
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: true
+      is_oncology_regimen: null
+      is_outside_prescription: null
     - record_id: '-9892'
       therapy_source: PCD_OBSERVATION
       therapy_type: INTRAVENOUS_BISPHOSPHONATE
-      coverage_months: 12
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: true
+      is_oncology_regimen: null
+      is_outside_prescription: null
     - record_id: '-9893'
       therapy_source: PCD_OBSERVATION
       therapy_type: DENOSUMAB
       coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: true
+      is_oncology_regimen: null
+      is_outside_prescription: null
     - record_id: '-9894'
       therapy_source: PCD_OBSERVATION
       therapy_type: OTHER_BONE_SPARING_THERAPY
       coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: true
+      is_oncology_regimen: null
+      is_outside_prescription: null
     - record_id: '-9895'
       therapy_source: PCD_OBSERVATION
       therapy_type: OTHER_BONE_SPARING_THERAPY
       coverage_months: 6
-    - record_id: '-9891'
-      therapy_source: MEDICATION_STATEMENT
+      is_authorisation_only: false
+      has_administration_evidence: true
+      is_oncology_regimen: null
+      is_outside_prescription: null
+    - record_id: '-9911'
+      therapy_source: MEDICATION_ORDER
       therapy_type: ZOLEDRONIC_ACID
       coverage_months: 12
-    - record_id: '-9892'
-      therapy_source: MEDICATION_STATEMENT
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: false
+      is_outside_prescription: true
+    - record_id: '-9912'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: true
+      is_outside_prescription: false
+    - record_id: '-9913'
+      therapy_source: MEDICATION_ORDER
       therapy_type: DENOSUMAB
       coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: false
+      is_outside_prescription: false
+    - record_id: '-9914'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: DENOSUMAB
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: true
+      is_outside_prescription: false
+    - record_id: '-9915'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: DENOSUMAB
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: true
+      is_outside_prescription: false
+    - record_id: '-9916'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: null
+      is_outside_prescription: false
+    - record_id: '-9918'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 12
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: false
+      is_outside_prescription: null
+    - record_id: '-9921'
+      therapy_source: MEDICATION_STATEMENT
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: null
+      is_authorisation_only: true
+      has_administration_evidence: false
+      is_oncology_regimen: null
+      is_outside_prescription: null
+    - record_id: '-9927'
+      therapy_source: MEDICATION_STATEMENT
+      therapy_type: DENOSUMAB
+      coverage_months: null
+      is_authorisation_only: true
+      has_administration_evidence: false
+      is_oncology_regimen: null
+      is_outside_prescription: null
+    - record_id: '-9919'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 6
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: null
+      is_outside_prescription: false
+    - record_id: '-9920'
+      therapy_source: MEDICATION_ORDER
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 12
+      is_authorisation_only: false
+      has_administration_evidence: false
+      is_oncology_regimen: false
+      is_outside_prescription: false
