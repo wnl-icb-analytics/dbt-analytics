@@ -8,13 +8,57 @@ models:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: EGFR_COD
     columns:
       - name: id
         description: Unique identifier for each eGFR observation
-        tests:
+        data_tests:
           - unique
           - not_null
+      - name: date_recorded
+        description: >-
+          Time the observation was saved in the source system. Null when unknown.
+          Used to order results on the same clinical calendar day.
+      - name: is_eligible_egfr
+        description: >-
+          Whether this result is eligible for latest selection and CKD persistence.
+          Requires a valid eGFR and a clinical date on or before the build date,
+          excluding the 1900-01-01 missing-date sentinel. History retains ineligible results.
+
+unit_tests:
+  - name: egfr_all_eligibility_boundaries
+    model: int_egfr_all
+    given: []
+    overrides:
+      macros:
+        get_observations: |-
+          SELECT column1::VARCHAR AS id, -143890::NUMBER AS person_id,
+              column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              NULL::TIMESTAMP_NTZ AS date_recorded, column3::FLOAT AS result_value,
+              'mL/min/1.73m2'::VARCHAR AS result_unit_display,
+              'SYN_EGFR'::VARCHAR AS mapped_concept_code,
+              'Synthetic eGFR'::VARCHAR AS mapped_concept_display,
+              'EGFR_COD'::VARCHAR AS cluster_id
+          FROM VALUES
+              ('SYN_VALID_MIN', '2023-01-01', 1),
+              ('SYN_VALID_MAX', '2023-01-01', 200),
+              ('SYN_INVALID_LOW', '2023-01-01', 0),
+              ('SYN_INVALID_HIGH', '2023-01-01', 201),
+              ('SYN_SENTINEL', '1900-01-01', 50),
+              ('SYN_BUILD_DAY', DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ), 50),
+              ('SYN_FUTURE', DATEADD(day, 1, CURRENT_DATE()), 50)
+        get_empty_subquery_sql: |-
+          SELECT NULL::VARCHAR AS id, NULL::BOOLEAN AS is_valid_egfr,
+              NULL::BOOLEAN AS is_eligible_egfr WHERE FALSE
+    expect:
+      rows:
+        - {id: SYN_VALID_MIN, is_valid_egfr: true, is_eligible_egfr: true}
+        - {id: SYN_VALID_MAX, is_valid_egfr: true, is_eligible_egfr: true}
+        - {id: SYN_INVALID_LOW, is_valid_egfr: false, is_eligible_egfr: false}
+        - {id: SYN_INVALID_HIGH, is_valid_egfr: false, is_eligible_egfr: false}
+        - {id: SYN_SENTINEL, is_valid_egfr: true, is_eligible_egfr: false}
+        - {id: SYN_BUILD_DAY, is_valid_egfr: true, is_eligible_egfr: true}
+        - {id: SYN_FUTURE, is_valid_egfr: true, is_eligible_egfr: false}
