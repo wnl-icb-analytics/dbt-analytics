@@ -1,0 +1,598 @@
+unit_tests:
+- name: autism_register_counts_distinct_readings
+  model: fct_person_autism_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_autism_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_autism_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_autism_diagnoses: 3
+    - person_id: -145442
+      total_autism_diagnoses: 1
+- name: cerebral_palsy_register_counts_distinct_readings
+  model: fct_person_cerebral_palsy_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_cerebral_palsy_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_cerebral_palsy_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_cerebral_palsy_diagnoses: 3
+    - person_id: -145442
+      total_cerebral_palsy_diagnoses: 1
+- name: chronic_liver_disease_register_counts_distinct_readings
+  model: fct_person_chronic_liver_disease_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_cld_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_chronic_liver_disease_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_cld_diagnoses: 3
+    - person_id: -145442
+      total_cld_diagnoses: 1
+- name: copd_register_counts_distinct_readings
+  model: fct_person_copd_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS copd_diagnosis_count, NULL::NUMBER AS copd_disorder_code_count, NULL::NUMBER AS copd_admin_code_count, NULL::NUMBER AS total_spirometry_tests, NULL::NUMBER AS total_unable_spirometry_records WHERE FALSE
+  given:
+  - input: ref('int_copd_diagnoses_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('int_spirometry_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('dim_person_historical_practice')
+    format: sql
+    rows: |-
+      SELECT
+          NULL::NUMBER AS person_id,
+          NULL::VARCHAR AS sk_patient_id,
+          NULL::VARCHAR AS practice_id,
+          NULL::VARCHAR AS practice_code,
+          NULL::VARCHAR AS practice_name,
+          NULL::VARCHAR AS practice_type_code,
+          NULL::VARCHAR AS practice_type_desc,
+          NULL::VARCHAR AS practice_postcode,
+          NULL::VARCHAR AS practice_parent_org_id,
+          NULL::TIMESTAMP_NTZ AS practice_open_date,
+          NULL::TIMESTAMP_NTZ AS practice_close_date,
+          NULL::VARCHAR AS practice_is_obsolete,
+          NULL::TIMESTAMP_NTZ AS registration_start_date,
+          NULL::TIMESTAMP_NTZ AS registration_end_date,
+          NULL::TIMESTAMP_NTZ AS effective_end_date,
+          NULL::FLOAT AS registration_duration_days,
+          NULL::FLOAT AS registration_status,
+          NULL::FLOAT AS registration_type,
+          NULL::BOOLEAN AS is_current_registration,
+          NULL::BOOLEAN AS is_latest_registration,
+          NULL::FLOAT AS registration_sequence,
+          NULL::FLOAT AS total_registrations_count,
+          NULL::FLOAT AS gap_since_previous_registration_days,
+          NULL::BOOLEAN AS has_changed_practice,
+          NULL::TIMESTAMP_NTZ AS age_at_registration_start,
+          NULL::VARCHAR AS practitioner_id,
+          NULL::VARCHAR AS previous_practice_id,
+          NULL::VARCHAR AS previous_practice_name,
+          NULL::TIMESTAMP_NTZ AS previous_registration_end_date,
+          NULL::VARCHAR AS next_practice_id,
+          NULL::VARCHAR AS next_practice_name,
+          NULL::TIMESTAMP_NTZ AS next_registration_start_date,
+          NULL::BOOLEAN AS is_first_registration,
+          NULL::BOOLEAN AS is_last_registration
+      WHERE FALSE
+  - input: ref('int_unable_spirometry_all')
+    format: sql
+    fixture: reentered_observation_readings
+  expect:
+    rows:
+    - person_id: -145441
+      copd_diagnosis_count: 5
+      copd_disorder_code_count: 5
+      copd_admin_code_count: 0
+      total_spirometry_tests: 5
+      total_unable_spirometry_records: 5
+    - person_id: -145442
+      copd_diagnosis_count: 1
+      copd_disorder_code_count: 1
+      copd_admin_code_count: 0
+      total_spirometry_tests: 1
+      total_unable_spirometry_records: 1
+- name: familial_hypercholesterolaemia_register_counts_distinct_readings
+  model: fct_person_familial_hypercholesterolaemia_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_fh_episodes WHERE FALSE
+  given:
+  - input: ref('int_familial_hypercholesterolaemia_diagnoses_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_fh_episodes: 5
+    - person_id: -145442
+      total_fh_episodes: 1
+- name: frailty_register_counts_distinct_readings
+  model: fct_person_frailty_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_frailty_diagnoses, NULL::NUMBER AS mild_frailty_count, NULL::NUMBER AS moderate_frailty_count, NULL::NUMBER AS severe_frailty_count WHERE FALSE
+  given:
+  - input: ref('int_frailty_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_frailty_diagnoses: 3
+      mild_frailty_count: 3
+      moderate_frailty_count: 0
+      severe_frailty_count: 0
+    - person_id: -145442
+      total_frailty_diagnoses: 1
+      mild_frailty_count: 1
+      moderate_frailty_count: 0
+      severe_frailty_count: 0
+- name: gestational_diabetes_register_counts_distinct_readings
+  model: fct_person_gestational_diabetes_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_gestational_diabetes_episodes WHERE FALSE
+  given:
+  - input: ref('int_gestational_diabetes_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_gestational_diabetes_episodes: 3
+    - person_id: -145442
+      total_gestational_diabetes_episodes: 1
+- name: hypothyroidism_register_counts_distinct_readings
+  model: fct_person_hypothyroidism_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_hypothyroidism_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_hypothyroidism_diagnoses_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_hypothyroidism_diagnoses: 5
+    - person_id: -145442
+      total_hypothyroidism_diagnoses: 1
+- name: mnd_register_counts_distinct_readings
+  model: fct_person_mnd_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_mnd_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_mnd_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_mnd_diagnoses: 3
+    - person_id: -145442
+      total_mnd_diagnoses: 1
+- name: ms_register_counts_distinct_readings
+  model: fct_person_ms_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_ms_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_ms_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_ms_diagnoses: 3
+    - person_id: -145442
+      total_ms_diagnoses: 1
+- name: nafld_register_counts_distinct_readings
+  model: fct_person_nafld_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_nafld_episodes WHERE FALSE
+  given:
+  - input: ref('int_nafld_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_nafld_episodes: 3
+    - person_id: -145442
+      total_nafld_episodes: 1
+- name: ndh_register_counts_distinct_readings
+  model: fct_person_ndh_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_ndh_episodes, NULL::NUMBER AS total_igt_episodes, NULL::NUMBER AS total_prd_episodes WHERE FALSE
+  given:
+  - input: ref('int_ndh_diagnoses_all')
+    format: sql
+    fixture: ndh_reentered_observation_readings
+  - input: ref('int_diabetes_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT
+          NULL::VARCHAR AS id,
+          NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::BOOLEAN AS is_general_diabetes_code,
+          NULL::BOOLEAN AS is_type1_diabetes_code,
+          NULL::BOOLEAN AS is_type2_diabetes_code,
+          NULL::BOOLEAN AS is_diabetes_resolved_code,
+          NULL::BOOLEAN AS is_diagnosis_code,
+          NULL::BOOLEAN AS is_resolved_code,
+          NULL::VARCHAR AS diabetes_observation_type
+      WHERE FALSE
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_ndh_episodes: 10
+      total_igt_episodes: 0
+      total_prd_episodes: 0
+    - person_id: -145442
+      total_ndh_episodes: 1
+      total_igt_episodes: 0
+      total_prd_episodes: 0
+- name: osteoarthritis_register_counts_distinct_readings
+  model: fct_person_osteoarthritis_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_osteoarthritis_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_osteoarthritis_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_osteoarthritis_diagnoses: 3
+    - person_id: -145442
+      total_osteoarthritis_diagnoses: 1
+- name: osteoporosis_register_counts_distinct_readings
+  model: fct_person_osteoporosis_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_osteoporosis_episodes WHERE FALSE
+  given:
+  - input: ref('int_osteoporosis_diagnoses_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('int_dxa_scans_all')
+    format: sql
+    rows: |-
+      SELECT
+          NULL::NUMBER AS person_id,
+          NULL::VARCHAR AS id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS numeric_value,
+          NULL::BOOLEAN AS is_dxa_scan_procedure,
+          NULL::BOOLEAN AS is_dxa_t_score_measurement,
+          NULL::TIMESTAMP_NTZ AS validated_t_score,
+          NULL::FLOAT AS t_score_interpretation,
+          NULL::BOOLEAN AS confirms_osteoporosis_diagnosis
+      WHERE FALSE
+  - input: ref('int_fragility_fractures_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 80::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_osteoporosis_episodes: 5
+    - person_id: -145442
+      total_osteoporosis_episodes: 1
+- name: pad_register_counts_distinct_readings
+  model: fct_person_pad_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_pad_episodes WHERE FALSE
+  given:
+  - input: ref('int_pad_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  expect:
+    rows:
+    - person_id: -145441
+      total_pad_episodes: 3
+    - person_id: -145442
+      total_pad_episodes: 1
+- name: palliative_care_register_counts_distinct_readings
+  model: fct_person_palliative_care_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_palliative_care_episodes, NULL::NUMBER AS total_no_longer_indicated_episodes WHERE FALSE
+  given:
+  - input: ref('int_palliative_care_diagnoses_all')
+    format: sql
+    fixture: palliative_reentered_observation_readings
+  expect:
+    rows:
+    - person_id: -145441
+      total_palliative_care_episodes: 5
+      total_no_longer_indicated_episodes: 4
+    - person_id: -145442
+      total_palliative_care_episodes: 1
+      total_no_longer_indicated_episodes: 0
+- name: parkinsons_register_counts_distinct_readings
+  model: fct_person_parkinsons_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_parkinsons_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_parkinsons_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_parkinsons_diagnoses: 3
+    - person_id: -145442
+      total_parkinsons_diagnoses: 1
+- name: qof_ndh_gdm_register_counts_distinct_readings
+  model: fct_person_qof_ndh_gdm_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_ndh_episodes, NULL::NUMBER AS total_igt_episodes, NULL::NUMBER AS total_prd_episodes, NULL::NUMBER AS total_gestational_diabetes_episodes WHERE FALSE
+  given:
+  - input: ref('int_ndh_diagnoses_all')
+    format: sql
+    fixture: ndh_reentered_observation_readings
+  - input: ref('int_gestational_diabetes_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT
+          NULL::VARCHAR AS id,
+          NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::BOOLEAN AS is_diagnosis_code
+      WHERE FALSE
+  - input: ref('int_diabetes_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT
+          NULL::VARCHAR AS id,
+          NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::BOOLEAN AS is_general_diabetes_code,
+          NULL::BOOLEAN AS is_type1_diabetes_code,
+          NULL::BOOLEAN AS is_type2_diabetes_code,
+          NULL::BOOLEAN AS is_diabetes_resolved_code,
+          NULL::BOOLEAN AS is_diagnosis_code,
+          NULL::BOOLEAN AS is_resolved_code,
+          NULL::VARCHAR AS diabetes_observation_type
+      WHERE FALSE
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_ndh_episodes: 10
+      total_igt_episodes: 0
+      total_prd_episodes: 0
+      total_gestational_diabetes_episodes: 0
+    - person_id: -145442
+      total_ndh_episodes: 1
+      total_igt_episodes: 0
+      total_prd_episodes: 0
+      total_gestational_diabetes_episodes: 0
+- name: rheumatoid_arthritis_register_counts_distinct_readings
+  model: fct_person_rheumatoid_arthritis_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_ra_episodes WHERE FALSE
+  given:
+  - input: ref('int_rheumatoid_arthritis_diagnoses_all')
+    format: sql
+    fixture: reentered_observation_readings
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_ra_episodes: 5
+    - person_id: -145442
+      total_ra_episodes: 1
+- name: sickle_cell_register_counts_distinct_readings
+  model: fct_person_sickle_cell_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_sickle_cell_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_diagnoses: 3
+    - person_id: -145442
+      total_diagnoses: 1
+- name: stroke_tia_register_counts_distinct_readings
+  model: fct_person_stroke_tia_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_stroke_tia_episodes WHERE FALSE
+  given:
+  - input: ref('int_stroke_tia_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  expect:
+    rows:
+    - person_id: -145441
+      total_stroke_tia_episodes: 3
+    - person_id: -145442
+      total_stroke_tia_episodes: 1
+- name: thalassaemia_register_counts_distinct_readings
+  model: fct_person_thalassaemia_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_thalassaemia_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_diagnoses: 3
+    - person_id: -145442
+      total_diagnoses: 1

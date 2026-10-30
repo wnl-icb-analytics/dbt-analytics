@@ -44,7 +44,7 @@ WITH osteoarthritis_diagnoses AS (
         FALSE) AS has_active_osteoarthritis_diagnosis,
 
         -- Count of osteoarthritis diagnoses
-        COUNT(CASE WHEN is_diagnosis_code THEN 1 END)
+        COUNT(DISTINCT IFF(is_diagnosis_code, {{ observation_reading_key(value=none) }}, NULL))
             AS total_osteoarthritis_diagnoses,
 
         -- Traceability arrays

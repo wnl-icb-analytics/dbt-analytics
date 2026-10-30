@@ -10,11 +10,14 @@ models:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: SMEAR_COD,CSPU_COD,CSDEC_COD,CSPCAINVITE_COD,NOCX_COD
             source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
     columns:
       - name: id
         description: 'Unique identifier for the observation'
@@ -25,6 +28,8 @@ models:
         description: 'Unique identifier for the person'
       - name: clinical_effective_date
         description: 'Date when the screening observation was recorded'
+      - name: result_value
+        description: Original numeric result; null for a value-free event. Used to distinguish repeated readings.
       - name: concept_code
         description: 'Mapped clinical concept code'
       - name: concept_display

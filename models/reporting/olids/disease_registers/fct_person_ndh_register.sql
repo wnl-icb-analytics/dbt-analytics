@@ -31,11 +31,11 @@ WITH ndh_diagnoses AS (
             THEN clinical_effective_date END) AS earliest_prd_date,
         MAX(CASE WHEN is_pre_diabetes_diagnosis_code
             THEN clinical_effective_date END) AS latest_prd_date,
-        COUNT(CASE WHEN is_ndh_diagnosis_code THEN 1 END)
+        COUNT(DISTINCT IFF(is_ndh_diagnosis_code, {{ observation_reading_key(record_context='source_patient_id') }}, NULL))
             AS total_ndh_episodes,
-        COUNT(CASE WHEN is_igt_diagnosis_code THEN 1 END)
+        COUNT(DISTINCT IFF(is_igt_diagnosis_code, {{ observation_reading_key(record_context='source_patient_id') }}, NULL))
             AS total_igt_episodes,
-        COUNT(CASE WHEN is_pre_diabetes_diagnosis_code THEN 1 END)
+        COUNT(DISTINCT IFF(is_pre_diabetes_diagnosis_code, {{ observation_reading_key(record_context='source_patient_id') }}, NULL))
             AS total_prd_episodes,
         MAX(is_ndh_diagnosis_code) AS has_ndh_diagnosis,
         MAX(is_igt_diagnosis_code) AS has_igt_diagnosis,

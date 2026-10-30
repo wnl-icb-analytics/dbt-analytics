@@ -1,14 +1,17 @@
 models:
   - name: fct_person_autism_register
-    description: >-
+    description: >
       Coded autism register (NICE IND175). One row per register member.
-
 
       Registration status is not filtered. People with a coded autism diagnosis qualify at any
       age, without a resolution rule. Future-dated diagnoses can qualify. Coded records do not
       verify assessment against ICD-10 or DSM-V criteria or assessment by an autism team. For
       NICE counts, select people registered on the build date. Based on NICE CG142 and CG128.
       Code lists: AUTISM_COD (PCD).
+
+      Observation counts include each person, concept, clinical calendar date and recorded
+      value once, including value-free entries. Register membership and first/last dates use
+      the full evidence history. Missing clinical days keep separate observation ids.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id

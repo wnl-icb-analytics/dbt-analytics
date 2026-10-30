@@ -29,7 +29,7 @@ WITH sickle_cell_diagnoses AS (
             CASE WHEN is_diagnosis_code THEN clinical_effective_date END
         ) IS NOT NULL, FALSE) AS has_active_diagnosis,
 
-        COUNT(CASE WHEN is_diagnosis_code THEN 1 END) AS total_diagnoses,
+        COUNT(DISTINCT IFF(is_diagnosis_code, {{ observation_reading_key(value=none) }}, NULL)) AS total_diagnoses,
 
         ARRAY_AGG(DISTINCT CASE WHEN is_diagnosis_code THEN concept_code END)
             AS all_concept_codes,

@@ -8,6 +8,7 @@ SELECT
     obs.id,
     obs.person_id,
     obs.clinical_effective_date,
+    obs.result_value,
     obs.date_recorded,
     obs.clinical_effective_date_raw,
     obs.mapped_concept_code AS concept_code,

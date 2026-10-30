@@ -16,6 +16,7 @@ WITH base_observations AS (
         obs.id,
         obs.person_id,
         obs.clinical_effective_date,
+        obs.date_recorded,
         -- Handle extreme values gracefully - cap at reasonable HbA1c ranges
         CASE 
             WHEN TRY_CAST(obs.result_value AS FLOAT) > 1000 THEN NULL  -- Likely data error
@@ -105,6 +106,7 @@ SELECT
     person_id,
     ID,
     clinical_effective_date,
+    date_recorded,
     hba1c_original_value,
     hba1c_ifcc,
     hba1c_dcct,

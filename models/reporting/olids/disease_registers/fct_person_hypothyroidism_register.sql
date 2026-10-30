@@ -38,7 +38,7 @@ WITH hypothyroidism_diagnoses AS (
         FALSE) AS has_active_hypothyroidism_diagnosis,
 
         -- Count of hypothyroidism diagnoses
-        COUNT(CASE WHEN is_diagnosis_code THEN 1 END)
+        COUNT(DISTINCT IFF(is_diagnosis_code, {{ observation_reading_key() }}, NULL))
             AS total_hypothyroidism_diagnoses,
 
         -- Traceability arrays

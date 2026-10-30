@@ -38,7 +38,7 @@ WITH fh_diagnoses AS (
             AS latest_diagnosis_date,
 
         -- Episode counts
-        COUNT(CASE WHEN is_diagnosis_code THEN 1 END) AS total_fh_episodes,
+        COUNT(DISTINCT IFF(is_diagnosis_code, {{ observation_reading_key() }}, NULL)) AS total_fh_episodes,
 
         -- Concept code arrays for traceability
         ARRAY_AGG(DISTINCT CASE WHEN is_diagnosis_code THEN concept_code END)

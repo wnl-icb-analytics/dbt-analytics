@@ -62,7 +62,6 @@ WITH person_demographics AS (
         END AS screening_interval_months
         
     FROM {{ ref('dim_person_demographics') }} dpa
-    -- LEFT JOIN {{ ref('dim_person_gender') }} dps ON dpa.person_id = dps.person_id
     WHERE dpa.gender = 'Female'  -- Only include women
         AND dpa.age BETWEEN 25 AND 64  -- Only include eligible age range
 ),
@@ -78,16 +77,16 @@ screening_history AS (
         MAX(CASE WHEN is_non_response_screening THEN clinical_effective_date END) AS latest_non_response_date,
         
         -- Counts by type
-        COUNT(CASE WHEN is_completed_screening THEN 1 END) AS total_completed_screenings,
-        COUNT(CASE WHEN is_unsuitable_screening THEN 1 END) AS total_unsuitable_records,
-        COUNT(CASE WHEN is_declined_screening THEN 1 END) AS total_declined_records,
-        COUNT(CASE WHEN is_non_response_screening THEN 1 END) AS total_non_response_records,
+        COUNT(DISTINCT IFF(is_completed_screening, {{ observation_reading_key() }}, NULL)) AS total_completed_screenings,
+        COUNT(DISTINCT IFF(is_unsuitable_screening, {{ observation_reading_key() }}, NULL)) AS total_unsuitable_records,
+        COUNT(DISTINCT IFF(is_declined_screening, {{ observation_reading_key() }}, NULL)) AS total_declined_records,
+        COUNT(DISTINCT IFF(is_non_response_screening, {{ observation_reading_key() }}, NULL)) AS total_non_response_records,
         MIN(CASE WHEN is_cervix_removal THEN clinical_effective_date END) AS first_cervix_removal_date,
         
         -- Overall screening history
         MIN(clinical_effective_date) AS earliest_screening_date,
         MAX(clinical_effective_date) AS latest_screening_date,
-        COUNT(*) AS total_screening_observations
+        COUNT(DISTINCT {{ observation_reading_key() }}) AS total_screening_observations
         
     FROM {{ ref('int_cervical_screening_all') }}
     GROUP BY person_id

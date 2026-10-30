@@ -40,6 +40,7 @@ WITH eligible_copd_evidence AS (
         d.person_id,
         d.clinical_effective_date AS evidence_date,
         d.ID,
+        d.result_value,
         d.concept_code,
         d.concept_display,
         d.source_cluster_id,
@@ -77,9 +78,9 @@ person_evidence_aggregates AS (
         person_id,
         MIN(evidence_date) AS copdear_dat,
         MAX(evidence_date) AS latest_evidence_date,
-        COUNT(DISTINCT ID) AS copd_diagnosis_count,
-        COUNT(DISTINCT CASE WHEN is_disorder_code THEN ID END) AS copd_disorder_code_count,
-        COUNT(DISTINCT CASE WHEN is_admin_code THEN ID END) AS copd_admin_code_count,
+        COUNT(DISTINCT {{ observation_reading_key(clinical_date='evidence_date') }}) AS copd_diagnosis_count,
+        COUNT(DISTINCT IFF(is_disorder_code, {{ observation_reading_key(clinical_date='evidence_date') }}, NULL)) AS copd_disorder_code_count,
+        COUNT(DISTINCT IFF(is_admin_code, {{ observation_reading_key(clinical_date='evidence_date') }}, NULL)) AS copd_admin_code_count,
         MAX(age) AS current_age,
         ARRAY_AGG(DISTINCT concept_code) AS all_copd_concept_codes,
         ARRAY_AGG(DISTINCT concept_display) AS all_copd_concept_displays
@@ -136,8 +137,11 @@ qof_field_calculations_extended AS (
 spirometry_tests AS (
     -- All spirometry tests with proper QOF field mapping
     SELECT
+        id,
         person_id,
         clinical_effective_date AS spirometry_date,
+        concept_code,
+        original_result_value AS result_value,
         fev1_fvc_ratio,
         is_below_0_7,
         is_valid_spirometry,
@@ -300,7 +304,7 @@ latest_spirometry_all AS (
     SELECT
         person_id,
         MAX(spirometry_date) AS latest_spirometry_date,
-        COUNT(*) AS total_spirometry_tests
+        COUNT(DISTINCT {{ observation_reading_key(clinical_date='spirometry_date') }}) AS total_spirometry_tests
     FROM spirometry_tests
     WHERE is_valid_spirometry = TRUE
     GROUP BY person_id
@@ -328,7 +332,7 @@ unable_spirometry_summary AS (
     SELECT
         person_id,
         MAX(clinical_effective_date) AS latest_unable_spirometry_date,
-        COUNT(*) AS total_unable_spirometry_records
+        COUNT(DISTINCT {{ observation_reading_key() }}) AS total_unable_spirometry_records
     FROM {{ ref('int_unable_spirometry_all') }}
     WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id

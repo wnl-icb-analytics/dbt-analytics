@@ -27,6 +27,7 @@
             ref_date.reference_date,
             diag.person_id,
             diag.id,
+            diag.concept_code,
             diag.clinical_effective_date,
             diag.is_diagnosis_code,
             diag.frailty_severity
@@ -59,9 +60,9 @@
             MIN(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS earliest_diagnosis_date,
             MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS latest_diagnosis_date,
             -- Severity-specific counts
-            COUNT(CASE WHEN frailty_severity = 'Mild' THEN 1 END) AS mild_frailty_count,
-            COUNT(CASE WHEN frailty_severity = 'Moderate' THEN 1 END) AS moderate_frailty_count,
-            COUNT(CASE WHEN frailty_severity = 'Severe' THEN 1 END) AS severe_frailty_count
+            COUNT(DISTINCT IFF(frailty_severity = 'Mild', {{ observation_reading_key(value=none) }}, NULL)) AS mild_frailty_count,
+            COUNT(DISTINCT IFF(frailty_severity = 'Moderate', {{ observation_reading_key(value=none) }}, NULL)) AS moderate_frailty_count,
+            COUNT(DISTINCT IFF(frailty_severity = 'Severe', {{ observation_reading_key(value=none) }}, NULL)) AS severe_frailty_count
         FROM frailty_diagnoses_filtered
         GROUP BY reference_date, person_id
     )

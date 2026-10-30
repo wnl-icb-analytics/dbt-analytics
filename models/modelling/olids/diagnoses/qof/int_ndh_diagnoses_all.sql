@@ -33,6 +33,8 @@ SELECT
     obs.id,
     obs.person_id,
     obs.clinical_effective_date,
+    obs.result_value,
+    obs.patient_id::VARCHAR AS source_patient_id,
     obs.date_recorded,
     obs.mapped_concept_code AS concept_code,
     obs.mapped_concept_display AS concept_display,

@@ -53,7 +53,7 @@ alcohol_disorders AS (
         -- Basic flags without interpretation
         BOOLOR_AGG(is_problem = TRUE AND (problem_end_date IS NULL OR problem_end_date > CURRENT_DATE())) AS has_active_disorder,
         
-        COUNT(DISTINCT ID) AS disorder_record_count
+        COUNT(DISTINCT {{ observation_reading_key() }}) AS disorder_record_count
     FROM {{ ref('int_alcohol_misuse_disorders') }}
     GROUP BY person_id
 ),

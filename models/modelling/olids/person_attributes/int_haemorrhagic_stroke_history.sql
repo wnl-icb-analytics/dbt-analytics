@@ -10,7 +10,7 @@ SELECT
     person_id,
     MIN(clinical_effective_date_raw::DATE) AS earliest_recorded_date,
     BOOLOR_AGG(clinical_effective_date_raw IS NULL) AS has_undated_record,
-    COUNT(*) AS record_count
+    COUNT(DISTINCT {{ observation_reading_key(value=none) }}) AS record_count
 FROM {{ ref('int_haemorrhagic_stroke_diagnoses_all') }}
 WHERE clinical_effective_date_raw IS NULL
     OR clinical_effective_date_raw::DATE <= CURRENT_DATE()
