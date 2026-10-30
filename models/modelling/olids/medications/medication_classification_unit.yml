@@ -144,13 +144,18 @@ unit_tests:
     format: sql
     rows: |-
       select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
-       current_date()::date clinical_effective_date, '10'::varchar bnf_chapter, '1001'::varchar bnf_section,
+       current_date()::date clinical_effective_date, left(v.bnf,2)::varchar bnf_chapter, left(v.bnf,4)::varchar bnf_section,
        v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
        null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
        null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
        null::number estimated_cost, null::varchar statement_medication_name,
        v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
-       from (values ('SYN_ONE','SYN_ONE','100101SYN'),('SYN_TWO','SYN_TWO','100101SYN'),('SYN_THREE','SYN_THREE','100101SYN'),('SYN_FOUR','SYN_FOUR','100101SYN')) v(id,code,bnf)
+       from (values ('SYN_ONE','SYN_ONE','100101SYN'),('SYN_TWO','SYN_TWO','1001010ASYN'),
+       ('SYN_THREE','SYN_THREE','100101SYN'),('SYN_FOUR','SYN_FOUR','100101SYN'),
+       ('SYN_IBUPROFEN_LYSINE','SYN_IBUPROFEN_LYSINE','1001010ASYN'),
+       ('SYN_DICLOFENAC','SYN_DICLOFENAC','1001010ASYN'),
+       ('SYN_TOPICAL','SYN_TOPICAL','100302SYN'),
+       ('SYN_OTHER_RHEUM','SYN_OTHER_RHEUM','100103SYN')) v(id,code,bnf)
   - input: ref('stg_olids_patient')
     format: sql
     rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
@@ -158,7 +163,9 @@ unit_tests:
     format: sql
     rows: >-
       select code::varchar product_code,vtm::varchar vtm_id from (values
-      ('SYN_ONE','775123001'),('SYN_TWO','SYN_MELOXICAM'),('SYN_FOUR','370187009')) v(code,vtm)
+      ('SYN_ONE','775123001'),('SYN_TWO','SYN_MELOXICAM'),('SYN_FOUR','370187009'),
+      ('SYN_IBUPROFEN_LYSINE','SYN_IBUPROFEN_LYSINE'),
+      ('SYN_DICLOFENAC','SYN_DICLOFENAC')) v(code,vtm)
   expect:
     rows:
     - medication_order_id: SYN_ONE
@@ -177,6 +184,14 @@ unit_tests:
       nsaid_type: COX2_SELECTIVE
       is_cox2_selective: true
       is_non_selective: false
+    - medication_order_id: SYN_IBUPROFEN_LYSINE
+      nsaid_type: NON_SELECTIVE
+      is_cox2_selective: false
+      is_non_selective: true
+    - medication_order_id: SYN_DICLOFENAC
+      nsaid_type: NON_SELECTIVE
+      is_cox2_selective: false
+      is_non_selective: true
   overrides:
     macros:
       get_empty_subquery_sql: >-
@@ -240,7 +255,10 @@ unit_tests:
        null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
        null::number estimated_cost, null::varchar statement_medication_name,
        v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
-       from (values ('SYN_ONE','SYN_ONE','060302SYN'),('SYN_TWO','SYN_TWO','060302SYN'),('SYN_THREE','SYN_THREE','060302SYN')) v(id,code,bnf)
+       from (values ('SYN_ONE','SYN_ONE','060301SYN'),('SYN_TWO','SYN_TWO','060302SYN'),
+       ('SYN_THREE','SYN_THREE','060302SYN'),('SYN_PREVIOUS','SYN_PREVIOUS','060301SYN'),
+       ('SYN_GLUC_REPLACEMENT','SYN_GLUC_REPLACEMENT','060301SYN'),
+       ('SYN_FLUDRO_OTHER_BNF','SYN_FLUDRO_OTHER_BNF','060302SYN')) v(id,code,bnf)
   - input: ref('stg_olids_patient')
     format: sql
     rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
@@ -248,22 +266,44 @@ unit_tests:
     format: sql
     rows: >-
       select code::varchar product_code,vtm::varchar vtm_id from (values
-      ('SYN_ONE','775983003'),('SYN_TWO','SYN_PREDNISOLONE')) v(code,vtm)
+      ('SYN_ONE','775983003'),('SYN_TWO','SYN_PREDNISOLONE'),('SYN_PREVIOUS','89192008'),
+      ('SYN_GLUC_REPLACEMENT','SYN_HYDROCORTISONE'),('SYN_FLUDRO_OTHER_BNF','775983003')) v(code,vtm)
   expect:
     rows:
     - medication_order_id: SYN_ONE
+      corticosteroid_type: MINERALOCORTICOID
+      is_anti_inflammatory: false
       corticosteroid_type_dmd: MINERALOCORTICOID
       is_mineralocorticoid: true
     - medication_order_id: SYN_TWO
+      corticosteroid_type: GLUCOCORTICOID
+      is_anti_inflammatory: true
       corticosteroid_type_dmd: GLUCOCORTICOID
       is_mineralocorticoid: false
     - medication_order_id: SYN_THREE
+      corticosteroid_type: UNKNOWN
+      is_anti_inflammatory: null
       corticosteroid_type_dmd: UNKNOWN
       is_mineralocorticoid: null
+    - medication_order_id: SYN_PREVIOUS
+      corticosteroid_type: MINERALOCORTICOID
+      is_anti_inflammatory: false
+      corticosteroid_type_dmd: MINERALOCORTICOID
+      is_mineralocorticoid: true
+    - medication_order_id: SYN_GLUC_REPLACEMENT
+      corticosteroid_type: GLUCOCORTICOID
+      corticosteroid_type_dmd: GLUCOCORTICOID
+      is_mineralocorticoid: false
+      is_anti_inflammatory: true
+    - medication_order_id: SYN_FLUDRO_OTHER_BNF
+      corticosteroid_type: MINERALOCORTICOID
+      corticosteroid_type_dmd: MINERALOCORTICOID
+      is_mineralocorticoid: true
+      is_anti_inflammatory: false
   overrides:
     macros:
       get_empty_subquery_sql: >-
-        select null::varchar medication_order_id,null::varchar corticosteroid_type_dmd,null::boolean
+        select null::varchar medication_order_id,null::varchar corticosteroid_type,null::boolean is_anti_inflammatory,null::varchar corticosteroid_type_dmd,null::boolean
         is_mineralocorticoid where false
 - name: valproate_formulation_from_dmd
   model: int_valproate_medications_all
@@ -345,29 +385,54 @@ unit_tests:
     format: sql
     rows: |-
       select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
-       current_date()::date clinical_effective_date, '02'::varchar bnf_chapter, '0208'::varchar bnf_section,
-       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
-       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
-       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
-       null::number estimated_cost, null::varchar statement_medication_name,
-       v.id::varchar mapped_concept_code, null::varchar mapped_concept_display
-       from (values ('SYN_DOAC','020802SYN'),('SYN_VKA','020802SYN'),('SYN_OUT','0208020ZSYN'),('SYN_WRONG','020802SYN')) v(id,bnf)
-  - input: ref('stg_olids_patient')
-    format: sql
-    rows: |-
-      select 'SYN_PAT'::varchar id,-9200::number person_id,null::varchar sk_patient_id
+       current_date()::date clinical_effective_date, left(v.bnf,2)::varchar bnf_chapter,
+       left(v.bnf,4)::varchar bnf_section, v.bnf::varchar bnf_code,
+       null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded,
+       null::varchar dose, null::number quantity_value,
+       null::varchar quantity_unit, null::number duration_days, null::number estimated_cost,
+       null::varchar statement_medication_name, v.id::varchar mapped_concept_code,
+       null::varchar mapped_concept_display
+      from (values ('SYN_DOAC','020802SYN'),('SYN_VKA','020802SYN'),
+       ('SYN_STRIP','0208020SSYN'),('SYN_PENTOSAN','0208020PSYN'),
+       ('SYN_WRONG','020802SYN'),('SYN_RIVAROXABAN_GAP','0208020Y0SYN'),
+       ('SYN_APIXABAN_GAP','0208020Z0SYN'),('SYN_EDOXABAN_GAP','0208020AASYN'),
+       ('SYN_DABIGATRAN_GAP','0208020X0SYN'),('SYN_WARFARIN_GAP','0208020V0SYN'),
+       ('SYN_PHENPROCOUMON_GAP','0208020S0SYN'),
+       ('SYN_PHENINDIONE_GAP','0208020N0SYN'),('SYN_ACENOCOUMAROL_GAP','0208020H0SYN'),
+       ('SYN_LISTED_OVERRIDES_BNF','0208020V0SYN'),
+       ('SYN_LISTED_OUTSIDE_BNF','010305SYN')) v(id,bnf)
   - input: ref('stg_reference_combined_codesets')
     format: sql
     rows: |-
-      select code::varchar code, cluster::varchar cluster_id, src::varchar source, 'Synthetic list'::varchar cluster_description from (values ('SYN_DOAC','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','OPENCODELISTS'),('SYN_VKA','NHS_DRUG_REFSETS/VITKANTAGDRUG_COD','OPENCODELISTS'),('SYN_WRONG','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','ECL_CACHE')) v(code,cluster,src)
+      select code::varchar code, cluster::varchar cluster_id, src::varchar source,
+       'Synthetic list'::varchar cluster_description
+      from (values
+       ('SYN_DOAC','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','OPENCODELISTS'),
+       ('SYN_DOAC','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','OPENCODELISTS'),
+       ('SYN_VKA','NHS_DRUG_REFSETS/VITKANTAGDRUG_COD','OPENCODELISTS'),
+       ('SYN_WRONG','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','ECL_CACHE'),
+       ('SYN_LISTED_OVERRIDES_BNF','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','OPENCODELISTS'),
+       ('SYN_LISTED_OUTSIDE_BNF','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','OPENCODELISTS')) v(code,cluster,src)
   expect:
     format: sql
     rows: |-
-      select column1::varchar medication_order_id,column2::boolean is_in_national_anticoagulant_list,column3::varchar anticoagulant_type_national from values ('SYN_DOAC',true,'DOAC'),('SYN_VKA',true,'VKA'),('SYN_OUT',false,null),('SYN_WRONG',false,null)
+      select column1::varchar medication_order_id,column2::boolean is_in_national_anticoagulant_list,
+       column3::varchar anticoagulant_type_national,column4::varchar anticoagulant_type,
+       (column4='DOAC')::boolean is_doac,(column4='VKA')::boolean is_vka
+      from values ('SYN_DOAC',true,'DOAC','DOAC'),('SYN_VKA',true,'VKA','VKA'),
+       ('SYN_RIVAROXABAN_GAP',false,null,'DOAC'),('SYN_APIXABAN_GAP',false,null,'DOAC'),
+       ('SYN_EDOXABAN_GAP',false,null,'DOAC'),('SYN_DABIGATRAN_GAP',false,null,'DOAC'),
+       ('SYN_WARFARIN_GAP',false,null,'VKA'),('SYN_PHENPROCOUMON_GAP',false,null,'VKA'),
+       ('SYN_PHENINDIONE_GAP',false,null,'VKA'),('SYN_ACENOCOUMAROL_GAP',false,null,'VKA'),
+       ('SYN_LISTED_OVERRIDES_BNF',true,'DOAC','DOAC'),
+       ('SYN_LISTED_OUTSIDE_BNF',true,'DOAC','DOAC')
   overrides:
     macros:
       get_empty_subquery_sql: >-
-        select null::varchar as medication_order_id, null::boolean as is_in_national_anticoagulant_list, null::varchar as anticoagulant_type_national where false
+        select null::varchar medication_order_id,null::boolean is_in_national_anticoagulant_list,
+        null::varchar anticoagulant_type_national,null::varchar anticoagulant_type,
+        null::boolean is_doac,null::boolean is_vka where false
 
 - name: arb_national_list_defines_scope
   model: int_arb_medications_all

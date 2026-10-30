@@ -1,0 +1,39 @@
+unit_tests:
+  - name: diuretic_bnf_scope_includes_only_in_section_combinations
+    model: int_diuretic_medications_all
+    given:
+      - input: ref('stg_olids_medication_order')
+        format: sql
+        rows: |-
+          select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9233::number person_id,
+              '2026-01-15'::date clinical_effective_date,
+              left(v.bnf, 2)::varchar bnf_chapter, left(v.bnf, 4)::varchar bnf_section,
+              v.bnf::varchar bnf_code, null::varchar bnf_name,
+              null::varchar medication_statement_id, null::varchar medication_name,
+              null::timestamp_ntz date_recorded, null::varchar dose,
+              null::number quantity_value, null::varchar quantity_unit,
+              null::number duration_days, null::number estimated_cost,
+              null::varchar statement_medication_name,
+              v.id::varchar mapped_concept_code, null::varchar mapped_concept_display
+          from (values
+              ('SYN_THIAZIDE', '020201SYN'),
+              ('SYN_COMBINATION', '020204SYN'),
+              ('SYN_COMBINATION_SAME_DAY', '020204SYN'),
+              ('SYN_ACE_COMBINATION', '0205051SYN'),
+              ('SYN_OTHER_SECTION', '020301SYN')
+          ) v(id, bnf)
+      - input: ref('stg_olids_patient')
+        format: sql
+        rows: select 'SYN_PAT'::varchar id, -9233::number person_id, null::number sk_patient_id
+    expect:
+      rows:
+        - medication_order_id: SYN_THIAZIDE
+          diuretic_type: THIAZIDE_RELATED
+        - medication_order_id: SYN_COMBINATION
+          diuretic_type: POTASSIUM_SPARING_WITH_THIAZIDE
+        - medication_order_id: SYN_COMBINATION_SAME_DAY
+          diuretic_type: POTASSIUM_SPARING_WITH_THIAZIDE
+    overrides:
+      macros:
+        get_empty_subquery_sql: >-
+          select null::varchar medication_order_id, null::varchar diuretic_type where false

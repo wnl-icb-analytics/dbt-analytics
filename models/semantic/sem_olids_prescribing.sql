@@ -240,8 +240,8 @@ DIMENSIONS(
     statins.is_statin AS is_statin COMMENT = 'Whether a BNF 2.12 order contains a statin. Only for BNF 2.12 orders.',
 
     -- Anticoagulant classification (only populated for anticoagulant orders)
-    anticoagulants.anticoagulant_type AS anticoagulant_type COMMENT = 'Anticoagulant type (DOAC, VKA, Other). Only for anticoagulant orders.',
-    anticoagulants.is_doac AS is_doac COMMENT = 'Direct oral anticoagulant. Only for anticoagulant orders.',
+    anticoagulants.anticoagulant_type AS anticoagulant_type COMMENT = 'DOAC or VKA, using national membership then the retained BNF chemical. Null outside anticoagulant orders.',
+    anticoagulants.is_doac AS is_doac COMMENT = 'DOAC class, using national membership then the retained BNF chemical. Null outside anticoagulant orders.',
 
     -- Valproate classification (only populated for valproate orders — clinical safety)
     valproate.valproate_product_type AS valproate_product_type COMMENT = 'Valproate type (SODIUM_VALPROATE, VALPROIC_ACID, EPILIM, DEPAKOTE). Only for valproate orders.',

@@ -42,15 +42,7 @@ SELECT
          WHEN base_orders.is_cox2_selective THEN 'COX2_SELECTIVE'
          ELSE 'NON_SELECTIVE' END AS nsaid_type,
     base_orders.is_cox2_selective,
-    FALSE AS is_topical,
     NOT base_orders.is_cox2_selective AS is_non_selective,
-
-    -- Legacy BNF rule retained until the held column removal; not a validated CV risk measure.
-    CASE
-        WHEN base_orders.bnf_code LIKE '1001010A%' THEN TRUE
-        ELSE FALSE
-    END AS is_high_cv_risk,
-
 
     -- Order recency flags
     {{ medication_date_flags('base_orders.order_date') }}

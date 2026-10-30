@@ -3,8 +3,10 @@ models:
     description: >-
       Systemic corticosteroid orders in BNF 0603 for all people, one row per dated order.
       dm+d therapeutic moiety identifies fludrocortisone as mineralocorticoid. Products do
-      not establish replacement or anti-inflammatory indication; legacy indication columns
-      remain pending interface approval.
+      not establish replacement or anti-inflammatory indication. The retained
+      is_anti_inflammatory flag identifies dm+d glucocorticoids for C-LTCS course evidence.
+      Combinations are included only within BNF 0603; corticosteroid ingredients in
+      products outside that section do not qualify them.
     config:
       meta:
         owner:
@@ -46,11 +48,9 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: corticosteroid_type
-        description: 'Legacy BNF classification retained pending interface approval. Use corticosteroid_type_dmd for the ingredient-based class.'
-      - name: is_replacement_therapy
-        description: 'Legacy BNF flag; product does not establish indication. Held for removal.'
+        description: 'dm+d class: MINERALOCORTICOID for fludrocortisone, GLUCOCORTICOID for other known VTMs, UNKNOWN when no VTM is available. Equal to corticosteroid_type_dmd.'
       - name: is_anti_inflammatory
-        description: 'Legacy BNF flag; product does not establish indication. Held for removal.'
+        description: 'dm+d glucocorticoid product for C-LTCS course evidence, not prescribed indication. False for fludrocortisone; null when no VTM is available.'
       - name: is_mineralocorticoid
         description: 'Fludrocortisone by current or previous dm+d VTM; null when no VTM is available.'
       - name: is_recent_1m
@@ -63,5 +63,5 @@ models:
         description: Order dated after the build date; kept as source evidence, never recent.
       - name: corticosteroid_type_dmd
         description: >-
-          MINERALOCORTICOID for current or previous fludrocortisone VTM, GLUCOCORTICOID for other
-          known VTMs, UNKNOWN when no VTM is available.
+          Equal to corticosteroid_type. Retained name for the dm+d class, including UNKNOWN when
+          no VTM is available.
