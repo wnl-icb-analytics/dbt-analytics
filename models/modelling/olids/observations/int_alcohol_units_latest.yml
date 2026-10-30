@@ -5,12 +5,19 @@ models:
       with evidence up to the build date. Includes inactive and deceased people
       without age or SMI-register restrictions. Same-date records favour a non-null
       result, but coded statuses need no numeric value. Units and risk categories
-      follow int_alcohol_units_all.
+      follow int_alcohol_units_all. Explicit daily values are weekly after conversion;
+      original value, unit, conversion reason and daily/weekly conflict flag remain available.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD
+    columns:
+      - name: source_result_unit_display
+        description: Source unit concept display, falling back to the mapped display when absent.
+      - name: person_id
+        description: One latest alcohol record per person.
+        data_tests: [unique, not_null]

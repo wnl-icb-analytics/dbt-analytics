@@ -44,7 +44,7 @@
 
     Biomarkers: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol,
     HDL Cholesterol, Non-HDL Cholesterol, Triglycerides, Total Cholesterol to HDL
-    Ratio, QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT,
+    Ratio, QRISK, HbA1c, BMI, Waist Circumference, Waist-to-height Ratio, eGFR, Creatinine, Urine ACR, ALT,
     GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, Electronic
     Frailty Index (eFI) (GP-recorded eFI and eFI2 scores), Rockwood Frailty Scale. Calculated eFI2 has no
     serial history and is only in sem_olids_observations.
@@ -75,11 +75,11 @@ DIMENSIONS(
 
     -- Observation
     obs.observation_event_id AS observation_event_id COMMENT = 'Stable per-event surrogate key. Use as the final ORDER BY tiebreaker in latest-N windows so tied clinical_effective_dates rank deterministically.',
-    obs.observation_type AS observation_type WITH SYNONYMS = ('biomarker', 'measurement', 'test') COMMENT = 'Biomarker label. Filter to one value before aggregating: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol, HDL Cholesterol, Non-HDL Cholesterol, Triglycerides, Total Cholesterol to HDL Ratio, QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, Electronic Frailty Index (eFI) (GP-recorded eFI and eFI2 scores), Rockwood Frailty Scale. Calculated eFI2 is not in this history view.',
+    obs.observation_type AS observation_type WITH SYNONYMS = ('biomarker', 'measurement', 'test') COMMENT = 'Biomarker label. Filter to one value before aggregating: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol, HDL Cholesterol, Non-HDL Cholesterol, Triglycerides, Total Cholesterol to HDL Ratio, QRISK, HbA1c, BMI, Waist Circumference, Waist-to-height Ratio, eGFR, Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, Electronic Frailty Index (eFI) (GP-recorded eFI and eFI2 scores), Rockwood Frailty Scale. Calculated eFI2 is not in this history view.',
     obs.observation_group AS observation_group COMMENT = 'Clinical group (Cardiovascular, Metabolic, Renal, Liver, Haematology, Frailty)',
     obs.clinical_effective_date AS clinical_effective_date WITH SYNONYMS = ('observation date', 'test date', 'date') COMMENT = 'Date of the reading',
     obs.unit AS unit COMMENT = 'Unit of measure for value',
-    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. Diastolic BP and Total Cholesterol to HDL Ratio have no category (NULL). Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK, waist and frailty types use their upstream clinical categories.',
+    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. Diastolic BP, Total Cholesterol to HDL Ratio and Waist Circumference have no category (NULL). Waist-to-height Ratio uses Healthy central adiposity, Increased central adiposity or High central adiposity from NG246 for paired adult readings with BMI below 35; otherwise its category is null. Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK and frailty types use their upstream clinical categories.',
     obs.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage for paired BP events: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Uses the event''s clinic or home/ABPM context; NULL for non-BP types.',
 
     -- Core Demographics

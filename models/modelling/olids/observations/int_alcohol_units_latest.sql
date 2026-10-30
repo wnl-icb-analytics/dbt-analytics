@@ -19,6 +19,11 @@ person_id
 ,result_value
 ,result_unit_display
 ,alcohol_risk_category
+,original_result_value
+,source_result_unit_display
+,is_converted_from_daily
+,is_daily_unit_conflict
+,conversion_reason
 ,CASE
 WHEN a.alcohol_risk_category in ('Increasing Risk','Higher Risk') THEN 'Yes'
 WHEN a.alcohol_risk_category in ('Ex-Drinker','Low Risk','Non-Drinker') THEN 'No'
