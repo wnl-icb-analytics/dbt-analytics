@@ -1,7 +1,14 @@
+{#
+    append_new_columns adds observation_id and date_recorded on incremental deploy.
+    Both columns are populated only for BMI rows and remain null for other deficits.
+    Months stored before the columns were added keep nulls until the history full
+    refresh backfills BMI rows. Recent months are rebuilt by the incremental window.
+#}
 {{
     config(
         materialized='incremental',
         incremental_strategy='delete+insert',
+        on_schema_change='append_new_columns',
         unique_key='end_date',
         cluster_by=['end_date', 'person_id'],
         snowflake_warehouse=env_var('EFI2_HISTORY_WAREHOUSE', target.warehouse),
@@ -32,9 +39,12 @@ codelist AS (
 ),
 
 relevant_observations AS (
-    -- Match the current cohort's DISTINCT evidence grain before month expansion.
-    -- The hash retains hidden grain fields without carrying them across 60 months.
-    SELECT DISTINCT
+    -- Match the current cohort's evidence grain before month expansion.
+    -- The hash replaces the wider codelist grain fields across month-ends.
+    -- Only BMI rows retain observation ID and save time for the selection tie-break.
+    SELECT
+        CASE WHEN cd.deficit = 'BMI' THEN obs.id END AS observation_id,
+        CASE WHEN cd.deficit = 'BMI' THEN obs.date_recorded END AS date_recorded,
         HASH(
             obs.person_id::VARCHAR,
             cd.snomed_code,
@@ -60,6 +70,13 @@ relevant_observations AS (
     FROM {{ ref('stg_olids_observation') }} AS obs
     INNER JOIN codelist AS cd
         ON obs.mapped_concept_code::VARCHAR = cd.snomed_code
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY obs.person_id, cd.snomed_code, cd.code_description,
+            cd.deficit, cd.other_instructions, cd.time_constraint_years,
+            cd.age_limit, obs.result_value, obs.result_unit_display,
+            obs.clinical_effective_date
+        ORDER BY obs.date_recorded DESC NULLS LAST, obs.id DESC
+    ) = 1
 ),
 
 patient_months_to_build AS (
@@ -72,6 +89,8 @@ patient_months_to_build AS (
 
 SELECT
     obs.evidence_id,
+    obs.observation_id,
+    obs.date_recorded,
     pd.person_id,
     obs.deficit,
     obs.other_instructions,

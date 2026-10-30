@@ -33,5 +33,5 @@ QUALIFY ROW_NUMBER() OVER (
             WHEN 'NSMOK_COD' THEN 3
             ELSE 4
         END,
-        id DESC
+        date_recorded DESC NULLS LAST, id DESC
 ) = 1

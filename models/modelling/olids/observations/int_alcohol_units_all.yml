@@ -5,7 +5,7 @@ models:
       clinical date up to the build date. Includes inactive and deceased people
       without age or SMI-register restrictions. Same-day records prefer higher risk
       (Higher, Increasing, Low, Ex-Drinker, Non-Drinker, Unclear), then a numeric
-      reading, then the lowest observation id. Weekly-unit variants use U/week;
+      reading, then the latest save time and highest observation ID. Weekly-unit variants use U/week;
       other units stay as recorded.
       Risk uses coded status or weekly units: low up to 14 units a week; increasing
       above 14; higher above 35 for women or 50 for men (NHS/OHID), using current
@@ -24,6 +24,11 @@ models:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD
+    columns:
+      - name: observation_id
+        description: Source observation selected within the model's event grain.
+      - name: date_recorded
+        description: EMIS save time of the selected observation; null when unavailable.
 
 unit_tests:
   - name: alcohol_units_bands_and_normalisation
@@ -31,7 +36,7 @@ unit_tests:
     overrides:
       macros:
         get_observations: |
-          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+          SELECT '2024-03-01'::TIMESTAMP_NTZ AS date_recorded, column1::VARCHAR AS id, column2::NUMBER AS person_id,
                  '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
                  column3::VARCHAR AS mapped_concept_code,
                  'SYN_alcohol observation'::VARCHAR AS mapped_concept_display,
@@ -86,7 +91,7 @@ unit_tests:
         - {person_id: -9509, concept_code: '86933000', result_value: null, alcohol_risk_category: Higher Risk, result_unit_display: null}
         - {person_id: -9510, concept_code: '1082641000000106', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
         - {person_id: -9511, concept_code: '160573003', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
-        - {person_id: -9512, concept_code: '160573003', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9512, concept_code: '1082641000000106', result_value: 12, alcohol_risk_category: Low Risk, result_unit_display: U/week}
         - {person_id: -18221, concept_code: '1082641000000106', result_value: 50.5, alcohol_risk_category: Higher Risk, result_unit_display: U/week}
         - {person_id: -18222, concept_code: '1082641000000106', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
         - {person_id: -18223, concept_code: '160582009', result_value: null, alcohol_risk_category: Ex-Drinker, result_unit_display: null}

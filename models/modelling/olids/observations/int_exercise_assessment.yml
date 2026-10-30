@@ -4,12 +4,19 @@ models:
       Exercise assessments and declined assessments in OLIDS GP records, using
       SMI_LONGER_LIVES_EXERCISE_ASSESSMENT, EXERASS_COD and EXERASSDEC_COD. One row
       per person, concept and clinical date up to the build date. Includes inactive
-      and deceased people, without age or SMI-register restrictions.
+      and deceased people, without age or SMI-register restrictions. Overlapping
+      clusters retain decline membership first, then the latest save time and highest ID.
     config:
       meta:
         owner:
           name: KateHomer55
     data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - concept_code
+              - clinical_effective_date
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
@@ -17,6 +24,10 @@ models:
           arguments:
             cluster_ids: SMI_LONGER_LIVES_EXERCISE_ASSESSMENT, EXERASS_COD, EXERASSDEC_COD
     columns:
+      - name: observation_id
+        description: Source observation selected within the model's event grain.
+      - name: date_recorded
+        description: EMIS save time of the selected observation; null when unavailable.
       - name: person_id
         tests:
           - not_null

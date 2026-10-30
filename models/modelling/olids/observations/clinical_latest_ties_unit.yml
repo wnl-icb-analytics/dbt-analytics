@@ -1,0 +1,1418 @@
+unit_tests:
+- name: alt_latest_valid_uses_save_time_then_id
+  model: int_alt_latest
+  given:
+  - input: ref('int_alt_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS code_description,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS expected_measurement_type,
+          NULL::VARCHAR AS inferred_unit,
+          column5::FLOAT AS inferred_value,
+          NULL::BOOLEAN AS value_was_converted,
+          NULL::BOOLEAN AS unit_was_changed,
+          NULL::VARCHAR AS conversion_reason,
+          NULL::VARCHAR AS confidence,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          NULL::VARCHAR AS alt_category,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-02', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+    - person_id: -144502
+      id: SYN_Z
+    - person_id: -144503
+      id: SYN_A
+    - person_id: -144504
+      id: SYN_NEW
+    - person_id: -144505
+      id: SYN_VALID
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id WHERE FALSE
+- name: bilirubin_latest_valid_uses_save_time_then_id
+  model: int_bilirubin_latest
+  given:
+  - input: ref('int_bilirubin_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS code_description,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS expected_measurement_type,
+          NULL::VARCHAR AS inferred_unit,
+          column5::FLOAT AS inferred_value,
+          NULL::BOOLEAN AS value_was_converted,
+          NULL::BOOLEAN AS unit_was_changed,
+          NULL::VARCHAR AS conversion_reason,
+          NULL::VARCHAR AS confidence,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          NULL::VARCHAR AS bilirubin_category,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-02', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+    - person_id: -144502
+      id: SYN_Z
+    - person_id: -144503
+      id: SYN_A
+    - person_id: -144504
+      id: SYN_NEW
+    - person_id: -144505
+      id: SYN_VALID
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id WHERE FALSE
+- name: ggt_latest_valid_uses_save_time_then_id
+  model: int_ggt_latest
+  given:
+  - input: ref('int_ggt_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS code_description,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS expected_measurement_type,
+          NULL::VARCHAR AS inferred_unit,
+          column5::FLOAT AS inferred_value,
+          NULL::BOOLEAN AS value_was_converted,
+          NULL::BOOLEAN AS unit_was_changed,
+          NULL::VARCHAR AS conversion_reason,
+          NULL::VARCHAR AS confidence,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          NULL::VARCHAR AS ggt_category,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-02', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+    - person_id: -144502
+      id: SYN_Z
+    - person_id: -144503
+      id: SYN_A
+    - person_id: -144504
+      id: SYN_NEW
+    - person_id: -144505
+      id: SYN_VALID
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id WHERE FALSE
+- name: haemoglobin_latest_valid_uses_save_time_then_id
+  model: int_haemoglobin_latest
+  given:
+  - input: ref('int_haemoglobin_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS code_description,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS expected_measurement_type,
+          NULL::VARCHAR AS inferred_unit,
+          column5::FLOAT AS inferred_value,
+          NULL::BOOLEAN AS value_was_converted,
+          NULL::BOOLEAN AS unit_was_changed,
+          NULL::VARCHAR AS conversion_reason,
+          NULL::VARCHAR AS confidence,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range,
+          NULL::VARCHAR AS haemoglobin_category
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-02', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+    - person_id: -144502
+      id: SYN_Z
+    - person_id: -144503
+      id: SYN_A
+    - person_id: -144504
+      id: SYN_NEW
+    - person_id: -144505
+      id: SYN_VALID
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id WHERE FALSE
+- name: platelets_latest_valid_uses_save_time_then_id
+  model: int_platelets_latest
+  given:
+  - input: ref('int_platelets_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS code_description,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS expected_measurement_type,
+          NULL::VARCHAR AS inferred_unit,
+          column5::FLOAT AS inferred_value,
+          NULL::BOOLEAN AS value_was_converted,
+          NULL::BOOLEAN AS unit_was_changed,
+          NULL::VARCHAR AS conversion_reason,
+          NULL::VARCHAR AS confidence,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          NULL::VARCHAR AS platelets_category,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-02', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+    - person_id: -144502
+      id: SYN_Z
+    - person_id: -144503
+      id: SYN_A
+    - person_id: -144504
+      id: SYN_NEW
+    - person_id: -144505
+      id: SYN_VALID
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id WHERE FALSE
+- name: cholesterol_latest_valid_uses_save_time_then_id
+  model: int_cholesterol_latest
+  given:
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::FLOAT AS cholesterol_value,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::FLOAT AS recorded_value,
+          NULL::FLOAT AS converted_value_mmol_l,
+          NULL::VARCHAR AS source_result_unit_code,
+          NULL::VARCHAR AS source_result_unit_display,
+          NULL::VARCHAR AS mapped_result_unit_code,
+          NULL::VARCHAR AS mapped_result_unit_display,
+          NULL::VARCHAR AS conversion_unit_basis,
+          NULL::NUMBER(38,6) AS conversion_factor,
+          NULL::BOOLEAN AS is_unit_metadata_conflict,
+          NULL::VARCHAR AS plausibility_status,
+          NULL::BOOLEAN AS is_lipid_review_required,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS unit_status,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS sampling_context,
+          column6::BOOLEAN AS is_valid_cholesterol,
+          NULL::VARCHAR AS cholesterol_category,
+          column5::FLOAT AS inferred_value,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-01', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144502
+      id: SYN_Z
+      has_later_unassessable_result: false
+    - person_id: -144503
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144504
+      id: SYN_NEW
+      has_later_unassessable_result: false
+    - person_id: -144505
+      id: SYN_VALID
+      has_later_unassessable_result: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+- name: cholesterol_hdl_latest_valid_uses_save_time_then_id
+  model: int_cholesterol_hdl_latest
+  given:
+  - input: ref('int_cholesterol_hdl_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::FLOAT AS cholesterol_value,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::FLOAT AS recorded_value,
+          NULL::FLOAT AS converted_value_mmol_l,
+          NULL::VARCHAR AS source_result_unit_code,
+          NULL::VARCHAR AS source_result_unit_display,
+          NULL::VARCHAR AS mapped_result_unit_code,
+          NULL::VARCHAR AS mapped_result_unit_display,
+          NULL::VARCHAR AS conversion_unit_basis,
+          NULL::NUMBER(38,6) AS conversion_factor,
+          NULL::BOOLEAN AS is_unit_metadata_conflict,
+          NULL::VARCHAR AS plausibility_status,
+          NULL::BOOLEAN AS is_lipid_review_required,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS unit_status,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS sampling_context,
+          column6::BOOLEAN AS is_valid_cholesterol,
+          NULL::VARCHAR AS cholesterol_category,
+          column5::FLOAT AS inferred_value,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-01', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144502
+      id: SYN_Z
+      has_later_unassessable_result: false
+    - person_id: -144503
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144504
+      id: SYN_NEW
+      has_later_unassessable_result: false
+    - person_id: -144505
+      id: SYN_VALID
+      has_later_unassessable_result: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+- name: cholesterol_ldl_latest_valid_uses_save_time_then_id
+  model: int_cholesterol_ldl_latest
+  given:
+  - input: ref('int_cholesterol_ldl_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::FLOAT AS cholesterol_value,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::FLOAT AS recorded_value,
+          NULL::FLOAT AS converted_value_mmol_l,
+          NULL::VARCHAR AS source_result_unit_code,
+          NULL::VARCHAR AS source_result_unit_display,
+          NULL::VARCHAR AS mapped_result_unit_code,
+          NULL::VARCHAR AS mapped_result_unit_display,
+          NULL::VARCHAR AS conversion_unit_basis,
+          NULL::NUMBER(38,6) AS conversion_factor,
+          NULL::BOOLEAN AS is_unit_metadata_conflict,
+          NULL::VARCHAR AS plausibility_status,
+          NULL::BOOLEAN AS is_lipid_review_required,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS unit_status,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS sampling_context,
+          column6::BOOLEAN AS is_valid_cholesterol,
+          NULL::VARCHAR AS cholesterol_category,
+          NULL::VARCHAR AS ldl_cvd_target_met,
+          column5::FLOAT AS inferred_value,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-01', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144502
+      id: SYN_Z
+      has_later_unassessable_result: false
+    - person_id: -144503
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144504
+      id: SYN_NEW
+      has_later_unassessable_result: false
+    - person_id: -144505
+      id: SYN_VALID
+      has_later_unassessable_result: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+- name: cholesterol_non_hdl_latest_valid_uses_save_time_then_id
+  model: int_cholesterol_non_hdl_latest
+  given:
+  - input: ref('int_cholesterol_non_hdl_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::FLOAT AS cholesterol_value,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::FLOAT AS recorded_value,
+          NULL::FLOAT AS converted_value_mmol_l,
+          NULL::VARCHAR AS source_result_unit_code,
+          NULL::VARCHAR AS source_result_unit_display,
+          NULL::VARCHAR AS mapped_result_unit_code,
+          NULL::VARCHAR AS mapped_result_unit_display,
+          NULL::VARCHAR AS conversion_unit_basis,
+          NULL::NUMBER(38,6) AS conversion_factor,
+          NULL::BOOLEAN AS is_unit_metadata_conflict,
+          NULL::VARCHAR AS plausibility_status,
+          NULL::BOOLEAN AS is_lipid_review_required,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS unit_status,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS sampling_context,
+          column6::BOOLEAN AS is_valid_cholesterol,
+          NULL::VARCHAR AS cholesterol_category,
+          column5::FLOAT AS inferred_value,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-01', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144502
+      id: SYN_Z
+      has_later_unassessable_result: false
+    - person_id: -144503
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144504
+      id: SYN_NEW
+      has_later_unassessable_result: false
+    - person_id: -144505
+      id: SYN_VALID
+      has_later_unassessable_result: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+- name: cholesterol_hdl_ratio_latest_valid_uses_save_time_then_id
+  model: int_cholesterol_hdl_ratio_latest
+  given:
+  - input: ref('int_cholesterol_hdl_ratio_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::FLOAT AS cholesterol_hdl_ratio,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::FLOAT AS recorded_value,
+          NULL::VARCHAR AS source_result_unit_code,
+          NULL::VARCHAR AS source_result_unit_display,
+          NULL::VARCHAR AS mapped_result_unit_code,
+          NULL::VARCHAR AS mapped_result_unit_display,
+          NULL::VARCHAR AS conversion_unit_basis,
+          NULL::NUMBER(38,6) AS conversion_factor,
+          NULL::BOOLEAN AS is_unit_metadata_conflict,
+          NULL::VARCHAR AS plausibility_status,
+          NULL::BOOLEAN AS is_lipid_review_required,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS unit_status,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS sampling_context,
+          column6::BOOLEAN AS is_valid_cholesterol_hdl_ratio,
+          column5::FLOAT AS inferred_value,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-01', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144502
+      id: SYN_Z
+      has_later_unassessable_result: false
+    - person_id: -144503
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144504
+      id: SYN_NEW
+      has_later_unassessable_result: false
+    - person_id: -144505
+      id: SYN_VALID
+      has_later_unassessable_result: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+- name: triglycerides_latest_valid_uses_save_time_then_id
+  model: int_triglycerides_latest
+  given:
+  - input: ref('int_triglycerides_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::FLOAT AS triglycerides_value,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::FLOAT AS recorded_value,
+          NULL::FLOAT AS converted_value_mmol_l,
+          NULL::VARCHAR AS source_result_unit_code,
+          NULL::VARCHAR AS source_result_unit_display,
+          NULL::VARCHAR AS mapped_result_unit_code,
+          NULL::VARCHAR AS mapped_result_unit_display,
+          NULL::VARCHAR AS conversion_unit_basis,
+          NULL::NUMBER(38,6) AS conversion_factor,
+          NULL::BOOLEAN AS is_unit_metadata_conflict,
+          NULL::VARCHAR AS plausibility_status,
+          NULL::BOOLEAN AS is_lipid_review_required,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS unit_status,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS sampling_context,
+          column6::BOOLEAN AS is_valid_triglycerides,
+          NULL::VARCHAR AS triglycerides_category,
+          column5::FLOAT AS inferred_value,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-01', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144502
+      id: SYN_Z
+      has_later_unassessable_result: false
+    - person_id: -144503
+      id: SYN_A
+      has_later_unassessable_result: false
+    - person_id: -144504
+      id: SYN_NEW
+      has_later_unassessable_result: false
+    - person_id: -144505
+      id: SYN_VALID
+      has_later_unassessable_result: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+- name: blood_glucose_latest_uses_save_time_then_id
+  model: int_blood_glucose_latest
+  given:
+  - input: ref('int_blood_glucose_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS result_value,
+          NULL::VARCHAR AS result_unit_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_display: SYN_WINNER
+    - person_id: -144512
+      concept_display: SYN_WINNER
+    - person_id: -144513
+      concept_display: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+- name: cochlear_implant_latest_uses_save_time_then_id
+  model: int_cochlear_implant_latest
+  given:
+  - input: ref('int_cochlear_implant_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column5::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_code: SYN_WINNER
+    - person_id: -144512
+      concept_code: SYN_WINNER
+    - person_id: -144513
+      concept_code: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code WHERE FALSE
+- name: csf_leak_latest_uses_save_time_then_id
+  model: int_csf_leak_latest
+  given:
+  - input: ref('int_csf_leak_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column5::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_code: SYN_WINNER
+    - person_id: -144512
+      concept_code: SYN_WINNER
+    - person_id: -144513
+      concept_code: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code WHERE FALSE
+- name: exercise_assessment_latest_uses_save_time_then_id
+  model: int_exercise_assessment_latest
+  given:
+  - input: ref('int_exercise_assessment')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS source_cluster_id,
+          column5::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS low_exercise_flag,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_code: SYN_WINNER
+    - person_id: -144512
+      concept_code: SYN_WINNER
+    - person_id: -144513
+      concept_code: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code WHERE FALSE
+- name: illicit_drug_use_latest_uses_save_time_then_id
+  model: int_illicit_drug_use_latest
+  given:
+  - input: ref('int_illicit_drug_use_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          NULL::BOOLEAN AS illicit_drug_assessed_last_12m,
+          NULL::VARCHAR AS illicit_drug_pattern,
+          NULL::VARCHAR AS illicit_drug_class,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_display: SYN_WINNER
+    - person_id: -144512
+      concept_display: SYN_WINNER
+    - person_id: -144513
+      concept_display: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+- name: nutrition_review_latest_uses_save_time_then_id
+  model: int_nutrition_review_latest
+  given:
+  - input: ref('int_nutrition_review')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS source_cluster_id,
+          column5::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::VARCHAR AS poor_diet_flag,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_code: SYN_WINNER
+    - person_id: -144512
+      concept_code: SYN_WINNER
+    - person_id: -144513
+      concept_code: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code WHERE FALSE
+- name: referral_pulmonary_rehab_latest_uses_save_time_then_id
+  model: int_referral_pulmonary_rehab_latest
+  given:
+  - input: ref('int_referral_pulmonary_rehab')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::DATE AS clinical_effective_date,
+          column3::TIMESTAMP_NTZ AS clinical_effective_at,
+          column5::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS pr_obs_type,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_code: SYN_WINNER
+    - person_id: -144512
+      concept_code: SYN_WINNER
+    - person_id: -144513
+      concept_code: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code WHERE FALSE
+- name: retinal_screening_latest_uses_save_time_then_id
+  model: int_retinal_screening_latest
+  given:
+  - input: ref('int_retinal_screening_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column5::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::BOOLEAN AS is_completed_screening,
+          NULL::BOOLEAN AS is_retinal_screening_code,
+          NULL::VARCHAR AS screening_result_category,
+          NULL::VARCHAR AS diabetes_eye_risk_category,
+          NULL::BOOLEAN AS is_normal_screening,
+          NULL::BOOLEAN AS is_sight_threatening_retinopathy,
+          NULL::BOOLEAN AS requires_ophthalmology_referral,
+          NULL::BOOLEAN AS screening_current_12m,
+          NULL::BOOLEAN AS screening_current_24m,
+          NULL::BOOLEAN AS meets_qof_screening_requirement,
+          NULL::VARCHAR AS screening_status_interpretation,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144513, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144511
+      concept_code: SYN_WINNER
+    - person_id: -144512
+      concept_code: SYN_WINNER
+    - person_id: -144513
+      concept_code: SYN_WINNER
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code WHERE FALSE
+- name: smi_care_plan_latest_uses_save_time_then_id
+  model: int_smi_care_plan_latest
+  given:
+  - input: ref('int_smi_care_plan_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS concept_display,
+          column5::BOOLEAN AS mh_care_plan_current_12m,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144511, '2024-03-01 15:00', '2024-03-02', FALSE),
+          ('SYN_A', -144511, '2024-03-01 09:00', '2024-03-03', TRUE),
+          ('SYN_A', -144512, '2024-03-01', '2024-03-02', FALSE),
+          ('SYN_Z', -144512, '2024-03-01', '2024-03-02', TRUE),
+          ('SYN_Z', -144513, '2024-03-01', NULL, FALSE),
+          ('SYN_A', -144513, '2024-03-01', '2024-03-02', TRUE)
+  expect:
+    rows:
+    - person_id: -144511
+      mh_care_plan_current_12m: true
+    - person_id: -144512
+      mh_care_plan_current_12m: true
+    - person_id: -144513
+      mh_care_plan_current_12m: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::BOOLEAN AS mh_care_plan_current_12m WHERE
+        FALSE
+- name: cochlear_implant_all_retains_save_time_then_id_within_event_grain
+  model: int_cochlear_implant_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'SYN_CLUSTER'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: csf_leak_all_retains_save_time_then_id_within_event_grain
+  model: int_csf_leak_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'SYN_CLUSTER'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: exercise_assessment_retains_save_time_then_id_within_event_grain
+  model: int_exercise_assessment
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'EXERASS_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: nutrition_review_retains_save_time_then_id_within_event_grain
+  model: int_nutrition_review
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'NUTRIASS_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: smi_care_plan_all_retains_save_time_then_id_within_event_grain
+  model: int_smi_care_plan_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'MHP_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: smoking_intervention_retains_save_time_then_id_within_event_grain
+  model: int_smoking_intervention
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'SMOKINGINT_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: subs_misuse_intervention_retains_save_time_then_id_within_event_grain
+  model: int_subs_misuse_intervention
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'ILLSUBINT_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: referral_pulmonary_rehab_retains_save_time_then_id_within_event_grain
+  model: int_referral_pulmonary_rehab
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'PULRHBOFF_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: blood_glucose_all_retains_save_time_then_id_within_event_grain
+  model: int_blood_glucose_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS code, NULL::VARCHAR AS cluster_id WHERE FALSE
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_CODE'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'GLUC_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: alcohol_units_all_retains_save_time_then_id_within_event_grain
+  model: int_alcohol_units_all
+  given:
+  - input: ref('dim_person_demographics')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 'Male'::VARCHAR AS gender FROM VALUES (-144571), (-144572), (-144573)
+  - input: ref('stg_olids_concept')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_id, NULL::VARCHAR AS display WHERE FALSE
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                column3::TIMESTAMP_NTZ AS clinical_effective_date,
+                column4::TIMESTAMP_NTZ AS date_recorded,
+                '1082641000000106'::VARCHAR AS mapped_concept_code, 'Synthetic observation'::VARCHAR AS mapped_concept_display,
+                'ALC_COD'::VARCHAR AS cluster_id, 10::FLOAT AS result_value,
+                'U/week'::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_units_source_concept_id
+                FROM VALUES ('SYN_Z', -144571, '2024-03-01', '2024-03-02'),
+                    ('SYN_A', -144571, '2024-03-01', '2024-03-03'),
+                    ('SYN_NEXT', -144571, '2024-03-02', NULL),
+                    ('SYN_A', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144572, '2024-03-01', '2024-03-02'),
+                    ('SYN_Z', -144573, '2024-03-01', NULL),
+                    ('SYN_A', -144573, '2024-03-01', '2024-03-02'),
+                    ('SYN_FUTURE', -144571, '2999-01-01', NULL)
+  expect:
+    rows:
+    - person_id: -144571
+      observation_id: SYN_A
+    - person_id: -144571
+      observation_id: SYN_NEXT
+    - person_id: -144572
+      observation_id: SYN_Z
+    - person_id: -144573
+      observation_id: SYN_A
+- name: eosinophil_latest_valid_uses_save_time_then_id
+  model: int_eosinophil_count_latest
+  given:
+  - input: ref('int_eosinophil_count')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          NULL::VARCHAR AS concept_code,
+          NULL::VARCHAR AS code_description,
+          NULL::VARCHAR AS source_cluster_id,
+          NULL::FLOAT AS original_result_value,
+          NULL::VARCHAR AS original_result_unit_display,
+          NULL::VARCHAR AS original_result_unit_code,
+          NULL::VARCHAR AS expected_measurement_type,
+          NULL::VARCHAR AS inferred_unit,
+          column5::FLOAT AS inferred_value,
+          NULL::BOOLEAN AS value_was_converted,
+          NULL::BOOLEAN AS unit_was_changed,
+          NULL::VARCHAR AS conversion_reason,
+          NULL::VARCHAR AS confidence,
+          NOT column6::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier,
+          NULL::VARCHAR AS eosinophil_category,
+          FALSE::BOOLEAN AS is_out_of_range
+      FROM VALUES
+          ('SYN_Z', -144501, '2024-03-01 15:00', '2024-03-02', 10, TRUE),
+          ('SYN_A', -144501, '2024-03-01 09:00', '2024-03-03', 20, TRUE),
+          ('SYN_A', -144502, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_Z', -144502, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_Z', -144503, '2024-03-01', NULL, 10, TRUE),
+          ('SYN_A', -144503, '2024-03-01', '2024-03-02', 20, TRUE),
+          ('SYN_OLD', -144504, '2024-03-01', '2024-03-05', 10, TRUE),
+          ('SYN_NEW', -144504, '2024-03-02', '2024-03-03', 20, TRUE),
+          ('SYN_VALID', -144505, '2024-03-01', '2024-03-02', 10, TRUE),
+          ('SYN_INVALID', -144505, '2024-03-02', '2024-03-03', 20, FALSE)
+  expect:
+    rows:
+    - person_id: -144501
+      id: SYN_A
+    - person_id: -144502
+      id: SYN_Z
+    - person_id: -144503
+      id: SYN_A
+    - person_id: -144504
+      id: SYN_NEW
+    - person_id: -144505
+      id: SYN_VALID
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id WHERE FALSE
+
+- name: exercise_assessment_retains_decline_membership_before_save_time
+  model: int_exercise_assessment
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+            '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+            column3::TIMESTAMP_NTZ AS date_recorded, column4::VARCHAR AS cluster_id,
+            'SYN_DECLINE'::VARCHAR AS mapped_concept_code,
+            'Synthetic decline'::VARCHAR AS mapped_concept_display,
+            NULL::FLOAT AS result_value, NULL::VARCHAR AS result_unit_display
+        FROM VALUES
+            ('SYN_A', -144581, '2024-03-02', 'EXERASSDEC_COD'),
+            ('SYN_A', -144581, '2024-03-02', 'EXERASS_COD'),
+            ('SYN_A', -144581, '2024-03-02', 'SMI_LONGER_LIVES_EXERCISE_ASSESSMENT'),
+            ('SYN_A', -144582, NULL, 'EXERASSDEC_COD'),
+            ('SYN_Z', -144582, '2024-03-03', 'EXERASS_COD'),
+            ('SYN_A', -144583, '2024-03-02', 'EXERASSDEC_COD'),
+            ('SYN_Z', -144583, '2024-03-02', 'EXERASSDEC_COD'),
+            ('SYN_A', -144584, '2024-03-03', 'EXERASSDEC_COD'),
+            ('SYN_Z', -144584, '2024-03-02', 'EXERASSDEC_COD')
+  expect:
+    rows:
+    - {person_id: -144581, observation_id: SYN_A, source_cluster_id: EXERASSDEC_COD, low_exercise_flag: Declined}
+    - {person_id: -144582, observation_id: SYN_A, source_cluster_id: EXERASSDEC_COD, low_exercise_flag: Declined}
+    - {person_id: -144583, observation_id: SYN_Z, source_cluster_id: EXERASSDEC_COD, low_exercise_flag: Declined}
+    - {person_id: -144584, observation_id: SYN_A, source_cluster_id: EXERASSDEC_COD, low_exercise_flag: Declined}
+
+- name: nutrition_review_retains_decline_membership_before_save_time
+  model: int_nutrition_review
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+            '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+            column3::TIMESTAMP_NTZ AS date_recorded, column4::VARCHAR AS cluster_id,
+            'SYN_DECLINE'::VARCHAR AS mapped_concept_code,
+            'Synthetic decline'::VARCHAR AS mapped_concept_display,
+            NULL::FLOAT AS result_value, NULL::VARCHAR AS result_unit_display
+        FROM VALUES
+            ('SYN_A', -144581, '2024-03-02', 'NUTRIASSDEC_COD'),
+            ('SYN_A', -144581, '2024-03-02', 'NUTRIASS_COD'),
+            ('SYN_A', -144581, '2024-03-02', 'SMI_LONGER_LIVES_NUTRITION_ACTIVITY'),
+            ('SYN_A', -144582, NULL, 'NUTRIASSDEC_COD'),
+            ('SYN_Z', -144582, '2024-03-03', 'NUTRIASS_COD'),
+            ('SYN_A', -144583, '2024-03-02', 'NUTRIASSDEC_COD'),
+            ('SYN_Z', -144583, '2024-03-02', 'NUTRIASSDEC_COD'),
+            ('SYN_A', -144584, '2024-03-03', 'NUTRIASSDEC_COD'),
+            ('SYN_Z', -144584, '2024-03-02', 'NUTRIASSDEC_COD')
+  expect:
+    rows:
+    - {person_id: -144581, observation_id: SYN_A, source_cluster_id: NUTRIASSDEC_COD, poor_diet_flag: Declined}
+    - {person_id: -144582, observation_id: SYN_A, source_cluster_id: NUTRIASSDEC_COD, poor_diet_flag: Declined}
+    - {person_id: -144583, observation_id: SYN_Z, source_cluster_id: NUTRIASSDEC_COD, poor_diet_flag: Declined}
+    - {person_id: -144584, observation_id: SYN_A, source_cluster_id: NUTRIASSDEC_COD, poor_diet_flag: Declined}

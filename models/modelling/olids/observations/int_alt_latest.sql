@@ -33,5 +33,5 @@ WHERE inferred_value IS NOT NULL
   AND NOT is_extreme_outlier
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC, id DESC
+    ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, id DESC
 ) = 1

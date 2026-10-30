@@ -23,7 +23,7 @@ SELECT
 FROM {{ ref('int_breast_screening_prompt_all') }}
 
 QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY person_id ORDER BY clinical_effective_date DESC
+    PARTITION BY person_id ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, observation_id DESC
 ) = 1
 
 ORDER BY person_id

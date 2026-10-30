@@ -8,7 +8,7 @@ build date are ignored.
 */
 
 WITH orders AS (
-    SELECT person_id, medication_order_id, order_date, sglt2_drug, bnf_name
+    SELECT person_id, medication_order_id, order_date, date_recorded, sglt2_drug, bnf_name
     FROM {{ ref('int_sglt2_medications_all') }}
     WHERE order_date BETWEEN '1990-01-01' AND CURRENT_DATE()
 ),
@@ -23,7 +23,8 @@ latest_order AS (
     SELECT *
     FROM orders
     QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY person_id ORDER BY order_date DESC, medication_order_id DESC
+        PARTITION BY person_id
+        ORDER BY order_date DESC, date_recorded DESC NULLS LAST, medication_order_id DESC
     ) = 1
 )
 

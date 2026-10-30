@@ -3,7 +3,14 @@
 WITH results AS (
     SELECT
         *,
-        MAX(clinical_effective_date) OVER (PARTITION BY person_id) AS most_recent_result_date
+        FIRST_VALUE(clinical_effective_date) OVER (
+            PARTITION BY person_id
+            ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, id DESC
+        ) AS most_recent_result_date,
+        ROW_NUMBER() OVER (
+            PARTITION BY person_id
+            ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, id DESC
+        ) AS result_recency
     FROM {{ ref('int_cholesterol_hdl_ratio_all') }}
 )
 
@@ -36,10 +43,10 @@ SELECT
     is_valid_cholesterol_hdl_ratio,
     most_recent_result_date,
     -- The person's most recent result was invalid, so this row is an older valid result.
-    most_recent_result_date > clinical_effective_date AS has_later_unassessable_result
+    result_recency > 1 AS has_later_unassessable_result
 FROM results
 WHERE is_valid_cholesterol_hdl_ratio
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC, id DESC
+    ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, id DESC
 ) = 1

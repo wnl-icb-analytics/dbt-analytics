@@ -10,6 +10,7 @@
 with smok AS (
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -19,7 +20,9 @@ WHERE obs.clinical_effective_date IS NOT NULL
 AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 )
 --select all to then deduplicate by person, code and date
-select person_id
+select id AS observation_id
+,date_recorded
+,person_id
 ,clinical_effective_date
 ,concept_code
 ,concept_display
@@ -29,4 +32,4 @@ WHEN concept_code in ('1087441000000106','527151000000107','871641000000105','75
                          '315022003','822591000000108','966971000000103') THEN 'Declined'
 ELSE 'Other assistance' END AS smoking_cessation_services
 from smok 
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY id) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY date_recorded DESC NULLS LAST, id DESC) = 1

@@ -10,6 +10,7 @@
 with SUBSM AS (
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -19,7 +20,9 @@ WHERE obs.clinical_effective_date IS NOT NULL
 AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 )
 --select all to then deduplicate by person, code and date
-select person_id
+select id AS observation_id
+,date_recorded
+,person_id
 ,clinical_effective_date
 ,concept_code
 ,concept_display
@@ -30,4 +33,4 @@ WHEN concept_code in ('1048091000000104','1048221000000107','417096006','1128910
 WHEN concept_code in ( '299881000000104', '1091431000000107' ) THEN 'Declined'
 ELSE 'Other assistance' END AS subs_misuse_services
 from SUBSM 
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY PERSON_ID) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY date_recorded DESC NULLS LAST, id DESC) = 1

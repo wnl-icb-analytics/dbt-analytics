@@ -1,20 +1,94 @@
 models:
-  - name: int_smi_cf_secondary_care
-    description: >-
-      Casefinding profile for OLIDS people with SMI and an NLFT admission in the last
-      6 months or no recorded discharge, one row per cross-system patient. Requires
-      current living registration, active SMI diagnosis, an NLFT identifier,
-      commissioner 93C in patient and spell records, and no MHSDS death date. Shows
-      the latest qualifying admission and ward stay, check gaps and vulnerabilities.
-      Recent admissions may be absent because MHSDS submissions lag by about six
-      weeks.
-    config:
-      meta:
-        owner:
-          name: KateHomer55
-    columns:
-      - name: person_id
-        description: Unique identifier for the person
-        tests:
-          - not_null
-          - unique
+- name: int_smi_cf_secondary_care
+  description: Casefinding profile for OLIDS people with SMI and an NLFT admission in the last 6 months or no recorded
+    discharge, one row per cross-system patient. Requires current living registration, active SMI diagnosis, an
+    NLFT identifier, commissioner 93C in patient and spell records, and no MHSDS death date. Shows the latest qualifying
+    admission and ward stay, check gaps and vulnerabilities. Admission and ward start timestamps, then source record
+    IDs break ties. Site labels use the selected ward stay's site code. Recent admissions may be absent because
+    MHSDS submissions lag by about six weeks.
+  config:
+    meta:
+      owner:
+        name: KateHomer55
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns: [sk_patient_id]
+  columns:
+  - name: person_id
+    description: Unique identifier for the person
+    data_tests:
+    - not_null
+    - unique
+unit_tests:
+- name: smi_secondary_care_uses_full_start_times_and_source_ids
+  model: int_smi_cf_secondary_care
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS spell_number, NULL::VARCHAR AS
+        site_name WHERE FALSE
+  given:
+  - input: ref('stg_mhsds_mpi_history')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS person_id,
+          'G6V2S'::VARCHAR AS org_id_prov, 'SYN_LOCAL'::VARCHAR AS local_patient_id,
+          CURRENT_DATE()::DATE AS reporting_period_end_date, 'SYN_MPI'::VARCHAR AS mhs001_uniq_id,
+          '93C'::VARCHAR AS dmic_ccg_code, NULL::DATE AS pers_death_date
+          FROM VALUES ('SYN_MPI1'), ('SYN_MPI2'), ('SYN_MPI3')
+  - input: ref('stg_mhsds_bridging')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS person_id, column2::NUMBER AS sk_patient_id
+          FROM VALUES ('SYN_MPI1', -144541), ('SYN_MPI2', -144542), ('SYN_MPI3', -144543)
+  - input: ref('int_smi_population_base')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column1::NUMBER AS sk_patient_id, TRUE::BOOLEAN AS has_active_smi_diagnosis,
+      FALSE::BOOLEAN AS is_homeless, FALSE::BOOLEAN AS interpreter_needed, NULL::VARCHAR AS hx_flake, NULL::VARCHAR
+      AS age, NULL::VARCHAR AS age_band_5y, NULL::VARCHAR AS gender, NULL::VARCHAR AS birth_date_approx, NULL::VARCHAR
+      AS ethnicity_category, NULL::VARCHAR AS ethcat_order, NULL::VARCHAR AS ethnicity_subcategory, NULL::VARCHAR
+      AS ethsubcat_order, NULL::VARCHAR AS ethnicity_granular, NULL::VARCHAR AS practice_code, NULL::VARCHAR AS
+      practice_name, NULL::VARCHAR AS main_language, NULL::VARCHAR AS imd_quintile, NULL::VARCHAR AS imdquintile_order,
+      NULL::VARCHAR AS interpreter_type FROM VALUES (-144541), (-144542), (-144543)
+  - input: ref('int_smi_casefinding')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS is_smoker, NULL::VARCHAR AS drug_use, NULL::VARCHAR
+      AS alcohol_use, NULL::VARCHAR AS ltc_count, NULL::VARCHAR AS ltc_2plus, NULL::VARCHAR AS ltc_summary, NULL::VARCHAR
+      AS is_on_lithium, NULL::VARCHAR AS has_declined, NULL::VARCHAR AS incomp12m_ct, NULL::VARCHAR AS incomp12m_list,
+      NULL::VARCHAR AS smok_miss, NULL::VARCHAR AS alc_miss, NULL::VARCHAR AS bp_miss, NULL::VARCHAR AS chol_miss,
+      NULL::VARCHAR AS bmi_miss, NULL::VARCHAR AS hba1c_miss WHERE FALSE
+  - input: ref('fct_mhsds_hospital_provider_spell')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS person_id,
+              column2::VARCHAR AS source_record_id, CURRENT_DATE() - 1 AS admission_date,
+              DATEADD(hour, column3, (CURRENT_DATE()-1)::TIMESTAMP_NTZ) AS admitted_at,
+              NULL::DATE AS discharge_date, '11'::VARCHAR AS admission_method_code,
+              'SYN_STATUS'::VARCHAR AS source_spell_status, '93C'::VARCHAR AS source_derived_icb_commissioner_code,
+              'G6V2S'::VARCHAR AS provider_organisation_code
+              FROM VALUES ('SYN_MPI1','SYN_Z_OLD',9), ('SYN_MPI1','SYN_A_NEW',15),
+                  ('SYN_MPI2','SYN_A2',9), ('SYN_MPI2','SYN_Z2',9), ('SYN_MPI3','SYN_NO_WARD',9)
+  - input: ref('fct_mhsds_ward_stay')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS recorded_hospital_provider_spell_id,
+              column2::VARCHAR AS uniq_ward_stay_id, 'SYN_WARD'::VARCHAR AS ward_code,
+              column3::VARCHAR AS ward_site_code, CURRENT_DATE()-1 AS ward_stay_start_date,
+              DATEADD(hour,column4,(CURRENT_DATE()-1)::TIMESTAMP_NTZ) AS ward_stay_started_at,
+              NULL::DATE AS ward_stay_end_date, 'G6V2S'::VARCHAR AS provider_organisation_code,
+              'Adult Psychiatric Intensive Care Unit (Acute Mental Health Care)'::VARCHAR AS source_derived_hospital_bed_type_name
+              FROM VALUES ('SYN_Z_OLD','SYN_OLD_WARD','A0G9K',16),
+                  ('SYN_A_NEW','SYN_Z_EARLY','A3C5P',16), ('SYN_A_NEW','SYN_A_LATE','A3D2M',18),
+                  ('SYN_A2','SYN_AWARD','A0G9K',16), ('SYN_Z2','SYN_A2WARD','A3C5P',16),
+                  ('SYN_Z2','SYN_Z2WARD','A5E8R',16), ('SYN_OTHER_SPELL','SYN_UNRELATED','A0G9K',19)
+  expect:
+    rows:
+    - person_id: -144541
+      spell_number: SYN_A_NEW
+      site_name: St Anns
+    - person_id: -144542
+      spell_number: SYN_Z2
+      site_name: Highgate
+    - person_id: -144543
+      spell_number: SYN_NO_WARD
+      site_name: null

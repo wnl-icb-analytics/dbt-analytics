@@ -12,5 +12,6 @@ threshold and precedence changes cannot drift between the two outputs.
 
 {{ efi2_rules(
     cohort_relation=ref('int_efi2_cohort_snomed_codes'),
-    haemoglobin_relation=ref('int_haemoglobin_latest')
+    haemoglobin_relation=ref('int_haemoglobin_latest'),
+    deduplicate_output=true
 ) }}

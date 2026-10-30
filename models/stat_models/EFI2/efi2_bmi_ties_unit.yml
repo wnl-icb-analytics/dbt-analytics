@@ -1,0 +1,122 @@
+unit_tests:
+- name: efi2_bmi_uses_clinical_date_save_time_and_id
+  model: int_efi2_rules
+  overrides:
+    macros:
+      is_incremental: false
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::BOOLEAN AS has_deficit, NULL::VARCHAR AS sub_deficit, NULL::VARCHAR AS other_instructions
+        WHERE FALSE
+  given:
+  - input: ref('int_efi2_cohort_snomed_codes')
+    format: sql
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          'BMI'::VARCHAR AS deficit,
+          column6::VARCHAR AS other_instructions,
+          NULL::NUMBER(38,6) AS snomed_code,
+          NULL::VARCHAR AS code_description,
+          NULL::NUMBER(38,6) AS time_constraint_years,
+          NULL::NUMBER(38,6) AS age_limit,
+          column2::FLOAT AS result_value,
+          NULL::VARCHAR AS result_value_unit,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          70::NUMBER AS age_at_event,
+          NULL::NUMBER(38,6) AS age_at_end,
+          NULL::DATE AS date_of_birth,
+          NULL::DATE AS date_of_death,
+          'MALE'::VARCHAR AS gender,
+          '2024-03-31'::DATE AS end_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          column5::VARCHAR AS observation_id
+      FROM VALUES
+          (-144531, 35, '2024-03-01 15:00', '2024-03-02', 'SYN_Z', NULL),
+          (-144531, 22, '2024-03-01 09:00', '2024-03-03', 'SYN_A', NULL),
+          (-144532, 22, '2024-03-01', '2024-03-02', 'SYN_A', NULL),
+          (-144532, 35, '2024-03-01', '2024-03-02', 'SYN_Z', NULL),
+          (-144533, 22, '2024-03-01', '2024-03-02', 'SYN_A', NULL),
+          (-144533, 35, '2024-03-01', NULL, 'SYN_Z', NULL),
+          (-144534, 35, '2024-03-01', '2024-03-10', 'SYN_Z', NULL),
+          (-144534, 18.5, '2024-03-02', '2024-03-03', 'SYN_A', NULL),
+          (-144535, 35, '2024-03-01', '2024-03-02', 'SYN_A', 'Synthetic A'),
+          (-144535, 35, '2024-03-01', '2024-03-02', 'SYN_A', 'Synthetic Z')
+  - input: ref('int_haemoglobin_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::FLOAT AS inferred_value, NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+      NULL::TIMESTAMP_NTZ AS date_recorded, NULL::VARCHAR AS id, FALSE::BOOLEAN AS is_negative, FALSE::BOOLEAN AS
+      is_out_of_range, FALSE::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  expect:
+    rows:
+    - person_id: -144531
+      has_deficit: false
+      sub_deficit: null
+    - person_id: -144532
+      has_deficit: true
+      sub_deficit: Obese
+    - person_id: -144533
+      has_deficit: false
+      sub_deficit: null
+    - person_id: -144534
+      has_deficit: true
+      sub_deficit: Underweight
+    - person_id: -144535
+      has_deficit: true
+      sub_deficit: Obese
+      other_instructions: Synthetic Z
+- name: efi2_bmi_history_uses_clinical_date_save_time_and_id
+  model: int_efi2_rules_history
+  overrides:
+    macros:
+      is_incremental: false
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::BOOLEAN AS has_deficit, NULL::VARCHAR AS sub_deficit, NULL::VARCHAR AS other_instructions
+        WHERE FALSE
+  given:
+  - input: ref('int_efi2_cohort_snomed_codes_history')
+    format: sql
+    rows: |-
+      SELECT
+          NULL::NUMBER(38,6) AS evidence_id,
+          column1::NUMBER AS person_id,
+          'BMI'::VARCHAR AS deficit,
+          column6::VARCHAR AS other_instructions,
+          column2::FLOAT AS result_value,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          70::NUMBER AS age_at_event,
+          'MALE'::VARCHAR AS gender,
+          '2024-03-31'::DATE AS end_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          column5::VARCHAR AS observation_id
+      FROM VALUES
+          (-144531, 35, '2024-03-01 15:00', '2024-03-02', 'SYN_Z', NULL),
+          (-144531, 22, '2024-03-01 09:00', '2024-03-03', 'SYN_A', NULL),
+          (-144532, 22, '2024-03-01', '2024-03-02', 'SYN_A', NULL),
+          (-144532, 35, '2024-03-01', '2024-03-02', 'SYN_Z', NULL),
+          (-144533, 22, '2024-03-01', '2024-03-02', 'SYN_A', NULL),
+          (-144533, 35, '2024-03-01', NULL, 'SYN_Z', NULL),
+          (-144534, 35, '2024-03-01', '2024-03-10', 'SYN_Z', NULL),
+          (-144534, 18.5, '2024-03-02', '2024-03-03', 'SYN_A', NULL),
+          (-144535, 35, '2024-03-01', '2024-03-02', 'SYN_A', 'Synthetic A'),
+          (-144535, 35, '2024-03-01', '2024-03-02', 'SYN_A', 'Synthetic Z')
+  - input: ref('int_haemoglobin_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::FLOAT AS inferred_value, NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+      NULL::TIMESTAMP_NTZ AS date_recorded, NULL::VARCHAR AS id, FALSE::BOOLEAN AS is_negative, FALSE::BOOLEAN AS
+      is_out_of_range, FALSE::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  expect:
+    rows:
+    - person_id: -144531
+      has_deficit: false
+      sub_deficit: null
+    - person_id: -144532
+      has_deficit: true
+      sub_deficit: Obese
+    - person_id: -144533
+      has_deficit: false
+      sub_deficit: null
+    - person_id: -144534
+      has_deficit: true
+      sub_deficit: Underweight
+    - person_id: -144535
+      has_deficit: true
+      sub_deficit: Obese
+      other_instructions: Synthetic Z
