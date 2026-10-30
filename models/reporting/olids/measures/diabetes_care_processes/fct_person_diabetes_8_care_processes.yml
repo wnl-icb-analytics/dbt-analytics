@@ -2,15 +2,21 @@ models:
   - name: fct_person_diabetes_8_care_processes
     description: 'Diabetes 8 care processes achievement for QOF reporting.
 
-      One row per person on diabetes register with completion status for HbA1c, blood pressure, cholesterol, creatinine, ACR, foot check, BMI, and smoking status within 12 months. BMI recording counts a recorded BMI value (BMIVAL_COD) within 10-150 at any age, or an adult recorded or calculated BMI from int_bmi_latest.'
+      One row per person on diabetes register with completion status for HbA1c, blood pressure, cholesterol, creatinine, ACR, foot check, BMI, and smoking status within 12 months. HbA1c completion uses any recorded test date, including invalid or value-free results, following the National Diabetes Audit. HbA1c date and value fields describe the latest valid result. BMI recording counts a recorded BMI value (BMIVAL_COD) within 10-150 at any age, or an adult recorded or calculated BMI from int_bmi_latest.'
 
-    tests:
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
     columns:
+      - name: latest_hba1c_date
+        description: Date of the latest valid HbA1c result; may precede the recorded test used for completion.
+      - name: latest_hba1c_value
+        description: Latest valid HbA1c result in its original measurement scale; null when no valid result exists.
+      - name: hba1c_completed_in_last_12m
+        description: Whether any HbA1c test is recorded within the last 12 months, regardless of result validity or availability.
       - name: person_id
-        tests:
+        data_tests:
           - unique
           - not_null
 
@@ -108,6 +114,10 @@ unit_tests:
           DATEADD(day, column2, CURRENT_DATE())::TIMESTAMP_NTZ AS clinical_effective_date,
           'calculated'::VARCHAR AS bmi_source, 24::FLOAT AS bmi_value, TRUE::BOOLEAN AS is_valid_bmi
       FROM VALUES (-18131, -60), (-18135, -30)
+  - input: ref('int_hba1c_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
   - input: ref('int_hba1c_latest')
     format: sql
     rows: |-
@@ -143,3 +153,87 @@ unit_tests:
           DATEADD(day, column3, CURRENT_DATE())::TIMESTAMP_NTZ AS latest_bmi_date
       FROM VALUES (-18131, TRUE, -30), (-18132, FALSE, NULL),
           (-18133, FALSE, NULL), (-18134, FALSE, NULL), (-18135, TRUE, -30)
+
+- name: diabetes_hba1c_completion_uses_recorded_test
+  model: fct_person_diabetes_8_care_processes
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date,
+         NULL::NUMBER(10,2) hba1c_original_value, NULL::VARCHAR original_result_value, NULL::BOOLEAN is_valid_hba1c,
+         NULL::VARCHAR source_cluster_id, NULL::BOOLEAN is_plausible_bmi,
+         NULL::BOOLEAN both_feet_checked, NULL::BOOLEAN left_foot_checked, NULL::BOOLEAN right_foot_checked,
+         NULL::BOOLEAN left_foot_absent, NULL::BOOLEAN right_foot_absent, NULL::BOOLEAN left_foot_amputated,
+         NULL::BOOLEAN right_foot_amputated, NULL::BOOLEAN is_unsuitable, NULL::BOOLEAN is_declined , NULL::BOOLEAN all_processes_completed, NULL::NUMBER care_processes_completed, NULL::BOOLEAN hba1c_completed_in_last_12m, NULL::NUMBER(10,2) latest_hba1c_value WHERE FALSE
+  given:
+  - input: ref('fct_person_diabetes_register')
+    format: sql
+    rows: SELECT column1::NUMBER person_id FROM VALUES (-251441), (-251442), (-251443), (-251444), (-251445)
+  - input: ref('int_hba1c_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER person_id, DATEADD(month,column2::NUMBER,CURRENT_DATE())::TIMESTAMP_NTZ clinical_effective_date,
+       column3::VARCHAR original_result_value, FALSE::BOOLEAN is_valid_hba1c
+       FROM VALUES (-251441,-1,'196'), (-251442,-1,NULL), (-251443,-13,'196'),
+                   (-251444,-12,'196'), (-251441,-1,'196'), (-251445,1,'196')
+  - input: ref('int_hba1c_latest')
+    format: sql
+    rows: |-
+      SELECT -251441::NUMBER person_id, DATEADD(month,-13,CURRENT_DATE())::TIMESTAMP_NTZ clinical_effective_date,
+       50::NUMBER(10,2) hba1c_original_value
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date, NULL::VARCHAR source_cluster_id,
+      NULL::BOOLEAN is_plausible_bmi WHERE FALSE
+  - input: ref('int_foot_examination_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date,
+       NULL::BOOLEAN both_feet_checked, NULL::BOOLEAN left_foot_checked, NULL::BOOLEAN right_foot_checked,
+       NULL::BOOLEAN left_foot_absent, NULL::BOOLEAN right_foot_absent, NULL::BOOLEAN left_foot_amputated,
+       NULL::BOOLEAN right_foot_amputated, NULL::BOOLEAN is_unsuitable, NULL::BOOLEAN is_declined WHERE FALSE
+  - input: ref('int_bmi_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  - input: ref('int_blood_pressure_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  - input: ref('int_cholesterol_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  - input: ref('int_creatinine_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  - input: ref('int_smoking_status_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -251441
+      hba1c_completed_in_last_12m: true
+      care_processes_completed: 1
+      all_processes_completed: false
+      latest_hba1c_value: 50
+    - person_id: -251442
+      hba1c_completed_in_last_12m: true
+      care_processes_completed: 1
+      all_processes_completed: false
+      latest_hba1c_value: null
+    - person_id: -251443
+      hba1c_completed_in_last_12m: false
+      care_processes_completed: 0
+      all_processes_completed: false
+      latest_hba1c_value: null
+    - person_id: -251444
+      hba1c_completed_in_last_12m: true
+      care_processes_completed: 1
+      all_processes_completed: false
+      latest_hba1c_value: null
+    - person_id: -251445
+      hba1c_completed_in_last_12m: false
+      care_processes_completed: 0
+      all_processes_completed: false
+      latest_hba1c_value: null

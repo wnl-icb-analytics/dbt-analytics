@@ -5,19 +5,11 @@
         cluster_by=['person_id', 'clinical_effective_date'])
 }}
 
--- HbA1c Data Quality Issues
--- Identifies HbA1c measurements that are flagged as invalid in int_hba1c_all
--- This table captures HbA1c values that are filtered out from the main HbA1c analysis tables
---
--- Valid HbA1c Ranges (maintains current clinically validated ranges):
--- - IFCC: 20-200 mmol/mol (international standard)
--- - DCCT: 3-20% (older percentage format)
--- Rationale:
--- - IFCC lower limit 20: Catches data entry errors while allowing very low HbA1c
--- - IFCC upper limit 200: Catches data entry errors while allowing extreme diabetic cases
--- - DCCT lower limit 3: Catches data entry errors while allowing very low HbA1c
--- - DCCT upper limit 20: Catches data entry errors while allowing extreme diabetic cases
--- - Dual scale complexity requires careful validation of measurement type detection
+-- Diagnose upstream invalid results using NDA limits before display rounding.
+WITH observations AS (
+    SELECT *, TRY_CAST(original_result_value AS FLOAT) AS numeric_result
+    FROM {{ ref('int_hba1c_all') }}
+)
 
 SELECT
     person_id,
@@ -34,12 +26,8 @@ SELECT
     hba1c_display,
     hba1c_category,
     
-    -- DQ Flags based on current validated ranges
-    CASE 
-        WHEN (is_ifcc AND (hba1c_original_value < 20 OR hba1c_original_value > 200)) OR
-             (is_dcct AND (hba1c_original_value < 3 OR hba1c_original_value > 20)) THEN TRUE 
-        ELSE FALSE 
-    END AS is_hba1c_out_of_range,
+    numeric_result IS NOT NULL AND (is_ifcc OR is_dcct)
+        AND NOT is_valid_hba1c AS is_hba1c_out_of_range,
     
     CASE 
         WHEN clinical_effective_date IS NULL THEN TRUE 
@@ -63,12 +51,11 @@ SELECT
         ELSE FALSE 
     END AS is_measurement_type_ambiguous,
     
-    -- Enhanced HbA1c category with DQ context
     CASE
-        WHEN is_ifcc AND hba1c_original_value < 20 THEN 'IFCC Below Valid Range (< 20)'
-        WHEN is_ifcc AND hba1c_original_value > 200 THEN 'IFCC Above Valid Range (> 200)'
-        WHEN is_dcct AND hba1c_original_value < 3 THEN 'DCCT Below Valid Range (< 3)'
-        WHEN is_dcct AND hba1c_original_value > 20 THEN 'DCCT Above Valid Range (> 20)'
+        WHEN NOT is_valid_hba1c AND is_ifcc AND numeric_result < 20 THEN 'IFCC Below Valid Range'
+        WHEN NOT is_valid_hba1c AND is_ifcc AND numeric_result >= 20 THEN 'IFCC Above Valid Range'
+        WHEN NOT is_valid_hba1c AND is_dcct AND numeric_result < 20 THEN 'DCCT Below Valid Range'
+        WHEN NOT is_valid_hba1c AND is_dcct AND numeric_result >= 20 THEN 'DCCT Above Valid Range'
         WHEN is_ifcc AND hba1c_original_value > 150 THEN 'IFCC Extremely High (> 150)'
         WHEN is_dcct AND hba1c_original_value > 15 THEN 'DCCT Extremely High (> 15)'
         WHEN (is_ifcc = FALSE AND is_dcct = FALSE) THEN 'Measurement Type Unknown'
@@ -76,16 +63,11 @@ SELECT
         ELSE hba1c_category
     END AS hba1c_category_with_issues
 
-FROM {{ ref('int_hba1c_all') }}
+FROM observations
 
 -- Only include observations with DQ issues
 WHERE original_result_value IS NOT NULL
-  AND ((is_ifcc AND (hba1c_original_value < 20 OR hba1c_original_value > 200))  -- IFCC out of range
-   OR (is_dcct AND (hba1c_original_value < 3 OR hba1c_original_value > 20))    -- DCCT out of range
-   OR clinical_effective_date IS NULL                        -- Missing date
-   OR clinical_effective_date > CURRENT_DATE                 -- Future date
-   OR (is_ifcc = FALSE AND is_dcct = FALSE)                  -- Unknown measurement type
-   OR (is_ifcc = TRUE AND is_dcct = TRUE)                    -- Ambiguous measurement type
-   OR is_valid_hba1c = FALSE)                                -- Invalid per original logic
+  AND (NOT is_valid_hba1c
+       OR is_date_missing OR is_future_date OR is_measurement_type_ambiguous)
 
 ORDER BY person_id, clinical_effective_date DESC

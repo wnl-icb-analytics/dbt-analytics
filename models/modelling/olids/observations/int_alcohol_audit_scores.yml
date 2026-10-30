@@ -1,14 +1,20 @@
 models:
   - name: int_alcohol_audit_scores
-    description: 'AUDIT and AUDIT-C alcohol screening assessments with UK-specific risk thresholds.
-
-      One row per AUDIT/AUDIT-C observation using AUDITC_COD and AUDIT_COD clusters with detailed categorisation and intervention flags.'
+    description: >
+      AUDIT, AUDIT-PC and AUDIT-C assessments, one row per observation and source cluster.
+      Includes people aged at least 16 at the assessment, including inactive and
+      deceased people, with a scored observation dated no later than the build date.
+      Whole-number totals use government screening guidance: brief advice at AUDIT
+      8-19 or AUDIT-C 5-10, and possible dependence with consideration of specialist
+      assessment at AUDIT 20+ or AUDIT-C 11+. AUDIT-PC (SNOMED 774089008 or 774090004)
+      uses 0-20 whole points and brief advice at 5+, with no specialist band.
+      These are screening bands, not diagnoses.
 
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: AUDITC_COD, AUDIT_COD
@@ -41,27 +47,27 @@ models:
           can be back-dated. May be NULL.
 
       - name: audit_score
-        description: Numeric AUDIT or AUDIT-C score value
+        description: Numeric total for the recorded AUDIT instrument
 
       - name: audit_type
-        description: Type of AUDIT assessment (AUDIT-C or Full AUDIT)
+        description: Type of AUDIT assessment (AUDIT-C, AUDIT-PC or Full AUDIT)
 
       - name: is_valid_score
         description: >-
-          Whole-number total within the instrument range (AUDIT-C 0-12, AUDIT 0-40).
+          Whole-number total within the instrument range (AUDIT-C 0-12, AUDIT-PC 0-20, AUDIT 0-40).
           All risk fields and flags are null, Invalid or false when this is false.
 
       - name: risk_category
-        description: Clinical risk category based on score thresholds
+        description: Instrument-specific screening category. AUDIT-PC uses Lower Risk below 5 and Increasing Risk at 5+; it has no higher-risk or dependence band.
 
       - name: auditc_positive_screen
-        description: Flag for AUDIT-C scores ≥5 indicating positive screen for potential harm
+        description: AUDIT-C scores of 5 or more indicating a positive screen
 
       - name: requires_specialist_intervention
-        description: Flag for scores indicating need for specialist clinical intervention
+        description: Consider specialist alcohol assessment for valid AUDIT 20+ or AUDIT-C 11+; not a dependence diagnosis.
 
       - name: brief_intervention_indicated
-        description: Flag for scores meeting threshold for brief intervention
+        description: Brief advice indicated for valid AUDIT 8-19, AUDIT-C 5-10 or AUDIT-PC 5+, per government screening guidance.
 
       - name: simplified_risk_level
         description: Simplified risk categorisation for aggregation. Null for invalid scores.
@@ -106,10 +112,58 @@ unit_tests:
         - {person_id: -9401, is_valid_score: true, risk_category: Increasing Risk, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: false}
         - {person_id: -9402, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
         - {person_id: -9403, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
-        - {person_id: -9404, is_valid_score: true, risk_category: Possible Dependence, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: true}
+        - {person_id: -9404, is_valid_score: true, risk_category: Possible Dependence, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: true}
         - {person_id: -9405, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
         - {person_id: -18240, is_valid_score: true, risk_category: Non-Drinker, simplified_risk_level: Non-Drinker, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
-        - {person_id: -18241, is_valid_score: true, risk_category: Possible Dependence, simplified_risk_level: Higher Risk, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: true}
+        - {person_id: -18241, is_valid_score: true, risk_category: Possible Dependence, simplified_risk_level: Higher Risk, auditc_positive_screen: true, brief_intervention_indicated: false, requires_specialist_intervention: true}
         - {person_id: -18242, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
         - {person_id: -18243, is_valid_score: true, risk_category: Non-Drinker, simplified_risk_level: Non-Drinker, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
         - {person_id: -18244, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+  - name: audit_government_intervention_boundaries
+    model: int_alcohol_audit_scores
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR id, -211439::NUMBER person_id,
+                 '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+                 '2026-01-02'::TIMESTAMP_NTZ date_recorded,
+                 column2::NUMBER result_value, 'score'::VARCHAR result_unit_display,
+                 'SYN_CODE'::VARCHAR mapped_concept_code,
+                 'Synthetic AUDIT'::VARCHAR mapped_concept_display,
+                 column3::VARCHAR cluster_id, 40::NUMBER age_at_event
+          FROM VALUES
+              ('SYN_C_4', 4, 'AUDITC_COD'),
+              ('SYN_C_5', 5, 'AUDITC_COD'),
+              ('SYN_C_7', 7, 'AUDITC_COD'),
+              ('SYN_C_8', 8, 'AUDITC_COD'),
+              ('SYN_C_10', 10, 'AUDITC_COD'),
+              ('SYN_C_11', 11, 'AUDITC_COD'),
+              ('SYN_C_12', 12, 'AUDITC_COD'),
+              ('SYN_FULL_7', 7, 'AUDIT_COD'),
+              ('SYN_FULL_8', 8, 'AUDIT_COD'),
+              ('SYN_FULL_15', 15, 'AUDIT_COD'),
+              ('SYN_FULL_16', 16, 'AUDIT_COD'),
+              ('SYN_FULL_19', 19, 'AUDIT_COD'),
+              ('SYN_FULL_20', 20, 'AUDIT_COD'),
+              ('SYN_FULL_40', 40, 'AUDIT_COD')
+    given:
+      - input: ref('dim_person_demographics')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER person_id, NULL::VARCHAR gender WHERE FALSE
+    expect:
+      rows:
+        - {id: SYN_C_4, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {id: SYN_C_5, is_valid_score: true, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_C_7, is_valid_score: true, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_C_8, is_valid_score: true, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_C_10, is_valid_score: true, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_C_11, is_valid_score: true, auditc_positive_screen: true, brief_intervention_indicated: false, requires_specialist_intervention: true}
+        - {id: SYN_C_12, is_valid_score: true, auditc_positive_screen: true, brief_intervention_indicated: false, requires_specialist_intervention: true}
+        - {id: SYN_FULL_7, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {id: SYN_FULL_8, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_FULL_15, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_FULL_16, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_FULL_19, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {id: SYN_FULL_20, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: true}
+        - {id: SYN_FULL_40, is_valid_score: true, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: true}

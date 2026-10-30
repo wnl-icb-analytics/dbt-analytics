@@ -6,9 +6,10 @@
 
 /*
 One row per person with valid AUDIT evidence or an alcohol disorder record.
-Select the latest AUDIT calendar date, then prefer full AUDIT and the highest
-score. Active disorders take priority over historical disorders, then AUDIT
-risk, regardless of assessment age. Recency fields describe evidence age.
+Select the latest AUDIT calendar date, then prefer full AUDIT, higher risk,
+AUDIT-PC over AUDIT-C and the highest score. Active disorders take priority over
+historical disorders, then AUDIT risk, regardless of assessment age. Recency
+fields describe evidence age.
 */
 
 WITH latest_audit_scores AS (
@@ -31,7 +32,17 @@ WITH latest_audit_scores AS (
                 PARTITION BY person_id 
                 ORDER BY clinical_effective_date::date DESC,
                          CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END,
-                         -- Instrument total is the sum of item scores, so it is the day's highest value
+                         -- Local rule: preserve the higher instrument-specific risk before comparing totals.
+                         CASE risk_category
+                             WHEN 'Possible Dependence' THEN 5
+                             WHEN 'Higher Risk' THEN 4
+                             WHEN 'Increasing Risk' THEN 3
+                             WHEN 'Lower Risk' THEN 2
+                             WHEN 'Occasional Drinker' THEN 1
+                             WHEN 'Non-Drinker' THEN 0
+                             ELSE -1
+                         END DESC,
+                         CASE WHEN audit_type = 'AUDIT-PC' THEN 0 ELSE 1 END,
                          audit_score DESC,
                          date_recorded DESC NULLS LAST,
                          id
@@ -137,7 +148,9 @@ SELECT
     
     -- Intervention flag
     CASE
-        WHEN brief_intervention_indicated = TRUE OR has_active_disorder = TRUE THEN TRUE
+        WHEN brief_intervention_indicated = TRUE
+          OR audit_requires_intervention = TRUE
+          OR has_active_disorder = TRUE THEN TRUE
         ELSE FALSE
     END AS requires_intervention,
     

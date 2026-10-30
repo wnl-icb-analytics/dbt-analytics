@@ -80,12 +80,12 @@ assessed AS (
     SELECT
         *,
         CASE
-            -- Keep sub-20 recorded mmol/mol results invalid before display rounding.
-            WHEN original_result_unit_code = 'mmol/mol'
-                AND TRY_CAST(original_result_value AS FLOAT) >= 13
-                AND TRY_CAST(original_result_value AS FLOAT) < 20 THEN FALSE
-            WHEN measurement_type = 'IFCC' AND hba1c_original_value BETWEEN 20 AND 200 THEN TRUE
-            WHEN measurement_type = 'DCCT' AND hba1c_original_value BETWEEN 3 AND 20 THEN TRUE
+            -- NDA cleaning bands apply to the recorded value before display rounding.
+            WHEN measurement_type = 'IFCC'
+                AND TRY_CAST(original_result_value AS FLOAT) BETWEEN 20 AND 195 THEN TRUE
+            WHEN measurement_type = 'DCCT'
+                AND TRY_CAST(original_result_value AS FLOAT) >= 3.979993595
+                AND TRY_CAST(original_result_value AS FLOAT) < 20 THEN TRUE
             ELSE FALSE
         END AS is_valid_hba1c,
         CASE WHEN measurement_type = 'UNKNOWN' THEN NULL

@@ -117,9 +117,20 @@ FROM {{ ref('int_alcohol_audit_scores') }} au
 --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_BASE p USING (PERSON_ID)
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 WHERE au.is_valid_score
--- Instrument total is the sum of item scores, so it is the day's highest value
+-- Local rule: preserve the higher instrument-specific risk before comparing totals.
 QUALIFY ROW_NUMBER() OVER (PARTITION BY au.person_id ORDER BY au.clinical_effective_date::date DESC,
-    IFF(au.audit_type = 'Full AUDIT', 0, 1), au.audit_score DESC, au.date_recorded DESC NULLS LAST, au.id) = 1
+    CASE WHEN au.audit_type = 'Full AUDIT' THEN 1 ELSE 2 END,
+    CASE au.risk_category
+        WHEN 'Possible Dependence' THEN 5
+        WHEN 'Higher Risk' THEN 4
+        WHEN 'Increasing Risk' THEN 3
+        WHEN 'Lower Risk' THEN 2
+        WHEN 'Occasional Drinker' THEN 1
+        WHEN 'Non-Drinker' THEN 0
+        ELSE -1
+    END DESC,
+    CASE WHEN au.audit_type = 'AUDIT-PC' THEN 0 ELSE 1 END,
+    au.audit_score DESC, au.date_recorded DESC NULLS LAST, au.id) = 1
 
 UNION
 --ALCOHOL UNITS

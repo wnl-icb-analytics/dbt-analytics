@@ -3,12 +3,13 @@ models:
   - name: fct_person_alcohol_status
     description: 'Combined alcohol risk assessment from screening and diagnoses.
 
-      One row per person with any alcohol-related data, integrating AUDIT/AUDIT-C
+      One row per person with valid AUDIT evidence or an alcohol disorder record, integrating AUDIT/AUDIT-C
       scores with alcohol disorder diagnoses. Any disorder record takes precedence
       over AUDIT, regardless of age. There is no 12-month conflict window.
-      Valid AUDIT records use the latest clinical date. Same-day records
-      prefer full AUDIT over AUDIT-C, then the highest total, latest recorded date
-      and observation id.'
+      Valid AUDIT records use the latest clinical date. Local same-day rule: prefer full AUDIT, then the higher instrument-specific
+      risk category, then AUDIT-PC over AUDIT-C, then the highest score, latest
+      recorded date and observation id. Risk takes priority over the total because
+      the shortened instruments use different scales.'
     config:
       meta:
         indicator:
@@ -124,31 +125,39 @@ models:
               threshold_unit: "score"
               description: "Full AUDIT possible dependence"
               sort_order: 12
+            # AUDIT-PC Intervention Threshold
+            - population_group: "ALL"
+              threshold_type: "BRIEF_INTERVENTION_AUDIT_PC"
+              threshold_value: "5"
+              threshold_operator: "AT_OR_ABOVE"
+              threshold_unit: "score"
+              description: "AUDIT-PC brief intervention threshold"
+              sort_order: 17
             # Clinical Intervention Thresholds
             - population_group: "ALL"
               threshold_type: "BRIEF_INTERVENTION_AUDIT_C"
-              threshold_value: "5"
-              threshold_operator: "AT_OR_ABOVE"
+              threshold_value: "5-10"
+              threshold_operator: "BETWEEN"
               threshold_unit: "score"
               description: "AUDIT-C brief intervention threshold"
               sort_order: 13
             - population_group: "ALL"
               threshold_type: "BRIEF_INTERVENTION_AUDIT"
-              threshold_value: "8"
-              threshold_operator: "AT_OR_ABOVE"
+              threshold_value: "8-19"
+              threshold_operator: "BETWEEN"
               threshold_unit: "score"
               description: "Full AUDIT brief intervention threshold"
               sort_order: 14
             - population_group: "ALL"
               threshold_type: "SPECIALIST_REFERRAL_AUDIT_C"
-              threshold_value: "8"
+              threshold_value: "11"
               threshold_operator: "AT_OR_ABOVE"
               threshold_unit: "score"
               description: "AUDIT-C specialist intervention threshold"
               sort_order: 15
             - population_group: "ALL"
               threshold_type: "SPECIALIST_REFERRAL_AUDIT"
-              threshold_value: "16"
+              threshold_value: "20"
               threshold_operator: "AT_OR_ABOVE"
               threshold_unit: "score"
               description: "Full AUDIT specialist intervention threshold"
@@ -159,7 +168,7 @@ models:
     columns:
       - name: person_id
         description: Unique identifier for the person
-        tests:
+        data_tests:
           - not_null
           - unique
 
@@ -178,11 +187,10 @@ models:
           1 non-drinker, 0 no data.
 
       - name: audit_score
-        description: Most recent AUDIT or AUDIT-C score
+        description: Most recent valid total for the recorded AUDIT instrument
 
       - name: audit_type
-        description: Type of most recent AUDIT assessment (AUDIT-C or Full 
-          AUDIT)
+        description: Type of most recent AUDIT assessment (AUDIT-C, AUDIT-PC or Full AUDIT)
 
       - name: audit_risk_category
         description: Risk category from most recent AUDIT assessment
@@ -191,10 +199,10 @@ models:
         description: Flag for currently active alcohol disorder
 
       - name: requires_intervention
-        description: Flag for persons requiring clinical intervention
+        description: Brief advice or consideration of specialist assessment from valid AUDIT evidence, or an active alcohol disorder.
 
       - name: brief_intervention_indicated
-        description: Flag indicating brief intervention threshold met
+        description: Brief advice indicated for valid AUDIT 8-19, AUDIT-C 5-10 or AUDIT-PC 5+.
 
       - name: audit_data_recency
         description: Recency classification of AUDIT data (Current, Recent, 
@@ -249,3 +257,43 @@ unit_tests:
         - {person_id: -18202, audit_score: 9, audit_type: Full AUDIT, audit_risk_category: SYN_FULL_RISK}
         - {person_id: -18203, audit_score: 9, audit_type: Full AUDIT, audit_risk_category: SYN_NEW}
         - {person_id: -18204, audit_score: 9, audit_type: Full AUDIT, audit_risk_category: SYN_A_RISK}
+
+  - name: alcohol_status_keeps_specialist_intervention_need
+    model: fct_person_alcohol_status
+    given:
+      - input: ref('int_alcohol_audit_scores')
+        format: sql
+        rows: |
+          SELECT column1::VARCHAR id, column2::NUMBER person_id,
+                 '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+                 '2026-01-02'::TIMESTAMP_NTZ date_recorded,
+                 column3::NUMBER audit_score, column4::VARCHAR audit_type,
+                 column5::VARCHAR risk_category, 'Higher Risk'::VARCHAR simplified_risk_level,
+                 FALSE auditc_positive_screen, column6::BOOLEAN requires_specialist_intervention,
+                 column7::BOOLEAN brief_intervention_indicated, TRUE is_valid_score,
+                 'SYN_gender'::VARCHAR gender
+          FROM VALUES
+              ('SYN_FULL20', -231439, 20, 'Full AUDIT', 'Possible Dependence', TRUE, FALSE),
+              ('SYN_C11', -231440, 11, 'AUDIT-C', 'Possible Dependence', TRUE, FALSE),
+              ('SYN_FULL19', -231441, 19, 'Full AUDIT', 'Higher Risk', FALSE, TRUE),
+              ('SYN_FULL7', -231442, 7, 'Full AUDIT', 'Lower Risk', FALSE, FALSE),
+              ('SYN_PC12', -231440, 12, 'AUDIT-PC', 'Increasing Risk', FALSE, TRUE),
+              ('SYN_C9', -231444, 9, 'AUDIT-C', 'Higher Risk', FALSE, TRUE),
+              ('SYN_PC10', -231444, 10, 'AUDIT-PC', 'Increasing Risk', FALSE, TRUE),
+              ('SYN_C7', -231445, 7, 'AUDIT-C', 'Increasing Risk', FALSE, TRUE),
+              ('SYN_PC5', -231445, 5, 'AUDIT-PC', 'Increasing Risk', FALSE, TRUE)
+      - input: ref('int_alcohol_misuse_disorders')
+        format: sql
+        rows: |
+          SELECT -231443::NUMBER person_id, 'SYN_DISORDER'::VARCHAR id,
+                 '2026-01-01'::DATE clinical_effective_date, TRUE is_problem,
+                 NULL::DATE problem_end_date
+    expect:
+      rows:
+        - {person_id: -231439, audit_type: Full AUDIT, audit_score: 20, audit_risk_category: Possible Dependence, brief_intervention_indicated: false, requires_intervention: true}
+        - {person_id: -231440, audit_type: AUDIT-C, audit_score: 11, audit_risk_category: Possible Dependence, brief_intervention_indicated: false, requires_intervention: true}
+        - {person_id: -231441, audit_type: Full AUDIT, audit_score: 19, audit_risk_category: Higher Risk, brief_intervention_indicated: true, requires_intervention: true}
+        - {person_id: -231442, audit_type: Full AUDIT, audit_score: 7, audit_risk_category: Lower Risk, brief_intervention_indicated: false, requires_intervention: false}
+        - {person_id: -231443, brief_intervention_indicated: null, requires_intervention: true}
+        - {person_id: -231444, audit_type: AUDIT-C, audit_score: 9, audit_risk_category: Higher Risk, brief_intervention_indicated: true, requires_intervention: true}
+        - {person_id: -231445, audit_type: AUDIT-PC, audit_score: 5, audit_risk_category: Increasing Risk, brief_intervention_indicated: true, requires_intervention: true}

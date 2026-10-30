@@ -1,0 +1,201 @@
+unit_tests:
+- name: int_alcohol_audit_scores_auditpc_boundaries
+  model: int_alcohol_audit_scores
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -251439::NUMBER person_id,
+         CURRENT_DATE()::TIMESTAMP_NTZ clinical_effective_date,
+         CURRENT_DATE()::TIMESTAMP_NTZ date_recorded,
+         column2::VARCHAR result_value, 'score'::VARCHAR result_unit_display,
+         '774089008'::VARCHAR mapped_concept_code, 'Synthetic AUDIT-PC'::VARCHAR mapped_concept_display,
+         'AUDIT_COD'::VARCHAR cluster_id, 40::NUMBER age_at_event
+        FROM VALUES
+        ('SYN_PC_ZERO', '0'),
+        ('SYN_PC_NEGATIVE', '-1'),
+        ('SYN_PC_BELOW', '4'),
+        ('SYN_PC_POSITIVE', '5'),
+        ('SYN_PC_SEVEN', '7'),
+        ('SYN_PC_MAX', '20'),
+        ('SYN_PC_OVER', '21'),
+        ('SYN_PC_FRACTION', '5.001'),
+        ('SYN_PC_DECIMAL', '5.0'),
+        ('SYN_PC_NULL', NULL)
+  given:
+  - input: ref('dim_person_demographics')
+    format: sql
+    rows: SELECT NULL::NUMBER person_id, NULL::VARCHAR gender WHERE FALSE
+  expect:
+    rows:
+    - id: SYN_PC_ZERO
+      audit_type: AUDIT-PC
+      is_valid_score: true
+      risk_category: Lower Risk
+      simplified_risk_level: Lower Risk
+      auditc_positive_screen: false
+      brief_intervention_indicated: false
+      requires_specialist_intervention: false
+    - id: SYN_PC_NEGATIVE
+      audit_type: AUDIT-PC
+      is_valid_score: false
+      risk_category: Invalid
+      simplified_risk_level: null
+      auditc_positive_screen: false
+      brief_intervention_indicated: false
+      requires_specialist_intervention: false
+    - id: SYN_PC_BELOW
+      audit_type: AUDIT-PC
+      is_valid_score: true
+      risk_category: Lower Risk
+      simplified_risk_level: Lower Risk
+      auditc_positive_screen: false
+      brief_intervention_indicated: false
+      requires_specialist_intervention: false
+    - id: SYN_PC_POSITIVE
+      audit_type: AUDIT-PC
+      is_valid_score: true
+      risk_category: Increasing Risk
+      simplified_risk_level: Increasing Risk
+      auditc_positive_screen: false
+      brief_intervention_indicated: true
+      requires_specialist_intervention: false
+    - id: SYN_PC_SEVEN
+      audit_type: AUDIT-PC
+      is_valid_score: true
+      risk_category: Increasing Risk
+      simplified_risk_level: Increasing Risk
+      auditc_positive_screen: false
+      brief_intervention_indicated: true
+      requires_specialist_intervention: false
+    - id: SYN_PC_MAX
+      audit_type: AUDIT-PC
+      is_valid_score: true
+      risk_category: Increasing Risk
+      simplified_risk_level: Increasing Risk
+      auditc_positive_screen: false
+      brief_intervention_indicated: true
+      requires_specialist_intervention: false
+    - id: SYN_PC_OVER
+      audit_type: AUDIT-PC
+      is_valid_score: false
+      risk_category: Invalid
+      simplified_risk_level: null
+      auditc_positive_screen: false
+      brief_intervention_indicated: false
+      requires_specialist_intervention: false
+    - id: SYN_PC_FRACTION
+      audit_type: AUDIT-PC
+      is_valid_score: false
+      risk_category: Invalid
+      simplified_risk_level: null
+      auditc_positive_screen: false
+      brief_intervention_indicated: false
+      requires_specialist_intervention: false
+    - id: SYN_PC_DECIMAL
+      audit_type: AUDIT-PC
+      is_valid_score: true
+      risk_category: Increasing Risk
+      simplified_risk_level: Increasing Risk
+      auditc_positive_screen: false
+      brief_intervention_indicated: true
+      requires_specialist_intervention: false
+- name: int_alcohol_screening_all_auditpc_boundaries
+  model: int_alcohol_screening_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -251439::NUMBER person_id,
+         CURRENT_DATE()::TIMESTAMP_NTZ clinical_effective_date,
+         CURRENT_DATE()::TIMESTAMP_NTZ date_recorded,
+         column2::VARCHAR result_value, 'score'::VARCHAR result_unit_display,
+         '774089008'::VARCHAR mapped_concept_code, 'Synthetic AUDIT-PC'::VARCHAR mapped_concept_display,
+         'AUDIT_COD'::VARCHAR cluster_id, 40::NUMBER age_at_event
+        FROM VALUES
+        ('SYN_PC_ZERO', '0'),
+        ('SYN_PC_NEGATIVE', '-1'),
+        ('SYN_PC_BELOW', '4'),
+        ('SYN_PC_POSITIVE', '5'),
+        ('SYN_PC_SEVEN', '7'),
+        ('SYN_PC_MAX', '20'),
+        ('SYN_PC_OVER', '21'),
+        ('SYN_PC_FRACTION', '5.001'),
+        ('SYN_PC_DECIMAL', '5.0'),
+        ('SYN_PC_NULL', NULL)
+  given: []
+  expect:
+    rows:
+    - id: SYN_PC_ZERO
+      screening_tool: AUDIT-PC
+      score_value: 0.0
+      is_positive_screen: false
+    - id: SYN_PC_NEGATIVE
+      screening_tool: AUDIT-PC
+      score_value: null
+      is_positive_screen: false
+    - id: SYN_PC_BELOW
+      screening_tool: AUDIT-PC
+      score_value: 4.0
+      is_positive_screen: false
+    - id: SYN_PC_POSITIVE
+      screening_tool: AUDIT-PC
+      score_value: 5.0
+      is_positive_screen: true
+    - id: SYN_PC_SEVEN
+      screening_tool: AUDIT-PC
+      score_value: 7.0
+      is_positive_screen: true
+    - id: SYN_PC_MAX
+      screening_tool: AUDIT-PC
+      score_value: 20.0
+      is_positive_screen: true
+    - id: SYN_PC_OVER
+      screening_tool: AUDIT-PC
+      score_value: null
+      is_positive_screen: false
+    - id: SYN_PC_FRACTION
+      screening_tool: AUDIT-PC
+      score_value: null
+      is_positive_screen: false
+    - id: SYN_PC_DECIMAL
+      screening_tool: AUDIT-PC
+      score_value: 5.0
+      is_positive_screen: true
+    - id: SYN_PC_NULL
+      screening_tool: AUDIT-PC
+      score_value: null
+      is_positive_screen: false
+- name: rockwood_terminal_illness_is_separate
+  model: int_rockwood_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -251440::NUMBER person_id,
+         CURRENT_DATE()::TIMESTAMP_NTZ clinical_effective_date,
+         column2::VARCHAR mapped_concept_code, 'Synthetic CFS'::VARCHAR mapped_concept_display,
+         'ROCKWOOD_SCORES'::VARCHAR cluster_id
+        FROM VALUES
+         ('SYN_CFS6', '1129381000000102'), ('SYN_CFS7', '1129391000000100'),
+         ('SYN_CFS8', '1129401000000102'), ('SYN_CFS9', '1129411000000100')
+  given: []
+  expect:
+    rows:
+    - id: SYN_CFS6
+      rockwood_score: 6
+      frailty_category: Moderate Frailty
+      is_frail: true
+      is_severely_frail: false
+    - id: SYN_CFS7
+      rockwood_score: 7
+      frailty_category: Severe Frailty
+      is_frail: true
+      is_severely_frail: true
+    - id: SYN_CFS8
+      rockwood_score: 8
+      frailty_category: Severe Frailty
+      is_frail: true
+      is_severely_frail: true
+    - id: SYN_CFS9
+      rockwood_score: 9
+      frailty_category: Terminally Ill
+      is_frail: false
+      is_severely_frail: false
