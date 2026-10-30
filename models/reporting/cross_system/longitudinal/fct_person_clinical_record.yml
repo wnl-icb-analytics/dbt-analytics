@@ -26,21 +26,43 @@ models:
     description: '{{ doc(''navigation_clinical_record_date'') }}'
   - name: clinical_time_precision
     description: '{{ doc(''navigation_clinical_time_precision'') }}'
-  - name: clinical_time_basis
-    description: '{{ doc(''navigation_clinical_time_basis'') }}'
   - name: clinical_record_type
     description: '{{ doc(''navigation_clinical_record_type'') }}'
   - name: clinical_record_type_name
     description: '{{ doc(''navigation_clinical_record_type_name'') }}'
-  - name: code
-    description: Preferred analysis code. Uses the mapped SNOMED triplet when mapped_code is populated; otherwise
-      retains the source triplet. Original source and mapped fields remain available.
-  - name: code_name
-    description: Preferred analysis code name. Uses the mapped SNOMED triplet when mapped_code is populated; otherwise
-      retains the source triplet. Original source and mapped fields remain available.
-  - name: coding_system
-    description: Preferred analysis coding system. Uses the mapped SNOMED triplet when mapped_code is populated;
-      otherwise retains the source triplet. Original source and mapped fields remain available.
+  - name: source_dataset
+    description: '{{ doc(''navigation_source_dataset'') }}'
+  - name: original_code
+    description: >-
+      {{ doc('navigation_clinical_original_code') }}
+  - name: original_code_name
+    description: >-
+      {{ doc('navigation_clinical_original_code_name') }}
+  - name: original_coding_system
+    description: >-
+      {{ doc('navigation_clinical_original_coding_system') }}
+  - name: snomed_code
+    description: >-
+      {{ doc('navigation_snomed_code') }}
+  - name: snomed_code_name
+    description: >-
+      {{ doc('navigation_snomed_code_name') }}
+  - name: snomed_mapping_method
+    description: >-
+      {{ doc('navigation_snomed_mapping_method') }}
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Recorded as SNOMED CT
+          - OLIDS concept map
+          - MHSDS supplied SNOMED
+          - National CTV3 map
+          - National Read v2 map
+          - Legacy Read dictionary
+  - name: is_snomed_mapping_assured
+    description: >-
+      {{ doc('navigation_is_snomed_mapping_assured') }}
   - name: result_value
     description: '{{ doc(''navigation_result_value'') }}'
   - name: result_value_name
@@ -64,8 +86,8 @@ models:
       Use this instead of result_value_numeric for scoring. ECDS scores remain null here until tool-specific
       validation is implemented; their submitted values remain in result_value and result_value_numeric.
   - name: assessment_response_status
-    description: 'Source assessment interpretation: enumerated_response, within_published_range, known_non_score,
-      value_missing, reference_not_available, response_unmatched or not_validated. ECDS uses not_validated
+    description: 'Source assessment interpretation: listed response, within published range, non-score response,
+      no value, reference unavailable, unmatched response or not validated. ECDS uses not validated
       for supplied scores because numeric parsing does not check the tool-specific score domain. Null for other clinical items.'
   - name: is_assessment_response_non_score
     description: True for a published non-score response such as unable to assess. Null means the source has no
@@ -80,10 +102,22 @@ models:
     description: '{{ doc(''navigation_medication_quantity_unit'') }}'
   - name: medication_duration_days
     description: '{{ doc(''navigation_medication_duration_days'') }}'
-  - name: medication_authorisation_type_code
-    description: '{{ doc(''navigation_medication_authorisation_type_code'') }}'
-  - name: medication_authorisation_type_name
-    description: '{{ doc(''navigation_medication_authorisation_type_name'') }}'
+  - name: medication_authorisation_type
+    description: >-
+      {{ doc('navigation_medication_authorisation_type') }}
+  - name: is_primary_diagnosis
+    description: Recorded ECDS primary diagnosis indicator. Null where the source does not provide this indicator;
+      coding position remains separate.
+  - name: coding_position
+    description: Submitted diagnosis or procedure position within its parent and code system. Positions from different
+      coding systems are not interchangeable.
+  - name: present_on_admission_code
+    description: Submitted SUS present-on-admission indicator. Retained without inferring onset from the encounter
+      date.
+  - name: present_on_admission_name
+    description: Readable interpretation of the NHS Data Dictionary national/default codes Y, N, 8 and 9. Missing
+      or unrecognised codes remain unlabelled. This field has limited mandated coverage; absence is not evidence
+      that a diagnosis developed after admission. See https://archive.datadictionary.nhs.uk/DD%20Release%20November%202021/data_elements/present_on_admission_indicator.html.
   - name: diagnosis_qualifier_code
     description: '{{ doc(''navigation_qualifier_code'') }}'
   - name: diagnosis_qualifier_name
@@ -94,78 +128,51 @@ models:
     description: '{{ doc(''navigation_provider_organisation_name'') }}'
   - name: provider_code_authority
     description: '{{ doc(''navigation_provider_code_authority'') }}'
+  - name: parent_record_type
+    description: '{{ doc(''navigation_parent_record_type'') }}'
+  - name: parent_record_id
+    description: '{{ doc(''navigation_parent_record_id'') }}'
+  - name: parent_start_date
+    description: Start date of the recorded episode, outpatient appointment, emergency attendance or OLIDS encounter.
+      Care context, not diagnosis onset. APC and OLIDS dates require positive person agreement. Interpret partial
+      dates with parent_start_date_precision.
+  - name: parent_start_date_precision
+    description: 'Precision of parent_start_date: date, month, year or unknown. OLIDS retains its encounter precision;
+      an encounter context date is never substituted for the clinical date.'
+  - name: parent_end_date
+    description: End date of the recorded episode or emergency attendance. Retained as context without replacing
+      a missing clinical date. Null for parents without a supplied end date.
+  - name: is_parent_person_consistent
+    description: Agreement between the clinical record and its linked parent person key where independently checked.
+      False identifies a conflict; null means not independently established. APC and OLIDS parent dates require
+      positive agreement. Their known conflicting links are not promoted as parents. APC spell-to-episode conflicts
+      also leave sk_patient_id null; the clinical item remains available without cross-system person attribution.
+  - name: parent_model_name
+    description: '{{ doc(''navigation_parent_model_name'') }}'
+  - name: clinical_record_id
+    description: '{{ doc(''navigation_clinical_record_id'') }}'
+    data_tests:
+    - unique
+  - name: source_record_type
+    description: '{{ doc(''navigation_source_record_type'') }}'
+  - name: source_record_id
+    description: '{{ doc(''navigation_source_record_id'') }}'
+  - name: source_person_id
+    description: '{{ doc(''navigation_source_person_id'') }}'
+  - name: source_model_name
+    description: '{{ doc(''navigation_source_model_name'') }}'
+  - name: clinical_time_basis
+    description: '{{ doc(''navigation_clinical_time_basis'') }}'
   - name: recorded_at
     description: OLIDS recording timestamp. It describes entry into the clinical system, not when the clinical condition
       began. Never substituted for clinical_record_at.
   - name: is_source_date_inconsistent
     description: True when the source fact reports disagreement between its supplied and derived clinical dates.
       Null when this comparison is unavailable.
-  - name: clinical_record_id
-    description: '{{ doc(''navigation_clinical_record_id'') }}'
-    data_tests:
-    - unique
-  - name: source_dataset
-    description: '{{ doc(''navigation_source_dataset'') }}'
-  - name: source_code
-    description: '{{ doc(''navigation_source_code'') }}'
-  - name: source_code_name
-    description: '{{ doc(''navigation_source_code_name'') }}'
-  - name: source_coding_system
-    description: '{{ doc(''navigation_source_coding_system'') }}'
-  - name: mapped_code
-    description: '{{ doc(''navigation_mapped_code'') }}'
-  - name: mapped_code_name
-    description: '{{ doc(''navigation_mapped_code_name'') }}'
-  - name: mapped_coding_system
-    description: '{{ doc(''navigation_mapped_coding_system'') }}'
-  - name: source_person_id
-    description: '{{ doc(''navigation_source_person_id'') }}'
-  - name: source_record_type
-    description: '{{ doc(''navigation_source_record_type'') }}'
-  - name: source_record_id
-    description: '{{ doc(''navigation_source_record_id'') }}'
-  - name: source_model_name
-    description: '{{ doc(''navigation_source_model_name'') }}'
-  - name: parent_record_type
-    description: '{{ doc(''navigation_parent_record_type'') }}'
-  - name: parent_record_id
-    description: '{{ doc(''navigation_parent_record_id'') }}'
-  - name: parent_model_name
-    description: '{{ doc(''navigation_parent_model_name'') }}'
-  - name: relationship_type
-    description: '{{ doc(''navigation_relationship_type'') }}'
   - name: source_submission_period
     description: '{{ doc(''navigation_source_submission_period'') }}'
   - name: source_received_at
     description: '{{ doc(''navigation_source_received_at'') }}'
-  - name: is_primary_diagnosis
-    description: Recorded ECDS primary diagnosis indicator. Null where the source does not provide this indicator;
-      coding position remains separate.
-  - name: coding_position
-    description: Submitted diagnosis or procedure position within its parent and code system. Positions from different
-      coding systems are not interchangeable.
-  - name: present_on_admission_code
-    description: Submitted SUS present-on-admission indicator. Retained without inferring onset from the encounter
-      date.
-  - name: is_parent_person_consistent
-    description: Agreement between the clinical record and its linked parent person key where independently checked.
-      False identifies a conflict; null means not independently established. APC and OLIDS parent dates require
-      positive agreement. Their known conflicting links are not promoted as parents. APC spell-to-episode conflicts
-      also leave sk_patient_id null; the clinical item remains available without cross-system person attribution.
-  - name: parent_start_date
-    description: Start date of the recorded episode, outpatient appointment, emergency attendance or OLIDS encounter.
-      Care context, not diagnosis onset. APC and OLIDS dates require positive person agreement. Interpret partial
-      dates with parent_start_date_precision.
-  - name: parent_end_date
-    description: End date of the recorded episode or emergency attendance. Retained as context without replacing
-      a missing clinical date. Null for parents without a supplied end date.
-  - name: present_on_admission_name
-    description: Readable interpretation of the NHS Data Dictionary national/default codes Y, N, 8 and 9. Missing
-      or unrecognised codes remain unlabelled. This field has limited mandated coverage; absence is not evidence
-      that a diagnosis developed after admission. See https://archive.datadictionary.nhs.uk/DD%20Release%20November%202021/data_elements/present_on_admission_indicator.html.
-  - name: parent_start_date_precision
-    description: 'Precision of parent_start_date: date, month, year or unknown. OLIDS retains its encounter precision;
-      an encounter context date is never substituted for the clinical date.'
   data_tests:
   - navigation_time_consistency:
       arguments:
@@ -174,3 +181,4 @@ models:
         at_column: clinical_record_at
         precision_column: clinical_time_precision
         at_is_sorting_anchor: true
+  - navigation_snomed_method
