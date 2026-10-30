@@ -1,0 +1,303 @@
+models:
+- name: int_blood_pressure_control_daily_by_context
+  description: Blood pressure control minima, one row per person, clinical date and measurement
+    context. Includes all people with eligible complete numeric evidence through the build date.
+    Validity requires systolic
+    40 to 350 mmHg, diastolic 20 to 200 mmHg, inclusive, and systolic above diastolic.
+    {{ doc('bp_control_evidence_rule') }}
+    Used by NICE BP control indicators, general BP control and the diabetes triple target,
+    including their C-LTCS, SMI and semantic consumers. Recording-only indicators and LTC LCS
+    use separate evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reading_date
+        - bp_context_group
+  columns:
+  - name: person_id
+    description: Person with complete numeric blood pressure evidence, regardless of registration or death.
+  - name: reading_date
+    description: Corrected clinical date of the contributing measurements.
+  - name: bp_context_group
+    description: CLINIC, HOME or ABPM. Components never cross these groups.
+  - name: systolic_value
+    description: Independent minimum valid systolic in mmHg; latest complete reading value on an invalid-only
+      date.
+  - name: diastolic_value
+    description: Independent minimum valid diastolic in mmHg; latest complete reading value on an invalid-only
+      date.
+  - name: is_valid_bp
+    description: Both daily values are plausible and systolic exceeds diastolic.
+  - name: is_home_bp_event
+    description: The context is HOME.
+  - name: is_abpm_bp_event
+    description: The context is ABPM.
+  - name: applied_measurement_context
+    description: CLINIC or HBPM_ABPM for the applicable indicator threshold.
+  - name: date_recorded
+    description: Latest save time among contributing readings. Used only to select metadata or invalid-only
+      evidence.
+  - name: observation_id
+    description: Deterministic source identifier from the latest contributing reading, not an identifier
+      for the synthetic minima pair.
+unit_tests:
+- name: nice_bp_context_minima_validity_and_monitoring
+  model: int_blood_pressure_control_daily_by_context
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::DATE AS effective_date,
+        NULL::VARCHAR AS parent_observation_id, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::FLOAT AS result_value,
+        NULL::BOOLEAN AS is_systolic_row, NULL::BOOLEAN AS is_diastolic_row, NULL::VARCHAR AS bp_context_group,
+        NULL::VARCHAR AS bp_context, NULL::DATE AS reading_date, NULL::FLOAT AS systolic_value, NULL::FLOAT
+        AS diastolic_value, NULL::BOOLEAN AS is_valid_bp, NULL::BOOLEAN AS is_home_bp_event, NULL::BOOLEAN
+        AS is_abpm_bp_event, NULL::VARCHAR AS applied_measurement_context, NULL::VARCHAR AS observation_id
+        WHERE FALSE
+  given:
+  - input: ref('int_blood_pressure_observations_base')
+    format: sql
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS effective_date,
+          column3::VARCHAR AS parent_observation_id,
+          column4::VARCHAR AS id,
+          column5::TIMESTAMP_NTZ AS date_recorded,
+          column6::FLOAT AS result_value,
+          column7::BOOLEAN AS is_systolic_row,
+          column8::BOOLEAN AS is_diastolic_row,
+          column9::VARCHAR AS bp_context_group,
+          column10::VARCHAR AS bp_context
+      FROM VALUES
+          (-14401, '2026-08-01', 'SYN_A', 'SYN_AS', '2026-08-02', 130, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14401, '2026-08-01', 'SYN_A', 'SYN_AD', '2026-08-02', 95, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14401, '2026-08-01', 'SYN_Z', 'SYN_ZS', '2026-08-02', 145, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14401, '2026-08-01', 'SYN_Z', 'SYN_ZD', '2026-08-02', 80, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14401, '2026-08-01', 'SYN_DUPLICATE', 'SYN_DUPLICATES', '2026-08-02', 145, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14401, '2026-08-01', 'SYN_DUPLICATE', 'SYN_DUPLICATED', '2026-08-02', 80, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14401, '2026-08-01', 'SYN_HOME', 'SYN_HOMES', '2026-08-02', 136, TRUE, FALSE, 'HOME', 'HOME_AVERAGE'),
+          (-14401, '2026-08-01', 'SYN_HOME', 'SYN_HOMED', '2026-08-02', 84, FALSE, TRUE, 'HOME', 'HOME_AVERAGE'),
+          (-14402, '2026-08-01', NULL, 'SYN_N1S', '2026-08-02', 150, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14402, '2026-08-01', NULL, 'SYN_N1D', '2026-08-02', 95, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14402, '2026-08-01', NULL, 'SYN_N2S', '2026-08-02', 139, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14402, '2026-08-01', NULL, 'SYN_N2D', '2026-08-02', 89, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14403, '2026-08-01', 'SYN_INV', 'SYN_INVS', '2026-08-02', 100, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14403, '2026-08-01', 'SYN_INV', 'SYN_INVD', '2026-08-02', 100, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14403, '2026-08-01', 'SYN_INV_LATE', 'SYN_INV_LATES', '2026-08-03', 120, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14403, '2026-08-01', 'SYN_INV_LATE', 'SYN_INV_LATED', '2026-08-03', 130, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14403, '2026-08-01', 'SYN_ZZZ', 'SYN_ZZZS', '2026-08-03', 400, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14403, '2026-08-01', 'SYN_ZZZ', 'SYN_ZZZD', '2026-08-03', 250, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14404, '2026-08-01', 'SYN_LOW', 'SYN_LOWS', '2026-08-02', 40, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14404, '2026-08-01', 'SYN_LOW', 'SYN_LOWD', '2026-08-02', 20, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14405, '2026-08-01', 'SYN_HIGH', 'SYN_HIGHS', '2026-08-02', 350, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14405, '2026-08-01', 'SYN_HIGH', 'SYN_HIGHD', '2026-08-02', 200, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14406, '2026-08-01', 'SYN_ABOVE', 'SYN_ABOVES', '2026-08-02', 351, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14406, '2026-08-01', 'SYN_ABOVE', 'SYN_ABOVED', '2026-08-02', 80, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14407, '2026-08-01', 'SYN_BELOW', 'SYN_BELOWS', '2026-08-02', 100, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14407, '2026-08-01', 'SYN_BELOW', 'SYN_BELOWD', '2026-08-02', 19, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14408, '2026-08-01', 'SYN_VALID', 'SYN_VALIDS', '2026-08-02', 150, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14408, '2026-08-01', 'SYN_VALID', 'SYN_VALIDD', '2026-08-02', 95, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14408, '2026-08-01', 'SYN_BAD', 'SYN_BADS', '2026-08-02', 20, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14408, '2026-08-01', 'SYN_BAD', 'SYN_BADD', '2026-08-02', 10, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14409, '2026-08-01', 'SYN_DAY', 'SYN_DAYS', '2026-08-02', 145, TRUE, FALSE, 'ABPM', 'ABPM_DAY'),
+          (-14409, '2026-08-01', 'SYN_DAY', 'SYN_DAYD', '2026-08-02', 95, FALSE, TRUE, 'ABPM', 'ABPM_DAY'),
+          (-14409, '2026-08-01', 'SYN_24', 'SYN_24S', '2026-08-02', 120, TRUE, FALSE, 'ABPM', 'ABPM_24H'),
+          (-14409, '2026-08-01', 'SYN_24', 'SYN_24D', '2026-08-02', 70, FALSE, TRUE, 'ABPM', 'ABPM_24H'),
+          (-14409, '2026-08-01', 'SYN_UNSPEC', 'SYN_UNSPECS', '2026-08-02', 130, TRUE, FALSE, 'ABPM', 'ABPM_UNSPECIFIED'),
+          (-14409, '2026-08-01', 'SYN_UNSPEC', 'SYN_UNSPECD', '2026-08-02', 80, FALSE, TRUE, 'ABPM', 'ABPM_UNSPECIFIED'),
+          (-14409, '2026-08-01', 'SYN_NIGHT', 'SYN_NIGHTS', '2026-08-02', 110, TRUE, FALSE, 'ABPM', 'ABPM_NIGHT'),
+          (-14409, '2026-08-01', 'SYN_NIGHT', 'SYN_NIGHTD', '2026-08-02', 60, FALSE, TRUE, 'ABPM', 'ABPM_NIGHT'),
+          (-14409, '2026-08-01', 'SYN_MIN', 'SYN_MINS', '2026-08-02', 100, TRUE, FALSE, 'ABPM', 'ABPM_MIN_MAX'),
+          (-14409, '2026-08-01', 'SYN_MIN', 'SYN_MIND', '2026-08-02', 50, FALSE, TRUE, 'ABPM', 'ABPM_MIN_MAX'),
+          (-14410, '2026-08-01', 'SYN_NIGHT_ONLY', 'SYN_NIGHT_ONLYS', '2026-08-02', 110, TRUE, FALSE, 'ABPM', 'ABPM_NIGHT'),
+          (-14410, '2026-08-01', 'SYN_NIGHT_ONLY', 'SYN_NIGHT_ONLYD', '2026-08-02', 60, FALSE, TRUE, 'ABPM', 'ABPM_NIGHT'),
+          (-14411, '2026-08-01', 'SYN_MIN_ONLY', 'SYN_MIN_ONLYS', '2026-08-02', 100, TRUE, FALSE, 'ABPM', 'ABPM_MIN_MAX'),
+          (-14411, '2026-08-01', 'SYN_MIN_ONLY', 'SYN_MIN_ONLYD', '2026-08-02', 50, FALSE, TRUE, 'ABPM', 'ABPM_MIN_MAX'),
+          (-14412, '2099-01-01', 'SYN_FUTURE', 'SYN_FUTURES', '2026-08-02', 130, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14412, '2099-01-01', 'SYN_FUTURE', 'SYN_FUTURED', '2026-08-02', 80, FALSE, TRUE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14413, '2026-08-01', NULL, 'SYN_SPLITS', '2026-08-02', 130, TRUE, FALSE, 'CLINIC', 'CLINIC_UNSPECIFIED'),
+          (-14413, '2026-08-01', NULL, 'SYN_SPLITD', '2026-08-02', 80, FALSE, TRUE, 'HOME', 'HOME_AVERAGE'),
+          (-14414, '2026-08-01', 'SYN_HOME_AVG', 'SYN_HOME_AVGS', '2026-08-03', 130, TRUE, FALSE, 'HOME', 'HOME_AVERAGE'),
+          (-14414, '2026-08-01', 'SYN_HOME_AVG', 'SYN_HOME_AVGD', '2026-08-03', 95, FALSE, TRUE, 'HOME', 'HOME_AVERAGE'),
+          (-14414, '2026-08-01', 'SYN_SELF', 'SYN_SELFS', '2026-08-03', 145, TRUE, FALSE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14414, '2026-08-01', 'SYN_SELF', 'SYN_SELFD', '2026-08-03', 80, FALSE, TRUE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14415, '2026-08-01', 'SYN_DAY_OLD', 'SYN_DAY_OLDS', '2026-08-03', 150, TRUE, FALSE, 'ABPM', 'ABPM_DAY'),
+          (-14415, '2026-08-01', 'SYN_DAY_OLD', 'SYN_DAY_OLDD', '2026-08-03', 95, FALSE, TRUE, 'ABPM', 'ABPM_DAY'),
+          (-14415, '2026-08-02', 'SYN_24_FALLBACK', 'SYN_24_FALLBACKS', '2026-08-03', 120, TRUE, FALSE, 'ABPM', 'ABPM_24H'),
+          (-14415, '2026-08-02', 'SYN_24_FALLBACK', 'SYN_24_FALLBACKD', '2026-08-03', 70, FALSE, TRUE, 'ABPM', 'ABPM_24H'),
+          (-14415, '2026-08-01', 'SYN_24_SAME_DAY', 'SYN_24_SAME_DAYS', '2026-08-03', 120, TRUE, FALSE, 'ABPM', 'ABPM_24H'),
+          (-14415, '2026-08-01', 'SYN_24_SAME_DAY', 'SYN_24_SAME_DAYD', '2026-08-03', 70, FALSE, TRUE, 'ABPM', 'ABPM_24H'),
+          (-14416, '2026-08-01', 'SYN_FALLBACK_14416', 'SYN_FALLBACK_14416S', '2026-08-03', 120, TRUE, FALSE, 'ABPM', 'ABPM_24H'),
+          (-14416, '2026-08-01', 'SYN_FALLBACK_14416', 'SYN_FALLBACK_14416D', '2026-08-03', 70, FALSE, TRUE, 'ABPM', 'ABPM_24H'),
+          (-14417, '2026-08-01', 'SYN_FALLBACK_14417', 'SYN_FALLBACK_14417S', '2026-08-03', 120, TRUE, FALSE, 'ABPM', 'ABPM_UNSPECIFIED'),
+          (-14417, '2026-08-01', 'SYN_FALLBACK_14417', 'SYN_FALLBACK_14417D', '2026-08-03', 70, FALSE, TRUE, 'ABPM', 'ABPM_UNSPECIFIED'),
+          (-14418, '2026-08-01', 'SYN_FALLBACK_14418', 'SYN_FALLBACK_14418S', '2026-08-03', 120, TRUE, FALSE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14418, '2026-08-01', 'SYN_FALLBACK_14418', 'SYN_FALLBACK_14418D', '2026-08-03', 70, FALSE, TRUE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14419, '2026-08-01', 'SYN_FALLBACK_14419', 'SYN_FALLBACK_14419S', '2026-08-03', 120, TRUE, FALSE, 'HOME', 'HOME_UNSPECIFIED'),
+          (-14419, '2026-08-01', 'SYN_FALLBACK_14419', 'SYN_FALLBACK_14419D', '2026-08-03', 70, FALSE, TRUE, 'HOME', 'HOME_UNSPECIFIED'),
+          (-14420, '2026-08-01', 'SYN_BAD_AVG', 'SYN_BAD_AVGS', '2026-08-03', 100, TRUE, FALSE, 'HOME', 'HOME_AVERAGE'),
+          (-14420, '2026-08-01', 'SYN_BAD_AVG', 'SYN_BAD_AVGD', '2026-08-03', 100, FALSE, TRUE, 'HOME', 'HOME_AVERAGE'),
+          (-14420, '2026-08-01', 'SYN_GOOD_SINGLE', 'SYN_GOOD_SINGLES', '2026-08-03', 120, TRUE, FALSE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14420, '2026-08-01', 'SYN_GOOD_SINGLE', 'SYN_GOOD_SINGLED', '2026-08-03', 70, FALSE, TRUE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14450, '2026-08-01', 'SYN_LONE_AVG', 'SYN_LONE_AVGS', '2026-08-02', 150, TRUE, FALSE, 'HOME', 'HOME_AVERAGE'),
+          (-14450, '2026-08-01', 'SYN_SINGLE', 'SYN_SINGLES', '2026-08-02', 125, TRUE, FALSE, 'HOME', 'HOME_SELF_REPORTED'),
+          (-14450, '2026-08-01', 'SYN_SINGLE', 'SYN_SINGLED', '2026-08-02', 75, FALSE, TRUE, 'HOME', 'HOME_SELF_REPORTED')
+  expect:
+    rows:
+    - person_id: -14401
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 130
+      diastolic_value: 80
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14401
+      reading_date: '2026-08-01'
+      bp_context_group: HOME
+      systolic_value: 136
+      diastolic_value: 84
+      is_valid_bp: true
+      is_home_bp_event: true
+      is_abpm_bp_event: false
+    - person_id: -14402
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 139
+      diastolic_value: 89
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14403
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 400
+      diastolic_value: 250
+      is_valid_bp: false
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14404
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 40
+      diastolic_value: 20
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14405
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 350
+      diastolic_value: 200
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14406
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 351
+      diastolic_value: 80
+      is_valid_bp: false
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14407
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 100
+      diastolic_value: 19
+      is_valid_bp: false
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14408
+      reading_date: '2026-08-01'
+      bp_context_group: CLINIC
+      systolic_value: 150
+      diastolic_value: 95
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: false
+    - person_id: -14409
+      reading_date: '2026-08-01'
+      bp_context_group: ABPM
+      systolic_value: 145
+      diastolic_value: 95
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: true
+    - person_id: -14414
+      reading_date: '2026-08-01'
+      bp_context_group: HOME
+      systolic_value: 130
+      diastolic_value: 95
+      is_valid_bp: true
+      is_home_bp_event: true
+      is_abpm_bp_event: false
+    - person_id: -14415
+      reading_date: '2026-08-01'
+      bp_context_group: ABPM
+      systolic_value: 150
+      diastolic_value: 95
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: true
+    - person_id: -14415
+      reading_date: '2026-08-02'
+      bp_context_group: ABPM
+      systolic_value: 120
+      diastolic_value: 70
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: true
+    - person_id: -14416
+      reading_date: '2026-08-01'
+      bp_context_group: ABPM
+      systolic_value: 120
+      diastolic_value: 70
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: true
+    - person_id: -14417
+      reading_date: '2026-08-01'
+      bp_context_group: ABPM
+      systolic_value: 120
+      diastolic_value: 70
+      is_valid_bp: true
+      is_home_bp_event: false
+      is_abpm_bp_event: true
+    - person_id: -14418
+      reading_date: '2026-08-01'
+      bp_context_group: HOME
+      systolic_value: 120
+      diastolic_value: 70
+      is_valid_bp: true
+      is_home_bp_event: true
+      is_abpm_bp_event: false
+    - person_id: -14419
+      reading_date: '2026-08-01'
+      bp_context_group: HOME
+      systolic_value: 120
+      diastolic_value: 70
+      is_valid_bp: true
+      is_home_bp_event: true
+      is_abpm_bp_event: false
+    - person_id: -14420
+      reading_date: '2026-08-01'
+      bp_context_group: HOME
+      systolic_value: 100
+      diastolic_value: 100
+      is_valid_bp: false
+      is_home_bp_event: true
+      is_abpm_bp_event: false
+    - person_id: -14450
+      reading_date: '2026-08-01'
+      bp_context_group: HOME
+      systolic_value: 125
+      diastolic_value: 75
+      is_valid_bp: true
+      is_home_bp_event: true
+      is_abpm_bp_event: false

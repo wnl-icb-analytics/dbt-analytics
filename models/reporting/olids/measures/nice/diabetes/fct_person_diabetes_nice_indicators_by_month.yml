@@ -26,15 +26,18 @@ models:
     description: "Whether the person meets the indicator achievement rule on the reporting date."
   - description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
     name: indicator_status
-  - description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
+  - description: "Latest eligible control date for BP indicators. Other indicators retain their own evidence date. Null when absent. Null where the field does not apply to an indicator."
     name: latest_record_date
-  - description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available. Null where the field does not apply to an indicator."
+  - description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator.
+      Null when no test or convertible result is available. Null where the field does not apply to an indicator."
     name: latest_hba1c_value
   - description: "Inclusive upper HbA1c threshold in mmol/mol; null for indicators without an HbA1c target. Null where the field does not apply to an indicator."
     name: hba1c_threshold
-  - description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
+  - description: "Independent minimum valid systolic in mmHg within the selected date and context. May come from a different reading to diastolic. Invalid-only dates retain the latest
+      complete reading. Null when absent. Null where the field does not apply to an indicator."
     name: latest_systolic_value
-  - description: "Diastolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
+  - description: "Independent minimum valid diastolic in mmHg within the selected date and context. May come from a different reading to systolic. Invalid-only dates retain the latest
+      complete reading. Null when absent. Null where the field does not apply to an indicator."
     name: latest_diastolic_value
   - description: "Latest coded frailty severity by the reporting date; null when none is recorded. Null where the field does not apply to an indicator."
     name: latest_frailty_severity
@@ -50,15 +53,13 @@ models:
         - indicator_id
         - reporting_date
   description: >-
-    Diabetes, non-diabetic hyperglycaemia and gestational diabetes NICE indicator results
-    (IND81, IND88, IND89, IND111, IND120, IND134, IND135, IND136, IND137, IND160, IND165,
-    IND171, IND172, IND173, IND179, IND180, IND249). One row per person, indicator and
-    month-end.
+    Diabetes, non-diabetic hyperglycaemia and gestational diabetes NICE indicator results (IND81,
+    IND88, IND89, IND111, IND120, IND134, IND135, IND136, IND137, IND160, IND165, IND171, IND172,
+    IND173, IND179, IND180, IND249). One row per person, indicator and month-end.
 
-
-    Each indicator uses its own denominator, evidence window and exclusions, described in
-    the member measures. Clinical fields are null where they do not apply to an indicator.
-    No personalised care adjustments are applied. Recalculated for each of the last 60
-    month-ends with current rules, code lists and records, so later corrections can change
-    past months.
+    Each indicator uses its own denominator, evidence window and exclusions, described in the member
+    measures. Clinical fields are null where they do not apply to an indicator. No personalised care
+    adjustments are applied. Recalculated for each of the last 60 month-ends with current rules,
+    code lists and records, so later corrections can change past months. BP control uses independent
+    daily context minima. {{ doc('bp_control_evidence_rule') }}
   name: fct_person_diabetes_nice_indicators_by_month

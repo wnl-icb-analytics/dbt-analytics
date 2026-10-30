@@ -1,6 +1,10 @@
 {% macro nice_ind242(reference='current') %}
+{% set clinic_systolic = 150 %}
+{% set clinic_diastolic = 90 %}
+{% set home_systolic = 145 %}
+{% set home_diastolic = 85 %}
 {#-
-    Calculate NICE IND242 from register membership and paired BP evidence.
+    Calculate NICE IND242 from register membership and daily context BP minima.
     Args: reference is current or by_month.
     Returns: the IND242 detail columns, one eligible person per reporting_date.
 -#}
@@ -40,16 +44,16 @@ assessed AS (
         ) AS is_bp_recorded_in_last_12m,
         CASE
             WHEN bp.person_id IS NULL THEN NULL
-            WHEN bp.applied_measurement_context = 'HBPM_ABPM' THEN 145
-            ELSE 150
+            WHEN bp.applied_measurement_context = 'HBPM_ABPM' THEN {{ home_systolic }}
+            ELSE {{ clinic_systolic }}
         END AS indicator_systolic_threshold,
         CASE
             WHEN bp.person_id IS NULL THEN NULL
-            WHEN bp.applied_measurement_context = 'HBPM_ABPM' THEN 85
-            ELSE 90
+            WHEN bp.applied_measurement_context = 'HBPM_ABPM' THEN {{ home_diastolic }}
+            ELSE {{ clinic_diastolic }}
         END AS indicator_diastolic_threshold
     FROM indicator_population AS population
-    LEFT JOIN {{ nice_ref('int_nice_blood_pressure_latest', reference) }} AS bp
+    LEFT JOIN ({{ nice_blood_pressure_for_target(reference, clinic_systolic, clinic_diastolic, home_systolic, home_diastolic) }}) AS bp
         ON population.person_id = bp.person_id
         AND population.reporting_date = bp.reporting_date
 ),

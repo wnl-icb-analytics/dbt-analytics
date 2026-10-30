@@ -1,0 +1,73 @@
+models:
+- name: int_nice_blood_pressure_control_latest_by_context
+  description: Latest-day blood pressure control contexts for members of the six BP control registers.
+    One row per person, reporting date and measurement context on the latest eligible clinical day. Includes
+    registered, living, non-test people with complete evidence. Invalid-only latest days remain; older
+    passing contexts do not replace them. Values use local context-specific independent minima. Assessed
+    on the build date.
+    Used by the NICE BP control indicators and their published Indicator Explorer, C-LTCS and semantic outputs.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+        - bp_context_group
+  columns:
+  - name: person_id
+    description: Eligible register member with complete numeric blood pressure evidence.
+  - name: reporting_date
+    description: Build-date assessment date.
+  - name: reading_date
+    description: Latest eligible clinical date across all contexts through the reporting date.
+  - name: bp_context_group
+    description: CLINIC, HOME or ABPM on the latest eligible date.
+  - name: systolic_value
+    description: Independent valid systolic minimum in mmHg within this date and context. Latest complete
+      reading value on invalid-only dates.
+  - name: diastolic_value
+    description: Independent valid diastolic minimum in mmHg within this date and context. Latest complete
+      reading value on invalid-only dates.
+  - name: is_valid_bp
+    description: Both values are plausible and systolic exceeds diastolic.
+  - name: is_home_bp_event
+    description: The context is HOME.
+  - name: is_abpm_bp_event
+    description: The context is ABPM.
+  - name: applied_measurement_context
+    description: CLINIC or HBPM_ABPM for the applicable indicator threshold.
+  - name: date_recorded
+    description: Latest save time among contributing readings.
+  - name: observation_id
+    description: Deterministic metadata identifier, not an identifier for the synthetic minima pair.
+unit_tests:
+- name: nice_bp_current_latest_day_contexts
+  model: int_nice_blood_pressure_control_latest_by_context
+  overrides:
+    macros:
+      nice_blood_pressure_register_population: SELECT -14431::NUMBER AS person_id, CURRENT_DATE()::DATE AS reporting_date
+  given:
+  - input: ref('int_blood_pressure_control_daily_by_context')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reading_date,
+              column3::VARCHAR AS bp_context_group, column4::FLOAT AS systolic_value,
+              column5::FLOAT AS diastolic_value, column6::BOOLEAN AS is_valid_bp,
+              bp_context_group='HOME' AS is_home_bp_event, bp_context_group='ABPM' AS is_abpm_bp_event,
+              IFF(bp_context_group='CLINIC','CLINIC','HBPM_ABPM') AS applied_measurement_context,
+              '2026-08-02'::TIMESTAMP_NTZ AS date_recorded, 'SYN'::VARCHAR AS observation_id
+              FROM VALUES (-14431,'2026-07-31','HOME',120,70,TRUE),
+              (-14431,'2026-08-01','CLINIC',139,89,TRUE),
+              (-14431,'2026-08-01','ABPM',134,84,TRUE),
+              (-14431,'2026-09-01','CLINIC',400,250,FALSE)
+  expect:
+    format: sql
+    rows: SELECT -14431::NUMBER AS person_id, CURRENT_DATE()::DATE AS reporting_date, '2026-09-01'::DATE
+      AS reading_date, 'CLINIC'::VARCHAR AS bp_context_group, 400::FLOAT AS systolic_value, 250::FLOAT
+      AS diastolic_value, FALSE AS is_valid_bp, FALSE AS is_home_bp_event, FALSE AS is_abpm_bp_event,
+      'CLINIC'::VARCHAR AS applied_measurement_context, '2026-08-02'::TIMESTAMP_NTZ AS date_recorded,
+      'SYN'::VARCHAR AS observation_id
