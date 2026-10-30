@@ -12,7 +12,7 @@ models:
       meta:
         owner:
           name: Emily Baldwin
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -59,3 +59,121 @@ models:
       - name: measurement_type
         data_type: varchar
         description: "Type of measurement"
+
+unit_tests:
+- name: cltcs_acr_nice_category_colours
+  model: cltcs_measurements
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS patient_id, NULL::VARCHAR AS area_code, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR
+        AS measurement_type, NULL::VARCHAR AS measurement_id, NULL::FLOAT AS value, NULL::VARCHAR AS category, NULL::NUMBER AS colour_mapping
+        WHERE FALSE
+  given:
+  - input: ref('cltcs_patient_list')
+    format: sql
+    rows: SELECT -9400::NUMBER patient_id, 'SYN_AREA'::VARCHAR area_code, -9400::NUMBER olids_id
+  - input: ref('int_hba1c_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS id,
+          NULL::FLOAT AS hba1c_ifcc,
+          NULL::VARCHAR AS hba1c_category,
+          NULL::BOOLEAN AS is_valid_hba1c,
+          NULL::BOOLEAN AS is_ifcc,
+          NULL::BOOLEAN AS is_dcct WHERE FALSE
+  - input: ref('int_blood_pressure_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS systolic_observation_id,
+          NULL::VARCHAR AS diastolic_observation_id,
+          NULL::FLOAT AS systolic_value,
+          NULL::FLOAT AS diastolic_value,
+          NULL::BOOLEAN AS is_home_bp_event,
+          NULL::BOOLEAN AS is_abpm_bp_event WHERE FALSE
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS id,
+          NULL::FLOAT AS egfr_value,
+          NULL::VARCHAR AS ckd_stage,
+          NULL::BOOLEAN AS is_valid_egfr WHERE FALSE
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS id,
+          NULL::FLOAT AS cholesterol_value,
+          NULL::VARCHAR AS cholesterol_category,
+          NULL::BOOLEAN AS is_valid_cholesterol WHERE FALSE
+  - input: ref('int_cholesterol_ldl_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS id,
+          NULL::FLOAT AS cholesterol_value,
+          NULL::VARCHAR AS ldl_cvd_target_met,
+          NULL::BOOLEAN AS is_valid_cholesterol WHERE FALSE
+  - input: ref('int_eosinophil_count')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS id,
+          NULL::FLOAT AS inferred_value,
+          NULL::VARCHAR AS eosinophil_category WHERE FALSE
+  - input: ref('int_eosinophil_percentage')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::VARCHAR AS id,
+          NULL::FLOAT AS inferred_value,
+          NULL::VARCHAR AS eosinophil_category WHERE FALSE
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT -9400::NUMBER person_id, CURRENT_DATE()::TIMESTAMP_NTZ clinical_effective_date,
+      column1::VARCHAR id, column2::FLOAT acr_value, column3::VARCHAR acr_category,
+      column4::BOOLEAN is_valid_acr FROM VALUES
+      ('SYN_A1', 2.99, 'A1 normal to mildly increased (<3)', TRUE),
+      ('SYN_A2_LOW', 3, 'A2 moderately increased (3-30)', TRUE),
+      ('SYN_A2', 30, 'A2 moderately increased (3-30)', TRUE),
+      ('SYN_A2_Z_COPY', 30, 'A2 moderately increased (3-30)', TRUE),
+      ('SYN_A3_LOW', 30.01, 'A3 severely increased (>30)', TRUE),
+      ('SYN_A3', 300, 'A3 severely increased (>30)', TRUE),
+      ('SYN_INVALID', 10000, 'Invalid', FALSE)
+  expect:
+    rows:
+    - measurement_id: SYN_A1
+      measurement_type: urine_acr
+      value: 2.99
+      category: A1 normal to mildly increased (<3)
+      colour_mapping: 0
+    - measurement_id: SYN_A2_LOW
+      measurement_type: urine_acr
+      value: 3
+      category: A2 moderately increased (3-30)
+      colour_mapping: 1
+    - measurement_id: SYN_A2
+      measurement_type: urine_acr
+      value: 30
+      category: A2 moderately increased (3-30)
+      colour_mapping: 1
+    - measurement_id: SYN_A3_LOW
+      measurement_type: urine_acr
+      value: 30.01
+      category: A3 severely increased (>30)
+      colour_mapping: 2
+    - measurement_id: SYN_A3
+      measurement_type: urine_acr
+      value: 300
+      category: A3 severely increased (>30)
+      colour_mapping: 2

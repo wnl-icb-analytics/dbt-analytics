@@ -79,7 +79,7 @@ DIMENSIONS(
     obs.observation_group AS observation_group COMMENT = 'Clinical group (Cardiovascular, Metabolic, Renal, Liver, Haematology, Frailty)',
     obs.clinical_effective_date AS clinical_effective_date WITH SYNONYMS = ('observation date', 'test date', 'date') COMMENT = 'Date of the reading',
     obs.unit AS unit COMMENT = 'Unit of measure for value',
-    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. Diastolic BP and Total Cholesterol to HDL Ratio have no category (NULL). Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK, waist and frailty types use their upstream clinical categories.',
+    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. Diastolic BP and Total Cholesterol to HDL Ratio have no category (NULL). Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK, waist and frailty types use their upstream clinical categories. Urine ACR uses NICE NG203: A1 below 3, A2 3-30 inclusive, A3 above 30 mg/mmol.',
     obs.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage for paired BP events: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Uses the event''s clinic or home/ABPM context; NULL for non-BP types.',
 
     -- Core Demographics

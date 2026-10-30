@@ -24,7 +24,7 @@ models:
     columns:
       - name: id
         description: Observation identifier.
-        tests:
+        data_tests:
           - unique
           - not_null
       - name: person_id
@@ -56,10 +56,183 @@ models:
       - name: is_valid_acr
         description: Whether acr_value is populated. Kept for existing consumers; it carries no meaning beyond acr_value being non-null.
       - name: acr_category
-        description: Normal, mildly, moderately or severely increased by ACR band; Invalid for an ACR result outside range; null otherwise.
+        description: NICE NG203 albuminuria category (mg/mmol), A1 below 3, A2 3-30 inclusive, A3 above 30; Invalid for out-of-range ACR, null otherwise.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A1 normal to mildly increased (<3)', 'A2 moderately increased (3-30)', 'A3 severely increased (>30)', 'Invalid']
       - name: is_acr_elevated
         description: ACR at or above 3 mg/mmol. False when no valid ACR value.
       - name: is_microalbuminuria
-        description: ACR from 3 to below 30 mg/mmol. False when no valid ACR value.
+        description: ACR from 3 to 30 mg/mmol inclusive (A2). False when no valid ACR value.
       - name: is_macroalbuminuria
-        description: ACR at or above 30 mg/mmol. False when no valid ACR value.
+        description: ACR above 30 mg/mmol (A3). False when no valid ACR value.
+
+unit_tests:
+- name: acr_nice_categories
+  model: int_urine_acr_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -9300::NUMBER person_id,
+        '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+        column2::VARCHAR result_value, column3::VARCHAR result_unit_display,
+        column4::VARCHAR mapped_concept_code,
+        'Synthetic observation'::VARCHAR mapped_concept_display,
+        'NDAALB_COD'::VARCHAR cluster_id
+        FROM VALUES
+        ('SYN_ZERO', '0', 'mg/mmol', '1023491000000104'),
+        ('SYN_BELOW_3', '2.99', 'mg/mmol', '1023491000000104'),
+        ('SYN_EXACT_3', '3', 'mg/mmol', '1023491000000104'),
+        ('SYN_ABOVE_3', '3.01', 'mg/mmol', '1023491000000104'),
+        ('SYN_BELOW_30', '29.99', 'mg/mmol', '1023491000000104'),
+        ('SYN_EXACT_30', '30', 'mg/mmol', '1023491000000104'),
+        ('SYN_ABOVE_30', '30.01', 'mg/mmol', '1023491000000104'),
+        ('SYN_BELOW_300', '299.99', 'mg/mmol', '1023491000000104'),
+        ('SYN_EXACT_300', '300', 'mg/mmol', '1023491000000104'),
+        ('SYN_ABOVE_300', '300.01', 'mg/mmol', '1023491000000104'),
+        ('SYN_UPPER_VALID', '9999.99', 'mg/mmol', '1023491000000104'),
+        ('SYN_TOO_HIGH', '10000', 'mg/mmol', '1023491000000104'),
+        ('SYN_NEGATIVE', '-0.01', 'mg/mmol', '1023491000000104'),
+        ('SYN_MISSING', NULL, 'mg/mmol', '1023491000000104'),
+        ('SYN_TEXT', 'not numeric', 'mg/mmol', '1023491000000104'),
+        ('SYN_PCR', '30', 'mg/mmol', '1006631000000104'),
+        ('SYN_CONCENTRATION', '30', 'mg/L', '1003301000000109'),
+        ('SYN_MISLABEL', '30', '%', '1023491000000104'),
+        ('SYN_UNIT_MISSING', '30', NULL, '1023491000000104')
+  given: []
+  expect:
+    rows:
+    - id: SYN_ZERO
+      acr_value: 0
+      is_valid_acr: true
+      acr_category: A1 normal to mildly increased (<3)
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_BELOW_3
+      acr_value: 2.99
+      is_valid_acr: true
+      acr_category: A1 normal to mildly increased (<3)
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_EXACT_3
+      acr_value: 3
+      is_valid_acr: true
+      acr_category: A2 moderately increased (3-30)
+      is_acr_elevated: true
+      is_microalbuminuria: true
+      is_macroalbuminuria: false
+    - id: SYN_ABOVE_3
+      acr_value: 3.01
+      is_valid_acr: true
+      acr_category: A2 moderately increased (3-30)
+      is_acr_elevated: true
+      is_microalbuminuria: true
+      is_macroalbuminuria: false
+    - id: SYN_BELOW_30
+      acr_value: 29.99
+      is_valid_acr: true
+      acr_category: A2 moderately increased (3-30)
+      is_acr_elevated: true
+      is_microalbuminuria: true
+      is_macroalbuminuria: false
+    - id: SYN_EXACT_30
+      acr_value: 30
+      is_valid_acr: true
+      acr_category: A2 moderately increased (3-30)
+      is_acr_elevated: true
+      is_microalbuminuria: true
+      is_macroalbuminuria: false
+    - id: SYN_ABOVE_30
+      acr_value: 30.01
+      is_valid_acr: true
+      acr_category: A3 severely increased (>30)
+      is_acr_elevated: true
+      is_microalbuminuria: false
+      is_macroalbuminuria: true
+    - id: SYN_BELOW_300
+      acr_value: 299.99
+      is_valid_acr: true
+      acr_category: A3 severely increased (>30)
+      is_acr_elevated: true
+      is_microalbuminuria: false
+      is_macroalbuminuria: true
+    - id: SYN_EXACT_300
+      acr_value: 300
+      is_valid_acr: true
+      acr_category: A3 severely increased (>30)
+      is_acr_elevated: true
+      is_microalbuminuria: false
+      is_macroalbuminuria: true
+    - id: SYN_ABOVE_300
+      acr_value: 300.01
+      is_valid_acr: true
+      acr_category: A3 severely increased (>30)
+      is_acr_elevated: true
+      is_microalbuminuria: false
+      is_macroalbuminuria: true
+    - id: SYN_UPPER_VALID
+      acr_value: 9999.99
+      is_valid_acr: true
+      acr_category: A3 severely increased (>30)
+      is_acr_elevated: true
+      is_microalbuminuria: false
+      is_macroalbuminuria: true
+    - id: SYN_TOO_HIGH
+      acr_value: null
+      is_valid_acr: false
+      acr_category: Invalid
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_NEGATIVE
+      acr_value: null
+      is_valid_acr: false
+      acr_category: Invalid
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_MISSING
+      acr_value: null
+      is_valid_acr: false
+      acr_category: null
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_TEXT
+      acr_value: null
+      is_valid_acr: false
+      acr_category: null
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_PCR
+      acr_value: null
+      is_valid_acr: false
+      acr_category: null
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_CONCENTRATION
+      acr_value: null
+      is_valid_acr: false
+      acr_category: null
+      is_acr_elevated: false
+      is_microalbuminuria: false
+      is_macroalbuminuria: false
+    - id: SYN_MISLABEL
+      acr_value: 30
+      is_valid_acr: true
+      acr_category: A2 moderately increased (3-30)
+      is_acr_elevated: true
+      is_microalbuminuria: true
+      is_macroalbuminuria: false
+    - id: SYN_UNIT_MISSING
+      acr_value: 30
+      is_valid_acr: true
+      acr_category: A2 moderately increased (3-30)
+      is_acr_elevated: true
+      is_microalbuminuria: true
+      is_macroalbuminuria: false

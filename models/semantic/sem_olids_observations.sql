@@ -346,10 +346,10 @@ DIMENSIONS(
     qrisk.warrants_statin_consideration AS warrants_statin_consideration WITH SYNONYMS = ('statin warranted') COMMENT = 'QRISK warrants statin consideration',
 
     -- Urine ACR Categories
-    acr.acr_category AS acr_category COMMENT = 'ACR category (Normal, Moderate, Severe)',
+    acr.acr_category AS acr_category COMMENT = 'NICE NG203 albuminuria category: A1 <3, A2 3-30, A3 >30 mg/mmol',
     acr.is_acr_elevated AS is_acr_elevated COMMENT = 'ACR >=3 mg/mmol',
-    acr.is_microalbuminuria AS is_microalbuminuria COMMENT = 'Microalbuminuria present',
-    acr.is_macroalbuminuria AS is_macroalbuminuria COMMENT = 'Macroalbuminuria present',
+    acr.is_microalbuminuria AS is_microalbuminuria COMMENT = 'ACR 3-30 mg/mmol inclusive (A2)',
+    acr.is_macroalbuminuria AS is_macroalbuminuria COMMENT = 'ACR above 30 mg/mmol (A3)',
 
     -- Liver Function
     lft.is_high_alt AS is_high_alt COMMENT = 'TRUE when ALT exceeds the ALT QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when ALT is absent.',
@@ -452,8 +452,8 @@ METRICS(
     -- Urine ACR
     acr.patients_with_acr AS COUNT(DISTINCT acr.person_id) COMMENT = 'Patients with ACR',
     acr.acr_elevated_count AS COUNT(DISTINCT CASE WHEN acr.is_acr_elevated THEN acr.person_id END) COMMENT = 'Patients with elevated ACR',
-    acr.microalbuminuria_count AS COUNT(DISTINCT CASE WHEN acr.is_microalbuminuria THEN acr.person_id END) COMMENT = 'Patients with microalbuminuria',
-    acr.macroalbuminuria_count AS COUNT(DISTINCT CASE WHEN acr.is_macroalbuminuria THEN acr.person_id END) COMMENT = 'Patients with macroalbuminuria',
+    acr.microalbuminuria_count AS COUNT(DISTINCT CASE WHEN acr.is_microalbuminuria THEN acr.person_id END) COMMENT = 'Patients with A2 albuminuria, ACR 3-30 mg/mmol inclusive',
+    acr.macroalbuminuria_count AS COUNT(DISTINCT CASE WHEN acr.is_macroalbuminuria THEN acr.person_id END) COMMENT = 'Patients with A3 albuminuria, ACR above 30 mg/mmol',
 
     -- Frailty (eFI)
     efi.patients_with_efi AS COUNT(DISTINCT efi.person_id) COMMENT = 'Patients with eFI assessment',
