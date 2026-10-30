@@ -34,7 +34,7 @@ SELECT
     -------------------------------------------------------------------------
     -- Data Lake Metadata
     -------------------------------------------------------------------------
-      DLP_FLEXOR_FREEZE                   
+      DLP_FLEX_OR_FREEZE                 
     , DLP_COMMISSIONER_CODE             
     , DLP_FINANCIAL_MONTH                
     , DLP_FINANCIAL_YEAR        

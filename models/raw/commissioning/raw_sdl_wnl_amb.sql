@@ -67,7 +67,7 @@ select
     "DLP_COMMISSIONER_CODE" as dlp_commissioner_code,
     "DLP_FINANCIAL_MONTH" as dlp_financial_month,
     "DLP_FINANCIAL_YEAR" as dlp_financial_year,
-    "DLP_FLEXOR_FREEZE" as dlp_flexor_freeze,
+    "DLP_FLEXOR_FREEZE" as dlp_flex_or_freeze,
     "DO_H_CATEGORY" as do_h_category,
     "DV_LSOA" as dv_lsoa,
     "DV_LSOA_DESTINATION_POSTCODE" as dv_lsoa_destination_postcode,
