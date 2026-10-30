@@ -1,20 +1,18 @@
 models:
-  - name: int_medication_review_latest
-    description: >-
-      Latest recorded medication review against the SMI Longer Lives definition per
-      person in OLIDS, by clinical date up to the build date. Includes inactive and
-      deceased people with qualifying evidence, without age or SMI-register
-      restrictions.
-    config:
-      meta:
-        owner:
-          name: KateHomer55
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-    columns:
-      - name: person_id
-        tests:
-          - unique
-          - not_null
+- name: int_medication_review_latest
+  description: Latest recorded medication review against the SMI Longer Lives definition per person in
+    OLIDS, by clinical date up to the build date. Includes inactive and deceased people with qualifying
+    evidence, without age or SMI-register restrictions. Same-day ties use save time and observation identifier.
+  config:
+    meta:
+      owner:
+        name: KateHomer55
+  columns:
+  - name: person_id
+    data_tests:
+    - unique
+    - not_null
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1

@@ -1,0 +1,542 @@
+unit_tests:
+- name: dietary_review_requires_review_assessment_or_attendance
+  model: int_diabetes_dietary_reviews_all
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: 'select column1::number as id, column2::number as person_id, column3::varchar as mapped_concept_code,
+      column4::timestamp_ntz as clinical_effective_date, column5::timestamp_ntz as date_recorded,
+
+      null::varchar as patient_id, null::varchar as result_value, null::varchar as result_units_source_concept_id,
+      null::varchar as result_unit_code, null::varchar as result_unit_display, null::varchar as result_text, null::varchar
+      as allergy_medication_name, null::varchar as is_problem, null::varchar as is_review, null::varchar as problem_end_date,
+      null::varchar as mapped_concept_id, null::varchar as mapped_concept_display, null::varchar as episodicity_source_concept_id,
+      null::varchar as age_at_event, null::varchar as lds_transform_datetime
+
+      from values (-510, -510, ''SYN_DIET'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-511, -511, ''SYN_FIND'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-512, -512, ''SYN_TOOL'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-513, -513, ''SYN_SEEN'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-514, -514, ''SYN_ASSESS'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-515, -515, ''SYN_ADVICE'', ''2026-09-01'', ''2026-09-02 12:00:00''), (-516, -516, ''226074007'', ''2026-09-01'',
+      ''2026-09-02 12:00:00'')'
+  - input: ref('stg_reference_combined_codesets')
+    rows:
+    - code: SYN_DIET
+      cluster_id: DM_DIET_REVIEW_COD
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_DIET
+    - code: SYN_DIET
+      cluster_id: NUTRIASS_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_DIET
+    - code: SYN_FIND
+      cluster_id: NUTRIASS_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_FIND
+    - code: SYN_TOOL
+      cluster_id: NUTRIASS_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_TOOL
+    - code: SYN_SEEN
+      cluster_id: NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD
+      source: OPENCODELISTS
+      cluster_description: Synthetic list
+      code_description: SYN_SEEN
+    - code: SYN_ASSESS
+      cluster_id: NUTRIASS_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_ASSESS
+    - code: SYN_ADVICE
+      cluster_id: DM_DIET_REVIEW_COD
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_ADVICE
+    - code: '226074007'
+      cluster_id: NUTRIASS_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: Dietary intake assessment using food frequency questionnaire
+  - input: ref('snomed_evidence_type')
+    rows:
+    - snomed_code: SYN_DIET
+      concept_name: Diabetic dietary review (regime/therapy)
+      evidence_type: completed
+      is_offer: false
+    - snomed_code: SYN_FIND
+      concept_name: Low fat diet (finding)
+      evidence_type: finding
+      is_offer: false
+    - snomed_code: SYN_TOOL
+      concept_name: Assessment using appetite Questionnaire (procedure)
+      evidence_type: completed
+      is_offer: false
+    - snomed_code: SYN_SEEN
+      concept_name: Seen by dietitian (finding)
+      evidence_type: completed
+      is_offer: false
+    - snomed_code: SYN_ASSESS
+      concept_name: Nutritional assessment (procedure)
+      evidence_type: completed
+      is_offer: false
+    - snomed_code: SYN_ADVICE
+      concept_name: Dietary advice (procedure)
+      evidence_type: advised
+      is_offer: false
+    - snomed_code: '226074007'
+      concept_name: Dietary intake assessment using food frequency questionnaire (procedure)
+      evidence_type: completed
+      is_offer: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as id, null::varchar as concept_code, null::varchar as source_cluster_id
+        where false
+  expect:
+    rows:
+    - id: -510
+      concept_code: SYN_DIET
+      source_cluster_id: DM_DIET_REVIEW_COD
+    - id: -513
+      concept_code: SYN_SEEN
+      source_cluster_id: NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD
+    - id: -514
+      concept_code: SYN_ASSESS
+      source_cluster_id: NUTRIASS_COD
+    - id: -516
+      concept_code: '226074007'
+      source_cluster_id: NUTRIASS_COD
+- name: medication_review_requires_completion_and_bounds_currency
+  model: int_medication_review
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: 'select column1::number as id, column2::number as person_id, column3::varchar as mapped_concept_code,
+      column4::timestamp_ntz as clinical_effective_date, column5::timestamp_ntz as date_recorded,
+
+      null::varchar as patient_id, null::varchar as result_value, null::varchar as result_units_source_concept_id,
+      null::varchar as result_unit_code, null::varchar as result_unit_display, null::varchar as result_text, null::varchar
+      as allergy_medication_name, null::varchar as is_problem, null::varchar as is_review, null::varchar as problem_end_date,
+      null::varchar as mapped_concept_id, null::varchar as mapped_concept_display, null::varchar as episodicity_source_concept_id,
+      null::varchar as age_at_event, null::varchar as lds_transform_datetime
+
+      from values (-601, -601, ''SYN_COMPLETE'', dateadd(day, -30, current_date()), dateadd(hour, 9, dateadd(day,
+      -29, current_date())::timestamp_ntz)),
+
+      (-602, -601, ''SYN_COMPLETE'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-603, -603, ''SYN_ADMIN'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-604, -604, ''SYN_ADVICE'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-605, -605, ''SYN_FIND'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-606, -606, ''SYN_COMPLETE'', dateadd(day, -365, current_date()), null),
+
+      (-607, -607, ''SYN_COMPLETE'', dateadd(day, -366, current_date()), null),
+
+      (-608, -608, ''SYN_COMPLETE'', dateadd(day, 1, current_date()), null)'
+  - input: ref('stg_reference_combined_codesets')
+    rows:
+    - code: SYN_COMPLETE
+      cluster_id: SMI_LONGER_LIVES_MEDICINES_REVIEW
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_COMPLETE
+    - code: SYN_ADMIN
+      cluster_id: SMI_LONGER_LIVES_MEDICINES_REVIEW
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_ADMIN
+    - code: SYN_ADVICE
+      cluster_id: SMI_LONGER_LIVES_MEDICINES_REVIEW
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_ADVICE
+    - code: SYN_FIND
+      cluster_id: SMI_LONGER_LIVES_MEDICINES_REVIEW
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_FIND
+  - input: ref('snomed_evidence_type')
+    rows:
+    - snomed_code: SYN_COMPLETE
+      concept_name: Synthetic review (procedure)
+      evidence_type: completed
+      is_offer: false
+    - snomed_code: SYN_ADMIN
+      concept_name: Synthetic invitation (procedure)
+      evidence_type: administrative
+      is_offer: false
+    - snomed_code: SYN_ADVICE
+      concept_name: Synthetic advice (procedure)
+      evidence_type: advised
+      is_offer: false
+    - snomed_code: SYN_FIND
+      concept_name: Synthetic finding (finding)
+      evidence_type: finding
+      is_offer: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as id, null::number as person_id, null::boolean as med_rev_last_12m
+        where false
+  expect:
+    rows:
+    - id: -602
+      person_id: -601
+      med_rev_last_12m: true
+    - id: -606
+      person_id: -606
+      med_rev_last_12m: true
+    - id: -607
+      person_id: -607
+      med_rev_last_12m: false
+- name: dental_inspection_requires_completion_and_bounds_currency
+  model: int_dental_inspection
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: 'select column1::number as id, column2::number as person_id, column3::varchar as mapped_concept_code,
+      column4::timestamp_ntz as clinical_effective_date, column5::timestamp_ntz as date_recorded,
+
+      null::varchar as patient_id, null::varchar as result_value, null::varchar as result_units_source_concept_id,
+      null::varchar as result_unit_code, null::varchar as result_unit_display, null::varchar as result_text, null::varchar
+      as allergy_medication_name, null::varchar as is_problem, null::varchar as is_review, null::varchar as problem_end_date,
+      null::varchar as mapped_concept_id, null::varchar as mapped_concept_display, null::varchar as episodicity_source_concept_id,
+      null::varchar as age_at_event, null::varchar as lds_transform_datetime
+
+      from values (-601, -601, ''SYN_COMPLETE'', dateadd(day, -30, current_date()), dateadd(hour, 9, dateadd(day,
+      -29, current_date())::timestamp_ntz)),
+
+      (-602, -601, ''SYN_COMPLETE'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-603, -603, ''SYN_ADMIN'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-604, -604, ''SYN_ADVICE'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-605, -605, ''SYN_FIND'', dateadd(day, -30, current_date()), dateadd(hour, 12, dateadd(day, -29, current_date())::timestamp_ntz)),
+
+      (-606, -606, ''SYN_COMPLETE'', dateadd(day, -365, current_date()), null),
+
+      (-607, -607, ''SYN_COMPLETE'', dateadd(day, -366, current_date()), null),
+
+      (-608, -608, ''SYN_COMPLETE'', dateadd(day, 1, current_date()), null)'
+  - input: ref('stg_reference_combined_codesets')
+    rows:
+    - code: SYN_COMPLETE
+      cluster_id: SMI_LONGER_LIVES_DENTAL
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_COMPLETE
+    - code: SYN_ADMIN
+      cluster_id: SMI_LONGER_LIVES_DENTAL
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_ADMIN
+    - code: SYN_ADVICE
+      cluster_id: SMI_LONGER_LIVES_DENTAL
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_ADVICE
+    - code: SYN_FIND
+      cluster_id: SMI_LONGER_LIVES_DENTAL
+      source: ECL_CACHE
+      cluster_description: Synthetic list
+      code_description: SYN_FIND
+  - input: ref('snomed_evidence_type')
+    rows:
+    - snomed_code: SYN_COMPLETE
+      concept_name: Synthetic review (procedure)
+      evidence_type: completed
+      is_offer: false
+    - snomed_code: SYN_ADMIN
+      concept_name: Synthetic invitation (procedure)
+      evidence_type: administrative
+      is_offer: false
+    - snomed_code: SYN_ADVICE
+      concept_name: Synthetic advice (procedure)
+      evidence_type: advised
+      is_offer: false
+    - snomed_code: SYN_FIND
+      concept_name: Synthetic finding (finding)
+      evidence_type: finding
+      is_offer: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as id, null::number as person_id, null::boolean as dental_last_12m
+        where false
+  expect:
+    rows:
+    - id: -602
+      person_id: -601
+      dental_last_12m: true
+    - id: -606
+      person_id: -606
+      dental_last_12m: true
+    - id: -607
+      person_id: -607
+      dental_last_12m: false
+- name: weight_outcomes_cover_advice_referral_decline_and_offer
+  model: int_weight_mgmt_intervention
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: 'select column1::number as id, column2::number as person_id, column3::varchar as mapped_concept_code,
+      column4::timestamp_ntz as clinical_effective_date, column5::timestamp_ntz as date_recorded,
+
+      null::varchar as patient_id, null::varchar as result_value, null::varchar as result_units_source_concept_id,
+      null::varchar as result_unit_code, null::varchar as result_unit_display, null::varchar as result_text, null::varchar
+      as allergy_medication_name, null::varchar as is_problem, null::varchar as is_review, null::varchar as problem_end_date,
+      null::varchar as mapped_concept_id, null::varchar as mapped_concept_display, null::varchar as episodicity_source_concept_id,
+      null::varchar as age_at_event, null::varchar as lds_transform_datetime
+
+      from values (-710, -710, ''SYN_DIET'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-711, -711, ''SYN_EXER'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-712, -712, ''SYN_DECL'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-713, -713, ''SYN_OFFER'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-714, -714, ''SYN_BOTH'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-715, -715, ''SYN_GENERIC'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+
+      (-716, -716, ''SYN_WTDECL'', ''2026-09-01'', ''2026-09-02 12:00:00''), (-717, -717, ''286321000000102'', ''2026-09-01'',
+      ''2026-09-02 12:00:00''), (-718, -718, ''439140001'', ''2026-09-01'', ''2026-09-02 12:00:00''), (-719, -719,
+      ''913431000000101'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+      (-720, -720, ''SYN_PLAN'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+      (-721, -721, ''SYN_AWAIT'', ''2026-09-01'', ''2026-09-02 12:00:00''),
+      (-722, -722, ''SYN_CONTEXT'', ''2026-09-01'', ''2026-09-02 12:00:00'')'
+  - input: ref('stg_reference_combined_codesets')
+    rows:
+    - code: SYN_DIET
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_DIET
+    - code: SYN_EXER
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_EXER
+    - code: SYN_DECL
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_DECL
+    - code: SYN_OFFER
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_OFFER
+    - code: SYN_BOTH
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_BOTH
+    - code: SYN_GENERIC
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_GENERIC
+    - code: SYN_WTDECL
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_WTDECL
+    - code: SYN_EXER
+      cluster_id: EXERCISEINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_EXER
+    - code: '286321000000102'
+      cluster_id: EXERCISEINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: Advice to aim for 30 minutes of moderate activity on 5 days or more each week
+    - code: '286321000000102'
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: Advice to aim for 30 minutes of moderate activity on 5 days or more each week
+    - code: '439140001'
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: Exercise leaflet given (situation)
+    - code: '913431000000101'
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: Education about chair based exercise programme (procedure)
+    - code: SYN_PLAN
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_PLAN
+    - code: SYN_AWAIT
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_AWAIT
+    - code: SYN_CONTEXT
+      cluster_id: WTMGINT_COD
+      source: PCD
+      cluster_description: Synthetic list
+      code_description: SYN_CONTEXT
+  - input: ref('snomed_evidence_type')
+    format: sql
+    rows: >-
+      select column1::varchar as snomed_code, column2::varchar as concept_name,
+      column3::varchar as evidence_type, column4::boolean as is_offer,
+      column5::boolean as is_planned_or_awaited from values
+      ('SYN_DIET', 'Dietary advice (procedure)', 'advised', false, false),
+      ('SYN_EXER', 'Referral to exercise (procedure)', 'requested_or_referred', false, false),
+      ('SYN_DECL', 'Referral to exercise declined (situation)', 'declined', false, false),
+      ('SYN_OFFER', 'Referral to exercise offered (finding)', 'requested_or_referred', true, false),
+      ('SYN_BOTH', 'Advice about diet and physical activity (procedure)', 'advised', false, false),
+      ('SYN_GENERIC', 'Referral to weight management service (procedure)', 'requested_or_referred', false, false),
+      ('SYN_WTDECL', 'Weight management referral declined (situation)', 'declined', false, false),
+      ('286321000000102', 'Advice to aim for 30 minutes of moderate activity on 5 days or more each week (procedure)', 'advised', false, false),
+      ('439140001', 'Exercise leaflet given (situation)', 'advised', false, false),
+      ('913431000000101', 'Education about chair based exercise programme (procedure)', 'advised', false, false),
+      ('SYN_PLAN', 'Exercise planned (situation)', 'requested_or_referred', false, true),
+      ('SYN_AWAIT', 'Dietary intervention awaited (situation)', 'requested_or_referred', false, true),
+      ('SYN_CONTEXT', 'Synthetic exercise (situation)', 'requested_or_referred', false, true)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as person_id, null::varchar as intervention_outcome, null::varchar
+        as referral_diet_advice, null::varchar as referral_exercise_advice where false
+  expect:
+    rows:
+    - person_id: -710
+      intervention_outcome: 'Yes'
+      referral_diet_advice: 'Yes'
+      referral_exercise_advice: null
+    - person_id: -711
+      intervention_outcome: 'Yes'
+      referral_diet_advice: null
+      referral_exercise_advice: 'Yes'
+    - person_id: -712
+      intervention_outcome: Declined
+      referral_diet_advice: null
+      referral_exercise_advice: Declined
+    - person_id: -713
+      intervention_outcome: null
+      referral_diet_advice: null
+      referral_exercise_advice: null
+    - person_id: -714
+      intervention_outcome: 'Yes'
+      referral_diet_advice: 'Yes'
+      referral_exercise_advice: 'Yes'
+    - person_id: -715
+      intervention_outcome: 'Yes'
+      referral_diet_advice: null
+      referral_exercise_advice: null
+    - person_id: -716
+      intervention_outcome: Declined
+      referral_diet_advice: null
+      referral_exercise_advice: null
+    - person_id: -717
+      intervention_outcome: 'Yes'
+      referral_diet_advice: null
+      referral_exercise_advice: 'Yes'
+    - person_id: -718
+      intervention_outcome: 'Yes'
+      referral_diet_advice: null
+      referral_exercise_advice: 'Yes'
+    - person_id: -719
+      intervention_outcome: 'Yes'
+      referral_diet_advice: null
+      referral_exercise_advice: 'Yes'
+    - person_id: -720
+      intervention_outcome: null
+      referral_diet_advice: null
+      referral_exercise_advice: null
+    - person_id: -721
+      intervention_outcome: null
+      referral_diet_advice: null
+      referral_exercise_advice: null
+    - person_id: -722
+      intervention_outcome: null
+      referral_diet_advice: null
+      referral_exercise_advice: null
+- name: medication_review_latest_uses_save_time_then_id
+  model: int_medication_review_latest
+  given:
+  - input: ref('int_medication_review')
+    format: sql
+    rows: select column1::number as id, column2::number as person_id, column3::timestamp_ntz as clinical_effective_date,
+      column4::timestamp_ntz as date_recorded, column5::varchar as concept_code, column6::varchar as concept_display,
+      column7::varchar as source_cluster_id, column8::varchar as referral_diet_advice, column9::varchar as referral_exercise_advice,
+      column10::varchar as intervention_outcome, column11::boolean as med_rev_last_12m, column12::boolean as dental_last_12m
+      from values (-1, -800, '2026-09-01 23:00:00', '2026-09-02 09:00:00', 'SYN_A', 'SYN_A', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (-2, -800, '2026-09-01', '2026-09-02 10:00:00', 'SYN_B', 'SYN_B', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (-3, -800, '2026-09-01', '2026-09-02 10:00:00', 'SYN_C', 'SYN_C', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as person_id, null::varchar as concept_code where false
+  expect:
+    rows:
+    - person_id: -800
+      concept_code: SYN_B
+- name: dental_inspection_latest_uses_save_time_then_id
+  model: int_dental_inspection_latest
+  given:
+  - input: ref('int_dental_inspection')
+    format: sql
+    rows: select column1::number as id, column2::number as person_id, column3::timestamp_ntz as clinical_effective_date,
+      column4::timestamp_ntz as date_recorded, column5::varchar as concept_code, column6::varchar as concept_display,
+      column7::varchar as source_cluster_id, column8::varchar as referral_diet_advice, column9::varchar as referral_exercise_advice,
+      column10::varchar as intervention_outcome, column11::boolean as med_rev_last_12m, column12::boolean as dental_last_12m
+      from values (-1, -800, '2026-09-01 23:00:00', '2026-09-02 09:00:00', 'SYN_A', 'SYN_A', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (-2, -800, '2026-09-01', '2026-09-02 10:00:00', 'SYN_B', 'SYN_B', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (-3, -800, '2026-09-01', '2026-09-02 10:00:00', 'SYN_C', 'SYN_C', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as person_id, null::varchar as concept_code where false
+  expect:
+    rows:
+    - person_id: -800
+      concept_code: SYN_B
+- name: weight_latest_ignores_later_offers_and_uses_save_time_then_id
+  model: int_weight_mgmt_intervention_latest
+  given:
+  - input: ref('int_weight_mgmt_intervention')
+    format: sql
+    rows: select column1::number as id, column2::number as person_id, column3::timestamp_ntz as clinical_effective_date,
+      column4::timestamp_ntz as date_recorded, column5::varchar as concept_code, column6::varchar as concept_display,
+      column7::varchar as source_cluster_id, column8::varchar as referral_diet_advice, column9::varchar as referral_exercise_advice,
+      column10::varchar as intervention_outcome, column11::boolean as med_rev_last_12m, column12::boolean as dental_last_12m
+      from values (-1, -800, '2026-09-01 23:00:00', '2026-09-02 09:00:00', 'SYN_A', 'SYN_A', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (-2, -800, '2026-09-01', '2026-09-02 10:00:00', 'SYN_B', 'SYN_B', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (-3, -800, '2026-09-01', '2026-09-02 10:00:00', 'SYN_C', 'SYN_C', 'SYNTHETIC', 'Yes',
+      null, 'Yes', true, true), (100, -800, '2026-09-01 23:30:00', '2026-09-02 12:00:00', 'SYN_DECLINE', 'SYN_C',
+      'SYNTHETIC', 'Declined', null, 'Declined', true, true), (101, -800, '2026-09-05', '2026-09-06', 'SYN_LATER_OFFER',
+      'SYN_OFFER', 'SYNTHETIC', null, null, null, true, true), (102, -801, '2026-09-05', '2026-09-06', 'SYN_ONLY_OFFER',
+      'SYN_OFFER', 'SYNTHETIC', null, null, null, true, true), (-201, -802, to_varchar(dateadd(day,-5,current_date())),
+      to_varchar(dateadd(day,-4,current_date())), 'SYN_REFERRAL', 'Referral to physical activity program', 'EXERCISEINT_COD',
+      null, 'Yes', 'Yes', true, true), (-202, -802, to_varchar(dateadd(day,-1,current_date())), to_varchar(current_date()),
+      'SYN_LATER_OFFER', 'Referral for physical activity service offered', 'EXERCISEINT_COD', null, null, null,
+      true, true)
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as person_id, null::varchar as concept_code where false
+  expect:
+    rows:
+    - person_id: -800
+      concept_code: SYN_B
+    - person_id: -802
+      concept_code: SYN_REFERRAL

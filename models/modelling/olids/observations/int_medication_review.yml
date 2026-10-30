@@ -1,23 +1,31 @@
 models:
-  - name: int_medication_review
-    description: >-
-      Medication reviews against the SMI Longer Lives definition in OLIDS GP records,
-      using ECL_CACHE SMI_LONGER_LIVES_MEDICINES_REVIEW. One row per person, concept
-      and clinical date up to the build date. Includes inactive and deceased people,
-      without age or SMI-register restrictions.
-    config:
-      meta:
-        owner:
-          name: KateHomer55
+- name: int_medication_review
+  description: Completed medication reviews in OLIDS GP records. One row per person, concept and clinical
+    timestamp up to the build date, including inactive and deceased people. Uses SMI_LONGER_LIVES_MEDICINES_REVIEW
+    without changing its membership. Invitations, label amendments and repeat synchronisation do not count.
+  config:
+    meta:
+      owner:
+        name: KateHomer55
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: SMI_LONGER_LIVES_MEDICINES_REVIEW
+        source: ECL_CACHE
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - concept_code
+        - clinical_effective_date
+  columns:
+  - name: person_id
     data_tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: SMI_LONGER_LIVES_MEDICINES_REVIEW
-            source: ECL_CACHE
-    columns:
-      - name: person_id
-        tests:
-          - not_null
+    - not_null
+  - name: id
+    description: Retained observation identifier, used after save time to break ties.
+  - name: date_recorded
+    description: Real source save time, used after clinical date to break ties.

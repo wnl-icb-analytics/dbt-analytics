@@ -1,35 +1,37 @@
 models:
-  - name: int_dental_inspection
-    description: >-
-      Dental or oral-health reviews and interventions in OLIDS GP records, using
-      SMI_LONGER_LIVES_DENTAL, ORALHEALTHREV_COD and ORALHEALTHINT_COD. One row per
-      person, concept and clinical date up to the build date. Includes inactive and
-      deceased people, without age or SMI-register restrictions.
-    config:
-      meta:
-        owner:
-          name: KateHomer55
+- name: int_dental_inspection
+  description: Completed dental inspections, oral-health assessments and dental contacts in OLIDS. One
+    row per person, concept and clinical timestamp up to the build date, including inactive and deceased
+    people. Uses SMI_LONGER_LIVES_DENTAL, ORALHEALTHREV_COD and ORALHEALTHINT_COD. Advice, education and
+    hygiene findings alone do not establish inspection.
+  config:
+    meta:
+      owner:
+        name: KateHomer55
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - concept_code
+        - clinical_effective_date
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: SMI_LONGER_LIVES_DENTAL, ORALHEALTHREV_COD, ORALHEALTHINT_COD
+  columns:
+  - name: person_id
     data_tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - person_id
-              - concept_code
-              - clinical_effective_date
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: SMI_LONGER_LIVES_DENTAL, ORALHEALTHREV_COD, ORALHEALTHINT_COD
-
-    columns:
-      - name: person_id
-        tests:
-          - not_null
-      - name: concept_code
-        tests:
-          - not_null
-      - name: clinical_effective_date
-        tests:
-          - not_null
+    - not_null
+  - name: concept_code
+    data_tests:
+    - not_null
+  - name: clinical_effective_date
+    data_tests:
+    - not_null
+  - name: id
+    description: Retained observation identifier, used after save time to break ties.
+  - name: date_recorded
+    description: Real source save time, used after clinical date to break ties.

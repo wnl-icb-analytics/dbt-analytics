@@ -1,23 +1,39 @@
 models:
-  - name: int_weight_mgmt_intervention
-    description: >-
-      Weight management and exercise interventions, including declines in OLIDS GP
-      records, using SMI_LONGER_LIVES_WEIGHT_MANAGEMENT, EXERCISEINT_COD, WTMGINT_COD
-      and WTMGINTDEC_COD. One row per person, concept and clinical date up to the
-      build date. Includes inactive and deceased people, without age or SMI-register
-      restrictions.
-    config:
-      meta:
-        owner:
-          name: KateHomer55
+- name: int_weight_mgmt_intervention
+  description: Weight-management and exercise activity in OLIDS GP records. One row per person, concept
+    and clinical timestamp up to the build date, including inactive and deceased people. Classifies completed
+    activity, advice, actual referrals and declines in the existing four lists. Offers, plans and awaited activity
+    have no positive outcome. EXERCISEINT_COD membership assigns the exercise subject. Other retained lists use diet or exercise wording;
+    none is a diet-only list. Generic weight-management activity
+    has an overall outcome without asserting diet or exercise.
+  config:
+    meta:
+      owner:
+        name: KateHomer55
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: SMI_LONGER_LIVES_WEIGHT_MANAGEMENT, EXERCISEINT_COD, WTMGINT_COD, WTMGINTDEC_COD
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - concept_code
+        - clinical_effective_date
+  columns:
+  - name: person_id
     data_tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: SMI_LONGER_LIVES_WEIGHT_MANAGEMENT, EXERCISEINT_COD, WTMGINT_COD, WTMGINTDEC_COD
-    columns:
-      - name: person_id
-        tests:
-          - not_null
+    - not_null
+  - name: id
+    description: Retained observation identifier, used after save time to break ties.
+  - name: date_recorded
+    description: Real source save time, used after clinical date and clinical priority to break ties.
+  - name: intervention_outcome
+    description: Yes for completed activity, advice or actual referral; Declined for refusal. Null for
+      offers, planned or awaited interventions, or unsupported activity. Generic weight-management records have
+      this overall outcome even without a diet or exercise subject.
+  - name: evidence_type
+    description: Shared SNOMED activity evidence type.
