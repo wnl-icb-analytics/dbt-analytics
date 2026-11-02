@@ -18,6 +18,13 @@ FROM {{ ref('stg_reference_wnl_reporting_names') }}
 --FROM STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES
 where provider_type = 'Acute'
 )
+--for non wnl activity can find which ICB the patient is registered with
+,lookup_icb as (
+select sk_organisation_id, REPLACE(organisation_name, 'Integrated Care Board', 'ICB') AS icb_name
+FROM {{ ref('stg_dictionary_dbo_organisation')}}
+--FROM STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION
+where organisation_name like '%Integrated Care Board'
+)
 --get accurate residential location.
 ,borough_res_category as (
 SELECT *
@@ -30,8 +37,7 @@ SELECT *
 FROM {{ ref('stg_reference_lsoa21_ward25_lad25') }}
 --FROM STAGING.REFERENCE.STG_REFERENCE_LSOA21_WARD25_LAD25
 )
---build main table for rolling 12m view
-,base_table_rolling_12m AS (
+--build main table for last 3 financial years and rolling 12m flag
 SELECT
 --commissioning details
 u.sk_patient_id,
@@ -43,12 +49,16 @@ u.reg_practice_pcn_name_latest as pcn_name,
 u.reg_practice_neighbourhood_name_latest as practice_neighbourhood,
 u.reg_practice_health_borough_name_latest as health_borough,
 CASE WHEN u.reg_practice_health_borough_name_latest is null THEN FALSE ELSE TRUE END AS is_wnl_registered,
+icb.icb_name,
 --provider
 u.organisation_id as provider_code,
 wnl.provider_shorthand,
 wnl.provider_name,
 u.site_id,
-u.site_name,
+CASE 
+WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'West Middlesex University Hospital UTC'
+WHEN u.site_name = 'Moorfields Eye Hospital (City Road Campus)' THEN 'Moorfields City Road'
+WHEN u.site_name LIKE '%Desmond%' THEN 'Richard Desmond Eye Centre' ELSE u.site_name END AS site_name,
 u.pod as dept_code,
 CASE 
 WHEN u.department_type = '01' THEN 'Major'
@@ -59,14 +69,16 @@ WHEN department_type = '05' THEN 'SDEC'
 ELSE department_type END as dept_type_desc,
 --attendance event
 u.start_date as attendance_date,
-u.duration,
+CASE WHEN u.start_date >= DATEADD('month', -12, CURRENT_DATE) THEN TRUE ELSE FALSE END AS is_last_12m,
 CASE 
         WHEN MONTH(u.start_date) >= 4 
         THEN YEAR(u.start_date) || '/' || RIGHT(YEAR(u.start_date) + 1, 2)
         ELSE (YEAR(u.start_date) - 1) || '/' || RIGHT(YEAR(u.start_date), 2)
     END as financial_year_label,
-TO_NUMBER(TO_CHAR(u.start_date, 'YYYYMM')) AS attendance_month_sort,
-MONTHNAME(u.start_date) || '-' || YEAR(u.start_date) AS attendance_month_label,
+DATE_TRUNC('month', u.start_date) AS month_start_date,
+TO_CHAR(u.start_date, 'mon-yy') AS month_label,
+TO_NUMBER(TO_CHAR(u.start_date, 'YYYYMM')) AS month_sort,
+u.duration,
 --duration > 240 mins
 u.is_four_hour_breach as is_4_hour_breach,
 --duration > 720 mins
@@ -126,8 +138,13 @@ INNER JOIN WNL_NAMES wnl on u.organisation_id = wnl.provider_code
 LEFT JOIN {{ ref("int_person_pds_demographics") }} pds using (sk_patient_id)
 --LEFT JOIN MODELLING.POPULATION.INT_PERSON_PDS_DEMOGRAPHICS pds using (sk_patient_id)
 LEFT JOIN borough_res_category g on COALESCE(u.lsoa_21_at_event,pds.lsoa_21) = g.lsoa21_cd
-where u.start_date >= DATEADD('month', -12, CURRENT_DATE)
-)
-select *
-from base_table_rolling_12m
-where comm_group = 'WNL'
+LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org on u.reg_practice_at_event = org.organisation_code
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION org on u.reg_practice_at_event = org.organisation_code
+LEFT JOIN lookup_icb icb on icb.sk_organisation_id = org.sk_organisation_id_health_authority
+WHERE u.start_date >= DATEADD(
+    'year', -2,
+    DATE_FROM_PARTS(
+        YEAR(CURRENT_DATE) - IFF(MONTH(CURRENT_DATE) < 4, 1, 0),
+        4,        1
+    ) )
+ 
