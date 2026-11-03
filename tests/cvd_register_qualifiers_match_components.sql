@@ -1,3 +1,5 @@
+{{ config(tags=['reconciliation']) }}
+
 -- Component flags and dates must identify every route into the composite register.
 
 WITH component_rows AS (

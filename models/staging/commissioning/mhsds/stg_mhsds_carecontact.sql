@@ -80,6 +80,7 @@ with active_contacts as (
     from {{ ref('raw_mhsds_mhs201carecontact') }} as c
     inner join {{ ref('stg_mhsds_activesubmission') }} as a
         on c.uniq_submission_id = a.uniq_submission_id
+    {{ mhsds_one_row_per_record('c.mhs201_uniq_id', 'c') }}
 )
 
 select

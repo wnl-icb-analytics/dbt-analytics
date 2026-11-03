@@ -8,7 +8,8 @@
 with accepted_records as (
 {{
     select_accepted_mhsds_period_records(
-        mhsds_table = ref('raw_mhsds_mhs204indirectactivity')
+        mhsds_table = ref('raw_mhsds_mhs204indirectactivity'),
+        record_id = 'mhs204_uniq_id'
     )
 }} )
 

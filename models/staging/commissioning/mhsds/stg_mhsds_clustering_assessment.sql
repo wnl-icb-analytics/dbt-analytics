@@ -1,7 +1,7 @@
 {{ config(materialized='view', tags=['mhsds']) }}
 
 with accepted as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs801clustertool')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs801clustertool'), 'mhs801_uniq_id') }}
 )
 select
     mhs801_uniq_id
