@@ -20,7 +20,9 @@ where provider_type = 'Acute'
 )
 --for non wnl activity can find which ICB the patient is registered with
 ,lookup_icb as (
-select sk_organisation_id, REPLACE(organisation_name, 'Integrated Care Board', 'ICB') AS icb_name
+select sk_organisation_id, 
+REPLACE(
+    REPLACE(organisation_name, 'NHS ', ''),' Integrated Care Board','') AS icb_name
 FROM {{ ref('stg_dictionary_dbo_organisation')}}
 --FROM STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION
 where organisation_name like '%Integrated Care Board'
@@ -44,7 +46,9 @@ u.sk_patient_id,
 u.commissioner_code_at_event as commissioner_code,
 IFF(u.commissioner_code_at_event IN ('07X','07M','08H','08D','07R','93C','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','Y05','T04','Z9B2Z'),'WNL','Other') comm_group,
 u.reg_practice_at_event as practice_code,
-u.reg_practice_name_latest as practice_name,
+REGEXP_REPLACE(
+    INITCAP(LOWER(u.reg_practice_name_latest)),
+    '\\bGp\\b','GP') AS practice_name,
 u.reg_practice_pcn_name_latest as pcn_name,
 u.reg_practice_neighbourhood_name_latest as practice_neighbourhood,
 u.reg_practice_health_borough_name_latest as health_borough,
@@ -56,7 +60,7 @@ wnl.provider_shorthand,
 wnl.provider_name,
 u.site_id,
 CASE 
-WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'West Middlesex University Hospital UTC'
+WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'WMUH UTC'
 WHEN u.site_name = 'Moorfields Eye Hospital (City Road Campus)' THEN 'Moorfields City Road'
 WHEN u.site_name LIKE '%Desmond%' THEN 'Richard Desmond Eye Centre' ELSE u.site_name END AS site_name,
 u.pod as dept_code,
@@ -78,6 +82,9 @@ CASE
 DATE_TRUNC('month', u.start_date) AS month_start_date,
 TO_CHAR(u.start_date, 'mon-yy') AS month_label,
 TO_NUMBER(TO_CHAR(u.start_date, 'YYYYMM')) AS month_sort,
+u.week_end_date,
+DATE_TRUNC('WEEK', u.start_date) AS week_start_date,
+TO_CHAR(DATE_TRUNC('WEEK', u.start_date),'DD-MON-YY') AS week_label,
 u.duration,
 --duration > 240 mins
 u.is_four_hour_breach as is_4_hour_breach,
@@ -94,6 +101,8 @@ IFF(
     u.over_72_hours_count = 1
 ) AS is_72_hour_breach,
 u.arrival_mode_desc,
+CASE
+WHEN u.arrival_mode_desc LIKE '%ambulance%' THEN TRUE ELSE FALSE END AS arrival_by_ambulance,
 u.hrg_code,
 u.core_hrg_desc,
 u.chief_complaint_desc,
@@ -114,7 +123,7 @@ g.residential_location,
 -- END AS age_band_5y,
 -- NHS Digital age bands (used in Health Survey for England)
 CASE
-    WHEN u.age_at_event < 0 THEN 'Unknown'
+    WHEN u.age_at_event < 0 OR u.age_at_event IS NULL THEN 'Unknown'
     WHEN u.age_at_event < 5 THEN '0-4'
     WHEN u.age_at_event < 15 THEN '5-14'
     WHEN u.age_at_event < 25 THEN '15-24'
@@ -126,6 +135,19 @@ CASE
     WHEN u.age_at_event < 85 THEN '75-84'
     ELSE '85+'
 END AS age_band_nhs,
+CASE
+    WHEN u.age_at_event < 0 THEN 0
+    WHEN u.age_at_event < 5 THEN 1
+    WHEN u.age_at_event < 15 THEN 2
+    WHEN u.age_at_event < 25 THEN 3
+    WHEN u.age_at_event < 35 THEN 4
+    WHEN u.age_at_event < 45 THEN 5
+    WHEN u.age_at_event < 55 THEN 6
+    WHEN u.age_at_event < 65 THEN 7
+    WHEN u.age_at_event < 75 THEN 8
+    WHEN u.age_at_event < 85 THEN 9
+    ELSE 10
+END AS age_sort,
 COALESCE(u.gender_desc_at_event,pds.gender) as gender,
 COALESCE(u.ethnicity_at_event,pds.ethnicity_code) as ethnicity_code,
 COALESCE(u.ethnicity_desc_at_event,pds.ethnicity_desc) as ethnicity,

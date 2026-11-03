@@ -105,6 +105,8 @@ SELECT
         WHEN dv_provider_code = 'RYJ' AND tariff_code = 'AEC' then 'Same Day Emergency Care'
         WHEN dv_provider_code = 'RAL' AND tariff_code = 'SDECED' then 'Same Day Emergency Care'
         WHEN dv_provider_code = 'RAS' AND tariff_code = 'SDEC' then 'Same Day Emergency Care'
+        --ICH PTS
+        WHEN dv_provider_code = 'RYJ' AND point_of_delivery_further_detail_code LIKE '%PTS%' THEN 'Patient Transport Service'
         ELSE pod_group
     END AS podgroupoverview,
     point_of_delivery_further_detail_code,
