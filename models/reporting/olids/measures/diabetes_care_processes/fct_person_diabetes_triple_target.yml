@@ -1,11 +1,13 @@
 models:
   - name: fct_person_diabetes_triple_target
     description: >-
-      Diabetes care targets for current OLIDS diabetes-register members, one row per
-      person. Targets are HbA1c at or below 58 mmol/mol, blood pressure below 130/80
-      mmHg using the local target, and total cholesterol below 5 mmol/L. Uses the
-      latest valid measurements, with separate 12-month recency flags. Target
-      achievement does not require recency, and missing values do not meet the target.
+      Diabetes care targets for current OLIDS diabetes-register members, one row per person. Targets
+      are HbA1c at or below 58 mmol/mol, blood pressure below 130/80 mmHg using the local target,
+      and total cholesterol below 5 mmol/L. Uses the latest HbA1c and cholesterol measurements, with
+      separate 12-month recency flags. BP values and recording dates describe the latest valid general
+      reading. Control uses separate latest control-eligible evidence. {{ doc('bp_control_evidence_rule') }} The local BP target remains below 130/80 mmHg
+      in every context. Target achievement does not require recency, and missing values do not meet
+      the target.
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
@@ -81,7 +83,7 @@ models:
     columns:
       - name: person_id
         description: Unique person identifier
-        tests:
+        data_tests:
           - unique
           - not_null
 
@@ -101,14 +103,20 @@ models:
         description: Clinical category for HbA1c level
 
       - name: latest_bp_date
-        description: Date of most recent blood pressure measurement
+        description: Clinical date of the latest valid general BP reading; null when absent
 
       - name: latest_systolic
-        description: Most recent systolic blood pressure (mmHg)
+        description: Systolic value of the latest valid general BP reading in mmHg; null when absent
 
       - name: latest_diastolic
-        description: Most recent diastolic blood pressure (mmHg)
+        description: Diastolic value of the latest valid general BP reading in mmHg; null when absent
 
+      - name: is_control_evidence_valid
+        description: TRUE when the selected control evidence is plausible. FALSE when absent or invalid; control flags are then NULL.
+      - name: control_evidence_date
+        description: Clinical date of the latest control-eligible evidence; null when none is available. Invalid-only dates remain.
+      - name: control_evidence_context
+        description: CLINIC, HOME or ABPM for the selected control evidence; null when absent. A context meeting the target takes priority on the latest eligible day.
       - name: latest_chol_date
         description: Date of most recent cholesterol measurement
 
@@ -122,10 +130,129 @@ models:
         description: Whether HbA1c meets QOF target (≤58 mmol/mol)
 
       - name: bp_in_target_range
-        description: Whether blood pressure meets target (<130/80 mmHg)
+        description: Latest control-eligible evidence below 130/80 mmHg, using control_evidence_date and control_evidence_context. NULL when absent or invalid. Displayed values describe the latest valid general reading.
 
       - name: cholesterol_in_target_range
         description: Whether cholesterol meets target (<5 mmol/L)
 
       - name: all_three_targets_met
         description: Whether all three targets are achieved
+unit_tests:
+- name: diabetes_triple_target_eligible_bp_contexts
+  model: fct_person_diabetes_triple_target
+  given:
+  - input: ref('fct_person_diabetes_register')
+    format: sql
+    rows: SELECT person_id,'Type 2'::VARCHAR AS diabetes_type,TRUE AS is_on_register FROM (SELECT column1::NUMBER
+      AS person_id FROM VALUES (-14441),(-14442),(-14443),(-14444),(-14445),(-14446),(-14447),(-14448),(-14449),(-14450),(-14451))
+  - input: ref('int_blood_pressure_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::FLOAT AS systolic_value, column4::FLOAT AS diastolic_value,
+          column5::BOOLEAN AS is_home_bp_event, column6::BOOLEAN AS is_abpm_bp_event
+      FROM VALUES
+          (-14441,'2026-08-01',150,95,FALSE,FALSE),
+          (-14442,'2026-08-01',139,89,FALSE,FALSE),
+          (-14443,'2026-08-01',135,85,FALSE,FALSE),
+          (-14444,'2026-08-01',145,85,FALSE,FALSE),
+          (-14445,'2026-07-01',120,70,TRUE,FALSE),
+          (-14446,'2026-08-01',145,95,FALSE,TRUE),
+          (-14447,'2026-08-01',130,95,TRUE,FALSE),
+          (-14448,'2026-08-01',129,79,FALSE,FALSE),
+          (-14449,CURRENT_DATE(),150,95,FALSE,TRUE),
+          (-14450,CURRENT_DATE(),150,95,FALSE,FALSE),
+          (-14451,CURRENT_DATE(),150,95,FALSE,FALSE)
+  - input: ref('int_blood_pressure_control_daily_by_context')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id,column2::DATE AS reading_date,column3::VARCHAR AS bp_context_group,
+
+      column4::FLOAT AS systolic_value,column5::FLOAT AS diastolic_value,column6::BOOLEAN AS is_valid_bp,
+
+      bp_context_group=''HOME'' AS is_home_bp_event,bp_context_group=''ABPM'' AS is_abpm_bp_event,
+
+      IFF(bp_context_group=''CLINIC'',''CLINIC'',''HBPM_ABPM'') AS applied_measurement_context,
+
+      ''2026-08-03''::TIMESTAMP_NTZ AS date_recorded,''SYN''::VARCHAR AS observation_id
+
+      FROM VALUES (-14441,''2026-08-01'',''CLINIC'',150,95,TRUE),
+
+      (-14442,''2026-08-01'',''CLINIC'',139,89,TRUE),(-14442,''2026-08-01'',''HOME'',136,84,TRUE),
+
+      (-14443,''2026-08-01'',''CLINIC'',135,85,TRUE),(-14443,''2026-08-01'',''HOME'',124,74,TRUE),
+
+      (-14444,''2026-08-01'',''CLINIC'',145,85,TRUE),
+
+      (-14445,''2026-07-01'',''HOME'',120,70,TRUE),(-14445,''2026-08-01'',''CLINIC'',400,250,FALSE),
+
+      (-14447,''2026-08-01'',''HOME'',130,95,TRUE),(-14448,''2026-08-01'',''CLINIC'',129,79,TRUE),
+      (-14449,DATEADD(day,-1,DATEADD(month,-12,CURRENT_DATE())),''CLINIC'',150,95,TRUE),
+      (-14450,DATEADD(month,-12,CURRENT_DATE()),''CLINIC'',150,95,TRUE),
+      (-14451,CURRENT_DATE(),''CLINIC'',150,95,TRUE)'
+  - input: ref('int_hba1c_latest')
+    format: sql
+    rows: SELECT person_id,'2026-08-01'::DATE AS clinical_effective_date,50::FLOAT AS hba1c_original_value,'mmol/mol'::VARCHAR
+      AS result_unit_display,'SYNTHETIC'::VARCHAR AS hba1c_category,TRUE AS is_ifcc,FALSE AS is_dcct,TRUE AS meets_qof_target
+      FROM (SELECT column1::NUMBER AS person_id FROM VALUES (-14441),(-14442),(-14443),(-14444),(-14445),(-14446),(-14447),(-14448),(-14449),(-14450),(-14451))
+  - input: ref('int_cholesterol_latest')
+    format: sql
+    rows: SELECT person_id,'2026-08-01'::DATE AS clinical_effective_date,4::FLOAT AS cholesterol_value FROM (SELECT
+      column1::NUMBER AS person_id FROM VALUES (-14441),(-14442),(-14443),(-14444),(-14445),(-14446),(-14447),(-14448),(-14449),(-14450),(-14451))
+  expect:
+    rows:
+    - person_id: -14441
+      bp_in_target_range: false
+      all_three_targets_met: false
+    - person_id: -14442
+      bp_in_target_range: false
+      all_three_targets_met: false
+    - person_id: -14443
+      bp_in_target_range: true
+      all_three_targets_met: true
+    - person_id: -14444
+      bp_in_target_range: false
+      all_three_targets_met: false
+    - person_id: -14445
+      bp_in_target_range: null
+      is_control_evidence_valid: false
+      bp_recent_but_out_of_range: false
+      all_three_targets_met: false
+      latest_bp_date: '2026-07-01'
+      latest_systolic: 120
+      latest_diastolic: 70
+      control_evidence_date: '2026-08-01'
+      control_evidence_context: CLINIC
+    - person_id: -14446
+      bp_in_target_range: null
+      is_control_evidence_valid: false
+      bp_recent_but_out_of_range: false
+      all_three_targets_met: false
+      latest_bp_date: '2026-08-01'
+      latest_systolic: 145
+      latest_diastolic: 95
+      control_evidence_date: null
+      control_evidence_context: null
+    - person_id: -14447
+      bp_in_target_range: false
+      all_three_targets_met: false
+    - person_id: -14448
+      bp_in_target_range: true
+      all_three_targets_met: true
+    - person_id: -14449
+      bp_in_target_range: false
+      is_control_evidence_valid: true
+      bp_measured_in_last_12m: true
+      bp_recent_but_out_of_range: false
+      all_three_targets_met: false
+    - person_id: -14450
+      bp_in_target_range: false
+      is_control_evidence_valid: true
+      bp_measured_in_last_12m: true
+      bp_recent_but_out_of_range: true
+      all_three_targets_met: false
+    - person_id: -14451
+      bp_in_target_range: false
+      is_control_evidence_valid: true
+      bp_measured_in_last_12m: true
+      bp_recent_but_out_of_range: true
+      all_three_targets_met: false

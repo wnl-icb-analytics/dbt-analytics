@@ -1,17 +1,19 @@
 models:
   - name: fct_person_bp_control
     description: >-
-      Blood pressure control, monitoring and blood pressure categories based on NICE NG136. One
-      row per person with a blood pressure reading and an applicable target.
+      Blood pressure control, monitoring and blood pressure categories based on NICE NG136. One row
+      per person with a latest valid general reading and an applicable target. Values, dates,
+      staging, case finding and monitoring describe that reading. Only control flags use the latest
+      control-eligible evidence, whose date and context are reported separately.
+      {{ doc('bp_control_evidence_rule') }}
 
-
-      Targets use current age, type 2 diabetes and kidney disease. Under 80, the clinic target
-      is below 140/90 mmHg, or below 130/80 with kidney disease and urine albumin-to-creatinine
-      ratio at least 70 mg/mmol; at 80 or over it is below 150/90. Home and ambulatory targets
-      are 5 mmHg lower. Both components must be below target. Monitoring is annual for listed
-      long-term conditions, every 5 years for other people aged 40 or over, and not routinely
-      recommended below 40. Blood pressure categories use the higher component and measurement
-      type. Based on NICE NG136.
+      Targets use current age, type 2 diabetes and kidney disease. Under 80, the clinic target is
+      below 140/90 mmHg, or below 130/80 with kidney disease and urine albumin-to-creatinine ratio
+      at least 70 mg/mmol; at 80 or over it is below 150/90. Home and ambulatory targets are 5 mmHg
+      lower. Both components must be below target. Monitoring is annual for listed long-term
+      conditions, every 5 years for other people aged 40 or over, and not routinely recommended
+      below 40. Blood pressure categories use the higher component and measurement type. Based on
+      NICE NG136.
     config:
       meta:
         owner:
@@ -75,7 +77,7 @@ models:
               threshold_value: "130/80"
               threshold_operator: "BELOW"
               threshold_unit: "mmHg"
-              description: "Target for CKD with ACR ≥70"
+              description: "Target for CKD with ACR at least 70"
               sort_order: 5
             # Diagnostic Criteria
             - population_group: "DIAGNOSIS"
@@ -117,25 +119,26 @@ models:
     columns:
       - name: person_id
         description: "Identifier of the person with a blood pressure recording and an applicable target."
-        tests:
+        data_tests:
           - not_null
           - unique
         
       - name: latest_bp_date
-        description: "Date of the latest complete blood pressure reading."
-        
+        description: "Clinical date of the latest valid general BP reading, also used for monitoring and recording completion."
       - name: latest_systolic_value
-        description: "Systolic blood pressure of the selected complete pair, in mmHg; null when no pair is recorded."
-        
+        description: "Systolic value of the latest valid general BP reading in mmHg."
       - name: latest_diastolic_value
-        description: "Diastolic blood pressure of the selected complete pair, in mmHg; null when no pair is recorded."
-
+        description: "Diastolic value of the latest valid general BP reading in mmHg."
       - name: is_home_bp_event
-        description: "Whether the selected blood pressure pair has home monitoring evidence."
-
+        description: "Whether the latest valid general BP reading has home evidence."
       - name: is_abpm_bp_event
-        description: "Whether the selected blood pressure pair has ambulatory monitoring evidence."
-        
+        description: "Whether the latest valid general BP reading has ambulatory evidence."
+      - name: is_control_evidence_valid
+        description: TRUE when the selected control evidence is plausible. FALSE when absent or invalid; control flags are then NULL.
+      - name: control_evidence_date
+        description: Clinical date of the latest control-eligible evidence; null when none is available. Invalid-only dates remain.
+      - name: control_evidence_context
+        description: CLINIC, HOME or ABPM for the selected control evidence; null when absent. A context meeting the target takes priority on the latest eligible day.
       - name: age
         description: "Current age in completed years, calculated from the approximate birth date."
         
@@ -164,7 +167,7 @@ models:
         description: "Target group: AGE_LT_80 for under 80, AGE_GE_80 for 80 or over, T2DM for type 2 diabetes, CKD for kidney disease, or CKD_ACR_GE_70 for kidney disease with urine albumin-to-creatinine ratio at least 70 mg/mmol."
 
       - name: applied_measurement_context
-        description: "CLINIC for clinic readings or HBPM_ABPM for home or ambulatory readings; determines which target applies."
+        description: "CLINIC or HBPM_ABPM for the latest valid general reading. The applied target fields describe that reading; control flags use the target for control_evidence_context."
         tests:
           - not_null
           - accepted_values:
@@ -181,13 +184,13 @@ models:
         description: "Whether the person is on the diabetes register with type 2 diabetes."
         
       - name: is_systolic_controlled
-        description: "Whether the latest systolic blood pressure is strictly below the applied target."
+        description: "Whether valid control evidence has systolic strictly below its context-specific patient target. NULL when control evidence is absent or invalid."
 
       - name: is_diastolic_controlled
-        description: "Whether the latest diastolic blood pressure is strictly below the applied target."
+        description: "Whether valid control evidence has diastolic strictly below its context-specific patient target. NULL when control evidence is absent or invalid."
 
       - name: is_overall_bp_controlled
-        description: "Whether both latest blood pressure values are strictly below their applied targets."
+        description: "Whether both components of valid control evidence are strictly below their context-specific patient targets. NULL when control evidence is absent or invalid."
 
       - name: hypertension_stage_number
         description: "Blood pressure category based on the higher component: 0 for Normal, 1 for Stage 1, 2 for Stage 2 or 3 for Stage 3 (Severe)."
@@ -212,3 +215,155 @@ models:
 
       - name: is_latest_bp_within_recommended_interval
         description: "Whether the latest blood pressure falls within the recommended interval through the build date; null when routine screening is not recommended."
+
+unit_tests:
+- name: bp_control_eligible_contexts_and_patient_targets
+  model: fct_person_bp_control
+  given:
+  - input: ref('int_blood_pressure_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::FLOAT AS systolic_value, column4::FLOAT AS diastolic_value,
+          column5::BOOLEAN AS is_home_bp_event, column6::BOOLEAN AS is_abpm_bp_event
+      FROM VALUES
+          (-14441,'2026-08-01',150,95,FALSE,FALSE),
+          (-14442,'2026-08-01',139,89,FALSE,FALSE),
+          (-14443,'2026-08-01',135,85,FALSE,FALSE),
+          (-14444,'2026-08-01',145,85,FALSE,FALSE),
+          (-14445,'2026-07-01',120,70,TRUE,FALSE),
+          (-14446,'2026-08-01',145,95,FALSE,TRUE),
+          (-14447,'2026-08-01',130,95,TRUE,FALSE),
+          (-14448,'2026-08-01',129,79,FALSE,FALSE)
+  - input: ref('int_blood_pressure_control_daily_by_context')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id,column2::DATE AS reading_date,column3::VARCHAR AS bp_context_group,
+
+      column4::FLOAT AS systolic_value,column5::FLOAT AS diastolic_value,column6::BOOLEAN AS is_valid_bp,
+
+      bp_context_group=''HOME'' AS is_home_bp_event,bp_context_group=''ABPM'' AS is_abpm_bp_event,
+
+      IFF(bp_context_group=''CLINIC'',''CLINIC'',''HBPM_ABPM'') AS applied_measurement_context,
+
+      ''2026-08-03''::TIMESTAMP_NTZ AS date_recorded,''SYN''::VARCHAR AS observation_id
+
+      FROM VALUES (-14441,''2026-08-01'',''CLINIC'',150,95,TRUE),
+
+      (-14442,''2026-08-01'',''CLINIC'',139,89,TRUE),(-14442,''2026-08-01'',''HOME'',136,84,TRUE),
+
+      (-14443,''2026-08-01'',''CLINIC'',135,85,TRUE),(-14443,''2026-08-01'',''HOME'',124,74,TRUE),
+
+      (-14444,''2026-08-01'',''CLINIC'',145,85,TRUE),
+
+      (-14445,''2026-07-01'',''HOME'',120,70,TRUE),(-14445,''2026-08-01'',''CLINIC'',400,250,FALSE),
+
+      (-14447,''2026-08-01'',''HOME'',130,95,TRUE),(-14448,''2026-08-01'',''CLINIC'',129,79,TRUE)'
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT person_id,IFF(person_id=-14444,80,60) AS age FROM (SELECT column1::NUMBER AS person_id FROM VALUES
+      (-14441),(-14442),(-14443),(-14444),(-14445),(-14446),(-14447),(-14448))
+  - input: ref('fct_person_diabetes_register')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id,FALSE AS is_on_register,NULL::VARCHAR AS diabetes_type WHERE FALSE
+  - input: ref('fct_person_ckd_register')
+    format: sql
+    rows: SELECT -14443::NUMBER AS person_id
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: SELECT -14443::NUMBER AS person_id,70::FLOAT AS acr_value
+  - input: ref('fct_person_hypertension_register')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, FALSE AS is_on_register WHERE FALSE
+  - input: ref('fct_person_chd_register')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, FALSE AS is_on_register WHERE FALSE
+  - input: ref('fct_person_stroke_tia_register')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, FALSE AS is_on_register WHERE FALSE
+  - input: ref('fct_person_pad_register')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, FALSE AS is_on_register WHERE FALSE
+  - input: ref('bp_thresholds')
+    format: sql
+    rows: 'SELECT column1::VARCHAR AS threshold_rule_id,column2::VARCHAR AS patient_group,column3::VARCHAR AS measurement_context,
+
+      column4::NUMBER AS systolic_threshold,column5::NUMBER AS diastolic_threshold,''TARGET_UPPER''::VARCHAR AS
+      threshold_type,''BELOW''::VARCHAR AS operator
+
+      FROM VALUES (''SYN_1'',''AGE_LT_80'',''CLINIC'',140,90),(''SYN_2'',''AGE_LT_80'',''HBPM_ABPM'',135,85),
+
+      (''SYN_3'',''AGE_GE_80'',''CLINIC'',150,90),(''SYN_4'',''AGE_GE_80'',''HBPM_ABPM'',145,85),
+
+      (''SYN_5'',''CKD_ACR_GE_70'',''CLINIC'',130,80),(''SYN_6'',''CKD_ACR_GE_70'',''HBPM_ABPM'',125,75)'
+  expect:
+    rows:
+    - person_id: -14441
+      is_overall_bp_controlled: false
+      applied_patient_group: AGE_LT_80
+      applied_measurement_context: CLINIC
+      hypertension_stage_number: 1
+      hypertension_stage: Stage 1
+      is_case_finding_candidate: true
+    - person_id: -14442
+      is_overall_bp_controlled: true
+      applied_patient_group: AGE_LT_80
+      applied_measurement_context: CLINIC
+      hypertension_stage_number: 0
+      hypertension_stage: Normal
+      is_case_finding_candidate: false
+    - person_id: -14443
+      is_overall_bp_controlled: true
+      applied_patient_group: CKD_ACR_GE_70
+      applied_measurement_context: CLINIC
+      hypertension_stage_number: 0
+      hypertension_stage: Normal
+      is_case_finding_candidate: false
+    - person_id: -14444
+      is_overall_bp_controlled: true
+      applied_patient_group: AGE_GE_80
+      applied_measurement_context: CLINIC
+      hypertension_stage_number: 1
+      hypertension_stage: Stage 1
+      is_case_finding_candidate: true
+    - person_id: -14445
+      is_overall_bp_controlled: null
+      is_control_evidence_valid: false
+      is_systolic_controlled: null
+      is_diastolic_controlled: null
+      applied_patient_group: AGE_LT_80
+      applied_measurement_context: HBPM_ABPM
+      hypertension_stage_number: 0
+      hypertension_stage: Normal
+      is_case_finding_candidate: false
+      latest_systolic_value: 120
+      latest_diastolic_value: 70
+      control_evidence_context: CLINIC
+      control_evidence_date: '2026-08-01'
+    - person_id: -14446
+      is_overall_bp_controlled: null
+      is_control_evidence_valid: false
+      is_systolic_controlled: null
+      is_diastolic_controlled: null
+      applied_patient_group: AGE_LT_80
+      applied_measurement_context: HBPM_ABPM
+      hypertension_stage_number: 2
+      hypertension_stage: Stage 2
+      is_case_finding_candidate: true
+      latest_systolic_value: 145
+      latest_diastolic_value: 95
+      control_evidence_context: null
+      control_evidence_date: null
+    - person_id: -14447
+      is_overall_bp_controlled: false
+      applied_patient_group: AGE_LT_80
+      applied_measurement_context: HBPM_ABPM
+      hypertension_stage_number: 2
+      hypertension_stage: Stage 2
+      is_case_finding_candidate: true
+    - person_id: -14448
+      is_overall_bp_controlled: true
+      applied_patient_group: AGE_LT_80
+      applied_measurement_context: CLINIC
+      hypertension_stage_number: 0
+      hypertension_stage: Normal
+      is_case_finding_candidate: false

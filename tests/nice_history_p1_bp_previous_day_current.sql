@@ -6,7 +6,7 @@
     {% set calculation = context['nice_ind' ~ indicator]('current') %}
     {% set calculation = calculation | replace(nice_register(condition, 'current') | string, 'SELECT person_id, reporting_date FROM synthetic_population') %}
     {% set calculation = calculation | replace(nice_reference_population('current') | string, 'SELECT * FROM synthetic_population') %}
-    {% set calculation = calculation | replace(ref('int_nice_blood_pressure_latest') | string, 'stored_bp') %}
+    {% set calculation = calculation | replace(ref('int_nice_blood_pressure_control_latest_by_context') | string, 'synthetic_bp_context') %}
     {% do queries.append(calculation) %}
 {% endfor %}
 
@@ -31,6 +31,14 @@ stored_bp AS (
         FALSE AS is_abpm_bp_event,
         'HBPM_ABPM' AS applied_measurement_context
     FROM synthetic_population
+),
+synthetic_bp_context AS (
+    SELECT person_id, reporting_date, latest_bp_date AS reading_date,
+        latest_systolic_value AS systolic_value, latest_diastolic_value AS diastolic_value,
+        is_valid_bp, is_home_bp_event, is_abpm_bp_event, applied_measurement_context,
+        IFF(is_home_bp_event, 'HOME', IFF(is_abpm_bp_event, 'ABPM', 'CLINIC')) AS bp_context_group,
+        NULL::TIMESTAMP_NTZ AS date_recorded, 'SYN' AS observation_id
+    FROM stored_bp
 ),
 actual AS (
     {% for calculation in queries %}

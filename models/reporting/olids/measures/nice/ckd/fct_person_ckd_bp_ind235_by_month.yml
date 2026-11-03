@@ -1,21 +1,19 @@
 models:
 - name: fct_person_ckd_bp_ind235_by_month
   description: >-
-    Blood pressure control in kidney disease (NICE IND235). One row per person in the
-    denominator at the month-end.
-
-
-    People registered at the month-end aged 18 or over on the CKD stage 3 to 5 register with
-    latest urine ACR below 70 mg/mmol, without moderate or severe frailty. The latest numeric
-    ACR has no lookback limit; value-free tests are ignored. An invalid numeric result
+    Blood pressure control in kidney disease (NICE IND235). One row per person in the denominator at
+    the month-end. People registered at the month-end aged 18 or over on the CKD stage 3 to 5
+    register with latest urine ACR below 70 mg/mmol, without moderate or severe frailty. The latest
+    numeric ACR has no lookback limit; value-free tests are ignored. An invalid numeric result
     excludes; no older numeric result is substituted. Achieved when both values of the latest
-    complete blood pressure reading in the last 12 months are below 140/90 mmHg in clinic or
-    135/85 mmHg at home or on ambulatory monitoring. Incomplete readings do not count; invalid
-    latest readings are unassessable, with no older reading substituted. No personalised care
-    adjustments are applied. Based on NICE NG203. Recalculated for each of the last 60
-    month-ends with current rules, code lists and records, so later corrections can change
-    past months. Code lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); BP_COD,
-    SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
+    complete blood pressure reading in the last 12 months are below 140/90 mmHg in clinic or 135/85
+    mmHg at home or on ambulatory monitoring. Incomplete readings do not count; invalid latest
+    readings are unassessable, with no older reading substituted. No personalised care adjustments
+    are applied. Based on NICE NG203. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months. Code lists: CKD_COD,
+    CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD,
+    HOMEBP_COD, ABPM_COD (PCD). At the latest eligible date, any clinic, home or ambulatory context
+    can meet its own strict NICE target. {{ doc('bp_control_evidence_rule') }}
   config:
     meta:
       owner:
@@ -47,17 +45,17 @@ models:
   - name: latest_acr_value
     description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
   - name: latest_bp_date
-    description: "Date of the latest complete blood pressure reading by the reporting date; it may be outside the measurement period. Null when none is recorded."
+    description: "Latest clinical date with eligible complete numeric control evidence. May precede the measurement window; null when absent."
   - name: latest_record_date
-    description: "Date of the selected complete blood pressure reading in the 12-month measurement period; null when none is recorded in that period."
+    description: "Latest clinical date with eligible complete numeric control evidence. May precede the measurement window; null when absent."
   - name: is_valid_bp
-    description: "Whether the selected complete reading has systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive; null when no complete reading exists."
+    description: "Selected daily values have systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive, with systolic above diastolic. Null when no complete evidence exists."
   - name: latest_systolic_value
-    description: "Systolic blood pressure of the selected complete pair, in mmHg; valid range 40 to 350, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
+    description: "Independent minimum valid systolic in mmHg within the selected date and context. May come from a different reading to diastolic. Invalid-only dates retain the latest complete reading. Null when absent."
   - name: latest_diastolic_value
-    description: "Diastolic blood pressure of the selected complete pair, in mmHg; valid range 20 to 200, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
+    description: "Independent minimum valid diastolic in mmHg within the selected date and context. May come from a different reading to systolic. Invalid-only dates retain the latest complete reading. Null when absent."
   - name: applied_measurement_context
-    description: "CLINIC for the clinic target or HBPM_ABPM for the home or ambulatory target; null when no complete reading exists."
+    description: "CLINIC or HBPM_ABPM for the selected context. On the latest eligible date a context meeting this indicator target takes priority. Otherwise prefer valid clinic, home, then ambulatory evidence."
   - name: indicator_systolic_threshold
     description: "Systolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists."
   - name: indicator_diastolic_threshold

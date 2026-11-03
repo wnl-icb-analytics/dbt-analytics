@@ -183,17 +183,15 @@ models:
         description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   - name: fct_person_diabetes_bp_ind249
     description: >-
-      Blood pressure control in diabetes (NICE IND249). One row per person in the
-      denominator on the build date.
-
-
-      People registered on the build date aged 17 to 79 on the diabetes register without
-      moderate or severe frailty. Achieved when both values of the latest complete blood
-      pressure reading in the last 12 months are below 140/90 mmHg in clinic or 135/85
-      mmHg at home or on ambulatory monitoring. Incomplete readings do not count;
-      invalid latest readings are unassessable, with no older reading substituted. No
-      personalised care adjustments are applied. Based on NICE NG17. Code lists: BP_COD,
-      SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
+      Blood pressure control in diabetes (NICE IND249). One row per person in the denominator on the
+      build date. People registered on the build date aged 17 to 79 on the diabetes register without
+      moderate or severe frailty. Achieved when both values of the latest complete blood pressure
+      reading in the last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at home or on
+      ambulatory monitoring. Incomplete readings do not count; invalid latest readings are
+      unassessable, with no older reading substituted. No personalised care adjustments are applied.
+      Based on NICE NG17. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD,
+      ABPM_COD (PCD). At the latest eligible date, any clinic, home or ambulatory context can meet
+      its own strict NICE target. {{ doc('bp_control_evidence_rule') }}
     config:
       meta:
         owner:
@@ -248,29 +246,29 @@ models:
       - name: latest_frailty_severity
         description: "Latest coded frailty severity by the reporting date; null when none is recorded."
       - name: latest_bp_date
-        description: "Date of the latest complete blood pressure reading by the reporting date; it may be outside the measurement period. Null when none is recorded."
+        description: "Latest clinical date with eligible complete numeric control evidence. May precede the measurement window; null when absent."
       - name: latest_record_date
-        description: "Date of the selected complete blood pressure reading in the 12-month measurement period; null when none is recorded in that period."
+        description: "Latest clinical date with eligible complete numeric control evidence. May precede the measurement window; null when absent."
       - name: is_valid_bp
-        description: "Whether the selected complete reading has systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive; null when no complete reading exists."
+        description: "Selected daily values have systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive, with systolic above diastolic. Null when no complete evidence exists."
       - name: latest_systolic_value
-        description: "Systolic blood pressure of the selected complete pair, in mmHg; valid range 40 to 350, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
+        description: "Independent minimum valid systolic in mmHg within the selected date and context. May come from a different reading to diastolic. Invalid-only dates retain the latest complete reading. Null when absent."
       - name: latest_diastolic_value
-        description: "Diastolic blood pressure of the selected complete pair, in mmHg; valid range 20 to 200, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
+        description: "Independent minimum valid diastolic in mmHg within the selected date and context. May come from a different reading to systolic. Invalid-only dates retain the latest complete reading. Null when absent."
       - name: is_home_bp_event
-        description: "Whether the selected complete blood pressure reading was recorded as home monitoring; null when no complete reading exists."
+        description: "Whether the selected daily minima use home evidence, with an average preferred on that date."
       - name: is_abpm_bp_event
-        description: "Whether the selected complete blood pressure reading was recorded as ambulatory monitoring; null when no complete reading exists."
+        description: "Whether the selected daily minima use ABPM, preferring daytime, then unspecified, then 24-hour averages."
       - name: applied_measurement_context
-        description: "CLINIC for the clinic target or HBPM_ABPM for the home or ambulatory target; null when no complete reading exists."
+        description: "CLINIC or HBPM_ABPM for the selected context. On the latest eligible date a context meeting this indicator target takes priority. Otherwise prefer valid clinic, home, then ambulatory evidence."
       - name: indicator_systolic_threshold
         description: "Systolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists."
       - name: indicator_diastolic_threshold
         description: "Diastolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists."
       - name: is_bp_recorded_in_last_12m
-        description: "Whether the latest complete blood pressure reading falls in the 12 months before the reporting date, including both boundary dates."
+        description: "Whether the latest eligible control date is in the preceding 12 months, including both boundary dates."
       - name: is_latest_bp_within_indicator_target
-        description: "Whether the latest complete blood pressure reading is valid and both values are strictly below their thresholds, regardless of its date."
+        description: "Whether the selected daily context minima are valid and strictly below both indicator targets, regardless of their date."
       - name: is_in_denominator
         description: "Always true. Every row belongs to the denominator before personalised care adjustments."
       - name: is_in_numerator
@@ -1222,15 +1220,15 @@ models:
               arguments:
                 values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
       - name: latest_record_date
-        description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
+        description: "Latest eligible control date for BP indicators. Other indicators retain their own test, referral or treatment date. Null when absent. Null where the field does not apply to an indicator."
       - name: latest_hba1c_value
         description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available. Null where the field does not apply to an indicator."
       - name: hba1c_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol; null for indicators without an HbA1c target. Null where the field does not apply to an indicator."
       - name: latest_systolic_value
-        description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
+        description: "Independent minimum valid systolic in mmHg within the selected date and context. May come from a different reading to diastolic. Invalid-only dates retain the latest complete reading. Null when absent. Null where the field does not apply to an indicator."
       - name: latest_diastolic_value
-        description: "Diastolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
+        description: "Independent minimum valid diastolic in mmHg within the selected date and context. May come from a different reading to systolic. Invalid-only dates retain the latest complete reading. Null when absent. Null where the field does not apply to an indicator."
       - name: latest_frailty_severity
         description: "Latest coded frailty severity by the reporting date; null when none is recorded. Null where the field does not apply to an indicator."
   - name: fct_person_diabetes_nice_indicators_snapshot_input
@@ -1275,8 +1273,8 @@ models:
       - name: latest_hba1c_value
         description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: latest_systolic_value
-        description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available."
+        description: "Independent systolic minimum in mmHg within the selected latest-day context. May come from a different reading to diastolic. Invalid-only dates retain the latest complete reading. Null when absent."
       - name: latest_diastolic_value
-        description: "Diastolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available."
+        description: "Independent diastolic minimum in mmHg within the selected latest-day context. May come from a different reading to systolic. Invalid-only dates retain the latest complete reading. Null when absent."
       - name: latest_frailty_severity
         description: "Latest coded frailty severity by the reporting date; null when none is recorded."
