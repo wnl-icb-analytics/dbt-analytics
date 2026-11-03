@@ -46,6 +46,6 @@ SUM(IFF(is_4_hour_breach,  attendance_count, 0)) AS breach_4hr,
 SUM(IFF(is_12_hour_breach, attendance_count, 0)) AS breach_12hr,
 SUM(IFF(is_72_hour_breach, attendance_count, 0)) AS breach_72hr,
 SUM(IFF(duration IS NULL, attendance_count, 0)) AS missing_duration
-FROM {{ ref("int_ecds_quick_report_base") }}
+FROM {{ ref("ecds_quick_report_base") }}
 --FROM DEV__MODELLING.ACUTE.INT_ECDS_QUICK_REPORT_BASE
 group by all
