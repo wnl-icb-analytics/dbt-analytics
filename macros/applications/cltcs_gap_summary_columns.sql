@@ -3,7 +3,9 @@
     Item IDs that cltcs_gap_summary turns into one is_gap_<item_id> column each. NICE
     indicators follow cltcs_treatment_nice_indicators; bespoke items follow cltcs_gap_items.
     Keep this list in step with both: the cltcs_gap_summary_covers_gap_items test fails when
-    cltcs_gap_items produces an item that is not listed here.
+    cltcs_gap_items produces an item that is not listed here. cltcs_application holds its own
+    labelled copy of these items and the groups below (GAP_ITEMS and GAP_DOMAINS in
+    utils/cohort_profile.py); update it too, or its Cohort Needs Profile page shows a warning.
   #}
   {{ return([
     'IND179', 'IND180', 'IND239', 'IND240', 'IND241', 'IND242', 'IND243', 'IND244',

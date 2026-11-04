@@ -1,0 +1,96 @@
+models:
+  - name: cltcs_uec_events
+    description: >
+      Urgent and emergency care events for the C-LTCS cohort in cltcs_patient_list, for the
+      Emergency care tab of the Cohort Needs Profile page. One row per A&E attendance or
+      emergency admission that started in the last 12 months. An attendance that leads to an
+      admission appears once in each setting.
+
+      A&E attendances are the is_unplanned_attendance population in obt_encounter_uec, with
+      attendance_count = 1 so streamed records already counted at a co-located department are
+      left out. Emergency admissions are spells in int_sus_apc_imputed_spells with an admission
+      method starting 2, excluding births, matching apc_nel_12mo in fct_person_sus_apc_recent.
+
+      The is_ flags are indicative and depend on diagnosis coding, which varies between
+      departments. An event can have several flags; the page places it in one service group.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - event_setting
+              - event_id
+    columns:
+      - name: patient_id
+        data_type: number
+        description: "Commissioning patient identifier [sk_patient_id]."
+      - name: area_code
+        data_type: varchar
+        description: "Neighbourhood code. The secure view restricts rows on this column."
+      - name: event_setting
+        data_type: varchar
+        description: "AE for an A&E attendance, NEL for an emergency admission."
+      - name: event_id
+        data_type: varchar
+        description: "Attendance or spell identifier [visit_occurrence_id]."
+      - name: event_date
+        data_type: date
+        description: "Arrival date for an attendance, admission date for a spell."
+      - name: event_time
+        data_type: time
+        description: "Arrival time for an attendance, admission time for a spell. Null when not recorded."
+      - name: event_reason
+        data_type: varchar
+        description: >
+          Attendance: ECDS primary diagnosis, or the chief complaint where no diagnosis is
+          recorded. Admission: ICD-10 primary diagnosis term, or the code where no term exists.
+      - name: arrival_mode_desc
+        data_type: varchar
+        description: "A&E arrival mode. Null for admissions and where not recorded."
+      - name: attendance_source_desc
+        data_type: varchar
+        description: "Who sent the person to A&E. Null for admissions and where not recorded."
+      - name: length_of_stay_days
+        data_type: number
+        description: "Admission length of stay, imputed for spells with no discharge date. Null for attendances."
+      - name: is_ambulance_arrival
+        data_type: boolean
+        description: "A&E arrival mode names an ambulance. Null for admissions and where arrival mode is not recorded."
+      - name: is_ambulatory_care_sensitive
+        data_type: boolean
+        description: "Admission is in int_activity_ambulatory_sensitive_nel. Null for attendances."
+      - name: is_admitted
+        data_type: boolean
+        description: "Attendance has discharge_destination_group 'Admitted'. Always true for admissions."
+      - name: is_mental_health
+        data_type: boolean
+        description: >
+          Attendance: is_mental_health_related_attendance in obt_encounter_uec (NHS England
+          definition). Admission: ICD-10 primary diagnosis F20 to F99.
+      - name: is_alcohol_drug
+        data_type: boolean
+        description: >
+          ICD-10 primary diagnosis F10 to F19. Attendances also count when
+          int_sus_uec_injury_alcohol_drug has an involvement record.
+      - name: is_fall
+        data_type: boolean
+        description: >
+          Attendance: injury mechanism or chief complaint names a fall. Admission: ICD-10
+          primary diagnosis W00 to W19 or R29.6. Falls coded only as a secondary diagnosis on
+          an admission are not counted.
+      - name: is_ltc_flare
+        data_type: boolean
+        description: >
+          Attendance: ECDS diagnosis group 1 is respiratory, cardiac, endocrine or metabolic.
+          Admission: same as is_ambulatory_care_sensitive.
+      - name: is_possibly_manageable_elsewhere
+        data_type: boolean
+        description: >
+          Attendance: standard or lower acuity and discharge_destination_group 'Non-admitted'.
+          Always false for admissions. Does not mean the attendance was inappropriate.
+      - name: is_died
+        data_type: boolean
+        description: "Attendance: discharged to the mortuary or discharge status records a death. Admission: discharge method 4 (patient died)."
