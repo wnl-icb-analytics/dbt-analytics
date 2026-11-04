@@ -138,3 +138,63 @@ select
     -- Metadata
     'Daily dynamic inpatient table' as notes
     
+union all
+
+-- =====================================================
+-- SLAM LSACM - Aggregated.
+-- =====================================================
+
+select
+
+    'SLAM_LSACM'                       as table_id,
+    'DATA_LAKE'                        as database_name,
+    'SERVICES_DATA'                    as schema_name,
+    'LSACM_LocalStandardAggregateContractMonitoring'
+                                       as table_name,
+
+    true                               as is_active,
+    'DV_DATEANDTIMEDATASETCREATED'     as refresh_column,
+    'MONTHLY'                          as frequency_type,
+
+    40                                 as warn_stale_days,
+    60                                 as critical_stale_days,
+
+    10                                 as warn_row_change_pct,
+    25                                 as critical_row_change_pct,
+
+    'SLAM'                             as business_area,
+    'MONTHLY_AGGREGATE'                as object_type,
+
+    'Monthly SLAM aggregate contract monitoring data'
+                                       as notes
+
+union all
+
+-- =====================================================
+-- SLAM LSPLCM - Patient Level.
+-- =====================================================
+
+select
+
+    'SLAM_LSPLCM'                       as table_id,
+    'DATA_LAKE'                        as database_name,
+    'SERVICES_DATA'                    as schema_name,
+    'LSPLCM_LocalStandardPatientLevelContractMonitoring'
+                                       as table_name,
+
+    true                               as is_active,
+    'DV_DATEANDTIMEDATASETCREATED'     as refresh_column,
+    'MONTHLY'                          as frequency_type,
+
+    40                                 as warn_stale_days,
+    60                                 as critical_stale_days,
+
+    10                                 as warn_row_change_pct,
+    25                                 as critical_row_change_pct,
+
+    'SLAM'                             as business_area,
+    'MONTHLY_PLD'                      as object_type,
+
+    'Monthly SLAM PLD contract monitoring data'
+                                       as notes
+                                       

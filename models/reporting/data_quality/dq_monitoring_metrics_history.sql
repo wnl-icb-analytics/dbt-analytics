@@ -54,6 +54,7 @@ with measurements as (
         ) as days_since_refresh,
         'MONTHLY' as frequency_type
     from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT_ACTIVITY
+
     union all
 
     select
@@ -69,6 +70,70 @@ with measurements as (
         ) as days_since_refresh,
         'DAILY' as frequency_type
     from REPORTING.MAIN_DATA.IP
+
+    union all
+
+    -- =====================================================
+    -- SLAM Aggregate Contract Monitoring
+    -- =====================================================
+
+    select
+        current_date() as measurement_date,
+        current_timestamp() as measured_at,
+        'SLAM_LSACM' as table_id,
+        count(*) as row_count,
+    max(
+        case
+            when DV_DATEANDTIMEDATASETCREATED <= current_timestamp() --- ignore future dates
+            then to_date(DV_DATEANDTIMEDATASETCREATED)
+        end
+    ) as refresh_date,
+    datediff(
+        day,
+        max(
+            case
+                when DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
+                then to_date(DV_DATEANDTIMEDATASETCREATED)
+            end
+        ),
+            current_date()
+        ) as days_since_refresh,
+        'MONTHLY' as frequency_type
+
+    from DATA_LAKE.SERVICES_DATA."LSACM_LocalStandardAggregateContractMonitoring"
+
+union all
+
+-- =====================================================
+-- SLAM Patient Level Contract Monitoring
+-- Ignoring invalid future dataset-created timestamps (eg. Moorfields 2024 file loads)
+-- =====================================================
+
+select
+    current_date() as measurement_date,
+    current_timestamp() as measured_at,
+    'SLAM_LSPLCM' as table_id,
+    count(*) as row_count,
+    max(
+        case
+            when DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
+            then to_date(DV_DATEANDTIMEDATASETCREATED)
+        end
+    ) as refresh_date,
+    datediff(
+        day,
+        max(
+            case
+                when DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
+                then to_date(DV_DATEANDTIMEDATASETCREATED)
+            end
+        ),
+        current_date()
+    ) as days_since_refresh,
+
+    'MONTHLY' as frequency_type
+
+from DATA_LAKE.SERVICES_DATA."LSPLCM_LocalStandardPatientLevelContractMonitoring"
 )
 
 select *
