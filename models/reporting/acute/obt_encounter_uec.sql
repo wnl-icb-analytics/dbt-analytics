@@ -48,8 +48,8 @@ select
     , start_time
     , timestamp_tz_from_parts(
         year(start_date), month(start_date), day(start_date)
-        , coalesce(hour(start_time), 0), coalesce(minute(start_time), 0)
-        , coalesce(second(start_time), 0), 0, 'Europe/London'
+        , hour(start_time), minute(start_time), second(start_time)
+        , 0, 'Europe/London'
     ) as arrival_at
     , financial_year
     , financial_month
@@ -59,8 +59,8 @@ select
     , end_time
     , timestamp_tz_from_parts(
         year(end_date), month(end_date), day(end_date)
-        , coalesce(hour(end_time), 0), coalesce(minute(end_time), 0)
-        , coalesce(second(end_time), 0), 0, 'Europe/London'
+        , hour(end_time), minute(end_time), second(end_time)
+        , 0, 'Europe/London'
     ) as departure_at
     , duration
     , initial_assessment_date
