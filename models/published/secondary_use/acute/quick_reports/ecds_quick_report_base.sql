@@ -97,8 +97,8 @@ CASE
 DATE_TRUNC('month', u.start_date) AS month_start_date,
 TO_CHAR(u.start_date, 'mon-yy') AS month_label,
 TO_NUMBER(TO_CHAR(u.start_date, 'YYYYMM')) AS month_sort,
-u.week_end_date,
-TO_CHAR(DATE_TRUNC('WEEK', u.week_end_date),'DD-MON-YY') AS week_label,
+DATE_TRUNC('WEEK', u.start_date)::DATE AS week_start_date,
+TO_CHAR(DATE_TRUNC('WEEK', u.start_date),'DD-MON-YY') AS week_label,
 DAYNAME(u.start_date) AS day_of_week,
 DAYOFWEEKISO(u.start_date) AS day_of_week_sort,
 u.start_time,
@@ -110,17 +110,47 @@ u.is_four_hour_breach as is_4_hour_breach,
 u.duration >720 is_12_hour_breach,
 --duration > 4320 mins (72 hrs)
 u.duration > 4320 is_72_hour_breach,
-u.arrival_mode_desc,
+CASE 
+WHEN u.arrival_mode_code in ('1048031000000100','1048041000000109') THEN 'Emergency Ambulance'
+WHEN u.arrival_mode_code in ('1048051000000107','1048081000000101') THEN 'Air Ambulance'
+WHEN u.arrival_mode_code in ('1048001000000106','1047991000000102') THEN 'Police/Prison Transport'
+WHEN u.arrival_mode_code in ('1048071000000103') THEN 'Own Transport'
+WHEN u.arrival_mode_code in ('1048061000000105') THEN 'Public Transport'
+WHEN u.arrival_mode_code in ('1048021000000102') THEN 'Non Emergency Ambulance'
+WHEN u.arrival_mode_code IS NULL THEN 'Unknown'
+END AS arrival_mode_short,
 CASE
-WHEN u.arrival_mode_desc LIKE '%ambulance%' THEN TRUE ELSE FALSE END AS arrival_by_ambulance,
+WHEN u.arrival_mode_code IS NOT NULL AND u.arrival_mode_code in ('1048031000000100', '1048041000000109','1048051000000107') THEN TRUE ELSE FALSE END AS arrival_by_ambulance,
 --clinical details
 u.hrg_code,
 u.core_hrg_desc,
-u.chief_complaint_desc,
-u.chief_complaint_ecds_group1 as chief_complaint_group,
-u.primary_diagnosis_desc_ecds_group1 as primary_diagnosis_group,
-u.primary_treatment_desc_ecds_group1 as primary_treatment_group,
-u.primary_investigation_desc_ecds_group1 as primary_investigation_group,
+CASE
+WHEN u.chief_complaint_ecds_group1 = 'General' THEN 'General/Non-specific'
+WHEN u.chief_complaint_ecds_group1 = 'Circulation / chest' THEN 'Circulation/Chest'
+WHEN u.chief_complaint_ecds_group1 = 'Airway / breathing' THEN 'Airway/Breathing'
+WHEN u.chief_complaint_ecds_group1 = 'Psychosocial / Behaviour change' THEN 'Psychosocial/Behaviour change'
+WHEN u.chief_complaint_ecds_group1 IS NULL THEN 'Unknown'
+ELSE u.chief_complaint_ecds_group1 END AS chief_complaint_group,
+CASE
+WHEN u.primary_diagnosis_desc_ecds_group1 = 'Env / social / comp / NAD' THEN 'Environmental/Social/Complications/No abnormality'
+WHEN u.primary_diagnosis_desc_ecds_group1 = 'Trauma / FB' THEN 'Trauma/Foreign Body'
+WHEN u.primary_diagnosis_desc_ecds_group1 = 'Psych / tox / D+A' THEN 'Pysch/Toxicology/Drugs/Alcohol'
+WHEN u.primary_diagnosis_desc_ecds_group1 = 'Fracture / dislocation' THEN 'Fracture/Dislocation'
+WHEN u.primary_diagnosis_desc_ecds_group1 = 'Soft tissue inj / wound' THEN 'Soft tissue injury/Wound'
+WHEN u.primary_diagnosis_desc_ecds_group1 IS NULL THEN 'Unknown'
+ELSE u.primary_diagnosis_desc_ecds_group1 END as primary_diagnosis_group,
+CASE 
+WHEN u.primary_treatment_desc_ecds_group1 = 'ENT / eye / dental' THEN 'ENT/Eye/Dental'
+WHEN u.primary_treatment_desc_ecds_group1 = 'Administration' THEN 'Treatment not indicated'
+WHEN u.primary_treatment_desc_ecds_group1 = 'Discharge Planning' THEN 'Clinical Support/Discharge'
+WHEN u.primary_treatment_desc_ecds_group1 IS NULL THEN 'Unknown'
+ELSE u.primary_treatment_desc_ecds_group1 END AS primary_treatment_group,
+CASE 
+WHEN u.primary_investigation_desc_ecds_group1 = 'Admin' THEN 'Investigation not indicated'
+WHEN u.primary_investigation_desc_ecds_group1 = 'Bedside' THEN 'Point-of-Care/Bedside'
+WHEN u.primary_investigation_desc_ecds_group1 = 'Eyes / dental' THEN 'Eyes/Dental'
+WHEN u.primary_investigation_desc_ecds_group1 IS NULL THEN 'Unknown'
+ELSE u.primary_investigation_desc_ecds_group1 END AS primary_investigation_group,
 u.is_mental_health_related_attendance,
 CASE
 WHEN u.acuity_desc = 'Immediate resuscitation level emergency care' THEN 'Resuscitation'
