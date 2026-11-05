@@ -229,9 +229,7 @@ group by
                 then to_date(p.DV_DATEANDTIMEDATASETCREATED)
             end
         )                                    as latest_refresh_date,
-
         max(p.DV_FINANCIALYEAR)              as latest_actual_financial_year,
-
         max(
             case
                 when p.DV_FINANCIALYEAR = (
@@ -246,14 +244,11 @@ group by
                 then p.DV_FINANCIALMONTH
             end
         )                                    as latest_actual_financial_month,
-
         max(to_date(p."LastUpdateTime"))     as latest_update_date
 
     from DATA_LAKE.SERVICES_DATA
         ."LSPLCM_LocalStandardPatientLevelContractMonitoring" p
-
     where p."Dv_ProviderCode" is not null
-
     group by
         p."Dv_ProviderCode"
 )
