@@ -1,7 +1,8 @@
 {{
     config(
         materialized='incremental',
-        unique_key=['measurement_date', 'table_id', 'provider_code']
+        unique_key=['measurement_date', 'table_id', 'provider_code'],
+        on_schema_change='append_new_columns'
     )
 }}
 
@@ -29,7 +30,12 @@ with measurements as (
         provider_code,
         provider_name,
         count(*)                            as row_count,
-        max(refresh_date)                   as latest_refresh_date
+        max(refresh_date)                   as latest_refresh_date,
+
+    -- SLAM-specific provider period fields (not used here in CSDS tables)
+    null::number                    as latest_actual_financial_year,
+    null::number                    as latest_actual_financial_month,
+    null::date                      as latest_update_date
 
     from REPORTING.MAIN_DATA.CSDS_REFERRAL
 
@@ -48,22 +54,26 @@ with measurements as (
     -- =====================================================
 
     select
-        current_date()                      as measurement_date,
-        current_timestamp()                 as measured_at,
-        'CSDS_CARE_CONTACT'                 as table_id,
-        provider_code,
-        provider_name,
-        count(*)                            as row_count,
-        max(refresh_date)                   as latest_refresh_date
+    current_date()                  as measurement_date,
+    current_timestamp()             as measured_at,
+    'CSDS_CARE_CONTACT'             as table_id,
+    provider_code,
+    provider_name,
+    count(*)                        as row_count,
+    max(refresh_date)               as latest_refresh_date,
 
-    from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT
+    -- SLAM-specific provider period fields (not used here in CSDS tables)
+    null::number                    as latest_actual_financial_year,
+    null::number                    as latest_actual_financial_month,
+    null::date                      as latest_update_date
 
-    where provider_code is not null
+from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT
 
-    group by
-        provider_code,
-        provider_name
+where provider_code is not null
 
+group by
+    provider_code,
+    provider_name
 
     union all
 
@@ -79,7 +89,12 @@ with measurements as (
         provider_code,
         provider_name,
         count(*)                            as row_count,
-        max(created_date)                   as latest_refresh_date
+        max(created_date)                   as latest_refresh_date,
+
+   -- SLAM-specific provider period fields (not used here in CSDS tables)
+    null::number                    as latest_actual_financial_year,
+    null::number                    as latest_actual_financial_month,
+    null::date                      as latest_update_date
 
     from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT_ACTIVITY
 
@@ -103,7 +118,12 @@ with measurements as (
         provider_code,
         provider_name,
         count(*)                    as row_count,
-        max(refresh_date)           as latest_refresh_date
+        max(refresh_date)           as latest_refresh_date,
+
+    -- SLAM-specific provider period fields (not used here in SUS Unified tables)
+    null::number                    as latest_actual_financial_year,
+    null::number                    as latest_actual_financial_month,
+    null::date                      as latest_update_date
 
     from REPORTING.MAIN_DATA.IP
 
@@ -118,63 +138,124 @@ with measurements as (
     -- =====================================================
     -- SLAM Local Standard Aggregate Contract Monitoring
     -- Monthly aggregate contract monitoring
+    --
+    -- Latest actual financial period is based only on
+    -- periods containing > 0 actual activity, preventing
+    -- future planned months from being treated as received
+    -- actual activity.
     -- =====================================================
 
     select
-        current_date()                          as measurement_date,
-        current_timestamp()                     as measured_at,
-        'SLAM_LSACM'                            as table_id,
-        "Dv_ProviderCode"                       as provider_code,
-        "Dv_ProviderCode"                       as provider_name,
-        count(*)                                as row_count,
+        current_date()                       as measurement_date,
+        current_timestamp()                  as measured_at,
+        'SLAM_LSACM'                         as table_id,
+        a."Dv_ProviderCode"                  as provider_code,
+        a."Dv_ProviderCode"                  as provider_name,
+        count(*)                             as row_count,
 
         max(
             case
-                when DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
-                then to_date(DV_DATEANDTIMEDATASETCREATED)
+                when a.DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
+                then to_date(a.DV_DATEANDTIMEDATASETCREATED)
             end
-        )                                       as latest_refresh_date
+        )                                    as latest_refresh_date,
 
-    from DATA_LAKE.SERVICES_DATA."LSACM_LocalStandardAggregateContractMonitoring"
+        max(
+            case
+                when coalesce(
+                    a."CONTRACT MONITORING ACTUAL ACTIVITY",
+                    0
+                ) > 0
+                then a.DV_FINANCIALYEAR
+            end
+        )                                    as latest_actual_financial_year,
 
-    where "Dv_ProviderCode" is not null
+        max(
+            case
+                when coalesce(
+                    a."CONTRACT MONITORING ACTUAL ACTIVITY",
+                    0
+                ) > 0
+
+                and a.DV_FINANCIALYEAR = (
+                    select max(y.DV_FINANCIALYEAR)
+                    from DATA_LAKE.SERVICES_DATA
+                        ."LSACM_LocalStandardAggregateContractMonitoring" y
+
+                    where y."Dv_ProviderCode" = a."Dv_ProviderCode"
+
+                      and coalesce(
+                          y."CONTRACT MONITORING ACTUAL ACTIVITY",
+                          0
+                      ) > 0
+                )
+
+                then a.DV_FINANCIALMONTH
+            end
+        )                                    as latest_actual_financial_month,
+
+        max(to_date(a."LastUpdateTime"))     as latest_update_date
+
+    from DATA_LAKE.SERVICES_DATA
+        ."LSACM_LocalStandardAggregateContractMonitoring" a
+
+    where a."Dv_ProviderCode" is not null
 
     group by
-        "Dv_ProviderCode"
+        a."Dv_ProviderCode"
 
 
-    union all
-
+        union all
 
     -- =====================================================
     -- SLAM Local Standard Patient Level Contract Monitoring
     -- Monthly patient-level contract monitoring
     --
-    -- Invalid future DV_DATEANDTIMEDATASETCREATED values
-    -- are excluded from the freshness calculation.
+    -- Invalid future dataset-created dates are excluded
+    -- from the freshness calculation.
     -- =====================================================
 
     select
-        current_date()                          as measurement_date,
-        current_timestamp()                     as measured_at,
-        'SLAM_LSPLCM'                           as table_id,
-        "Dv_ProviderCode"                       as provider_code,
-        "Dv_ProviderCode"                       as provider_name,
-        count(*)                                as row_count,
+        current_date()                       as measurement_date,
+        current_timestamp()                  as measured_at,
+        'SLAM_LSPLCM'                        as table_id,
+        p."Dv_ProviderCode"                  as provider_code,
+        p."Dv_ProviderCode"                  as provider_name,
+        count(*)                             as row_count,
 
         max(
             case
-                when DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
-                then to_date(DV_DATEANDTIMEDATASETCREATED)
+                when p.DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
+                then to_date(p.DV_DATEANDTIMEDATASETCREATED)
             end
-        )                                       as latest_refresh_date
+        )                                    as latest_refresh_date,
 
-    from DATA_LAKE.SERVICES_DATA."LSPLCM_LocalStandardPatientLevelContractMonitoring"
+        max(p.DV_FINANCIALYEAR)              as latest_actual_financial_year,
 
-    where "Dv_ProviderCode" is not null
+        max(
+            case
+                when p.DV_FINANCIALYEAR = (
+                    select max(y.DV_FINANCIALYEAR)
+
+                    from DATA_LAKE.SERVICES_DATA
+                        ."LSPLCM_LocalStandardPatientLevelContractMonitoring" y
+
+                    where y."Dv_ProviderCode" = p."Dv_ProviderCode"
+                )
+
+                then p.DV_FINANCIALMONTH
+            end
+        )                                    as latest_actual_financial_month,
+
+        max(to_date(p."LastUpdateTime"))     as latest_update_date
+
+    from DATA_LAKE.SERVICES_DATA
+        ."LSPLCM_LocalStandardPatientLevelContractMonitoring" p
+
+    where p."Dv_ProviderCode" is not null
 
     group by
-        "Dv_ProviderCode"
+        p."Dv_ProviderCode"
 )
 
 select *
