@@ -8,8 +8,8 @@ select
     provider_name,
     row_count,
     latest_refresh_date,
-    latest_financial_year,
-    latest_financial_month,
+    latest_actual_financial_year,
+    latest_actual_financial_month,
     latest_update_date,
 
     lag(row_count) over (
