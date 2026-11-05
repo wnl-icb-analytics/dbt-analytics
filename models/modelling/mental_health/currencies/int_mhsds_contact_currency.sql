@@ -20,7 +20,7 @@ with eligible_contacts as (
     from eligible_contacts as c
     left join {{ ref('int_mhsds_currency_primary_diagnosis') }} as d
         on c.uniq_serv_req_id = d.uniq_serv_req_id
-        and d.coded_diag_timestamp <= c.care_cont_date
+        and d.coded_diag_timestamp < dateadd(day, 1, c.care_cont_date)
     qualify row_number() over (
         partition by c.uniq_serv_req_id, c.uniq_care_cont_id
         order by d.coded_diag_timestamp desc nulls last

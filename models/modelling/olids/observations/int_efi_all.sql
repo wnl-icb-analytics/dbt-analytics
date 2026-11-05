@@ -38,6 +38,7 @@ classified AS (
             ELSE 'UNKNOWN'
         END AS efi_type,
         CASE
+            WHEN efi_value IS NULL OR efi_value NOT BETWEEN 0 AND 1 THEN NULL
             WHEN bo.source_cluster_id = 'EFI_SCORE' THEN (
                 CASE
                     WHEN efi_value < 0.12 THEN 'Fit'
@@ -57,7 +58,7 @@ classified AS (
                 END
             )
             ELSE 'Unknown'
-        END AS efi_category
+        END::VARCHAR(16) AS efi_category
     FROM base_observations bo
 )
 
@@ -72,7 +73,8 @@ SELECT
     source_cluster_id,
     efi_type,
     efi_category,
-    original_result_value
+    original_result_value,
+    COALESCE(efi_value BETWEEN 0 AND 1, FALSE) AS is_valid_efi
 FROM classified
 ORDER BY person_id, clinical_effective_date DESC
 

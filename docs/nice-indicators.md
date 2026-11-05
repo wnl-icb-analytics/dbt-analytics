@@ -1,7 +1,8 @@
 # NICE general practice indicators
 
 This page lists the model coverage of all 192 NICE general practice indicators.
-Network and system indicators are out of scope.
+Network and system indicators are out of scope. Comparisons with published data are in
+[nice-benchmarks.md](nice-benchmarks.md).
 
 ## Querying results
 
@@ -41,15 +42,16 @@ at the reporting date. The dedicated NICE hypothyroidism, overweight, obesity an
 already apply the active-patient population. Shared registers can retain inactive and deceased
 people and need this filter separately.
 For current counts, use `dim_person_active_patients` to apply this population.
-IND206 also needs age 65 or over and latest coded severity Moderate or Severe. IND254 needs age
-18 or over. IND256 requires the diagnosis register plus people on active lithium treatment,
-counting each person once. The shared asthma register requires recent treatment, while IND186
-requires the diagnosis population. IND185 includes resolved atrial fibrillation in NICE's
-wording, but the shared register excludes it.
+IND185, IND205, IND206 and IND256 have dedicated NICE registers that already apply the
+registered, living, non-test population and their clinical and age rules. IND185 includes
+resolved AF; IND205 counts adults with at least four categories; IND206 selects moderate or
+severe frailty at age 65 or over; IND256 includes lithium-only people. IND254 needs age 18 or
+over. The shared asthma register requires recent treatment, while IND186 requires the diagnosis
+population.
 IND237 and IND238 use the shared NG246 BMI categories, including calculated BMI.
 Lower thresholds apply only to recorded higher-risk ethnic groups; unknown ethnicity uses standard
 thresholds. This differs from the NICE wording, which lowers thresholds for everyone not recorded as White.
-The live autism, frailty and NDH registers can use future-dated records. Their monthly register
+The shared live autism, frailty and NDH registers can use future-dated records. Their monthly register
 models restrict evidence to what was known by month-end.
 `Planned` means further code lists, data or agreed rules are needed.
 Percentages in `Not built` rows describe coded activity. Missing coding does not establish that
@@ -154,7 +156,7 @@ care was absent.
 | IND179 | Diabetes: HbA1c 58 mmol/mol | Built | `fct_person_diabetes_hba1c_ind179` |
 | IND180 | Diabetes: HbA1c 75 mmol/mol | Built | `fct_person_diabetes_hba1c_ind180` |
 | IND181 | Diabetes: CVD risk assessment | Built | `fct_person_cvd_risk_assessment_ind181` |
-| IND185 | Atrial fibrillation: register | Register | `fct_person_atrial_fibrillation_register`. Resolved AF is excluded by the model but included by NICE. |
+| IND185 | Atrial fibrillation: register | Register | `fct_person_nice_atrial_fibrillation_register`. People with an atrial fibrillation diagnosis, including resolved atrial fibrillation. |
 | IND186 | Asthma: register | Register | `fct_person_asthma_register`. Requires treatment in the preceding 12 months. NICE counts use the diagnosis population used by IND273, without that treatment restriction. |
 | IND189 | Asthma: smoking status (under 19) | Built | `fct_person_asthma_smoking_status_ind189` |
 | IND190 | COPD: register | Register | `fct_person_copd_register`. QOF spirometry windows and no-spirometry route differ from NICE. |
@@ -170,8 +172,8 @@ care was absent.
 | IND202 | Alcohol use: brief intervention for people with a long-term condition | Built | `fct_person_alcohol_ind202` |
 | IND203 | Lipids disorders: FH assessment (29 years and under) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
 | IND204 | Lipids disorders: FH assessment (30 years and over) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
-| IND205 | Multiple long-term conditions: multimorbidity register | Register | `int_nice_multimorbidity_categories`. Include registered, living, non-test people aged 18 or over with at least four distinct categories. The route based on an agreed tailored approach has no coded evidence. |
-| IND206 | Multiple long-term conditions: frailty register | Register | `fct_person_frailty_register`. Include register members aged 65 or over whose latest severity is 'Moderate' or 'Severe'. |
+| IND205 | Multiple long-term conditions: multimorbidity register | Register | `fct_person_nice_multimorbidity_register`. Adults with conditions in at least 4 of 11 categories: cancer, chronic pain, circulatory, diabetes, digestive, learning disability, mental health, musculoskeletal, neurological, renal and respiratory. |
+| IND206 | Multiple long-term conditions: frailty register | Register | `fct_person_nice_frailty_register`. People aged 65 or over whose latest coded frailty is moderate or severe. |
 | IND207 | Multiple long-term conditions: medication review | Built | `fct_person_multimorbidity_ind207` |
 | IND208 | Multiple long-term conditions: asking about falls | Built | `fct_person_multimorbidity_ind208` |
 | IND210 | HIV: testing at registration | Built | `fct_person_hiv_test_at_registration_ind210` |
@@ -219,7 +221,7 @@ care was absent.
 | IND253 | Epilepsy: register | Register | `fct_person_epilepsy_register` |
 | IND254 | Heart failure: register | Register | `fct_person_heart_failure_register`. Filter `age >= 18`. |
 | IND255 | Hypertension: register | Register | `fct_person_hypertension_register` |
-| IND256 | Bipolar, schizophrenia and other psychoses: register (lithium therapy) | Register | `fct_person_smi_register`. Union with `int_nice_ltc_population.is_on_lithium`; six-month treatment rule applies only to the lithium arm. |
+| IND256 | Bipolar, schizophrenia and other psychoses: register (lithium therapy) | Register | `fct_person_nice_smi_register`. People with schizophrenia, bipolar affective disorder or other psychoses, including remission, or on active lithium therapy. |
 | IND257 | Bipolar, schizophrenia and other psychoses: register | Register | `fct_person_smi_register` |
 | IND258 | GP services: palliative care register | Register | `fct_person_palliative_care_register`. Model applies a 1 April 2008 date floor absent from NICE. |
 | IND259 | Stroke and ischaemic attack: register | Register | `fct_person_stroke_tia_register` |

@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Implements clinical decision logic for Valproate safety monitoring, determining recommended actions for each patient based on clinical status and dependencies.') }}
+    description="Valproate monitoring actions per person in OLIDS aged 0 to 55, not recorded as Male, with a valproate order in the last six months. Uses Pregnancy Prevention Programme (PPP) status, whether the Annual Risk Acknowledgement Form (ARAF) is up to date, and recorded pregnancy risk. Pregnancy has highest priority. These are programme rules, not an independent clinical assessment.") }}
 
 WITH db_scope AS (
     SELECT * FROM {{ ref('dim_valproate_db_scope') }}

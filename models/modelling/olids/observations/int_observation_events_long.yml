@@ -59,3 +59,112 @@ models:
         description: NICE NG136 stage for paired BP events (Normal, Stage 1, Stage 2, Stage 3 (Severe)); NULL for other types.
       - name: source_observation_id
         description: Source observation id from the originating _all model (traceability).
+
+unit_tests:
+- name: observation_history_rejects_out_of_range_haemoglobin
+  model: int_observation_events_long
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS source_observation_id, NULL::VARCHAR AS observation_type, NULL::FLOAT AS value WHERE FALSE
+  given:
+  - input: ref('int_haemoglobin_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, -18114::NUMBER AS person_id,
+          column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column2::TIMESTAMP_NTZ AS date_recorded, column3::FLOAT AS inferred_value,
+          column4::BOOLEAN AS is_out_of_range, FALSE::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier, 'g/L'::VARCHAR AS inferred_unit,
+          'SYN_CATEGORY'::VARCHAR AS haemoglobin_category
+      FROM VALUES ('SYN_VALID', '2024-01-01', 135, FALSE),
+          ('SYN_BAD', '2024-02-01', 1.5, TRUE)
+  - input: ref('int_blood_pressure_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS systolic_observation_id, NULL::VARCHAR AS diastolic_observation_id, NULL::FLOAT AS systolic_value, NULL::FLOAT AS diastolic_value, NULL::BOOLEAN AS is_home_bp_event, NULL::BOOLEAN AS is_abpm_bp_event, NULL::BOOLEAN AS is_hypertensive_range WHERE FALSE
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+  - input: ref('int_cholesterol_ldl_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS ldl_cvd_target_met WHERE FALSE
+  - input: ref('int_cholesterol_hdl_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+  - input: ref('int_cholesterol_non_hdl_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+  - input: ref('int_triglycerides_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS triglycerides_value, NULL::VARCHAR AS triglycerides_category WHERE FALSE
+  - input: ref('int_cholesterol_hdl_ratio_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS cholesterol_hdl_ratio WHERE FALSE
+  - input: ref('int_qrisk_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS qrisk_score, NULL::VARCHAR AS cvd_risk_category WHERE FALSE
+  - input: ref('int_hba1c_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS hba1c_ifcc, NULL::VARCHAR AS hba1c_category WHERE FALSE
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS bmi_value, NULL::VARCHAR AS bmi_category WHERE FALSE
+  - input: ref('int_waist_circumference_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS waist_circumference_value, NULL::VARCHAR AS waist_risk_category WHERE FALSE
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS egfr_value, NULL::VARCHAR AS ckd_stage WHERE FALSE
+  - input: ref('int_creatinine_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS creatinine_value, NULL::VARCHAR AS creatinine_category WHERE FALSE
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS acr_value, NULL::VARCHAR AS acr_category WHERE FALSE
+  - input: ref('int_alt_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS alt_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_ggt_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS ggt_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_bilirubin_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS bilirubin_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_platelets_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS platelets_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_eosinophil_count')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS eosinophil_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_efi_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS efi_value, NULL::VARCHAR AS efi_category WHERE FALSE
+  - input: ref('int_rockwood_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS rockwood_score, NULL::VARCHAR AS frailty_category WHERE FALSE
+  expect:
+    rows:
+    - person_id: -18114
+      source_observation_id: SYN_VALID
+      observation_type: Haemoglobin
+      value: 135

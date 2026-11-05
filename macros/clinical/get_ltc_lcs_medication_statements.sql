@@ -9,7 +9,8 @@
     to translate EMIS codes to SNOMED. When both paths match the same statement, the
     'mapped' row wins via the qualify ordering.
 
-    Note: original_codes.include_children is not yet expanded (parent codes only).
+    P2 permits mapped concepts and requested descendants only through public or
+    equivalent local roots. Other local roots retain exact source matching.
 
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
@@ -37,7 +38,10 @@
 {%- set valuesets_quoted = "'" ~ valueset_tokens | join("','") ~ "'" -%}
 {%- set valuesets_upper_quoted = "'" ~ (valueset_tokens | map('upper') | join("','")) ~ "'" -%}
 
-with matched_statements as (
+with permitted_mapped_codes as (
+    {{ ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) }}
+),
+matched_statements as (
 {%- if match_paths in ['both', 'mapped'] %}
     select
         ms.id as medication_statement_id,
@@ -51,6 +55,7 @@ with matched_statements as (
         ms.quantity_unit as statement_quantity_unit,
         ms.date_recorded,
         ms.authorisation_type_code,
+        ms.authorisation_type_source_code,
         ms.authorisation_type_display,
         ms.issue_method,
         ms.is_active,
@@ -65,7 +70,7 @@ with matched_statements as (
         bnf.bnf_name,
         'mapped' as match_path
     from {{ ref('stg_olids_medication_statement') }} as ms
-    inner join {{ ref('stg_reference_ltc_lcs_expanded_concepts') }} as ec
+    inner join permitted_mapped_codes as ec
         on ms.mapped_concept_code = ec.snomed_code
     left join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
         on ec.valueset_id = vs.valueset_id
@@ -95,6 +100,7 @@ with matched_statements as (
         ms.quantity_unit as statement_quantity_unit,
         ms.date_recorded,
         ms.authorisation_type_code,
+        ms.authorisation_type_source_code,
         ms.authorisation_type_display,
         ms.issue_method,
         ms.is_active,

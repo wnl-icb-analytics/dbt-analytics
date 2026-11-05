@@ -362,6 +362,10 @@ reviewers must still confirm that it covers the stated key or key combination.
 - Use singular tests for domain rules that generic tests cannot express. Select
   only the model keys and context needed to diagnose a failure. Treat any
   returned rows as potentially patient-level under the safety rules above.
+- Tag a test `reconciliation` when it compares a model with source or model
+  data built separately, such as source row counts or retained keys. Partial
+  deploys and PR validation exclude the tag because they mix fresh and stale
+  relations; scheduled and full builds rebuild both sides and run it.
 
 ## Validate the change
 

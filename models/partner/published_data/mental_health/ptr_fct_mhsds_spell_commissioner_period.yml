@@ -1,0 +1,91 @@
+models:
+  - name: ptr_fct_mhsds_spell_commissioner_period
+    description: >
+      Partner copy of fct_mhsds_spell_commissioner_period, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_spell_commissioner_period. Commissioner responsibility recorded during a
+      hospital admission. Each row is one provider, spell, commissioner and assignment
+      start date. Multiple or overlapping assignments remain included; the table does
+      not choose one commissioner for the whole admission. It uses the latest accepted
+      version of each assignment and preserves separate source records when identifying
+      details are incomplete.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
+      - name: spell_commissioner_period_id
+        description: >
+          Unique identifier at the documented model grain.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: hospital_provider_spell_source_record_id
+        description: >
+          Submitted hospital provider spell source record id.
+
+      - name: commissioner_organisation_code
+        description: >
+          Submitted commissioner organisation code.
+
+      - name: commissioner_start_date
+        description: >
+          Submitted commissioner start date.
+
+      - name: commissioner_end_date
+        description: >
+          Submitted commissioner end date.
+
+      - name: source_derived_icb_commissioner_code
+        description: >
+          Submitted source derived icb commissioner code.
+
+      - name: source_derived_sub_icb_commissioner_code
+        description: >
+          Submitted source derived sub icb commissioner code.
+
+      - name: n_accepted_source_records
+        description: >
+          Accepted submitted versions of this identity across all periods, including
+          repeats.
+
+      - name: is_identity_incomplete
+        description: >
+          A required identity component is missing; the source row is retained
+          separately.
+
+      - name: first_submission_period_end_date
+        description: >
+          First accepted reporting period containing this identity, not the clinical
+          start date.
+
+      - name: reporting_period_end_date
+        description: >
+          Period of the accepted source evidence; may be later than the clinical event.
+
+      - name: source_file_received_at
+        description: >
+          Source file receipt timestamp, not a clinical time.
+
+      - name: source_derived_icb_commissioner_name
+        description: >
+          Authoritative organisation name for the corresponding source code; null when
+          the code is missing or unmatched.
+
+      - name: source_derived_sub_icb_commissioner_name
+        description: >
+          Authoritative organisation name for the corresponding source code; null when
+          the code is missing or unmatched.

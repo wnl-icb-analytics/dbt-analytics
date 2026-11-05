@@ -1,0 +1,84 @@
+models:
+- name: fct_person_nice_smi_register
+  description: >-
+    Psychosis, bipolar disorder or lithium (NICE IND256). One row per register member on the
+    build date.
+
+
+    People registered on the build date, of any age, qualify with schizophrenia, bipolar affective
+    disorder or other psychoses, including remission, or active lithium treatment. Remission-only
+    records do not qualify as a diagnosis. Lithium uses is_on_lithium from int_nice_ltc_population.
+    It requires an order strictly after the date
+    six calendar months before the build date and on or before it, with no stop on a later calendar
+    date; a same-day stop retains treatment. Both clinical and recorded dates must be known
+    by the build date; missing recorded dates use the clinical or order date. Diagnosis-qualified
+    people do not need lithium. Each person counts once. Based on NICE CG178 recommendation
+    1.5.3.1, CG155 and CG185 recommendation 1.2.10. Diagnosis code lists: MH_COD and MHREM_COD
+    (PCD). Lithium evidence uses the upstream LIT_COD medication and LITSTP_COD stop definitions.
+    Deceased people and test records are excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND256
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Mental Health
+        name_short: Psychosis, bipolar disorder or lithium
+        description_short: >-
+          People with schizophrenia, bipolar affective disorder or other psychoses, including
+          remission, or on active lithium therapy.
+        description_long: >-
+          People registered on the build date, of any age, qualify with schizophrenia, bipolar
+          affective disorder or other psychoses, including remission, or active lithium treatment.
+          Remission-only records do not qualify as a diagnosis. Lithium uses is_on_lithium from
+          int_nice_ltc_population. It requires an order strictly
+          after the date six calendar months before the build date and on or before it, with
+          no stop on a later calendar date; a same-day stop retains treatment. Both clinical
+          and recorded dates must be known by the build date; missing recorded dates use the
+          clinical or order date. Diagnosis-qualified people do not need lithium. Each person
+          counts once. Based on NICE CG178 recommendation 1.5.3.1, CG155 and CG185 recommendation
+          1.2.10. Diagnosis code lists: MH_COD and MHREM_COD (PCD). Lithium evidence uses the
+          upstream LIT_COD medication and LITSTP_COD stop definitions.
+        source_column: is_on_register
+        is_qof: true
+        qof_indicator: MH001
+        usage_contexts:
+        - NICE_GUIDANCE
+  columns:
+  - name: person_id
+    description: >-
+      Person identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: reporting_date
+    description: >-
+      Build date used to assess register membership.
+  - name: age
+    description: >-
+      Age in years from the approximate birth month on the build date; null when birth date
+      is missing.
+  - name: practice_code
+    description: >-
+      Current practice attributed to the registered person on the build date.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included.
+  - name: has_smi_diagnosis
+    description: >-
+      Whether an MH_COD diagnosis is known by the build date. Remission does not remove this
+      flag; remission-only evidence does not qualify.
+  - name: is_on_lithium
+    description: >-
+      Whether int_nice_ltc_population identifies active lithium under its six-calendar-month
+      order and stop rule on the build date.
+  - name: latest_diagnosis_date
+    description: >-
+      Latest qualifying SMI diagnosis clinical timestamp known by the build date; null for lithium-only
+      members.
+  - name: latest_remission_date
+    description: >-
+      Latest SMI remission clinical timestamp known by the build date; null when no remission
+      is known.

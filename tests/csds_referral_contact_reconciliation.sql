@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- Label and person joins must retain each selected source key and attendance code.
 select 'referral' as source_entity,
     coalesce(r.unique_service_request_identifier, f.referral_id) as referral_id,

@@ -15,6 +15,23 @@ diabetes_register AS (
     -- No WHERE clause needed - this table already filters to people on the register
 ),
 
+bmi_recording AS (
+    -- BMI recording is a care process from age 12 (QOF, NDA), so recorded BMI values of
+    -- any age count alongside the adult BMI model, which also covers calculated BMI.
+    SELECT person_id, MAX(clinical_effective_date) AS clinical_effective_date
+    FROM (
+        SELECT person_id, clinical_effective_date
+        FROM {{ ref('int_bmi_qof_all') }}
+        WHERE source_cluster_id = 'BMIVAL_COD'
+            AND is_plausible_bmi
+            AND clinical_effective_date <= CURRENT_DATE()
+        UNION ALL
+        SELECT person_id, clinical_effective_date
+        FROM {{ ref('int_bmi_latest') }}
+    )
+    GROUP BY person_id
+),
+
 care_process_data AS (
     SELECT
         dr.person_id,
@@ -104,7 +121,7 @@ care_process_data AS (
         ON dr.person_id = acr.person_id
     LEFT JOIN {{ ref('int_foot_examination_latest') }} AS fc
         ON dr.person_id = fc.person_id
-    LEFT JOIN {{ ref('int_bmi_latest') }} AS bmi
+    LEFT JOIN bmi_recording AS bmi
         ON dr.person_id = bmi.person_id
     LEFT JOIN {{ ref('int_smoking_status_latest') }} AS smok
         ON dr.person_id = smok.person_id

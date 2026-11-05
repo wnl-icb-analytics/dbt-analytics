@@ -127,10 +127,10 @@ left join {{ ref('organisation') }} as provider
     on upper(trim(r.organisation_code_provider)) = provider.organisation_code
 left join {{ ref('organisation') }} as icb
     on upper(trim(r.dm_icb_commissioner)) = icb.organisation_code
-left join {{ ref('csds_referral_code_lookup') }} as reason
-    on reason.code_set_name = 'reason_for_referral' and trim(r.primary_reason_for_referral_community_care) = reason.code
-left join {{ ref('csds_referral_code_lookup') }} as priority
-    on priority.code_set_name = 'priority_type' and trim(r.priority_type_code) = priority.code
+left join {{ ref('csds_reason_for_referral') }} as reason
+    on trim(r.primary_reason_for_referral_community_care) = reason.code
+left join {{ ref('nhs_dd_priority_type') }} as priority
+    on trim(r.priority_type_code) = priority.code
 left join {{ ref('csds_source_of_referral') }} as source
     on trim(r.source_of_referral_for_community) = source.code
 left join {{ ref('csds_service_or_team_type') }} as team_type

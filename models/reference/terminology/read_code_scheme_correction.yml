@@ -1,0 +1,26 @@
+version: 2
+models:
+  - name: read_code_scheme_correction
+    description: >-
+      Read codes to resolve in the other Read scheme when submitted under the wrong one.
+      One row per submitted scheme (read_v2 or ctv3) and exact-case code that has no
+      membership evidence in that scheme but is an exact Dictionary concept code in the
+      other. Membership evidence is any Dictionary code or alternative with that scheme's
+      membership flag, including ambiguous alternatives, and any UKHFD Read v2 term or
+      code, CTV3 concept or CTV3 term identifier. Codes absent from this model keep their
+      submitted scheme. The resolved scheme always has an exact_code row in read_code.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [submitted_coding_system, code]
+    columns:
+      - name: submitted_coding_system
+        description: read_v2 or ctv3, the scheme a record named but that has no evidence of the code.
+      - name: code
+        description: Case-sensitive Read code. Dots and letter case remain significant.
+      - name: resolved_coding_system
+        description: The other Read scheme, where the code is an exact Dictionary concept code.

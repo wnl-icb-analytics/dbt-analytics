@@ -1,0 +1,96 @@
+version: 2
+
+models:
+  - name: qadmissions_predictions
+    description: >-
+      Latest QAdmissions one-year emergency-admission risk from ClinRisk 2013 v4.1,
+      one row per active, non-deceased OLIDS person aged 18-100 with recorded sex male
+      or female. Scoring uses GP and linked SUS features. Inputs remain available,
+      including BMI imputation details. Rejected inputs remain with is_scored false
+      and error text. Build timestamps and monthly-history safeguards are documented
+      on scored_at.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('qadmissions_input_features')
+          config:
+            tags:
+              - reconciliation
+    columns:
+      - name: person_id
+        data_type: varchar
+        description: "OLIDS person identifier. Primary key of this model."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Commissioning patient identifier, carried from qadmissions_input_features."
+
+      - name: score_month
+        data_type: date
+        description: "First day of the calendar month in which the row was scored."
+
+      - name: scored_at
+        data_type: timestamp_ntz
+        description: >-
+          Actual scoring build time, which can be later than the latest calendar month in
+          qadmissions_predictions_history. Monthly history preserves previous rows when fewer
+          than qadmissions_min_scored_share of current inputs score successfully (default
+          50%).
+
+      - name: model_version
+        data_type: varchar
+        description: "Version of the registered QAdmissions model that produced the score."
+
+      - name: is_scored
+        data_type: boolean
+        description: "TRUE if the model produced a score; FALSE if it rejected the inputs (see scoring_errors)."
+        data_tests:
+          - not_null
+
+      - name: score_percent
+        data_type: float
+        description: >
+          Predicted risk of an emergency admission within the surv horizon, as a
+          percentage (0-100). NULL when is_scored is FALSE.
+        data_tests:
+          - dbt_utils.not_null_proportion:
+              arguments:
+                at_least: "{{ var('qadmissions_min_scored_share', 0.5) }}"
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+                inclusive: true
+
+      - name: scoring_errors
+        data_type: varchar
+        description: >-
+          Reasons for rejection, separated by semicolons, including BMI outside 20-40 or
+          missing or out-of-range town values. Null when is_scored is true.
+      - name: bmi_recorded
+        data_type: float
+        description: "The person's latest valid recorded BMI (kg/m^2), from qadmissions_input_features. NULL when they have none and bmi was imputed."
+
+      - name: is_bmi_imputed
+        data_type: boolean
+        description: "TRUE when the bmi that was scored is imputed, because the person had no recorded BMI."
+
+      - name: bmi_imputation_group
+        data_type: varchar
+        description: "The group whose mean BMI was imputed: sex_age_ethnicity, or sex_age or sex when the finer group had fewer than 100 recorded BMIs. NULL when bmi is recorded."
+
+      - name: bmi_imputation_method
+        data_type: varchar
+        description: >
+          How a missing BMI was imputed for this run:
+          mean_sex_age_decade_ethnicity_category, or none when imputation was
+          switched off (var qadmissions_impute_bmi). In
+          qadmissions_predictions_history, months scored before imputation
+          was added hold NULL in this and the three columns above.

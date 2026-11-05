@@ -1,20 +1,13 @@
 models:
   - name: int_flu_immunosuppression
-    description: 'Flu vaccination eligibility for people with immunosuppression using pathway logic.
-
-      Key Features:
-
-      • Four eligibility pathways: diagnosis (IMMDX_COD), medication (IMMRX_COD), admin codes (IMMADM_COD), or chemotherapy/radiotherapy (DXT_CHEMO_COD)
-
-      • Medication and chemotherapy pathways look back six months from the campaign; the admin code pathway looks back six months up to 2025-26 and three years from 2026-27
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Complex logic combining historical diagnoses with recent treatment indicators
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people eligible for flu vaccination due to immunosuppression from causes.'
+    description: >-
+      Flu immunosuppression group in OLIDS, one row per person and campaign, aged at
+      least 6 months at its run date, without an upper limit. Requires IMMDX_COD at
+      any time, or IMMRX_COD, DXT_CHEMO_COD or IMM_ADM_COD in the campaign window.
+      Medication and treatment windows start on 1 March before the campaign;
+      administration starts 6 months before campaign start in 2024-25/2025-26, or 3
+      years before rolling audit end in 2026-27. Evidence uses campaign-specific
+      UKHSA_FLU codes through audit end.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

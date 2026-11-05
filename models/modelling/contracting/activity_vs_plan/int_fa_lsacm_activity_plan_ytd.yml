@@ -1,0 +1,52 @@
+models:
+  - name: int_fa_lsacm_activity_plan_ytd
+    description: >
+      Latest LSACM activity and plan data submitted YTD by provider and service code for QA checks.
+      Multiple rows per provider are expected; the latest file version for each financial month is selected.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    columns:
+      - name: meta_file_id
+        description: SDL source file identifier for the selected latest submission. Joins to META_FILE_REGISTRY.
+      - name: provider_code
+        description: Provider ODS code.
+      - name: provider_name
+        description: Full name of the provider organisation.
+      - name: provider_shorthand
+        description: Shorthand acronym for the provider organisation.
+      - name: financial_month
+        description: Financial month number from 1 (April) to 12 (March).
+      - name: submitted_row_count
+        description: Row count from the selected submission metadata.
+      - name: submission_status
+        description: Submission status derived from the expected and actual submission dates.
+      - name: file_version
+        description: Version number for the selected submission file.
+      - name: commissioner_code
+        description: Commissioner organisation code as submitted.
+      - name: point_of_delivery_code
+        description: National point-of-delivery (POD) code as submitted.
+      - name: local_point_of_delivery_description
+        description: Local POD description as submitted.
+      - name: service_code
+        description: National service code as submitted.
+      - name: commissioned_service_category_code
+        description: Commissioned service category code as submitted, such as delegated or retained.
+      - name: spec_comm_flag
+        description: Derived commissioning flag based on commissioner and service code logic.
+      - name: comm_group
+        description: Commissioner group classification for WNL or Other.
+      - name: activity_actual
+        description: Actual activity value, rounded to the nearest whole number.
+      - name: activity_plan
+        description: Planned activity value, rounded to the nearest whole number.
+      - name: price_actual
+        description: Actual price value.
+      - name: price_plan
+        description: Planned price value.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

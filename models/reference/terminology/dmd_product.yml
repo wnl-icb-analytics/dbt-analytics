@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: dmd_product
+    description: >-
+      dm+d VMP and AMP codes (SNOMED CT identifiers) with their VMP therapeutic moiety, dose form
+      and virtual product ingredient count. One row per product code using the latest retained
+      dm+d attributes. Removed and invalid products are kept so historical orders still
+      match; this is not a list of products available today. Source: NHSBSA dm+d, held in UKHFD.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: product_code
+        description: dm+d VMP or AMP SNOMED CT product identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: product_type
+        description: VMP (virtual medicinal product) or AMP (actual medicinal product).
+      - name: vpid
+        description: Virtual medicinal product SNOMED CT identifier.
+      - name: vmp_name
+        description: Virtual medicinal product name.
+      - name: vtm_id
+        description: Virtual therapeutic moiety SNOMED CT identifier; null when not supplied.
+      - name: vtm_name
+        description: Virtual therapeutic moiety name; null when not supplied.
+      - name: form_code
+        description: dm+d dose form code; null when not supplied.
+      - name: form_description
+        description: dm+d VMP dose form description; null when not supplied.
+      - name: ingredient_count
+        description: Count of current virtual product ingredient records. For a product removed from dm+d, the count of its retained records. Null when dm+d lists none, mostly appliances.
+
+unit_tests:
+- name: dmd_product_amp_inheritance_retained_ingredients_and_missing_attributes
+  model: dmd_product
+  given:
+  - input: ref('stg_ukhfd_dmd_vmp')
+    format: sql
+    rows: |-
+      select column1::varchar vpid,column2::varchar vtm_id,column3::varchar vmp_name,column4::boolean is_in_latest_source from values ('SYN_V1','SYN_T1','Synthetic VMP',true),('SYN_V2',null,'Synthetic missing attributes',true),('SYN_REMOVED','SYN_T1','Synthetic removed VMP',false)
+  - input: ref('stg_ukhfd_dmd_amp')
+    format: sql
+    rows: |-
+      select column1::varchar apid,column2::varchar vpid from values ('SYN_A1','SYN_V1'),('SYN_A_REMOVED','SYN_REMOVED')
+  - input: ref('stg_ukhfd_dmd_vtm')
+    format: sql
+    rows: |-
+      select 'SYN_T1'::varchar vtm_id,'Synthetic VTM'::varchar vtm_name
+  - input: ref('stg_ukhfd_dmd_vmp_drug_form')
+    format: sql
+    rows: |-
+      select column1::varchar vpid,'SYN_F1'::varchar form_code from values ('SYN_V1'),('SYN_REMOVED')
+  - input: ref('stg_ukhfd_dmd_lookup_form')
+    format: sql
+    rows: |-
+      select 'SYN_F1'::varchar form_code,'Synthetic form'::varchar form_description
+  - input: ref('stg_ukhfd_dmd_vmp_ingredient')
+    format: sql
+    rows: |-
+      select column1::varchar vpid,column2::varchar ingredient_substance_id,column3::boolean is_in_latest_source from values ('SYN_V1','SYN_I1',true),('SYN_V1','SYN_I2',true),('SYN_V1','SYN_I_RETAINED',false),('SYN_REMOVED','SYN_I_REMOVED',false)
+  expect:
+    format: sql
+    rows: |-
+      select column1::varchar product_code,column2::varchar vtm_id,column3::varchar form_code,column4::varchar form_description,column5::number ingredient_count
+       from values ('SYN_V1','SYN_T1','SYN_F1','Synthetic form',2),('SYN_A1','SYN_T1','SYN_F1','Synthetic form',2),('SYN_V2',null,null,null,null),('SYN_REMOVED','SYN_T1','SYN_F1','Synthetic form',1),('SYN_A_REMOVED','SYN_T1','SYN_F1','Synthetic form',1)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as product_code, null::varchar as vtm_id, null::varchar as form_code, null::varchar as form_description, null::number as ingredient_count where false

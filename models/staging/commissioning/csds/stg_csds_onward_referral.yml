@@ -1,0 +1,29 @@
+version: 2
+models:
+- name: stg_csds_onward_referral
+  description: "Latest reported CSDS onward referral. Grain: one row per referral, onward referral date and\
+    \ reason, the ETOS successor key. Population: CYP105 onward referral records. Selection prioritises\
+    \ reporting month, then receipt timestamp, submission and source row ID. Later absence is not evidence\
+    \ of deletion."
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - unique_service_request_identifier
+        - onward_referral_date
+        - onward_referral_reason
+  columns:
+  - name: cyp105_unique_id
+    description: Delivered CYP105 row selected for the onward referral.
+  - name: unique_service_request_identifier
+    description: Provider-qualified identifier of the referral the onward referral was made from.
+  - name: onward_referral_date
+    description: Date the onward referral was made.
+  - name: onward_referral_reason
+    description: Submitted onward referral reason code.
+  - name: organisation_identifier_receiving
+    description: Submitted ODS code of the receiving organisation.

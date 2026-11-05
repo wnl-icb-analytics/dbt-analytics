@@ -1,20 +1,13 @@
 models:
   - name: int_covid_homeless
-    description: 'COVID vaccination eligibility for people with homelessness.
-
-      Key Features:
-
-      • Single diagnosis pathway using HOMELESS_COD codes
-
-      • Recent occurrence qualifying (lookback period from campaign)
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes homeless status and accommodation codes
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to homelessness requiring immunisation.'
+    description: >-
+      OLIDS homelessness group for COVID vaccination, one row per person and offering
+      campaign, aged at least 5 at its reference date. Requires HOMELESS_COD evidence
+      not superseded by a later RESIDE_COD residence record, or current living
+      registration at Camden Health Improvement Practice (Y02674). Campaign-specific
+      UKHSA_COVID evidence runs through the audit end, without a homelessness
+      lookback. The practice route uses current registration, including for past
+      campaigns.
     data_tests:
       - cluster_ids_exist:
           arguments:
@@ -66,7 +59,7 @@ models:
       - name: campaign_category
         description: 'Category of eligibility criteria (always "CLINICAL_CONDITION")'
       - name: risk_group
-        description: 'Risk group classification (always "Homeless")'
+        description: 'Risk group classification (always "Homelessness")'
       - name: person_id
         description: 'Unique identifier for the person'
         data_tests:
@@ -84,4 +77,4 @@ models:
       - name: age_years_at_ref_date
         description: 'Age in years at campaign reference date (minimum 5 years required)'
       - name: created_at
-        description: 'Audit timestamp for record creation (campaign audit end date)'
+        description: 'Timestamp when the row was built; not the campaign audit end date'

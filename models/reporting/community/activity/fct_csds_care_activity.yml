@@ -6,7 +6,9 @@ models:
     comes from the same submission, never from an unrelated latest occurrence. Activities are child detail
     and do not emit separate healthcare events. Delivery timestamps are not clinical activity dates. Native
     clinical codes, schemes, values and units remain together. Clinical labels use the supplied coding
-    scheme; source codes and values are not rewritten.
+    scheme, except that a Read code submitted under the wrong Read scheme (read_code_scheme_correction)
+    takes its label and SNOMED mapping from the other Read scheme. Source codes, schemes and values are not
+    rewritten.
   config:
     meta:
       owner:
@@ -148,15 +150,18 @@ models:
     description: Latest available provider name, preferring UKHFD ODS API and retaining closed organisations.
       Dictionary supplies names absent from the API; the UKHFD closed archive supplies codes absent from both.
   - name: procedure_name
-    description: Authoritative description matched using the supplied procedure code and coding scheme.
+    description: Authoritative description matched using the supplied procedure code and coding scheme, or the
+      other Read scheme for a Read code listed in read_code_scheme_correction.
       SNOMED CT and Read dictionaries supply terms. Null means the code
       is absent or no supported authoritative match exists. Original code remains unchanged.
   - name: finding_name
-    description: Authoritative description matched using the supplied finding code and coding scheme.
+    description: Authoritative description matched using the supplied finding code and coding scheme, or the
+      other Read scheme for a Read code listed in read_code_scheme_correction.
       SNOMED CT and Read dictionaries supply terms; findings also support ICD-10. Null means the code
       is absent or no supported authoritative match exists. Original code remains unchanged.
   - name: observation_name
-    description: Authoritative description matched using the supplied observation code and coding scheme.
+    description: Authoritative description matched using the supplied observation code and coding scheme, or the
+      other Read scheme for a Read code listed in read_code_scheme_correction.
       SNOMED CT and Read dictionaries supply terms. Null means the code
       is absent or no supported authoritative match exists. Original code remains unchanged.
   - name: observation_unit_match_type

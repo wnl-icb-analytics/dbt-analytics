@@ -1,36 +1,12 @@
 models:
   - name: int_efi2_scores
-    description: >
-      eFI2 (electronic Frailty Index 2) score and frailty category per person —
-      native OLIDS-built equivalent of the AI Centre INT_EFI2_SCORES, ported from
-      lds-pipelines. Built in parallel to the AIC import (stg_aic_int_efi2_scores),
-      which has since been retired with the rest of the raw_aic pipeline — this is
-      now the only eFI2 score in the project.
-
-      Known divergences from the AIC output to validate before any cutover. Items
-      1-3 are deliberate paper-alignment choices (the paper takes priority over AIC
-      fidelity):
-        1. Population is restricted to age >= 65 (the paper's development and
-           validation population); AIC/lds scored all living adults.
-        2. BMI uses the most recent reading; lds/AIC used the earliest.
-        3. Missing-lifestyle deficits (BMI, alcohol) and polypharmacy are evaluated
-           across the whole scored population, not only patients with >= 1 eFI2 code.
-        4. Anaemia uses int_haemoglobin_latest (g/L, thresholds 130/120 by sex) in
-           place of the lds phenolab haemoglobin measurement (g/dL, 13/12) — the
-           thresholds are clinically equivalent, but the underlying observation set
-           and unit-standardisation differ.
-        5. OLIDS-vs-LDS staging differences (observation/medication coverage) and
-           refresh cadence, as with dim_person_ccms.
-      Polypharmacy counts distinct BNF sub-subchapters (level 3 = first 6 chars of
-      the BNF code) among meds in the 90 days before end_date, per the eFI2 paper.
-      The deprecated phenolab definition store is removed and no BNF code exclusions
-      are applied (unlike this repo's int_polypharmacy_* pipeline, which scopes to
-      NHSBSA in-scope chapters) - the paper counts across all sub-subchapters. This
-      may differ from the AIC output if its phenolab definitions were at a different
-      BNF granularity - validate on cutover.
-      The category cut points match lds but are expressed as contiguous ordered
-      thresholds, closing the (0.1623, 0.1624) gap that lds's paired BETWEEN ranges
-      left as a NULL category (the sliver resolves to MILD).
+    description: >-
+      Current eFI2 score and frailty category, one row per living OLIDS person whose
+      65th birthday could have occurred by scoring. Eligibility uses the first day of
+      the approximate birth month, with no GP-registration restriction. Scores sum
+      published deficit weights, including missing-BMI and missing-alcohol defaults.
+      This replaces the retired AIC import; age coverage, BMI selection, default
+      weights and source timing differ, so legacy comparisons require validation.
     config:
       meta:
         owner:
@@ -44,12 +20,20 @@ models:
       - name: end_date
         description: As-at date for the scoring run (current_date()).
       - name: efi_score
-        description: Electronic Frailty Index 2 score (0-1 scale), defaults to 0 if not available.
+        description: >-
+          Electronic Frailty Index 2 score, the sum of applicable published weights,
+          defaulting to 0 if unavailable. Missing BMI and alcohol carry defaults across the
+          whole scoring population. Polypharmacy counts distinct six-character BNF prefixes in
+          the preceding 90 days, without int_polypharmacy_* chapter exclusions. Legacy AIC
+          included younger adults, chose earliest BMI and applied some defaults only to people
+          with eFI2 codes. Anaemia now uses latest valid OLIDS haemoglobin in g/L at
+          equivalent male/female thresholds of 130/120. Observation coverage, unit
+          standardisation and refresh timing can differ from AIC.
       - name: category
-        description: >
-          Frailty category based on eFI2 score (contiguous bands, no NULLs):
-          `ROBUST` (< 0.0857), `MILD FRAILTY` (>= 0.0857 and < 0.1624),
-          `MODERATE FRAILTY` (>= 0.1624 and <= 0.2391), `SEVERE FRAILTY` (> 0.2391).
+        description: >-
+          Frailty bands: ROBUST below 0.0857; MILD FRAILTY from 0.0857 to below 0.1624;
+          MODERATE FRAILTY from 0.1624 to 0.2391 inclusive; SEVERE FRAILTY above 0.2391. The
+          legacy gap above 0.1623 and below 0.1624 is classified as mild frailty.
       - name: age_at_end
         description: Patient age at the end date (null for persons with no eFI2-coded observation).
       - name: gender

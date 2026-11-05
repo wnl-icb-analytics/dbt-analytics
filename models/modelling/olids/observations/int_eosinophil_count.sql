@@ -8,7 +8,7 @@
 All blood eosinophil count observations with unit standardisation and data quality flags.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 Uses the standardise_count_observation macro: values inside the absolute range are kept
-as-is; conversions are attempted only when a value is implausibly high; nothing is dropped
+as-is; conversions are attempted below or above that range; nothing is dropped
 (out-of-range values pass through, carried by flags).
 Standard unit: 10*9/L (billion per liter).
 */

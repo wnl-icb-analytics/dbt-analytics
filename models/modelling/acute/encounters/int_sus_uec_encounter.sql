@@ -43,14 +43,6 @@ gender_codes as (
     select distinct gender_code, gender
     from {{ref('stg_dictionary_dbo_gender')}}
     ),
-commissioner_codes as (
-    select commissioner_code, commissioner_name
-    from {{ ref('stg_dictionary_dbo_commissioner') }}
-    qualify row_number() over (
-        partition by commissioner_code
-        order by coalesce(end_date, '9999-12-31'::date) desc, start_date desc
-    ) = 1
-    ),
 treatment_function_codes as (
     select bk_specialty_code, treatment_function_description
     from {{ ref('stg_dictionary_dbo_specialties') }}
@@ -79,6 +71,19 @@ lsoa_imd_2025 as (
     from {{ ref('stg_ukhfd_old_lsoa_to_new_lsoa_map') }} as bridge
     left join {{ ref('stg_reference_imd2025') }} as imd
         on bridge.new_lsoa_code = imd.lsoa_code_2021
+    group by bridge.old_lsoa_code
+    ),
+lsoa_2011_health_borough as (
+    select
+        bridge.old_lsoa_code
+        , case
+            when count(*) = count(health_borough.health_borough_name)
+              and count(distinct health_borough.health_borough_name) = 1
+                then min(health_borough.health_borough_name)
+          end as unambiguous_health_borough_name
+    from {{ ref('stg_ukhfd_old_lsoa_to_new_lsoa_map') }} as bridge
+    left join {{ ref('wnl_health_borough_lsoa_2021') }} as health_borough
+        on bridge.new_lsoa_code = health_borough.lsoa_2021_code
     group by bridge.old_lsoa_code
     )
 
@@ -229,15 +234,23 @@ select
     , core.commissioning_national_pricing_market_forces_adjustment as mff_adjustment
 
     , core.patient_residence_ccg_from_patient_postcode as residence_area_code_at_event
+    , {{ sus_commissioner_organisation_name('residence_commissioner') }}
+        as residence_area_name_at_event
     , coalesce(
-        residence_commissioner_exact.commissioner_name
-        , residence_commissioner_fallback.commissioner_name
-    ) as residence_area_name_at_event
-    , core.commissioning_service_agreement_commissioner as assigned_commissioner_code_at_event
-    , coalesce(
-        registrant_commissioner_exact.commissioner_name
-        , registrant_commissioner_fallback.commissioner_name
-    ) as assigned_commissioner_name_at_event
+        core.commissioning_commissioner_assignment_commissioner
+        , core.commissioning_service_agreement_commissioner
+    ) as commissioner_code_at_event
+    , case
+        when core.commissioning_commissioner_assignment_commissioner is not null
+            then {{ sus_commissioner_organisation_name('cam_commissioner') }}
+        else {{ sus_commissioner_organisation_name('service_commissioner') }}
+      end as commissioner_name_at_event
+    , case
+        when core.commissioning_commissioner_assignment_commissioner is not null
+            then 'CAM'
+        when core.commissioning_service_agreement_commissioner is not null
+            then 'DSCRO'
+      end as commissioner_source_at_event
 
     /* patient information at time of event */
     , core.patient_age_at_arrival as age_at_event
@@ -256,6 +269,11 @@ select
     , core.patient_usual_address_lsoa_11 as lsoa_11_at_event
     , core.patient_usual_address_lsoa_21 as lsoa_21_at_event
     , core.patient_usual_address_local_authority_district as lad_at_event
+    , case
+        when core.patient_usual_address_lsoa_21 is not null
+            then lsoa_21_health_borough.health_borough_name
+        else lsoa_11_health_borough.unambiguous_health_borough_name
+      end as residence_health_borough_name_at_event
     , core.patient_usual_address_index_of_multiple_deprivation_decile as imd_at_event
     , case
         when lsoa_21_imd.index_of_multiple_deprivation_decile is not null
@@ -408,27 +426,20 @@ left join
     {{ ref('stg_dictionary_dbo_hrg') }} as dict_hrg
     on core.commissioning_grouping_health_resource_group = dict_hrg.hrg_code
 
-left join commissioner_codes as residence_commissioner_exact
-    on core.patient_residence_ccg_from_patient_postcode
-    = residence_commissioner_exact.commissioner_code
+{{ join_sus_commissioner_organisation(
+    'core.patient_residence_ccg_from_patient_postcode',
+    'residence_commissioner'
+) }}
 
-left join commissioner_codes as residence_commissioner_fallback
-    on residence_commissioner_exact.commissioner_code is null
-    and length(core.patient_residence_ccg_from_patient_postcode) = 5
-    and right(core.patient_residence_ccg_from_patient_postcode, 2) = '00'
-    and left(core.patient_residence_ccg_from_patient_postcode, 3)
-    = residence_commissioner_fallback.commissioner_code
+{{ join_sus_commissioner_organisation(
+    'core.commissioning_service_agreement_commissioner',
+    'service_commissioner'
+) }}
 
-left join commissioner_codes as registrant_commissioner_exact
-    on core.commissioning_service_agreement_commissioner
-    = registrant_commissioner_exact.commissioner_code
-
-left join commissioner_codes as registrant_commissioner_fallback
-    on registrant_commissioner_exact.commissioner_code is null
-    and length(core.commissioning_service_agreement_commissioner) = 5
-    and right(core.commissioning_service_agreement_commissioner, 2) = '00'
-    and left(core.commissioning_service_agreement_commissioner, 3)
-    = registrant_commissioner_fallback.commissioner_code
+{{ join_sus_commissioner_organisation(
+    'core.commissioning_commissioner_assignment_commissioner',
+    'cam_commissioner'
+) }}
 
 left join treatment_function_codes as treatment_function
     on core.attendance_decision_to_admit_treatment_function_code = treatment_function.bk_specialty_code
@@ -446,3 +457,9 @@ left join {{ ref('stg_reference_imd2025') }} as lsoa_21_imd
 
 left join lsoa_imd_2025 as lsoa_imd
     on core.patient_usual_address_lsoa_11 = lsoa_imd.old_lsoa_code
+
+left join {{ ref('wnl_health_borough_lsoa_2021') }} as lsoa_21_health_borough
+    on core.patient_usual_address_lsoa_21 = lsoa_21_health_borough.lsoa_2021_code
+
+left join lsoa_2011_health_borough as lsoa_11_health_borough
+    on core.patient_usual_address_lsoa_11 = lsoa_11_health_borough.old_lsoa_code

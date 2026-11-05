@@ -1,20 +1,10 @@
 models:
   - name: int_flu_chronic_kidney_disease
-    description: 'Flu vaccination eligibility for people with chronic kidney disease using complex staging logic.
-
-      Key Features:
-
-      • CKD pathways: general CKD diagnosis or stage 3-5 codes
-
-      • Stage comparison logic: CKD35_DAT >= CKD15_DAT when both present
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Uses CKD_COD, CKD15_COD (all stages), and CKD35_COD (stages 3-5) clusters
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people eligible for flu vaccination due to chronic kidney disease with staging criteria.'
+    description: >-
+      Flu CKD group in OLIDS, one row per person and campaign, aged at least 6 months
+      at its run date, with no upper limit. Requires CKD_COD diagnosis or a latest
+      CKD_35_COD stage 3 to 5 record no earlier than any CKD_15_COD stage record.
+      Evidence uses campaign-specific UKHSA_FLU codes through the audit end.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -79,13 +69,15 @@ models:
       - name: campaign_category
         description: 'Category of eligibility criteria (always "Clinical Condition")'
       - name: risk_group
-        description: 'Risk group classification (always "Chronic Kidney Disease")'
+        description: 'Risk group classification (always "Chronic Kidney Disease (Stage 3-5)", including people qualifying through a direct CKD diagnosis)'
       - name: person_id
         description: 'Unique identifier for the person'
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying CKD diagnosis or stage classification'
+        description: >-
+          Later of the first CKD_COD diagnosis date and qualifying CKD_35_COD stage date when both
+          routes apply.
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

@@ -8,7 +8,7 @@
 -- - Rule 2 (gate): peripheral ischaemia code (vs1) before 12 months ago. Fail -> exclude.
 -- - Rule 3: latest non-HDL cholesterol (vs2) > 2.5 -> include
 -- - Rule 4 (gate): high-intensity statin order (vs3) in last 6 months, or current
---   repeat course of any statin (vs4) -> exclude (on optimal therapy)
+--   Automatic, Repeat or Repeat Dispensing course of any statin (vs4) -> exclude (on optimal therapy)
 -- - Rule 5: include if NOT on statins - no statin order (vs5) in last 12 months,
 --   no statin clinical code (vs5) in last 12 months and no 'statin declined'
 --   code (vs6) in last year. Otherwise exclude.
@@ -43,7 +43,7 @@ rule_3_non_hdl_high as (
 ),
 
 -- Rule 4: on optimal statin therapy - high-intensity statin order in last
--- 6 months, or a current repeat-type course of any statin
+-- 6 months, or a current Automatic, Repeat or Repeat Dispensing course of any statin
 rule_4_high_intensity_statins as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("on_pad_reg_pg3_mr_vs3") }})
@@ -52,7 +52,7 @@ rule_4_high_intensity_statins as (
     select person_id
     from ({{ get_ltc_lcs_medication_statements("on_pad_reg_pg3_mr_vs4") }})
     where is_active = true
-        and authorisation_type_display = 'Repeated prescription'
+        and authorisation_type_source_code in ('Automatic', 'Repeat', 'Repeat Dispensing')
 ),
 
 -- Rule 5: any statin therapy - statin order or clinical code (vs5, STAT_COD

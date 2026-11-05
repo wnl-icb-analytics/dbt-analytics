@@ -8,7 +8,7 @@
 -- Rule chain:
 -- - Rule 1 (gate): excludes PG2 (HR) patients
 -- - Rule 2: earliest HF code (vs1, HF_COD refset, episode excluding
---   Review/End) in last 6 months -> include (first diagnosis within 6 months)
+--   Review/Ended) in last 6 months -> include (first diagnosis within 6 months)
 -- - Rule 3: latest NYHA classification (vs2+vs3) is Class II (vs3) -> include
 -- - Rule 4: latest oedema code (vs4+vs5) is ankle/feet oedema (vs5) -> include
 -- - Rule 5 (gate): latest LVEF (vs6) < 50. Fail -> exclude.
@@ -39,7 +39,7 @@ pg2_exclusions as (
     from {{ ref('int_ltc_lcs_rs_hf_pg2_hr') }}
 ),
 
--- Rule 2: earliest HF code (episode excluding Review/End) in last 6 months
+-- Rule 2: earliest HF code (episode excluding Review/Ended) in last 6 months
 rule_2_new_hf_diagnosis as (
     select person_id
     from (
@@ -47,7 +47,7 @@ rule_2_new_hf_diagnosis as (
         from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs1") }}) o
         left join {{ ref('stg_olids_enriched_concept_map') }} ecm
             on o.episodicity_source_concept_id = ecm.source_concept_id
-        where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+        where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
     )
     qualify row_number() over (
         partition by person_id
@@ -64,12 +64,12 @@ rule_3_nyha_class_2 as (
     from (
         select person_id, observation_id
         from (
-            select distinct person_id, observation_id, clinical_effective_date
-            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs2, on_hf_reg_pg3_mr_vs3") }})
+            select distinct person_id, observation_id, clinical_effective_date, date_recorded
+            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs2, on_hf_reg_pg3_mr_vs3", include_date_recorded=true) }})
         )
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
         ) = 1
     ) latest_nyha
     inner join ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs3") }}) class_2
@@ -82,12 +82,12 @@ rule_4_oedema as (
     from (
         select person_id, observation_id
         from (
-            select distinct person_id, observation_id, clinical_effective_date
-            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs4, on_hf_reg_pg3_mr_vs5") }})
+            select distinct person_id, observation_id, clinical_effective_date, date_recorded
+            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs4, on_hf_reg_pg3_mr_vs5", include_date_recorded=true) }})
         )
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
         ) = 1
     ) latest_oedema
     inner join ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs5") }}) ankle_feet
@@ -105,11 +105,11 @@ rule_5_lvef as (
 rule_6_sglt2 as (
     select distinct person_id
     from ({{ get_ltc_lcs_medication_statements("on_hf_reg_pg3_mr_vs7") }})
-    where statement_date >= dateadd(month, -6, current_date())
+    where statement_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_medication_orders("on_hf_reg_pg3_mr_vs7") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs8") }})
@@ -119,11 +119,11 @@ rule_6_sglt2 as (
 rule_7_mra as (
     select distinct person_id
     from ({{ get_ltc_lcs_medication_statements("on_hf_reg_pg3_mr_vs9") }})
-    where statement_date >= dateadd(month, -6, current_date())
+    where statement_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_medication_orders("on_hf_reg_pg3_mr_vs9") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs10") }})
@@ -133,7 +133,7 @@ rule_7_mra as (
 rule_8_beta_blockers as (
     select distinct person_id
     from ({{ get_ltc_lcs_medication_orders("on_hf_reg_pg3_mr_vs11") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs12") }})

@@ -26,6 +26,7 @@ CLUSTER_MACROS = {
     'get_lipid_observations',
 }
 VALUESET_MACROS = {
+    'get_ltc_lcs_latest_record_in_set',
     'get_ltc_lcs_observations',
     'get_ltc_lcs_observations_latest',
     'get_ltc_lcs_medication_orders',
@@ -138,6 +139,18 @@ def find_usages(sql: str) -> tuple[set[tuple[str, str | None, bool]], set[str], 
         if not args.strip():
             continue
         positional, keyword = split_args(args)
+
+        if macro == 'get_ltc_lcs_latest_record_in_set':
+            for raw in (
+                keyword.get('inclusion_valuesets', positional[0] if positional else None),
+                keyword.get('test_valuesets', positional[1] if len(positional) > 1 else None),
+            ):
+                literal = string_literal(raw)
+                if literal is None:
+                    dynamic.append(f'{macro}({args.strip()[:60]})')
+                else:
+                    valuesets.update(tokens(literal))
+            continue
 
         if macro in VALUESET_MACROS:
             raw = keyword.get('valuesets', positional[0] if positional else None)

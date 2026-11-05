@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_pbr_hrg4_chapter
+    description: |
+      HRG4 chapter labels held in UKHFD. One row represents a chapter in one
+      financial year's HRG4+ grouper code-to-group file. The chapter is the first
+      character of an HRG4 code.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [hrg_chapter_code, valid_from_date]
+    columns:
+      - name: hrg_chapter_code
+        description: HRG4 chapter code, the first character of an HRG4 code.
+        data_tests: [not_null]
+      - name: hrg_chapter
+        description: Chapter label in this financial year.
+      - name: valid_from_date
+        description: First day of the financial year the label applies to.
+        data_tests: [not_null]
+      - name: valid_to_date
+        description: Last day of the financial year the label applies to.
+      - name: source_file_name
+        description: UKHFD path and code-to-group file name.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the file.

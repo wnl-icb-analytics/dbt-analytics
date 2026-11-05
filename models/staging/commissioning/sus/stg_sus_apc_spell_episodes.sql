@@ -3,6 +3,7 @@
 }}
 
 select primarykey_id
+    , {{ dbt_utils.generate_surrogate_key(['primarykey_id', 'episodes_id']) }} as source_record_id
     , {{ consistent_sk_patient_id_format('PATIENT_IDENTITY_NHS_NUMBER_VALUE_PSEUDO') }} as sk_patient_id
     , patient_identity_local_patient_identifier_value as local_patient_identifier
     , EPISODES_ID

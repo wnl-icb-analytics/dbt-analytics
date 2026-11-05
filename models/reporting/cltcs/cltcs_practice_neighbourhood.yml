@@ -1,0 +1,50 @@
+models:
+  - name: cltcs_practice_neighbourhood
+    description: >
+      C-LTCS assignment of GP practices to neighbourhoods, one row per active NCL
+      practice. Uses the shared dim_practice_neighbourhood, except for a short list
+      of practices that C-LTCS assigns to a different neighbourhood. For those
+      practices the neighbourhood code is replaced by the C-LTCS code and the
+      neighbourhood name is taken from neighbourhood_wnl_active for that code.
+      Practice name and local authority always come from dim_practice_neighbourhood.
+      These overrides apply to C-LTCS only.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: practice_code
+        data_type: varchar
+        description: "GP practice ODS code"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: practice_name
+        data_type: varchar
+        description: "GP practice name"
+
+      - name: local_authority
+        data_type: varchar
+        description: "Local authority of the practice, from dim_practice_neighbourhood. Not changed by a neighbourhood override."
+
+      - name: neighbourhood_code
+        data_type: varchar
+        description: >
+          Neighbourhood code used by C-LTCS: the C-LTCS override code for listed
+          practices, otherwise the dim_practice_neighbourhood code. Used as the
+          z-score scaling group in the C-LTCS score models. Null when the practice
+          has no neighbourhood.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('neighbourhood_wnl_active')
+                field: neighbourhood_code
+
+      - name: neighbourhood_registered
+        data_type: varchar
+        description: "Neighbourhood name for neighbourhood_code"
+
+      - name: is_cltcs_neighbourhood_override
+        data_type: boolean
+        description: "True when C-LTCS assigns this practice to a different neighbourhood from dim_practice_neighbourhood."

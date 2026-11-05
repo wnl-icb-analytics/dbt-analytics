@@ -457,3 +457,61 @@ select
     , null::boolean as is_assessment_parent_linked
     , null::boolean as is_assessment_parent_person_consistent
 from {{ ref('int_mhsds_presenting_complaint') }} as a
+
+union all
+
+select
+    s.source_record_id as source_record_id
+    , s.mhs011_uniq_id::varchar as source_row_id
+    , 'MHS011' as source_table
+    , 'social_circumstance' as clinical_record_type
+    , s.person_id as person_id
+    , null::varchar as local_patient_id
+    , null::varchar as referral_source_record_id
+    , null::varchar as uniq_care_cont_id
+    , null::varchar as care_activity_source_record_id
+    , null::varchar as uniq_care_act_id
+    , null::varchar as care_prof_local_id
+    , null::varchar as uniq_care_prof_local_id
+    , coalesce(s.soc_per_circumstance_rec_timestamp, s.soc_per_circumstance_rec_date::timestamp_ntz) as clinical_at
+    , case
+        when s.soc_per_circumstance_rec_timestamp is not null then 'stored_timestamp_precision_unknown'
+        when s.soc_per_circumstance_rec_date is not null then 'date'
+    end as clinical_time_precision
+    , 'social_circumstance_recorded' as clinical_time_basis
+    , s.soc_per_circumstance_rec_timestamp as source_timestamp
+    , s.soc_per_circumstance_rec_date as source_derived_date
+    , s.soc_per_circumstance_rec_timestamp::date <> s.soc_per_circumstance_rec_date as is_source_date_inconsistent
+    , null::varchar as coding_scheme_code
+    , 'fixed_snomed' as coding_scheme_kind
+    , 'SNOMED CT' as source_coding_scheme_description
+    , s.soc_per_circumstance::varchar as clinical_code
+    , null::varchar as source_clinical_description
+    , null::varchar as source_clinical_label_status
+    , null::varchar as standardised_snomed_code
+    , null::varchar as source_standardised_snomed_description
+    , null::varchar as clinical_value
+    , null::varchar as unit_of_measurement_code
+    , null::varchar as unit_of_measurement_description
+    , null::varchar as unit_of_measurement_label_status
+    , s.org_id_prov as provider_organisation_code
+    , s.uniq_submission_id as uniq_submission_id
+    , s.reporting_period_start_date as reporting_period_start_date
+    , s.reporting_period_end_date as reporting_period_end_date
+    , s.dmic_dataset as mhsds_version
+    , s.effective_from as source_file_received_at
+    , null::timestamp_ntz as source_loaded_at
+    , s.first_reported_period_end_date as first_reported_period_end_date
+    , s.last_reported_period_end_date as last_reported_period_end_date
+    , s.accepted_source_record_count as accepted_source_record_count
+    , s.reported_period_count as reported_period_count
+    , false as has_person_identifier_changed
+    , null::boolean as is_care_activity_linked
+    , null::boolean as is_care_activity_person_consistent
+    , null::boolean as is_care_activity_referral_consistent
+    , null::boolean as is_care_activity_contact_consistent
+    , null::boolean as is_care_contact_person_consistent
+    , null::varchar as source_assessment_id
+    , null::boolean as is_assessment_parent_linked
+    , null::boolean as is_assessment_parent_person_consistent
+from {{ ref('int_mhsds_social_circumstance') }} as s

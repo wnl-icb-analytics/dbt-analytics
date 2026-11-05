@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.SDL.META_SCHEMA_VERSIONS \ndbt: source(''sdl_wnl'', ''META_SCHEMA_VERSIONS'') \nColumns:\n  FEED -> feed\n  VERSION_ID -> version_id\n  FILE_COUNT -> file_count\n  FIRST_SEEN -> first_seen\n  LAST_SEEN -> last_seen\n  RAW_MAPPING -> raw_mapping\n  COLUMN_MAPPING -> column_mapping"
+        description="Raw layer (ServicesDataLocal canonical-named feeds, WNL footprint). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.SDL.META_SCHEMA_VERSIONS \ndbt: source(''sdl_wnl'', ''META_SCHEMA_VERSIONS'') \nColumns:\n  FEED -> feed\n  VERSION_ID -> version_id\n  FILE_COUNT -> file_count\n  FIRST_SEEN -> first_seen\n  LAST_SEEN -> last_seen\n  RAW_MAPPING -> raw_mapping\n  COLUMN_MAPPING -> column_mapping"
     )
 }}
 select

@@ -31,17 +31,7 @@
     -- Expand cluster codes with historical predecessors from SCT_History
     -- Picks up retired SNOMED codes that map to current cluster codes
     historical_codes AS (
-        SELECT DISTINCT
-            h.old_concept_id::VARCHAR AS mapped_concept_code,
-            cc.cluster_id,
-            cc.cluster_description,
-            cc.code_description
-        FROM {{ ref('stg_nhsd_snomed_sct_history') }} h
-        INNER JOIN cluster_codes cc
-            ON h.new_concept_id::VARCHAR = cc.mapped_concept_code
-        WHERE h.old_concept_id::VARCHAR NOT IN (
-            SELECT mapped_concept_code FROM cluster_codes
-        )
+        {{ snomed_history_predecessors('cluster_codes', ['cluster_description', 'code_description']) }}
     ),
 
     expanded_codes AS (
@@ -54,11 +44,8 @@
         o.id,
         o.patient_id,
         o.person_id,
-        -- Use date_recorded as fallback if clinical_effective_date is after it (data quality fix)
-        CASE
-            WHEN o.clinical_effective_date > o.date_recorded THEN o.date_recorded
-            ELSE COALESCE(o.clinical_effective_date, '1900-01-01')
-        END AS clinical_effective_date,
+        -- Corrected clinical date; 1900-01-01 marks a missing date (see get_observations.yml).
+        COALESCE({{ observation_clinical_date('o') }}, '1900-01-01') AS clinical_effective_date,
         o.clinical_effective_date AS clinical_effective_date_raw,  -- Original value for audit
         o.date_recorded,
         o.result_value,

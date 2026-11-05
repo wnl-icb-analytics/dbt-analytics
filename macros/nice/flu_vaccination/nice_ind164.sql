@@ -39,7 +39,7 @@ assessed AS (
         season.latest_vaccination_date AS latest_record_date,
         season.person_id IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
-    -- March still selects the preceding completed season; the switch is on 1 April.
+    -- On 31 March the season ending that day counts as complete.
     LEFT JOIN {{ ref('int_nice_flu_season_vaccination_all') }} AS season
         ON population.person_id = season.person_id
         AND population.season_year = season.season_year

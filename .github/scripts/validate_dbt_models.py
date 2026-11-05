@@ -1,4 +1,9 @@
-"""Build selected models with the UEC encounter needed by its code tests."""
+"""Build selected UEC code models with their encounter parent.
+
+Reconciliation tests compare a model with separately built source or model
+data. A partial build mixes fresh and stale relations, so they are excluded
+here and run in scheduled and full builds, which rebuild both sides.
+"""
 
 import argparse
 import json
@@ -8,6 +13,7 @@ import sys
 
 UEC_CODES = {"int_sus_uec_diagnosis", "int_sus_uec_procedure"}
 UEC_PARENT = "int_sus_uec_encounter"
+EXCLUDE = ["--exclude", "tag:reconciliation"]
 
 
 def build_selection(nodes):
@@ -24,13 +30,14 @@ def main():
     parser.add_argument("--target", choices=["dev", "prod"], default="dev")
     parser.add_argument("--state")
     parser.add_argument("--select", nargs="+", required=True)
+    parser.add_argument("--full-refresh", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     common = ["--target", args.target, "--profiles-dir", "."]
     if args.state:
         common += ["--state", args.state]
     result = subprocess.run(
-        ["dbt", "ls", *common, "--select", *args.select,
+        ["dbt", "ls", *common, "--select", *args.select, *EXCLUDE,
          "--indirect-selection", "eager", "--output", "json",
          "--output-keys", "name", "resource_type", "--quiet"],
         capture_output=True, text=True,
@@ -50,10 +57,12 @@ def main():
     print(f"{args.target} build selects {len(selection)} explicit nodes.")
     # Cautious adds the parent's own tests without testing unselected siblings.
     # Original eager tests remain selected explicitly, so none are dropped.
-    command = ["dbt", "build", *common, "--select", *selection,
+    command = ["dbt", "build", *common, "--select", *selection, *EXCLUDE,
                "--indirect-selection", "cautious"]
     if args.state and args.target == "dev":
         command += ["--defer", "--favor-state"]
+    if args.full_refresh:
+        command.append("--full-refresh")
     if args.dry_run:
         print(json.dumps(command))
     else:

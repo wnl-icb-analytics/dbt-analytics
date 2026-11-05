@@ -12,7 +12,7 @@ every age, and pivots membership to one row per programme, campaign and person. 
 dashboards join it on those three keys, so the flags are bounded to the campaign's own
 evidence window and do not leak between seasons or programmes.
 
-in_clinical_risk_group is the spec ATRISK_GROUP: the eight shared clinical groups, plus
+in_clinical_risk_group is the spec ATRISK_GROUP: the nine shared clinical groups, plus
 learning disability and severe mental illness for COVID only. Flu treats learning
 disability as a reporting group, not an at-risk group.
 */

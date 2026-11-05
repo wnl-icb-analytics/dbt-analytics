@@ -1,0 +1,48 @@
+version: 2
+models:
+  - name: stg_ukhfd_registered_patients_by_gp_practice_lsoa_2021
+    description: |
+      Registered patient counts from the NHS England "Patients Registered at a
+      GP Practice" monthly publication, via UKHFD. Actual counts taken on the
+      first of each month. One row per GP Practice and LSOA code. Unlike the
+      other registered patients tables, this includes no roll-up rows.
+
+      Source: UKHFD.Demography.fact_No_Of_Patients_Regd_At_GP_Practice_LSOA_2021_Level
+      source('ukhfd_demography', 'registered_patients_at_gp_practice_by_lsoa_2021')
+      via raw_ukhfd_registered_patients_at_gp_practice_by_lsoa_2021
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: gp_practice_code
+        description: GP Practice  ODS code.
+        data_tests:
+          - not_null
+      - name: lsoa_code
+        description: 2021 LSOA Code for the registered patient.
+        data_tests:
+          - not_null
+      - name: census_year
+        description: Year of census to get patient information.
+      - name: sex
+        description: MALE, FEMALE. Note does not include ALL as a category like other tables.
+      - name: size
+        description: Count of registered patients at the snapshot date.
+      - name: effective_snapshot_date
+        description: Publication snapshot date (first of the month).
+      - name: data_source_file_for_this_snapshot_version
+        description: UKHFD source-file version for the snapshot.
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - gp_practice_code
+              - lsoa_code
+              - sex
+              - effective_snapshot_date

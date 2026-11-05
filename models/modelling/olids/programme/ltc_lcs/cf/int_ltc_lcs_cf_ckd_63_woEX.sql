@@ -23,17 +23,21 @@ ckd_62_woex as (
     from {{ ref('int_ltc_lcs_cf_ckd_62_woEX') }}
 ),
 
--- vs1 (1 code): latest UACR per person, require value > 70
+-- Filter positive matched results before Latest 1, then test > 70 below.
 latest_uacr_severe as (
-    select person_id
-    from ({{ get_ltc_lcs_observations_latest("with_most_recent_uacr70_and_not_on_ckd_reg_vs1") }})
+    select person_id, result_value
+    from ({{ get_ltc_lcs_observations("6bfbf92c-3c89-cc89-f541-a7dcaa945562", match_paths='both', include_date_recorded=true, exclude_result_headers=true) }})
     where result_value > 0
-        and result_value > 70
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
 )
 
 select distinct b.person_id
 from base as b
 inner join latest_uacr_severe as u
     on b.person_id = u.person_id
-where b.person_id not in (select person_id from ckd_61_woex)
+where u.result_value > 70
+    and b.person_id not in (select person_id from ckd_61_woex)
     and b.person_id not in (select person_id from ckd_62_woex)

@@ -24,7 +24,7 @@ rule_1a_recent_stroke_episode as (
     from ({{ get_ltc_lcs_observations("on_stroketia_reg_pg1_hrc_vs1, on_stroketia_reg_pg1_hrc_vs2") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where o.clinical_effective_date >= dateadd(day, -30, current_date())
+    where o.clinical_effective_date > dateadd(day, -30, current_date())
         and ecm.source_display in ('First', 'New', 'Flare Up')
 ),
 

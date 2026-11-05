@@ -1,0 +1,38 @@
+version: 2
+models:
+  - name: stg_ukhfd_domains_of_deprivation_by_lsoa
+    description: >-
+      English Indices of Deprivation File 7 by LSOA: one row per LSOA and release held in
+      UKHFD (2015, 2019 and 2025). Each release uses its own LSOA boundaries. Includes the
+      overall IMD, seven domains, IDACI, IDAOPI and six sub-domains, each with score, rank
+      and decile, plus the published population denominators. Rank 1 and decile 1 are the
+      most deprived.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - release_year
+              - lsoa_code
+    columns:
+      - name: release_year
+        description: Publication year of the Indices of Deprivation release.
+        data_tests: [not_null]
+      - name: lsoa_boundary_year
+        description: Census vintage of the LSOA codes used by the release.
+      - name: lsoa_code
+        description: ONS LSOA code on the release's boundaries.
+        data_tests: [not_null]
+      - name: total_population
+        description: Published total population denominator. The mid-year and prisoner treatment differ by release.
+      - name: children_population
+        description: Published population aged 0 to 15.
+      - name: population_aged_16_to_59
+        description: Published population aged 16 to 59. Supplied for 2015 and 2019 only.
+      - name: older_population
+        description: Published population aged 60 and over.
+      - name: working_age_population
+        description: Published working-age denominator for the Employment domain. Its age range and years differ by release.

@@ -71,6 +71,8 @@ WITH foot_observations AS (
 foot_observations_tagged AS (
     SELECT
         *,
+        -- NICE NG19 severity order
+        CASE risk_level WHEN 'Low' THEN 1 WHEN 'Moderate' THEN 2 WHEN 'High' THEN 3 WHEN 'Ulcerated' THEN 4 END AS risk_rank,
         (is_examination_code
          AND NOT has_left
          AND NOT has_right
@@ -128,14 +130,14 @@ check_details_raw AS (
 
         -- Risk level by foot (only populated where the code carries an explicit risk descriptor)
         MAX(CASE
-            WHEN is_examination_code AND (has_left OR is_townson) THEN risk_level
+            WHEN is_examination_code AND (has_left OR is_townson) THEN risk_rank
             ELSE NULL
-        END) AS left_foot_risk_level,
+        END) AS left_foot_risk_rank,
 
         MAX(CASE
-            WHEN is_examination_code AND (has_right OR is_townson) THEN risk_level
+            WHEN is_examination_code AND (has_right OR is_townson) THEN risk_rank
             ELSE NULL
-        END) AS right_foot_risk_level,
+        END) AS right_foot_risk_rank,
 
         -- Get Townson scale level if used
         MAX(CASE
@@ -169,8 +171,8 @@ check_details AS (
         left_foot_checked,
         right_foot_checked,
         (both_feet_checked_row_level OR (left_foot_checked AND right_foot_checked)) AS both_feet_checked,
-        left_foot_risk_level,
-        right_foot_risk_level,
+        CASE left_foot_risk_rank WHEN 1 THEN 'Low' WHEN 2 THEN 'Moderate' WHEN 3 THEN 'High' WHEN 4 THEN 'Ulcerated' END AS left_foot_risk_level,
+        CASE right_foot_risk_rank WHEN 1 THEN 'Low' WHEN 2 THEN 'Moderate' WHEN 3 THEN 'High' WHEN 4 THEN 'Ulcerated' END AS right_foot_risk_level,
         townson_scale_level,
         has_screening_referral,
         has_risk_classification,

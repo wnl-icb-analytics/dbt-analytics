@@ -1,27 +1,51 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CVD case finding: ICB_CF_CVD_61_BASE population (shared parent for 61 + 62)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/cvd/icb-cf-cvd-61.md
---
--- CVD_61_BASE = currently registered, age 40 to <84, INCLUDE who do NOT match any of:
---   - ICS_METABOLIC_LTC (has_metabolic_excluding_condition)
---   - CF_NHSHC2Y (had_nhs_health_check_24m)  [this BASE DOES exclude NHSHC2Y per canon]
---   - atorvastatin SCT_PREP 91-product issue, latest issue date > today - 12m
---     (vs1 people_with_aged_40_84_with_qrisk_recorded_vs1, 91 expanded codes)
---   - STAT_COD refset (12464001000001103) clinical code, latest date > today - 12m
---     (vs2, STAT_COD)
---   - statin adverse reaction (vs3, 52 codes)            -- ever
---   - statin contraindicated / not indicated (vs4, TXSTAT_COD, 3 codes) -- ever
---   - statin declined (vs5, STATINDEC_COD), latest date > today - 5 years
--- (EMIS library items 3de35e4f / ea06414e in canon BASE are not in the export -> not implemented.)
---
--- Statin product valuesets are fully expanded (91 codes) so the medication macro matches
--- directly; no BNF substitution needed.
+-- CVD_61/62 shared cohort: one row per registered living person aged 40 to <84.
+-- Excludes the shared metabolic population and NHS health checks in the last two years.
+-- Excludes the latest explicit statin-product issue or STAT_COD event within 12 months,
+-- and latest statin decline within five years, selecting records on or before today.
+-- Excludes persistent statin adverse reactions at any date and contraindication,
+-- statin not indicated or not tolerated events on or before today. Local adverse codes use the shared equivalence rule.
+-- Excludes QOF palliative care register membership (EMIS library ea06414e).
+-- XML library exclusion 3de35e4f lacks a complete exported definition.
+-- Authority: EMIS R5 ICB_CF_CVD_61_BASE, structured filters and tests.
 
-with base as (
+-- XML date caps apply before Latest 1, so future records cannot hide earlier records.
+with statin_product_issue_at_baseline as (
+    select person_id, order_date
+    from ({{ get_ltc_lcs_medication_orders("476ee994-f9a6-21f8-16ac-bcd937a23da5", include_date_recorded=true) }})
+    where order_date <= current_date()
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by order_date desc nulls last, date_recorded desc nulls last, medication_order_id desc
+    ) = 1
+),
+
+statin_code_event_at_baseline as (
+    select person_id, clinical_effective_date
+    from ({{ get_ltc_lcs_observations("64531256-e997-1a46-caf9-45de4bd95bbe", include_date_recorded=true) }})
+    where clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+statin_decline_at_baseline as (
+    select person_id, clinical_effective_date
+    from ({{ get_ltc_lcs_observations("49465e07-b9f2-275e-293a-61c00c62a4a0", include_date_recorded=true) }})
+    where clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+base as (
     select person_id, age_at_least
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
+        and is_on_palliative_care_register = false
         and had_nhs_health_check_24m = false
 ),
 
@@ -32,42 +56,38 @@ age_eligible as (
         and age_at_least < 84
 ),
 
--- atorvastatin SCT_PREP issue, latest > today - 12m (vs1)
-on_atorvastatin as (
+on_statin_products as (
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("people_with_aged_40_84_with_qrisk_recorded_vs1") }})
+    from statin_product_issue_at_baseline
     where order_date > dateadd(month, -12, current_date())
 ),
 
--- STAT_COD refset clinical code, latest > today - 12m (vs2)
 on_statin_code as (
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("people_with_aged_40_84_with_qrisk_recorded_vs2") }})
+    from statin_code_event_at_baseline
     where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
--- statin adverse reaction (vs3) -- ever
 statin_adverse as (
     select person_id
-    from ({{ get_ltc_lcs_observations("people_with_aged_40_84_with_qrisk_recorded_vs3") }})
+    from ({{ get_ltc_lcs_observations("38fdc3b5-7de4-b15c-6577-3f3142bb313e") }})
 ),
 
--- statin contraindicated / not indicated (vs4 TXSTAT_COD) -- ever
 statin_contra as (
     select person_id
-    from ({{ get_ltc_lcs_observations("people_with_aged_40_84_with_qrisk_recorded_vs4") }})
+    from ({{ get_ltc_lcs_observations("312c880f-3b26-2eef-48ff-7f2795ed33ef") }})
+    where clinical_effective_date <= current_date()
 ),
 
--- statin declined (vs5 STATINDEC_COD), latest > today - 5y
 statin_declined as (
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("people_with_aged_40_84_with_qrisk_recorded_vs5") }})
+    from statin_decline_at_baseline
     where clinical_effective_date > dateadd(year, -5, current_date())
 )
 
 select distinct person_id
 from age_eligible
-where person_id not in (select person_id from on_atorvastatin)
+where person_id not in (select person_id from on_statin_products)
     and person_id not in (select person_id from on_statin_code)
     and person_id not in (select person_id from statin_adverse)
     and person_id not in (select person_id from statin_contra)

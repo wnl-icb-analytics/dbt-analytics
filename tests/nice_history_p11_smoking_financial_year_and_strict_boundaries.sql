@@ -52,7 +52,8 @@ synthetic_smoking AS (
         column3::VARCHAR AS latest_smoking_status,
         column4::DATE AS latest_smoking_status_date,
         column5::DATE AS latest_never_smoked_date,
-        column6::DATE AS latest_smoking_intervention_date
+        column6::DATE AS latest_smoking_intervention_date,
+        FALSE AS is_ex_smoker_covered
     FROM VALUES
         (-11001, '2024-03-31', 'Never Smoked', '2023-04-02', '2023-04-02', NULL),
         (-11001, '2024-04-30', 'Never Smoked', '2023-04-02', '2023-04-02', NULL),

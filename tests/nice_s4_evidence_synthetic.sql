@@ -240,7 +240,10 @@ synthetic_smoking AS (
         column2::TIMESTAMP_NTZ AS clinical_effective_date,
         column3::VARCHAR AS source_cluster_id,
         column4::VARCHAR AS smoking_status,
-        column3 = 'NSMOK_COD' AS is_never_smoked_code
+        column3 = 'NSMOK_COD' AS is_never_smoked_code,
+        column3 = 'LSMOK_COD' AS is_smoker_code,
+        column3 = 'EXSMOK_COD' AS is_ex_smoker_code,
+        column2::DATE AS date_recorded
     FROM VALUES ('SYN_Z', '2026-03-01', 'NSMOK_COD', 'Never Smoked'),
         ('SYN_A', '2026-03-01', 'LSMOK_COD', 'Current Smoker'),
         ('SYN_B', '2026-04-01', 'EXSMOK_COD', 'Ex-Smoker'),

@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Aggregates Pregnancy Prevention Programme (PPP) events for each person, providing analytics-ready person-level PPP status and history.') }}
+    description="Pregnancy Prevention Programme (PPP) status for OLIDS people with recorded evidence, one row per person. Status follows the selected latest event, with only 'Yes - PPP enrolled' counted as enrolled. Undated records remain, and no current-registration or recent-valproate filter applies.") }}
 
 -- PPP events for each person from intermediate table
 WITH base_ppp_observations AS (

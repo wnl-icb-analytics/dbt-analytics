@@ -1,0 +1,14 @@
+version: 2
+macros:
+  - name: numeric_parse_status
+    description: >-
+      Classifies a text value's NUMBER(38,9) parse with the CSDS clinical-record
+      vocabulary: value_missing for null, not_numeric_or_out_of_range when
+      TRY_TO_DECIMAL fails, numeric_format_unverified when it parses a form other
+      than a plain decimal (such as an exponent), numeric_rounded when a non-zero
+      digit beyond the ninth decimal place is rounded away, otherwise numeric. Pass
+      blank text as null.
+    arguments:
+      - name: value
+        type: string
+        description: SQL expression for the source text value.

@@ -1,0 +1,32 @@
+models:
+  - name: cltcs_status_log_open_cases
+    description: >
+      Open C-LTCS cases, one row per patient whose most recent status log action
+      (cltcs_status_log_most_recent) is not Case closed, Removed from shortlist or Reject.
+      A null action counts as open. Used by cltcs_patient_list to keep patients listed,
+      in the area recorded on their most recent status log entry, until their case is
+      closed, removed or rejected, even if they are no longer eligible or have moved area.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+
+    columns:
+      - name: patient_id
+        data_type: number
+        description: "Unique patient identifier from commissioning data [sk_patient_id]"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: area_code
+        data_type: varchar
+        description: "Area code recorded on the most recent status log entry; the area the patient is listed under while the case is open"
+
+      - name: action
+        data_type: varchar
+        description: "Most recent action recorded in the status log"
+
+      - name: action_date
+        data_type: date
+        description: "Date of the most recent action"

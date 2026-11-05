@@ -40,7 +40,7 @@ WITH population AS (
     WHERE evidence_type IN ('PULREHAB_OFFERED_COD', 'PULRHBOFF_COD')
 ), rehab_evidence AS (
     SELECT p.person_id, p.reporting_date,
-        MAX(IFF(e.event_type = 'OFFERED' AND e.event_date > p.mrc_date, e.event_date, NULL))
+        MAX(IFF(e.event_type = 'OFFERED' AND e.event_date >= p.mrc_date, e.event_date, NULL))
             AS latest_offer_date,
         MAX(IFF(e.event_type = 'ATTENDED' AND e.event_date >= p.diagnosis_date
             AND e.event_date < p.mrc_date, e.event_date, NULL)) AS prior_attendance_date,

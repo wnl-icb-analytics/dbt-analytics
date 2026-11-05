@@ -1,0 +1,43 @@
+models:
+  - name: cltcs_score_treatment_pathway_snapshot_input
+    description: >-
+      Current candidate C-LTCS treatment scores (cltcs_score_treatment_pathway) for
+      change-history capture, one row per patient and qualifying inclusion rule. People
+      meeting both the original and Adults with Complexity criteria have two rows. Scores,
+      domain components and the priority tier are relative to the patient's neighbourhood
+      and cohort.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - inclusion_rule
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier; one row per patient per cohort."
+        data_tests:
+          - not_null
+
+      - name: inclusion_rule
+        data_type: varchar
+        description: >
+          Cohort this row is scored in: 'original_criteria' (original C-LTCS
+          inclusion criteria) or 'adults_with_complexity' (Adults with Complexity
+          cohort, fct_person_complex_adults). Part of the snapshot unique_key.
+
+      - name: score_treatment
+        data_type: number
+        description: "Candidate treatment score, 0-100, without age adjustment (50 + 15 x composite z-score, capped)."
+
+      - name: score_treatment_age_adjusted
+        data_type: number
+        description: "score_treatment multiplied by the age multiplier (1.15 at 18, 1 at 60, 0.85 from 100) and capped at 0 and 100."
+
+      - name: treatment_priority_tier
+        data_type: number
+        description: "Priority tier within neighbourhood, cohort and age band: 1 top 5%, 2 top 5-15%, 3 the rest."

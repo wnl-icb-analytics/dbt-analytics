@@ -1,0 +1,183 @@
+{{ config(
+    materialized='incremental', incremental_strategy='delete+insert',
+    unique_key=['source_record_type', 'source_record_id'], on_schema_change='fail',
+    cluster_by=['sk_patient_id', 'coalesce(event_at, event_date::timestamp_ntz)'], tags=['healthcare_event_stream', 'daily'],
+    pre_hook="{{ navigation_build_warehouse() }}",
+    post_hook=["{{ navigation_remove_withdrawn_records([('apc_spell', 'obt_encounter_apc', 'visit_occurrence_id'), ('outpatient_appointment', 'int_sus_op_appointment', 'visit_occurrence_id'), ('emergency_care_attendance', 'obt_encounter_uec', 'visit_occurrence_id'), ('emergency_care_referral', 'int_sus_uec_referred_to_service', 'referral_id')]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
+) }}
+
+with source_records as (
+select
+    'SUS_APC'::varchar as source_dataset,
+    'apc_spell'::varchar as source_record_type,
+    s.visit_occurrence_id::varchar as source_record_id,
+    'obt_encounter_apc'::varchar as source_model_name,
+    s.sk_patient_id::varchar as sk_patient_id,
+    'inpatient'::varchar as care_setting,
+    s.organisation_id::varchar as provider_organisation_code,
+    s.organisation_name::varchar as provider_organisation_name,
+    s.site_id::varchar as site_code,
+    s.site_name::varchar as site_name,
+    s.main_specialty_code::varchar as specialty_code,
+    s.main_specialty_name::varchar as specialty_name,
+    null::varchar as attendance_code,
+    null::varchar as attendance_name,
+    s.discharge_destination_code::varchar as outcome_code,
+    s.discharge_destination_name::varchar as outcome_name,
+    null::varchar as parent_record_type,
+    null::varchar as parent_record_id,
+    null::varchar as parent_model_name,
+    null::varchar as relationship_type,
+    delivery.source_received_at::timestamp_ntz as source_received_at,
+    array_construct(
+        object_construct_keep_null('type', 'admission', 'name', 'Hospital admission', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'code', s.spell_admission_method::varchar, 'code_name', s.admission_method_name::varchar, 'coding_system', 'Admission method', 'basis', 'start_date', 'retain_undated', true),
+        object_construct_keep_null('type', 'discharge', 'name', 'Hospital discharge', 'date', s.end_date::date, 'at', timestamp_ntz_from_parts(s.end_date::date, s.end_time::time), 'precision', iff(s.end_date is null, 'unknown', iff(s.end_time is null, 'date', 'timestamp')), 'code', s.discharge_method_code::varchar, 'code_name', s.discharge_method_name::varchar, 'coding_system', 'Discharge method', 'basis', 'end_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'inpatient_decision_to_admit', 'name', 'Inpatient decision to admit', 'date', s.decided_to_admit_date::date, 'precision', 'date', 'basis', 'decided_to_admit_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'discharge_ready', 'name', 'Ready for discharge', 'date', s.discharge_ready_date::date, 'precision', 'date', 'basis', 'discharge_ready_date', 'retain_undated', false)
+    ) as milestones
+from {{ ref('obt_encounter_apc') }} as s
+left join {{ ref('stg_sus_apc_spell') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
+where true
+{{ navigation_delivery_filter('delivery.source_received_at', 'apc_spell') }}
+union all
+select
+    'SUS_OP'::varchar as source_dataset,
+    'outpatient_appointment'::varchar as source_record_type,
+    s.visit_occurrence_id::varchar as source_record_id,
+    'int_sus_op_appointment'::varchar as source_model_name,
+    s.sk_patient_id::varchar as sk_patient_id,
+    'outpatient'::varchar as care_setting,
+    s.organisation_id::varchar as provider_organisation_code,
+    s.organisation_name::varchar as provider_organisation_name,
+    s.site_id::varchar as site_code,
+    s.site_name::varchar as site_name,
+    s.main_specialty_code::varchar as specialty_code,
+    s.main_specialty_name::varchar as specialty_name,
+    s.appointment_attended_or_dna::varchar as attendance_code,
+    s.appointment_attendance_outcome_desc::varchar as attendance_name,
+    s.appointment_outcome::varchar as outcome_code,
+    s.outcome_desc::varchar as outcome_name,
+    null::varchar as parent_record_type,
+    null::varchar as parent_record_id,
+    null::varchar as parent_model_name,
+    null::varchar as relationship_type,
+    delivery.source_received_at::timestamp_ntz as source_received_at,
+    array_construct(
+        object_construct_keep_null('type', 'appointment_slot', 'name', 'Scheduled appointment', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'basis', 'start_date', 'retain_undated', true, 'consultation_mechanism_code', s.consultation_medium_used_code::varchar, 'consultation_mechanism_name', s.consultation_medium_used_name::varchar, 'priority_code', s.referral_acuity::varchar, 'priority_name', s.referral_acuity_desc::varchar, 'referring_organisation_code', s.referral_organisation_id::varchar, 'referring_organisation_name', s.referral_organisation_name::varchar)
+    ) as milestones
+from {{ ref('int_sus_op_appointment') }} as s
+left join {{ ref('stg_sus_op_appointment') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
+where true
+{{ navigation_delivery_filter('delivery.source_received_at', 'outpatient_appointment') }}
+union all
+select
+    'ECDS'::varchar as source_dataset,
+    'emergency_care_attendance'::varchar as source_record_type,
+    s.visit_occurrence_id::varchar as source_record_id,
+    'obt_encounter_uec'::varchar as source_model_name,
+    s.sk_patient_id::varchar as sk_patient_id,
+    'urgent_emergency_care'::varchar as care_setting,
+    s.organisation_id::varchar as provider_organisation_code,
+    s.organisation_name::varchar as provider_organisation_name,
+    s.site_id::varchar as site_code,
+    s.site_name::varchar as site_name,
+    s.main_specialty_code::varchar as specialty_code,
+    s.main_specialty_name::varchar as specialty_name,
+    null::varchar as attendance_code,
+    null::varchar as attendance_name,
+    s.discharge_destination_code::varchar as outcome_code,
+    s.discharge_destination_desc::varchar as outcome_name,
+    null::varchar as parent_record_type,
+    null::varchar as parent_record_id,
+    null::varchar as parent_model_name,
+    null::varchar as relationship_type,
+    delivery.source_received_at::timestamp_ntz as source_received_at,
+    array_construct(
+        object_construct_keep_null('type', 'emergency_care_arrival', 'name', 'Emergency care arrival', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'basis', 'start_date', 'retain_undated', true, 'referring_organisation_code', s.attendance_source_organisation_site_identifier::varchar, 'referring_organisation_name', s.attendance_source_organisation_name::varchar),
+        object_construct_keep_null('type', 'initial_assessment', 'name', 'Initial assessment', 'date', s.initial_assessment_date::date, 'at', timestamp_ntz_from_parts(s.initial_assessment_date::date, s.initial_assessment_time::time), 'precision', iff(s.initial_assessment_date is null, 'unknown', iff(s.initial_assessment_time is null, 'date', 'timestamp')), 'basis', 'initial_assessment_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'seen_for_treatment', 'name', 'Seen for treatment', 'date', s.seen_for_treatment_date::date, 'at', timestamp_ntz_from_parts(s.seen_for_treatment_date::date, s.seen_for_treatment_time::time), 'precision', iff(s.seen_for_treatment_date is null, 'unknown', iff(s.seen_for_treatment_time is null, 'date', 'timestamp')), 'basis', 'seen_for_treatment_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'decision_to_admit', 'name', 'Decision to admit', 'date', s.decided_to_admit_date::date, 'at', timestamp_ntz_from_parts(s.decided_to_admit_date::date, s.decided_to_admit_time::time), 'precision', iff(s.decided_to_admit_date is null, 'unknown', iff(s.decided_to_admit_time is null, 'date', 'timestamp')), 'basis', 'decided_to_admit_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'clinically_ready_to_proceed', 'name', 'Clinically ready to proceed', 'date', s.clinically_ready_to_proceed_at::timestamp_ntz::date, 'at', s.clinically_ready_to_proceed_at::timestamp_ntz, 'precision', iff(s.clinically_ready_to_proceed_at is null, 'unknown', 'timestamp'), 'basis', 'clinically_ready_to_proceed_at', 'retain_undated', false),
+        object_construct_keep_null('type', 'emergency_care_departure', 'name', 'Emergency care departure', 'date', s.end_date::date, 'at', timestamp_ntz_from_parts(s.end_date::date, s.end_time::time), 'precision', iff(s.end_date is null, 'unknown', iff(s.end_time is null, 'date', 'timestamp')), 'basis', 'end_date', 'retain_undated', false)
+    ) as milestones
+from {{ ref('obt_encounter_uec') }} as s
+left join {{ ref('stg_sus_ecds_emergency_care') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
+where true
+{{ navigation_delivery_filter('delivery.source_received_at', 'emergency_care_attendance') }}
+union all
+select
+    'ECDS'::varchar as source_dataset,
+    'emergency_care_referral'::varchar as source_record_type,
+    s.referral_id::varchar as source_record_id,
+    'int_sus_uec_referred_to_service'::varchar as source_model_name,
+    s.sk_patient_id::varchar as sk_patient_id,
+    'urgent_emergency_care'::varchar as care_setting,
+    a.organisation_id::varchar as provider_organisation_code,
+    a.organisation_name::varchar as provider_organisation_name,
+    a.site_id::varchar as site_code,
+    a.site_name::varchar as site_name,
+    null::varchar as specialty_code,
+    null::varchar as specialty_name,
+    null::varchar as attendance_code,
+    null::varchar as attendance_name,
+    null::varchar as outcome_code,
+    null::varchar as outcome_name,
+    -- The referral's person is the attendance's, so the link cannot conflict.
+    'emergency_care_attendance'::varchar as parent_record_type,
+    s.visit_occurrence_id::varchar as parent_record_id,
+    'obt_encounter_uec'::varchar as parent_model_name,
+    'recorded_parent'::varchar as relationship_type,
+    delivery.source_received_at::timestamp_ntz as source_received_at,
+    array_construct(
+        object_construct_keep_null('type', 'onward_referral', 'name', 'Onward referral', 'date', s.request_date::date, 'at', timestamp_ntz_from_parts(s.request_date::date, s.request_time::time), 'precision', iff(s.request_date is null, 'unknown', iff(s.request_time is null, 'date', 'timestamp')), 'code', s.referred_to_service_code::varchar, 'code_name', s.referred_to_service_desc::varchar, 'coding_system', 'SNOMED CT', 'basis', 'request_date', 'retain_undated', true),
+        object_construct_keep_null('type', 'referred_service_assessment', 'name', 'Referred service assessment', 'date', s.assessment_date::date, 'at', timestamp_ntz_from_parts(s.assessment_date::date, s.assessment_time::time), 'precision', iff(s.assessment_date is null, 'unknown', iff(s.assessment_time is null, 'date', 'timestamp')), 'code', s.referred_to_service_code::varchar, 'code_name', s.referred_to_service_desc::varchar, 'coding_system', 'SNOMED CT', 'basis', 'assessment_date', 'retain_undated', false)
+    ) as milestones
+from {{ ref('int_sus_uec_referred_to_service') }} as s
+left join {{ ref('obt_encounter_uec') }} as a on s.visit_occurrence_id = a.visit_occurrence_id
+left join {{ ref('stg_sus_ecds_emergency_care') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
+where true
+{{ navigation_delivery_filter('delivery.source_received_at', 'emergency_care_referral') }}
+)
+select
+    {{ dbt_utils.generate_surrogate_key(['r.source_dataset', 'r.source_record_type', 'r.source_record_id', 'm.value:type::varchar']) }} as event_id,
+    r.source_dataset as source_dataset,
+    r.source_record_type as source_record_type,
+    r.source_record_id as source_record_id,
+    r.source_model_name as source_model_name,
+    r.sk_patient_id as sk_patient_id,
+    r.care_setting as care_setting,
+    r.provider_organisation_code as provider_organisation_code,
+    r.provider_organisation_name as provider_organisation_name,
+    r.site_code as site_code,
+    r.site_name as site_name,
+    r.specialty_code as specialty_code,
+    r.specialty_name as specialty_name,
+    r.attendance_code as attendance_code,
+    r.attendance_name as attendance_name,
+    case when r.source_dataset = 'SUS_OP' or m.value:type::varchar in ('discharge', 'emergency_care_departure')
+        then r.outcome_code end::varchar as outcome_code,
+    case when r.source_dataset = 'SUS_OP' or m.value:type::varchar in ('discharge', 'emergency_care_departure')
+        then r.outcome_name end::varchar as outcome_name,
+    m.value:referring_organisation_code::varchar as referring_organisation_code,
+    m.value:referring_organisation_name::varchar as referring_organisation_name,
+    m.value:consultation_mechanism_code::varchar as consultation_mechanism_code,
+    m.value:consultation_mechanism_name::varchar as consultation_mechanism_name,
+    m.value:priority_code::varchar as priority_code,
+    m.value:priority_name::varchar as priority_name,
+    r.parent_record_type as parent_record_type,
+    r.parent_record_id as parent_record_id,
+    r.parent_model_name as parent_model_name,
+    r.relationship_type as relationship_type,
+    r.source_received_at as source_received_at,
+    m.value:type::varchar as event_type,
+    m.value:name::varchar as event_name,
+    m.value:code::varchar as event_code,
+    m.value:code_name::varchar as event_code_name,
+    m.value:coding_system::varchar as event_coding_system,
+    m.value:date::date as event_date,
+    iff(m.value:precision::varchar = 'timestamp', m.value:at::timestamp_ntz, null) as event_at,
+    m.value:precision::varchar as event_time_precision,
+    m.value:basis::varchar as event_time_basis,
+    'ODS'::varchar as provider_code_authority
+from source_records as r, lateral flatten(input => r.milestones) as m
+where m.value:retain_undated::boolean or m.value:date::date is not null

@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- The outpatient models retain every staged appointment and every usable
 -- clinical code. Summing observation_count restores source-record grain after
 -- repeated codes are collapsed within each appointment. Aggregate categories

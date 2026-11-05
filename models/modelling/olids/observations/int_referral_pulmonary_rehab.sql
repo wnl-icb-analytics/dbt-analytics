@@ -38,4 +38,7 @@ WHEN source_cluster_id = 'PULRHBDEC_COD' THEN 'Pulmonary Rehab Declined'
 WHEN source_cluster_id = 'PULRHBOFF_COD' THEN 'Pulmonary Rehab Offered'
 END AS pr_obs_type
 from PR 
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY PERSON_ID) = 1
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY PR.person_id, PR.concept_code, DATE(PR.clinical_effective_date)
+    ORDER BY PR.id
+) = 1

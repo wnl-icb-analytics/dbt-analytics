@@ -71,6 +71,7 @@ SELECT
     confidence,
     is_negative,
     is_extreme_outlier,
+    is_out_of_range,
     CASE
         WHEN inferred_value IS NULL THEN 'Abnormal'
         WHEN inferred_value < 20 OR inferred_value > 250 THEN 'Abnormal'

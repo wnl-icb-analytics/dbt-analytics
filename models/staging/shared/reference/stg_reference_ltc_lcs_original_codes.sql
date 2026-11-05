@@ -13,6 +13,7 @@ select
     include_children,
     is_refset,
     translated_to_snomed_code,
-    translated_to_display
+    translated_to_display,
+    translation_equivalence
 from {{ ref('raw_reference_ltc_lcs_original_codes') }}
 qualify row_number() over (partition by original_code_id order by original_code) = 1

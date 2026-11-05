@@ -1,11 +1,17 @@
 models:
   - name: int_smi_care_plan_all
-    description: 'Mental Health /SMI care pan for SMI registry replacement/QOF indicator. One row per Mental Health /SMI care pan observation using MHP_COD cluster with currency flag in last 12 months'
+    description: 'Mental Health /SMI care plan for SMI registry replacement/QOF indicator. One row per person, concept and clinical date using MHP_COD cluster with currency flag in last 12 months'
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - concept_code
+              - clinical_effective_date
       - cluster_ids_exist:
           arguments:
             cluster_ids: MHP_COD

@@ -224,28 +224,20 @@ left join {{ ref('fct_mhsds_referral') }} as referral
     on w.uniq_serv_req_id = referral.source_record_id
 left join {{ ref('stg_mhsds_bridging') }} as bridge
     on w.person_id = bridge.person_id
-left join {{ ref('mhsds_inpatient_code_lookup') }} as admitted_class
+left join {{ ref('nhs_dd_mental_health_admitted_patient_classification_type') }} as admitted_class
     on upper(trim(w.mh_admitted_patient_class)) = admitted_class.code
-    and admitted_class.code_set_name
-        = 'mental_health_admitted_patient_classification'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as ward_setting
+left join {{ ref('mhsds_ward_setting_type') }} as ward_setting
     on upper(trim(w.ward_setting_code)) = ward_setting.code
-    and ward_setting.code_set_name = 'ward_setting'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as ward_age
+left join {{ ref('mhsds_ward_intended_age_group') }} as ward_age
     on upper(trim(w.ward_intended_age_group_code)) = ward_age.code
-    and ward_age.code_set_name = 'ward_intended_age_group'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as ward_sex
+left join {{ ref('nhs_dd_ward_intended_sex') }} as ward_sex
     on upper(trim(w.ward_intended_sex_code)) = ward_sex.code
-    and ward_sex.code_set_name = 'ward_intended_sex'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as care_intensity
+left join {{ ref('nhs_dd_ward_intended_clinical_care_intensity') }} as care_intensity
     on upper(trim(w.ward_clinical_care_intensity_code)) = care_intensity.code
-    and care_intensity.code_set_name = 'ward_clinical_care_intensity'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as security_level
+left join {{ ref('nhs_dd_ward_security_level') }} as security_level
     on upper(trim(w.ward_security_level_code)) = security_level.code
-    and security_level.code_set_name = 'ward_security_level'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as locked_ward
+left join {{ ref('nhs_dd_locked_ward_indicator') }} as locked_ward
     on upper(trim(w.locked_ward_indicator_code)) = locked_ward.code
-    and locked_ward.code_set_name = 'locked_ward_indicator'
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(w.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as site

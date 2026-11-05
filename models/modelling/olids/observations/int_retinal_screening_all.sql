@@ -5,9 +5,10 @@
 }}
 
 /*
-All diabetes retinal screening programme completions with enhanced analytics features.
-Uses RETSCREN_COD cluster which only includes completed screenings
-(excludes declined, unsuitable, or referral codes).
+Diabetic retinopathy screening evidence with enhanced analytics features.
+Uses PCD RETSCREN_COD (NDA retinal screening) and CVDRETSCRN_COD (national screening
+evidence: retinal photography, digital screening and screener attendance). Excludes
+declined, unsuitable and referral codes.
 
 Enhanced Analytics Features:
 - Comprehensive screening result categorisation
@@ -26,7 +27,7 @@ SELECT
     obs.mapped_concept_display AS concept_display,
     obs.cluster_id AS source_cluster_id,
 
-    -- All records in this model represent completed screenings
+    -- Every record is evidence that retinal screening took place
     TRUE AS is_completed_screening,
     TRUE AS is_retinal_screening_code,
 
@@ -102,9 +103,12 @@ SELECT
         ELSE 'Overdue (>24 months)'
     END AS screening_status_interpretation
 
-FROM ({{ get_observations("'RETSCREN_COD'") }}) obs
+FROM ({{ get_observations("'RETSCREN_COD', 'CVDRETSCRN_COD'", source='PCD') }}) obs
 LEFT JOIN {{ ref('dim_person_active_patients') }} ap
     ON obs.person_id = ap.person_id
 WHERE obs.clinical_effective_date IS NOT NULL
+-- Prefer the completion cluster when an observation also records attendance.
+QUALIFY ROW_NUMBER() OVER (PARTITION BY obs.id
+    ORDER BY IFF(obs.cluster_id = 'RETSCREN_COD', 0, 1)) = 1
 
 ORDER BY person_id, clinical_effective_date DESC

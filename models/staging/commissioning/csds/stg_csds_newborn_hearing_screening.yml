@@ -1,0 +1,40 @@
+version: 2
+models:
+- name: stg_csds_newborn_hearing_screening_history
+  description: One CYP603 newborn hearing screening row from an accepted CSDS submission. The same screening
+    repeats across reporting periods. CSDS supplies no screening date.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: cyp603_unique_id
+    description: Source table row identifier, unique across accepted submissions.
+    data_tests:
+    - not_null
+    - unique
+  - name: unique_submission_id
+    description: Accepted source submission supplying this occurrence.
+- name: stg_csds_newborn_hearing_screening
+  description: Latest accepted CYP603 newborn hearing screening for each person, provider, screening outcome,
+    audiology service request date and audiology procedure date, the ETOS derivation key. Missing
+    outcomes and dates are part of the key. Rows missing a person or provider keep each source
+    occurrence.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: ETOS record key, with a source-row fallback when a required key field is missing.
+    data_tests:
+    - not_null
+    - unique
+  - name: cyp603_unique_id
+    description: Source row of the selected accepted occurrence.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting period containing this key.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting period containing this key.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the selected occurrence.

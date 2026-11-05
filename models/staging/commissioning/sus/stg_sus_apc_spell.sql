@@ -25,6 +25,10 @@ derived as (
 )
 
 select core.primarykey_id
+    , greatest_ignore_nulls(
+        try_to_timestamp_ntz(core.system_interchange_received_date::varchar),
+        try_to_timestamp_ntz(core.system_interchange_latest_episode_received_date::varchar)
+    ) as source_received_at
     , {{ consistent_sk_patient_id_format('core.spell_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id
     , spell_patient_identity_local_patient_identifier_value as local_patient_identifier
 
@@ -36,11 +40,24 @@ select core.primarykey_id
     , {{ clean_organisation_id('SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER') }} as SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER
     , core.spell_care_location_site_code_of_treatment
 
+    /* commissioner details */
+    , nullif(upper(trim(core.spell_commissioning_service_agreement_commissioner)), '')
+        as spell_commissioning_service_agreement_commissioner
+    , core.spell_commissioning_service_agreement_is_commissioner_recognised
+    , nullif(upper(trim(core.spell_commissioning_service_agreement_commissioner_derived)), '')
+        as spell_commissioning_service_agreement_commissioner_derived
+    , nullif(upper(trim(core.spell_commissioning_commissioner_assignment_commissioner)), '')
+        as spell_commissioning_commissioner_assignment_commissioner
+    , nullif(trim(core.spell_commissioning_commissioner_assignment_flowchart_reference), '')
+        as spell_commissioning_commissioner_assignment_flowchart_reference
+
      /* Time and date */
     , core.spell_admission_date::date as spell_admission_date 
     , core.spell_admission_time::time as spell_admission_time
     , core.spell_discharge_date::date as spell_discharge_date
     , core.spell_discharge_time::time as spell_discharge_time
+    , core.spell_referral_decided_to_admit_date::date as spell_referral_decided_to_admit_date
+    , core.spell_discharge_ready_date::date as spell_discharge_ready_date
     , core.spell_open_spell_indicator
     , core.spell_discharge_length_of_hospital_stay
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
@@ -50,6 +67,7 @@ select core.primarykey_id
     , core.spell_discharge_method
 
     /* Admission information */
+    , core.spell_admission_administrative_category
     , core.spell_admission_method
     , core.spell_admission_admission_type
     , core.spell_admission_admission_sub_type

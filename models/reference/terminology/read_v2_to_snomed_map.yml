@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: read_v2_to_snomed_map
+    description: >-
+      National NHS Data Migration map from Read v2 to SNOMED CT, one current
+      concept per Read v2 code and term code. TRUD via UKHFD, final release
+      March 2020. Each code and term keeps its latest map revision only when that
+      revision is active; an inactive latest revision does not revive an older map.
+      Filter on is_preferred_term (term code 00) for one concept per code.
+      READ_CODE.snomed_ct_code comes from the legacy Dictionary with one value per
+      code; this map is the national term-level source.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [read_code, term_code]
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [read_code]
+          config:
+            where: is_preferred_term
+    columns:
+      - name: read_code
+        description: Five-character Read v2 code. Case and dots are significant.
+      - name: term_code
+        description: Two-character Read v2 term code; 00 is the preferred term.
+      - name: is_preferred_term
+        description: True for term code 00. Filter to true for one concept per code.
+      - name: snomed_concept_id
+        description: Mapped SNOMED CT concept identifier, as text.
+        data_tests: [not_null]
+      - name: snomed_description_id
+        description: SNOMED CT description identifier for the mapped term, as text.
+      - name: is_assured
+        description: Whether the source marks the map as assured.
+      - name: map_effective_date
+        description: Effective date of the current map revision.

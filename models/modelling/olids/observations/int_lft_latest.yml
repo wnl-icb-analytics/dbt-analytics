@@ -5,8 +5,9 @@ models:
       Composite liver function test (LFT) status per person. One row per person who has
       at least one latest valid ALT, GGT, or bilirubin observation. Exposes each component's
       latest value and date, per-component high flags, and a single composite `high_lft`
-      flag that is TRUE when any component is above its clinical ULN. ULNs are sourced
-      from the qadmissions_lab_thresholds seed.
+      flag that is TRUE when any component exceeds its QAdmissions abnormal-LFT
+      threshold from the qadmissions_lab_thresholds seed. These thresholds are
+      approximately three times the clinical upper limits of normal, not clinical ULNs.
     config:
       meta:
         owner:
@@ -30,13 +31,13 @@ models:
       - name: bilirubin_date
         description: Clinical effective date of the latest bilirubin observation
       - name: is_high_alt
-        description: TRUE if alt_value exceeds the ALT ULN from qadmissions_lab_thresholds, NULL if alt_value is NULL
+        description: TRUE if alt_value exceeds the ALT QAdmissions abnormal-LFT threshold, NULL if alt_value is NULL
       - name: is_high_ggt
-        description: TRUE if ggt_value exceeds the GGT ULN from qadmissions_lab_thresholds, NULL if ggt_value is NULL
+        description: TRUE if ggt_value exceeds the GGT QAdmissions abnormal-LFT threshold, NULL if ggt_value is NULL
       - name: is_high_bilirubin
-        description: TRUE if bilirubin_value exceeds the bilirubin ULN from qadmissions_lab_thresholds, NULL if bilirubin_value is NULL
+        description: TRUE if bilirubin_value exceeds the bilirubin QAdmissions abnormal-LFT threshold, NULL if bilirubin_value is NULL
       - name: high_lft
-        description: TRUE if any of ALT, GGT, or bilirubin is above its ULN
+        description: TRUE if any component exceeds its QAdmissions abnormal-LFT threshold
         data_tests:
           - not_null
           - accepted_values:

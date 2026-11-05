@@ -13,7 +13,7 @@ Person-level snapshot of recent medication prescriptions with counts.
 Includes all medication orders (not just repeat prescriptions) from the last 30 days and last year.
 Also splits last-year medicines into current repeats and non-repeats (see medications_repeat / medications_non_repeat).
 
-Grain: One row per person with medications in last 30 days or last year
+Grain: One row per person in dim_person with a named order in the last 365 days.
 */
 
 WITH repeat_medicines_list as (
@@ -27,26 +27,29 @@ WITH repeat_medicines_list as (
 medication_orders_base AS (
     -- Get all medication orders from the last year
     SELECT
-        pp.person_id,
+        mo.person_id,
         COALESCE(bnf.bnf_name, mo.medication_name, mo.statement_medication_name) AS medication_name,
         bnf.vtm AS vtm_code,
         bnf.vtm_name AS vtm_name,
         mo.clinical_effective_date AS order_date,
-        CASE 
-            WHEN mo.clinical_effective_date >= DATEADD(day, -30, CURRENT_DATE()) THEN 1 
-            ELSE 0 
+        CASE
+            WHEN mo.clinical_effective_date >= DATEADD(day, -30, CURRENT_DATE()) THEN 1
+            ELSE 0
         END AS is_last_30d,
         zeroifnull(rm.repeat_flag) as is_repeat_order
     FROM {{ ref('stg_olids_medication_order') }} mo
-    INNER JOIN {{ ref('int_patient_person_unique') }} pp
-        ON mo.patient_id = pp.patient_id
     LEFT JOIN {{ ref('stg_reference_bnf_latest') }} bnf
         ON mo.mapped_concept_code = bnf.snomed_code
     LEFT JOIN repeat_medicines_list rm
-        ON mo.mapped_concept_code = rm.mapped_concept_code 
-        and pp.person_id = rm.person_id 
+        ON mo.mapped_concept_code = rm.mapped_concept_code
+        and mo.person_id = rm.person_id
         and mo.clinical_effective_date = rm.latest_order_date
-    WHERE mo.clinical_effective_date >= DATEADD(day, -365, CURRENT_DATE())
+    WHERE EXISTS (
+        SELECT 1
+        FROM {{ ref('dim_person') }} person
+        WHERE person.person_id = mo.person_id
+    )
+        AND mo.clinical_effective_date >= DATEADD(day, -365, CURRENT_DATE())
         AND mo.clinical_effective_date <= CURRENT_DATE()
         AND mo.clinical_effective_date IS NOT NULL
         AND COALESCE(bnf.bnf_name, mo.medication_name, mo.statement_medication_name) IS NOT NULL

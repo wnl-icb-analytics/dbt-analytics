@@ -91,8 +91,8 @@ select
     case
         when from_month_end_date is null then 'New entrant'
         when to_risk_group is null then 'Left register'
-        when to_risk_rank > from_risk_rank then 'Improved'
-        when to_risk_rank < from_risk_rank then 'Worsened'
+        when case to_risk_group when 'HRC' then 1 when 'HR' then 2 when 'MR' then 3 when 'LR' then 4 end > case from_risk_group when 'HRC' then 1 when 'HR' then 2 when 'MR' then 3 when 'LR' then 4 end then 'Improved'
+        when case to_risk_group when 'HRC' then 1 when 'HR' then 2 when 'MR' then 3 when 'LR' then 4 end < case from_risk_group when 'HRC' then 1 when 'HR' then 2 when 'MR' then 3 when 'LR' then 4 end then 'Worsened'
         else 'No change'
     end as movement_type
 from combined

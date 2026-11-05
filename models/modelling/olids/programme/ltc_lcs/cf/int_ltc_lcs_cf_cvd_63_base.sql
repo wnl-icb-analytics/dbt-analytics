@@ -1,22 +1,19 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CVD case finding: ICB_CF_CVD_63_BASE population (shared parent for 63 + 64 + 65)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/cvd/icb-cf-cvd-63.md
---
--- CVD_63_BASE = currently registered, age 40 to <84, EXCLUDE who match any of:
---   - ICS_METABOLIC_LTC (has_metabolic_excluding_condition)
---   - statin adverse reaction (vs1, 52 codes)             -- ever
---   - statin contraindicated / not indicated (vs2, TXSTAT_COD, 3 codes) -- ever
---   (library items 3de35e4f / ea06414e not in export -> not implemented)
---   Then REQUIRE QRISK refset (999011011000230107) latest numeric value >= 10 (vs3, CVDASS2_COD).
---
--- Unlike CVD_61_BASE this BASE does NOT exclude CF_NHSHC2Y and does NOT exclude statin users
--- (statin status is the discriminator applied per indicator in the _woEX layer).
+-- CVD_63/64/65 shared cohort: one row per registered living person aged 40 to <84.
+-- Requires latest QRISK >=10, without a date window, and no shared metabolic exclusion.
+-- Excludes persistent statin adverse reactions at any date and contraindication,
+-- statin not indicated or not tolerated events on or before today. Local adverse codes use the shared equivalence rule.
+-- This parent permits statin treatment and recent NHS health checks.
+-- Excludes QOF palliative care register membership (EMIS library ea06414e).
+-- XML library exclusion 3de35e4f lacks a complete exported definition.
+-- Authority: EMIS R5 ICB_CF_CVD_63_BASE, structured filters and tests.
 
 with base as (
     select person_id, age_at_least
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
+        and is_on_palliative_care_register = false
 ),
 
 age_eligible as (
@@ -26,22 +23,20 @@ age_eligible as (
         and age_at_least < 84
 ),
 
--- statin adverse reaction (vs1) -- ever
 statin_adverse as (
     select person_id
-    from ({{ get_ltc_lcs_observations("people_with_qrisk_10_vs1") }})
+    from ({{ get_ltc_lcs_observations("a06baf8e-f9c8-30ab-cee1-c2ba3af35902") }})
 ),
 
--- statin contraindicated / not indicated (vs2 TXSTAT_COD) -- ever
 statin_contra as (
     select person_id
-    from ({{ get_ltc_lcs_observations("people_with_qrisk_10_vs2") }})
+    from ({{ get_ltc_lcs_observations("cd58c9a2-0e17-f7fe-30d3-effd2a7ec9aa") }})
+    where clinical_effective_date <= current_date()
 ),
 
--- QRISK refset latest numeric value >= 10 (vs3 CVDASS2_COD)
 qrisk_ge10 as (
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("people_with_qrisk_10_vs3") }})
+    from ({{ get_ltc_lcs_observations_latest("bc214a50-595d-7b11-b391-6f3d8ef2aa96") }})
     where result_value >= 10
 )
 

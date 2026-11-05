@@ -51,7 +51,9 @@ SELECT
     -- QOF obesity register flags
     source_cluster_id = 'BMI30_COD' OR bmi_value >= 30 AS is_bmi_30_plus,
     bmi_value >= 27.5 AS is_bmi_27_5_plus,
-    bmi_value >= 25 AS is_bmi_25_plus
+    bmi_value >= 25 AS is_bmi_25_plus,
+    bmi_value BETWEEN 10 AND 150 AS is_plausible_bmi,
+    source_cluster_id = 'BMI30_COD' AS is_threshold_code
 
 FROM base_observations
 WHERE bmi_value IS NOT NULL

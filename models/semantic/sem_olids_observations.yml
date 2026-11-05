@@ -2,62 +2,13 @@ version: 2
 
 models:
   - name: sem_olids_observations
-    description: |
-      OLIDS Clinical Observations semantic view. OLIDS is the One London
-      Integrated Data Set — primary care data from system suppliers,
-      unified by the One London team.
-
-      Semantic model for clinical observations with category-based metrics
-      for population health analysis. Focuses on proportions at target
-      rather than raw averages.
-
-      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion —
-      denormalised onto dim_person_demographics) for age-standardised rate
-      calculation across areas.
-
-      Exposes person_id as a pseudonymised linkage dimension for cross-view
-      cohort intersection (CTE joins to the other sem_olids_* views);
-      aggregate-only output.
-
-      Design Principles:
-      - Categories over averages (% at target vs mean value)
-      - Patient-specific thresholds where applicable (BP control)
-      - Pre-computed clinical classifications from int/fct models
-
-      Grain: One row per person (latest observation values)
-
-      Tables Included:
-      - dim_person_demographics: Base population
-      - int_blood_pressure_latest / fct_person_bp_control: BP and control status
-      - int_hba1c_latest: HbA1c with NICE categories
-      - int_cholesterol_latest / int_cholesterol_ldl_latest / int_cholesterol_hdl_latest / int_cholesterol_non_hdl_latest: Total, LDL, HDL and non-HDL cholesterol
-      - int_triglycerides_latest: Triglycerides with HEART UK numeric bands
-      - int_cholesterol_hdl_ratio_latest: Recorded total cholesterol to HDL ratio; no calculated ratio or treatment target
-      - int_bmi_latest: BMI with ethnicity-adjusted categories (adults 18+ only; heights and weights under age 18 excluded upstream)
-      - int_waist_circumference_latest: Waist circumference with risk categories
-      - int_blood_glucose_latest: Latest blood glucose with fasting flag; units are not standardised
-      - int_egfr_latest: eGFR with CKD staging
-      - int_creatinine_latest: Serum creatinine
-      - int_qrisk_latest: QRISK cardiovascular risk
-      - int_urine_acr_latest: Urine ACR
-      - int_lft_latest: Liver function (ALT, GGT, bilirubin) with high flags
-      - int_haemoglobin_latest: Haemoglobin with anaemia category
-      - int_platelets_latest: Platelet count with category
-      - int_eosinophil_count_latest: Blood eosinophil count with category
-      - int_smoking_status_latest: Latest recorded smoking status from LSMOK_COD,
-        EXSMOK_COD, NSMOK_COD or SMOK_COD concept 405746006 (Non-Smoker (History
-        Unknown)); excludes status-free pack-years and unknown-consumption
-        records. People without a qualifying record are absent.
-      - int_efi_latest: Electronic Frailty Index (GP-coded only, incomplete coverage)
-      - int_efi2_scores: Calculated eFI2 for living people aged 65+
-      - int_rockwood_latest: Rockwood Clinical Frailty Scale
-
-      Diabetes care processes, foot examination, and retinal screening
-      moved to sem_olids_diabetes_care.
-
-      NICE blood pressure indicators IND239 to IND246 are exposed through
-      sem_olids_bp_indicators.
-
+    description: >-
+      Latest clinical measurements for the OLIDS demographic population, with one row
+      per person in each linked measurement table. People without measurements remain
+      in the demographic population; measurement dates can differ. Demographics are
+      current. ESP 2013 weights support age-standardised rates. person_id supports
+      cohort linkage; final results must be aggregate-only. Diabetes care and NICE
+      blood pressure indicators have separate views.
     config:
       materialized: semantic_view
       schema: SEMANTIC

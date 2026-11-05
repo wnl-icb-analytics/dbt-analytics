@@ -35,7 +35,7 @@ left join organisation_type as site_organisation_type
     )
 left join {{ ref('organisation') }} as site_organisation
     on site_organisation_type.organisation_code = site_organisation.organisation_code
-left join {{ ref('attendance_status') }} as attendance
+left join {{ ref('nhs_dd_attendance_status') }} as attendance
     on nullif(ltrim(trim(f.source_attendance_status_code), '0'), '') = attendance.code
 left join {{ ref('stg_csds_referral_history') }} as submitted_referral
     on f.submission_id = submitted_referral.unique_submission_id

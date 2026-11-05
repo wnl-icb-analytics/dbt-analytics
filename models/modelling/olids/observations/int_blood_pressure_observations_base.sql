@@ -15,7 +15,17 @@ Note: Future date handling (clinical_effective_date > date_recorded) is applied
 in the get_observations macro, benefiting all models that use it.
 */
 
-WITH base_observations AS (
+WITH concept_setting AS (
+    SELECT
+        code AS concept_code,
+        BOOLOR_AGG(UPPER(cluster_id) = 'ABPM_COD') AS is_abpm_concept,
+        BOOLOR_AGG(UPPER(cluster_id) IN ('HOMEBP_COD', 'HOMEAMBBP_COD')) AS is_home_concept
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE UPPER(cluster_id) IN ('ABPM_COD', 'HOMEBP_COD', 'HOMEAMBBP_COD')
+    GROUP BY code
+),
+
+base_observations AS (
     SELECT
         obs.id,
         obs.person_id,
@@ -47,10 +57,32 @@ SELECT
     
     result_value,
     'mmHg' AS result_unit_display,
-    concept_code,
+    b.concept_code,
     concept_display,
     source_cluster_id,
     parent_observation_id,
+    CASE WHEN cs.is_abpm_concept THEN 'ABPM'
+        WHEN cs.is_home_concept THEN 'HOME'
+        ELSE 'CLINIC'
+    END AS bp_context_group,
+    CASE bp_context_group
+        WHEN 'ABPM' THEN CASE
+            WHEN b.concept_code IN ('314449000','314462001','314464000','314465004') THEN 'ABPM_24H'
+            WHEN b.concept_code IN ('314446007','314461008') THEN 'ABPM_DAY'
+            WHEN b.concept_code IN ('314445006','314460009') THEN 'ABPM_NIGHT'
+            WHEN b.concept_code IN ('314451001','314456006','314447003','314438006','314442009',
+                                  '314441002','723236006','314455005','314454009') THEN 'ABPM_MIN_MAX'
+            ELSE 'ABPM_UNSPECIFIED' END
+        WHEN 'HOME' THEN CASE
+            WHEN b.concept_code IN ('413606001','413605002','1285115008') THEN 'HOME_AVERAGE'
+            WHEN b.concept_code IN ('1162737008','1162735000','413153004') THEN 'HOME_SELF_REPORTED'
+            ELSE 'HOME_UNSPECIFIED' END
+        ELSE CASE
+            WHEN b.concept_code IN ('407554009','407555005','163035008') THEN 'CLINIC_SITTING'
+            WHEN b.concept_code IN ('400974009','400975005','163034007') THEN 'CLINIC_STANDING'
+            WHEN b.concept_code IN ('407556006','407557002','163033001') THEN 'CLINIC_LYING'
+            ELSE 'CLINIC_UNSPECIFIED' END
+    END AS bp_context,
 
     -- BP type classification flags
     (source_cluster_id = 'SYSBP_COD' OR
@@ -67,4 +99,5 @@ SELECT
     (clinical_effective_date_raw > date_recorded) AS had_future_date,
     (clinical_effective_date_raw IS NULL) AS had_null_date
 
-FROM base_observations
+FROM base_observations b
+LEFT JOIN concept_setting cs ON b.concept_code = cs.concept_code

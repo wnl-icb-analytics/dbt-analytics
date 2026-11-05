@@ -1,28 +1,11 @@
 models:
   - name: int_covid_flu_campaign_population
-    description: >
-      Search population for each COVID and flu vaccination campaign, resolved as at the
-      campaign rather than as at today.
-
-      Grain: one row per campaign per person.
-
-      Both UKHSA specifications require the patient to be currently registered for GMS at
-      RUN_DAT. Applying that with dim_person_demographics tests registration now, which
-      rewrites a closed campaign every time the models rebuild: anyone who has since left
-      the practice list or died disappears from a season already reported, shrinking its
-      denominator and inflating its uptake rate.
-
-      Each campaign is resolved to a monthly snapshot in person_month_analysis_base at its
-      RUN_DAT, and the people registered and alive at that point are returned. RUN_DAT is
-      the fixed 31 March or 30 June for COVID, and the extraction date capped at the final
-      28 February AUDITEND_DAT for flu, so a closed flu season is measured against its
-      February list rather than the March REF_DAT list. A campaign whose run date is still
-      in the future, which is any season in flight, falls back to the most recent snapshot
-      available, so it tracks the current list.
-
-      Consumed by fct_covid_eligibility, fct_covid_status, fct_flu_eligibility and
-      fct_flu_status, which apply the population once rather than each intermediate model
-      applying its own.
+    description: >-
+      People registered and alive for each COVID or flu campaign in OLIDS, one row per
+      person and campaign. Uses month-end population at the campaign run date, or the
+      latest available month if earlier. COVID run dates are 31 March or 30 June; flu
+      uses extraction date capped at 28 February. People who later leave or die remain
+      in past campaigns; unknown death status counts as living.
     config:
       meta:
         owner:

@@ -1,20 +1,13 @@
 models:
   - name: int_bmi_all
-    description: 'BMI measurements for adults aged 18+ with ethnicity-adjusted categorisation per NICE NG246.
-
-      One row per BMI observation for adults aged 18+ using BMIVAL_COD cluster with plausible range filtering (10-150). Uses ethnicity-adjusted BMI thresholds for cardiometabolic risk populations (South Asian, Chinese, other Asian, Middle Eastern, Black African, African-Caribbean). Avoids calculating BMI on dates where recorded BMI already exists.
-
-      Key Features:
-
-      • Age restriction: Adults 18+ only (paediatric BMI requires age/gender-specific percentiles). Heights and weights recorded under age 18 are excluded at source so they never feed calculated BMI.
-
-      • Ethnicity-adjusted BMI categories per NICE NG246 (lower thresholds for at-risk populations)
-
-      • Prevents BMI over-calculation by excluding dates with existing recorded BMI
-
-      • Combines recorded and calculated BMI observations
-
-      Purpose: Provides clinically appropriate adult BMI categorisation accounting for ethnic differences in cardiometabolic risk.'
+    description: >-
+      Recorded and calculated BMI in OLIDS, one row per BMIVAL_COD observation or
+      qualifying weight observation used for calculation, up to the build date.
+      Includes inactive and deceased people aged at least 18, using age at build for
+      living people and age at death otherwise. Every recorded BMI, height and weight
+      was measured at age 18 or over. Calculated BMI uses adult height and
+      weight and fills dates without recorded BMI. Invalid values remain flagged. NICE
+      NG246 categories use lower thresholds for qualifying ethnicities.
     config:
       meta:
         owner:
@@ -34,7 +27,9 @@ models:
         tests:
           - not_null
       - name: age
-        description: 'Age in years at time of analysis (adults 18+ only)'
+        description: >-
+          Age in years at the build date for living people or at death for deceased people.
+          Only people aged 18 or over on that basis are included.
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -62,14 +57,20 @@ models:
       - name: height_date_recorded
         description: When the height used to calculate BMI was entered into the clinical system; null for recorded BMI or when the contributing height has no recorded date
       - name: bmi_source
-        description: 'Source of BMI value (recorded or calculated)'
+        description: >-
+          Recorded for BMIVAL_COD observations. Calculated uses the most recent prior height
+          with a qualifying weight, both recorded at age 18 or over, only on dates without
+          recorded BMI.
         tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ['recorded', 'calculated']
       - name: requires_lower_bmi_thresholds
-        description: 'Flag indicating if person requires lower BMI thresholds per NICE NG246'
+        description: >-
+          True for South Asian, Chinese, other Asian, Middle Eastern, Black African and
+          African-Caribbean ethnicities, under NICE NG246. Based on the recorded evidence
+          selected by int_ethnicity_cardiometabolic_risk.
       - name: cardiometabolic_risk_ethnicity_group
         description: 'Ethnicity group classification for cardiometabolic risk assessment'
       - name: is_valid_bmi
@@ -77,7 +78,9 @@ models:
         tests:
           - not_null
       - name: bmi_category
-        description: 'BMI categorisation using ethnicity-adjusted thresholds per NICE NG246'
+        description: >-
+          NICE NG246 BMI category. Overweight and obesity start at 25 and 30 kg/m2, or 23 and
+          27.5 for qualifying cardiometabolic-risk ethnicities.
         tests:
           - not_null
           - accepted_values:
@@ -92,3 +95,79 @@ models:
                 min_value: 0
                 max_value: 6
                 inclusive: true
+
+unit_tests:
+- name: bmi_adult_age_at_measurement
+  model: int_bmi_all
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT 'SYN_BMI_0'::VARCHAR AS id, 'SYN_BMI'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -9301::NUMBER AS person_id, 15::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 24::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_BMI_1'::VARCHAR AS id, 'SYN_BMI'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -9301::NUMBER AS person_id, 20::NUMBER AS age_at_event, '2026-01-02'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 27::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_BMI_2'::VARCHAR AS id, 'SYN_BMI'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -9301::NUMBER AS person_id, NULL::NUMBER AS age_at_event, '2026-01-03'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 26::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_BMI18'::VARCHAR AS id, 'SYN_BMI'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18130::NUMBER AS person_id, 18::NUMBER AS age_at_event, '2026-01-02'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 24::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_HEIGHT_18150'::VARCHAR AS id, 'SYN_HEIGHT'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18150::NUMBER AS person_id, 17::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 200::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_WEIGHT_18150'::VARCHAR AS id, 'SYN_WEIGHT'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18150::NUMBER AS person_id, 18::NUMBER AS age_at_event, '2026-01-02'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 80::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_HEIGHT_18151'::VARCHAR AS id, 'SYN_HEIGHT'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18151::NUMBER AS person_id, 18::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 200::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_WEIGHT_18151'::VARCHAR AS id, 'SYN_WEIGHT'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18151::NUMBER AS person_id, 17::NUMBER AS age_at_event, '2026-01-02'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 80::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_HEIGHT_18152'::VARCHAR AS id, 'SYN_HEIGHT'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18152::NUMBER AS person_id, 18::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 200::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_WEIGHT_18152'::VARCHAR AS id, 'SYN_WEIGHT'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -18152::NUMBER AS person_id, 18::NUMBER AS age_at_event, '2026-01-02'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-02-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 80::VARCHAR AS result_value
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT 'SYN_BMI'::VARCHAR AS code, 'BMIVAL_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BMI'::VARCHAR AS cluster_description, 'Synthetic BMI'::VARCHAR AS code_description
+      UNION ALL
+      SELECT 'SYN_HEIGHT'::VARCHAR AS code, 'HEIGHT'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BMI'::VARCHAR AS cluster_description, 'Synthetic BMI'::VARCHAR AS code_description
+      UNION ALL
+      SELECT 'SYN_WEIGHT'::VARCHAR AS code, 'WEIGHT'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BMI'::VARCHAR AS cluster_description, 'Synthetic BMI'::VARCHAR AS code_description
+  - input: ref('dim_person_age')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, 25::NUMBER AS age
+      FROM VALUES (-9301), (-18130), (-18150), (-18151), (-18152)
+  - input: ref('int_ethnicity_cardiometabolic_risk')
+    format: sql
+    rows: SELECT -9301::NUMBER AS person_id, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'SYN_GROUP'::VARCHAR
+      AS cardiometabolic_risk_ethnicity_group
+      UNION ALL
+      SELECT -18130::NUMBER AS person_id, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'SYN_GROUP'::VARCHAR AS cardiometabolic_risk_ethnicity_group
+      UNION ALL
+      SELECT -18150::NUMBER AS person_id, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'SYN_GROUP'::VARCHAR AS cardiometabolic_risk_ethnicity_group
+      UNION ALL
+      SELECT -18151::NUMBER AS person_id, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'SYN_GROUP'::VARCHAR AS cardiometabolic_risk_ethnicity_group
+      UNION ALL
+      SELECT -18152::NUMBER AS person_id, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'SYN_GROUP'::VARCHAR AS cardiometabolic_risk_ethnicity_group
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS
+        result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display,
+        NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id,
+        NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS
+        parent_observation_id, NULL::NUMBER AS patient_id, NULL::NUMBER AS person_id, NULL::NUMBER AS age_at_event,
+        NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ
+        AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN
+        AS is_review, NULL::VARCHAR AS result_value, NULL::VARCHAR AS code, NULL::VARCHAR AS cluster_id, NULL::VARCHAR
+        AS source, NULL::VARCHAR AS cluster_description, NULL::VARCHAR AS code_description, NULL::NUMBER AS age,
+        NULL::BOOLEAN AS requires_lower_bmi_thresholds, NULL::VARCHAR AS cardiometabolic_risk_ethnicity_group, NULL::FLOAT
+        AS bmi_value, NULL::VARCHAR AS bmi_source WHERE FALSE
+  expect:
+    rows:
+    - id: SYN_BMI_1
+      bmi_value: 27
+      bmi_source: recorded
+    - id: SYN_BMI18
+      bmi_value: 24
+      bmi_source: recorded
+    - id: SYN_WEIGHT_18152
+      bmi_value: 20
+      bmi_source: calculated

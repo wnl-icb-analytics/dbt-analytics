@@ -5,14 +5,21 @@ models:
       One row per observation id and source cluster, with an effective date no later
       than the build date. Includes IFCCHBAM_COD and DCCTHBA1C_COD tests without
       numeric results. Missing or non-numeric results have null standardised values
-      and false validity. IFCC values use mmol/mol and DCCT values use percent.
+      and false validity. IFCC values use mmol/mol and DCCT values use percent. Values
+      below 20 are read as percent, except unrounded values from 13 to below 20
+      recorded as mmol/mol. These are invalid: below the National Diabetes Audit
+      IFCC range and an extreme percent value.
       Consumers assessing control must check validity; test-presence measures may
-      use every retained observation.
+      use every retained observation. Invalid results have category Invalid and null
+      diabetes-range and QOF target flags. The original unit is retained for review.
     config:
       meta:
         owner:
           name: EddieDavison92
     data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "is_valid_hba1c OR (hba1c_category = 'Invalid' AND meets_qof_target IS NULL AND indicates_diabetes IS NULL)"
       - dbt_utils.expression_is_true:
           arguments:
             expression: "hba1c_original_value is not null or not is_valid_hba1c"
@@ -33,6 +40,12 @@ models:
         description: Person identifier
         data_tests:
           - not_null
+      - name: original_result_unit_code
+        description: Recorded UCUM unit code before scale inference.
+      - name: original_result_unit_display
+        description: Recorded unit display before canonicalisation.
+      - name: is_unit_conflict
+        description: Inferred scale disagrees with the recorded unit or concept cluster. Review before use. Null for unknown scale.
       - name: measurement_type
         description: Type of HbA1c measurement (IFCC, DCCT, or UNKNOWN)
         data_tests:
@@ -41,7 +54,10 @@ models:
               arguments:
                 values: ['IFCC', 'DCCT', 'UNKNOWN']
       - name: is_valid_hba1c
-        description: Whether the result is numeric and within 20-200 mmol/mol for IFCC or 3-20 percent for DCCT; false for missing or non-numeric results
+        description: >
+          Whether the numeric result is within 20-200 mmol/mol for IFCC or 3-20 percent
+          for DCCT. Recorded mmol/mol values from 13 to below 20 are invalid before
+          rounding. False for missing or non-numeric results.
         data_tests:
           - not_null
           - accepted_values:
@@ -50,12 +66,12 @@ models:
                 quote: false
       - name: hba1c_category
         description: >
-          Clinical band derived from the standardised IFCC value (mmol/mol).
-          Bands align with NICE NG28 targets and QOF indicator DM021 (<=58 mmol/mol, inclusive).
+          Invalid for any result outside the validity bands. Clinical band derived from the standardised IFCC value (mmol/mol).
+          Bands align with NICE NG28 targets and the QOF DM020 threshold (<=58 mmol/mol, inclusive).
           Values: Normal (<42), Prediabetes (42–47.9, NICE non-diabetic hyperglycaemia),
-          Diabetes - At NICE Target (48–53.9), Diabetes - Elevated (54–58.0, above NICE target but still within QOF),
+          Diabetes - At NICE Target (48–53.9), Diabetes - Elevated (within QOF) (54–58.0, above NICE target but still within QOF),
           Diabetes - Above Target (>58–74.9, misses QOF), Diabetes - High Risk (75–85.9),
-          Diabetes - Very High Risk (>=86), Invalid (null or out of range).
+          Diabetes - Very High Risk (>=86), Invalid (no standardised IFCC value could be derived; other out-of-range values still receive a band, use is_valid_hba1c to exclude them).
         data_tests:
           - not_null
           - accepted_values:
@@ -70,18 +86,202 @@ models:
                   - 'Diabetes - Very High Risk'
                   - 'Invalid'
       - name: indicates_diabetes
-        description: HbA1c >=48 mmol/mol (NICE NG28 diagnostic threshold for diabetes).
+        description: HbA1c >=48 mmol/mol (NICE NG28 diagnostic threshold). Null when invalid.
         data_tests:
-          - not_null
           - accepted_values:
               arguments:
                 values: [true, false]
                 quote: false
       - name: meets_qof_target
-        description: HbA1c <=58 mmol/mol (QOF indicator DM021 glycaemic control threshold, inclusive).
+        description: HbA1c <=58 mmol/mol, the QOF DM020 threshold (inclusive); not QOF eligibility or achievement. Null when invalid.
         data_tests:
-          - not_null
           - accepted_values:
               arguments:
                 values: [true, false]
                 quote: false
+
+unit_tests:
+- name: hba1c_scale_and_validity
+  model: int_hba1c_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, column2::NUMBER person_id,
+        column3::TIMESTAMP_NTZ clinical_effective_date, column3::TIMESTAMP_NTZ date_recorded,
+        column4::VARCHAR result_value, column5::VARCHAR result_unit_code,
+        CASE WHEN column1 = 'SYN_HPCT' THEN 'SYN_original_percent_words'
+            ELSE column5::VARCHAR END result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+        'Synthetic observation'::VARCHAR mapped_concept_display, column6::VARCHAR cluster_id
+        FROM VALUES ('SYN_1', -9300, '2026-01-01', 15, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_2', -9301, '2026-01-01', 22, 'mmol/mol', 'DCCTHBA1C_COD'),
+        ('SYN_3', -9302, '2026-01-01', 22, '%', 'IFCCHBAM_COD'),
+        ('SYN_4', -9303, '2026-01-01', 22, NULL, 'IFCCHBAM_COD'),
+        ('SYN_5', -9304, '2026-01-01', 48, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_6', -9305, '2026-01-01', 0.5, '%', 'DCCTHBA1C_COD'),
+        ('SYN_7', -9306, '2026-01-01', 250, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_8', -9307, '2026-01-01', NULL, NULL, 'IFCCHBAM_COD'),
+        ('SYN_9', -9308, '2026-01-01', 22, '%{Hemoglobin}', 'IFCCHBAM_COD'),
+        ('SYN_H13', -18120, '2026-01-01', 13, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_H19', -18121, '2026-01-01', 19.99, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_HLOW', -18122, '2026-01-01', 12.99, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_HPCT', -18123, '2026-01-01', 15, '%', 'DCCTHBA1C_COD'),
+        ('SYN_H20', -18124, '2026-01-01', 20, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_H19999', -18127, '2026-01-01', 19.999, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_H25', -18128, '2026-01-01', 25, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_HP1999', -18129, '2026-01-01', 19.99, '%', 'DCCTHBA1C_COD')
+  given: []
+  expect:
+    rows:
+    - id: SYN_1
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      indicates_diabetes: null
+      original_result_unit_display: mmol/mol
+    - id: SYN_2
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Normal
+      meets_qof_target: true
+      is_unit_conflict: true
+      original_result_unit_code: mmol/mol
+      indicates_diabetes: false
+      original_result_unit_display: mmol/mol
+    - id: SYN_3
+      measurement_type: DCCT
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: true
+      original_result_unit_code: '%'
+      indicates_diabetes: null
+      original_result_unit_display: '%'
+    - id: SYN_4
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Normal
+      meets_qof_target: true
+      is_unit_conflict: false
+      original_result_unit_code: null
+      indicates_diabetes: false
+      original_result_unit_display: null
+    - id: SYN_5
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - At NICE Target
+      meets_qof_target: true
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      indicates_diabetes: true
+      original_result_unit_display: mmol/mol
+    - id: SYN_6
+      measurement_type: DCCT
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: false
+      original_result_unit_code: '%'
+      indicates_diabetes: null
+      original_result_unit_display: '%'
+    - id: SYN_7
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      indicates_diabetes: null
+      original_result_unit_display: mmol/mol
+    - id: SYN_8
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: false
+      original_result_unit_code: null
+      indicates_diabetes: null
+      original_result_unit_display: null
+    - id: SYN_9
+      measurement_type: DCCT
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: true
+      original_result_unit_code: '%{Hemoglobin}'
+      indicates_diabetes: null
+      original_result_unit_display: '%{Hemoglobin}'
+    - id: SYN_H13
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      indicates_diabetes: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_H19
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      indicates_diabetes: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_HLOW
+      measurement_type: DCCT
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - Very High Risk
+      meets_qof_target: false
+      indicates_diabetes: true
+      is_unit_conflict: true
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_HPCT
+      measurement_type: DCCT
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - Very High Risk
+      meets_qof_target: false
+      indicates_diabetes: true
+      is_unit_conflict: false
+      original_result_unit_code: '%'
+      original_result_unit_display: SYN_original_percent_words
+    - id: SYN_H20
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Normal
+      meets_qof_target: true
+      indicates_diabetes: false
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_H19999
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      indicates_diabetes: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_H25
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Normal
+      meets_qof_target: true
+      indicates_diabetes: false
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_HP1999
+      measurement_type: DCCT
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - Very High Risk
+      meets_qof_target: false
+      indicates_diabetes: true
+      is_unit_conflict: false
+      original_result_unit_code: '%'
+      original_result_unit_display: '%'

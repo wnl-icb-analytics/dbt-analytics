@@ -1,42 +1,26 @@
 models:
   - name: int_hba1c_latest
-    description: 'Intermediate: Latest HbA1c Observations - Most recent valid HbA1c measurement per person.
-
-      Clinical Logic:
-
-      • Provides current glycaemic control status for diabetes management
-
-      • Supports diabetes care decision-making and QOF reporting
-
-      • Enables current diabetes control assessment and treatment planning
-
-
-      Data Granularity:
-
-      • One row per person with their most recent valid HbA1c
-
-      • Includes only patients with valid HbA1c measurements
-
-      • Supports both IFCC and DCCT measurement formats
-
-
-      Key Features:
-
-      • Latest valid HbA1c identification with measurement type preservation
-
-      • Clinical diabetes control categorisation for care pathway management
-
-      • QOF target achievement flags for quality indicator reporting
-
-      • Diabetes diagnostic indicators for clinical decision support
-      Validity is filtered before selecting the latest result. Observation ID descending
-      breaks ties on the clinical effective date.'
-
+    description: >-
+      Latest valid HbA1c from IFCCHBAM_COD or DCCTHBA1C_COD in OLIDS, one row per
+      person up to the build date. Includes inactive and deceased people of all ages.
+      Valid ranges are 20-200 mmol/mol IFCC or 3-20% DCCT; both formats are retained.
+      IFCC flags use at least 48 for diabetes range and at most 58 for the QOF target,
+      without establishing diagnosis or register eligibility. Observation ID resolves
+      date ties. A later invalid or value-free test sets has_later_unassessable_result;
+      the selected row remains the latest valid result.
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
     columns:
+      - name: most_recent_result_date
+        description: Latest date of any HbA1c test, including invalid and value-free tests.
+      - name: has_later_unassessable_result
+        description: A later invalid or value-free test exists after this valid result.
+      - name: original_result_unit_code
+        description: Recorded UCUM unit code before scale inference.
+      - name: is_unit_conflict
+        description: Inferred scale disagrees with the recorded unit or concept cluster. Review before use.
       - name: person_id
         tests:
           - unique
@@ -118,3 +102,41 @@ models:
               sort_order: 6
         owner:
           name: EddieDavison92
+unit_tests:
+- name: hba1c_latest_later_unassessable
+  model: int_hba1c_latest
+  given:
+  - input: ref('int_hba1c_all')
+    rows: |-
+      SELECT 'SYN_OLD'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -9301::NUMBER AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, TRUE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_LATER'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -9301::NUMBER AS person_id, '2026-02-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, FALSE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_ONLY'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -9302::NUMBER AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, TRUE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_V'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -18125::NUMBER AS person_id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, TRUE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_I'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -18125::NUMBER AS person_id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, FALSE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_INVALID_ONLY'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -18126::NUMBER AS person_id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, FALSE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+    format: sql
+  expect:
+    rows:
+    - id: SYN_OLD
+      most_recent_result_date: "2026-02-01"
+      has_later_unassessable_result: true
+    - id: SYN_ONLY
+      most_recent_result_date: "2026-01-01"
+      has_later_unassessable_result: false
+    - id: SYN_V
+      has_later_unassessable_result: false
+      most_recent_result_date: "2026-03-01"
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+        NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display,
+        NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code,
+        NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value,
+        NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct,
+        NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict,
+        NULL::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result, NULL::TIMESTAMP_NTZ AS most_recent_result_date WHERE FALSE

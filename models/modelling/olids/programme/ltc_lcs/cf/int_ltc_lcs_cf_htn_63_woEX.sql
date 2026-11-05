@@ -1,14 +1,17 @@
 {{ config(materialized='table') }}
 
--- LTC LCS HTN case finding: ICB_CF_HTN_63_woEX (UCLP Priority Group 2b) — pre-Rule-1
+-- LTC LCS HTN case finding: ICB_CF_HTN_63_woEX (UCLP Priority Group 2b), pre-Rule-1 population.
+-- Keep the latest record across the full 22-code systolic or diastolic pool.
+-- Test that same record against the clinic/home code set before its numeric threshold.
+-- CHD/stroke/TIA/PAD exclude Review and Ended episodes; CKD/diabetes are dated on or before today.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/hypertension/icb-cf-htn-63.md
 --
 -- Start = int_ltc_lcs_cf_htn_base. Net logic:
 --   REQUIRE Black ethnicity (vs1, 78 codes [COLLISION] -> pin woEX id) AND stage-1 BP:
---     clinic systolic  (vs2 + vs3) latest >= 140
---     clinic diastolic (vs4 + vs5) latest >= 90
---     home   systolic  (vs2 + vs6) latest >= 135
---     home   diastolic (vs4 + vs7) latest >= 85
+--     clinic systolic  (latest full pool, code IN vs3) >= 140
+--     clinic diastolic (latest full pool, code IN vs5) >= 90
+--     home   systolic  (latest full pool, code IN vs6) >= 135
+--     home   diastolic (latest full pool, code IN vs7) >= 85
 --   EXCLUDE ICB_CF_HTN_61_woEX and ICB_CF_HTN_62_woEX
 --   AND a CVD/metabolic risk-factor include (any of):
 --     CHD_COD (vs8) OR STRK_COD (vs9) OR TIA_COD (vs10) OR PAD_COD (vs11) OR CKD_COD (vs12)
@@ -30,38 +33,22 @@ black_ethnicity as (
 
 clinic_systolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs2, uclp_priority_group_2b_vs3") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_2b_vs2", "uclp_priority_group_2b_vs3") }})
     where result_value >= 140
 ),
 clinic_diastolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs4, uclp_priority_group_2b_vs5") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_2b_vs4", "uclp_priority_group_2b_vs5") }})
     where result_value >= 90
 ),
 home_systolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs2, uclp_priority_group_2b_vs6") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_2b_vs2", "uclp_priority_group_2b_vs6") }})
     where result_value >= 135
 ),
 home_diastolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs4, uclp_priority_group_2b_vs7") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_2b_vs4", "uclp_priority_group_2b_vs7") }})
     where result_value >= 85
 ),
 
@@ -75,7 +62,7 @@ bp_eligible as (
     select person_id from home_diastolic
 ),
 
--- Risk-factor include (register-code arms ever; eGFR/BMI Latest 1)
+-- Risk-factor include; eGFR/BMI retain their Latest 1 restrictions.
 egfr_low as (
     select person_id
     from ({{ get_ltc_lcs_observations_latest("uclp_priority_group_2b_vs13") }})
@@ -87,19 +74,29 @@ bmi_high as (
     where result_value > 35
 ),
 risk_factor as (
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs8") }})
+    select obs.person_id
+    from ({{ get_ltc_lcs_observations(
+        "uclp_priority_group_2b_vs8,uclp_priority_group_2b_vs9,uclp_priority_group_2b_vs10,uclp_priority_group_2b_vs11"
+    ) }}) as obs
+    where not exists (
+        select 1
+        from {{ ref('stg_olids_enriched_concept_map') }} as episode
+        where episode.source_concept_id = obs.episodicity_source_concept_id
+            and episode.source_system in (
+                'EMIS_ObservationEpisode_cs', 'EMIS_Enumeration_cs'
+            )
+            and upper(episode.source_code) in ('REVIEW', 'ENDED')
+    )
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs9") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs10") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs11") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs12") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs12") }})
+    where clinical_effective_date <= current_date()
     union
     select person_id from egfr_low
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs14") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs14") }})
+    where clinical_effective_date <= current_date()
     union
     select person_id from bmi_high
 )

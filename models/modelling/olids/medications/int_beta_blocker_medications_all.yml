@@ -1,7 +1,7 @@
 models:
 - name: int_beta_blocker_medications_all
-  description: Beta blocker medication orders using BNF classification for cardiovascular protection. One row
-    per medication order for all people, without a build-relative window.
+  description: National licensed and unlicensed beta-blocker drug-refset orders for all people, one row per
+    dated order. Lists LBB_COD and ULBB_COD are disjoint; grain tests detect future overlap.
   config:
     meta:
       owner:
@@ -38,14 +38,16 @@ models:
   - name: bnf_name
     description: BNF classification name
   - name: is_recent_3m
-    description: Order within last 3 months
+    description: Order in the 3 calendar months up to and including the build date; lower bound excluded.
   - name: is_recent_6m
-    description: Order within last 6 months
+    description: Order in the 6 calendar months up to and including the build date; lower bound excluded.
   - name: is_recent_12m
-    description: Order within last 12 months
+    description: Order in the 12 calendar months up to and including the build date; lower bound excluded.
   - name: is_hf_licensed
     description: Whether the mapped product belongs to NHS_DRUG_REFSETS/LBB_COD, the HF-licensed beta blocker
       list.
+  - name: is_future_dated
+    description: Order dated after the build date; kept as source evidence, never recent.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:
@@ -53,5 +55,5 @@ models:
         - medication_order_id
   - cluster_ids_exist:
       arguments:
-        cluster_ids: NHS_DRUG_REFSETS/LBB_COD
+        cluster_ids: NHS_DRUG_REFSETS/LBB_COD,NHS_DRUG_REFSETS/ULBB_COD
         source: OPENCODELISTS

@@ -14,7 +14,25 @@ models:
       Exposes setting-specific sk_patient_id linkage dimensions for
       aggregate-only CTE joins to sem_olids_population. Never return the key.
 
+      APC spells include the administrative category at the start of the
+      spell. apc_admission_administrative_category_code is the code supplied
+      by SUS+. apc_admission_administrative_category_name is the NHS Data
+      Dictionary description, and is null when the code is missing or
+      unmatched.
+
+      UEC rows include uec_is_four_hour_breach. It is true when
+      arrival-to-departure time is over 240 minutes, false at 240 minutes or
+      less, and null when duration is missing. uec_four_hour_breach_count
+      counts the true flags.
+
       Tables: obt_encounter_apc, obt_encounter_uec, and obt_encounter_op.
+
+      UEC residence filters use uec_residence_health_borough_name, the
+      legacy CCG-based WNL or NCL health borough of residence at the
+      attendance. Null means outside WNL/NCL or no usable LSOA. UEC
+      commissioner filters use uec_commissioner_code,
+      uec_commissioner_name and uec_commissioner_source. CAM is preferred
+      over DSCRO; it starts in 2024, so earlier attendances use DSCRO.
     config:
       materialized: semantic_view
       schema: SEMANTIC

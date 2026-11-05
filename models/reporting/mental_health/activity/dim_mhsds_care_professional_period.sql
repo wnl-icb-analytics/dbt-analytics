@@ -65,20 +65,16 @@ select
     , s.source_file_received_at
     , s.source_loaded_at
 from {{ ref('stg_mhsds_staff_details') }} as s
-left join {{ ref('mhsds_care_professional_code_lookup') }} as registration_body
+left join {{ ref('nhs_dd_professional_registration_body') }} as registration_body
     on upper(trim(s.prof_reg_body_code)) = registration_body.code
-    and registration_body.code_set_name = 'professional_registration_body'
-left join {{ ref('mhsds_care_professional_code_lookup') }} as staff_group
+left join {{ ref('mhsds_care_professional_staff_group') }} as staff_group
     on upper(trim(s.staff_group_code)) = staff_group.code
-    and staff_group.code_set_name = 'staff_group'
-left join {{ ref('mhsds_care_professional_code_lookup') }} as main_specialty
+left join {{ ref('nhs_dd_main_specialty') }} as main_specialty
     on upper(trim(s.main_specialty_code)) = main_specialty.code
-    and main_specialty.code_set_name = 'main_specialty'
 left join {{ ref('nhs_occupation_codes') }} as occupation
     on upper(trim(s.occupation_code)) = occupation.occupation_code
-left join {{ ref('mhsds_care_professional_code_lookup') }} as job_role
+left join {{ ref('nhs_dd_job_role') }} as job_role
     on upper(trim(s.job_role_code)) = job_role.code
-    and job_role.code_set_name = 'job_role'
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as professional_identifier_organisation

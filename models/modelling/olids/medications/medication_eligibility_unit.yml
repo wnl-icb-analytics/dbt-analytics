@@ -1,0 +1,173 @@
+unit_tests:
+- name: medication_date_flags_boundaries
+  model: int_ppi_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, iff(v.id in ('SYN_MISSING','SYN_CONFLICT'),v.id,'SYN_PAT')::varchar patient_id,
+       iff(v.id in ('SYN_MISSING','SYN_CONFLICT'),-18301,-9100)::number person_id,
+       v.dt::date clinical_effective_date, '01'::varchar bnf_chapter, '0103'::varchar bnf_section,
+       '0103050SYN'::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       'SYN_PPI'::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (select 'SYN_FUTURE',dateadd(day,1,current_date()) union all
+       select 'SYN_TODAY',current_date() union all
+       select 'SYN_3M',dateadd(month,-3,current_date()) union all
+       select 'SYN_3M_OLD',dateadd(day,-1,dateadd(month,-3,current_date())) union all
+       select 'SYN_6M',dateadd(month,-6,current_date()) union all
+       select 'SYN_12M',dateadd(month,-12,current_date()) union all
+       select 'SYN_MISSING',dateadd(day,-1,current_date()) union all
+       select 'SYN_CONFLICT',dateadd(day,-1,current_date()) union all
+       select 'SYN_NULL',null::date) v(id,dt)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: |-
+      select 'SYN_PAT'::varchar id,-9100::number person_id,null::varchar sk_patient_id
+      union all select 'SYN_CONFLICT',-18399,'SYN_SK'
+  expect:
+    rows:
+    - medication_order_id: SYN_FUTURE
+      person_id: -9100
+      is_future_dated: true
+      is_recent_3m: false
+      is_recent_6m: false
+      is_recent_12m: false
+    - medication_order_id: SYN_TODAY
+      person_id: -9100
+      is_future_dated: false
+      is_recent_3m: true
+      is_recent_6m: true
+      is_recent_12m: true
+    - medication_order_id: SYN_3M
+      person_id: -9100
+      is_future_dated: false
+      is_recent_3m: false
+      is_recent_6m: true
+      is_recent_12m: true
+    - medication_order_id: SYN_6M
+      person_id: -9100
+      is_future_dated: false
+      is_recent_3m: false
+      is_recent_6m: false
+      is_recent_12m: true
+    - medication_order_id: SYN_12M
+      person_id: -9100
+      is_future_dated: false
+      is_recent_3m: false
+      is_recent_6m: false
+      is_recent_12m: false
+    - medication_order_id: SYN_3M_OLD
+      person_id: -9100
+      is_future_dated: false
+      is_recent_3m: false
+      is_recent_6m: true
+      is_recent_12m: true
+    - medication_order_id: SYN_MISSING
+      person_id: -18301
+      is_future_dated: false
+      is_recent_3m: true
+      is_recent_6m: true
+      is_recent_12m: true
+    - medication_order_id: SYN_CONFLICT
+      person_id: -18301
+      is_future_dated: false
+      is_recent_3m: true
+      is_recent_6m: true
+      is_recent_12m: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id, null::number as person_id, null::boolean as is_future_dated, null::boolean
+        as is_recent_3m, null::boolean as is_recent_6m, null::boolean as is_recent_12m where false
+- name: medication_repeat_current_latest_eligible_issue
+  model: int_medication_orders_repeat_current
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: select 'SYN_REPEAT'::varchar code,'REPEAT_PRESCRIPTION'::varchar cluster_id
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select id::varchar id, person::number person_id, iff(id in ('SYN_49','SYN_NULL'), 'SYN_PATIENT_COPY', 'SYN_PATIENT_' || person)::varchar patient_id,
+       code::varchar mapped_concept_code,
+       dateadd(day,days,current_date())::date clinical_effective_date, iff(id in ('SYN_NULL','SYN_N_A','SYN_N_Z'),null,dateadd(day,iff(id in ('SYN_41','SYN_62','SYN_81'),-2,-1),current_date()))::timestamp_ntz date_recorded,
+       duration::number duration_days, 'SYN_STATEMENT'::varchar medication_statement_id
+       from (values ('SYN_11',-9101,'SYN_A',-10,56),('SYN_12',-9101,'SYN_A',20,28),
+       ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28),('SYN_41',-9104,'SYN_D',-10,28),('SYN_49',-9104,'SYN_D',-10,56),('SYN_51',-9105,'SYN_E',-20,null),('SYN_59',-9105,'SYN_E',-20,14),('SYN_61',-9106,'SYN_F',-5,28),('SYN_62',-9106,'SYN_F',-5,28),('SYN_71',-9107,'SYN_G',-15,56),('SYN_72',-9107,'SYN_G',-10,0),('SYN_81',-9108,'SYN_H',-10,14),('SYN_82',-9108,'SYN_H',-10,56),
+       ('SYN_EXPIRES_TODAY',-18310,'SYN_EXPIRY',-28,28),('SYN_EXPIRED',-18309,'SYN_EXPIRY',-29,28),
+       ('SYN_TIE_A',-18311,'SYN_TIE',-10,28),('SYN_TIE_Z',-18311,'SYN_TIE',-10,28),
+       ('SYN_DATED',-18312,'SYN_NULL_RECORD',-10,14),('SYN_NULL',-18312,'SYN_NULL_RECORD',-10,56),
+       ('SYN_N_A',-18313,'SYN_NULL_TIE',-10,28),('SYN_N_Z',-18313,'SYN_NULL_TIE',-10,28))
+       v(id,person,code,days,duration)
+  expect:
+    rows:
+    - person_id: -9101
+      mapped_concept_code: SYN_A
+      medication_order_id: SYN_11
+      latest_duration: 56
+    - person_id: -9102
+      mapped_concept_code: SYN_B
+      medication_order_id: SYN_22
+      latest_duration: 28
+    - person_id: -9104
+      mapped_concept_code: SYN_D
+      medication_order_id: SYN_41
+      latest_duration: 28
+    - person_id: -9105
+      mapped_concept_code: SYN_E
+      medication_order_id: SYN_51
+      latest_duration: null
+    - person_id: -9106
+      mapped_concept_code: SYN_F
+      medication_order_id: SYN_62
+      latest_duration: 28
+    - person_id: -9108
+      mapped_concept_code: SYN_H
+      medication_order_id: SYN_82
+      latest_duration: 56
+    - person_id: -18310
+      mapped_concept_code: SYN_EXPIRY
+      medication_order_id: SYN_EXPIRES_TODAY
+      latest_duration: 28
+    - person_id: -18311
+      mapped_concept_code: SYN_TIE
+      medication_order_id: SYN_TIE_Z
+      latest_duration: 28
+    - person_id: -18312
+      mapped_concept_code: SYN_NULL_RECORD
+      medication_order_id: SYN_DATED
+      latest_duration: 14
+    - person_id: -18313
+      mapped_concept_code: SYN_NULL_TIE
+      medication_order_id: SYN_N_Z
+      latest_duration: 28
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::varchar as mapped_concept_code, null::varchar as
+        medication_order_id, null::number as latest_duration where false
+
+- name: valproate_latest_inclusive_boundary_and_final_id
+  model: int_valproate_medications_6m_latest
+  given:
+  - input: ref('int_valproate_medications_all')
+    format: sql
+    rows: |-
+      select person::number person_id,id::varchar medication_order_id,
+       iff(id='SYN_BOUNDARY',dateadd(month,-6,current_date()),dateadd(day,days,current_date()))::date order_date,
+       null::varchar medication_statement_id, null::varchar order_medication_name, null::varchar order_dose, null::varchar order_quantity_unit, null::varchar statement_medication_name, null::varchar mapped_concept_code, null::varchar mapped_concept_display, null::number order_quantity_value,null::number order_duration_days
+       from (values (-18340,'SYN_A',-1),(-18340,'SYN_Z',-1),(-18340,'SYN_FUTURE',1),(-18341,'SYN_BOUNDARY',0)) v(person,id,days)
+  expect:
+    format: sql
+    rows: |-
+      select -18340::number person_id,'SYN_Z'::varchar medication_order_id,2::number recent_order_count union all select -18341,'SYN_BOUNDARY',1
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::varchar as medication_order_id, null::number as recent_order_count where false

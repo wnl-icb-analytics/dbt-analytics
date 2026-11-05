@@ -1,0 +1,42 @@
+models:
+  - name: int_ltc_lcs_moc_events
+    description: LTC LCS programme events, one row per person, event code and date on or before today. Local codes match
+      by source; MDT and sharing include SNOMED descendants.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: event_code
+        description: C check and test; M MDT; S sharing; A agreed; R review; D declined; O offered.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - C
+                  - M
+                  - S
+                  - A
+                  - R
+                  - D
+                  - O
+      - name: event_date
+        description: Clinical effective date; future and undated events are excluded.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - event_code
+              - event_date
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 06a67476-a82f-8c9e-d328-c0c7c5aea698
+              - 50bf74e8-ae15-b5f1-0e25-f6155f398c47
+              - 1e4b1d73-eaed-7e8d-da5e-0a77ca874c17

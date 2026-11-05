@@ -2,32 +2,14 @@ version: 2
 
 models:
   - name: sem_olids_trends
-    description: |
-      OLIDS Population Trends semantic view. OLIDS is the One London
-      Integrated Data Set — primary care data from system suppliers,
-      unified by the One London team.
-
-      Time-series semantic model for population health trend analysis.
-      Built on person_month_analysis_base with 60-month rolling window.
-      Monthly condition flags follow clinical episodes and do not apply QOF register rules.
-
-      Includes age_band_esp for ESP 2013 age-band grouping. ESP weights
-      (esp_weight, esp_proportion) are NOT in this view — for age-standardised
-      rates use sem_olids_population.
-
-      Exposes person_id as a pseudonymised linkage dimension for cross-view
-      cohort intersection (CTE joins to the other sem_olids_* views);
-      aggregate-only output.
-
-      Grain: One row per person per month. Includes inactive/deceased rows —
-      filter is_active as needed.
-
-      Tables Included:
-      - person_month_analysis_base: 60-month rolling window with demographics and condition flags
-
-      Note: This view covers CONDITIONS and DEMOGRAPHICS trends only.
-      For clinical biomarker analysis (BP, HbA1c), use sem_olids_observations.
-
+    description: >-
+      OLIDS demographics and condition episodes over the rolling 60-month window in
+      person_month_analysis_base, one row per person and month. Inactive and deceased
+      rows remain; is_active identifies that month's active population. Condition
+      flags follow episodes rather than QOF register rules. ESP age groups are
+      available; weights use sem_olids_population and biomarkers use
+      sem_olids_observations. person_id supports cohort linkage; final results must be
+      aggregate-only.
     config:
       materialized: semantic_view
       schema: SEMANTIC

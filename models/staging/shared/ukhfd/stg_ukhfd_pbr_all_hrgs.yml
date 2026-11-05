@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_pbr_all_hrgs
+    description: |
+      HRG codes and names in national tariff and NHS Payment Scheme HRG lists from 2010/11, held
+      in UKHFD as yearly revisions. One row represents an HRG code from the start
+      of a financial year until its name, source list or listing status next
+      changed.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [hrg_code, valid_from_date]
+    columns:
+      - name: hrg_code
+        description: HRG code, upper-cased and trimmed.
+        data_tests: [not_null]
+      - name: hrg_name
+        description: HRG name in this revision.
+      - name: source_table_name
+        description: >-
+          UKHFD list the revision came from, such as HRG, APC_And_OPROC (admitted
+          and outpatient procedure prices), HRG_Exclusions (excluded from prices),
+          AandE or Maternity_Prices.
+      - name: is_in_source_data
+        description: >-
+          FALSE when the revision records that the code was absent from that
+          year's UKHFD HRG payment list. The grouper may still output it.
+      - name: valid_from_date
+        description: First day of the financial year from which the revision applies.
+        data_tests: [not_null]
+      - name: valid_to_date
+        description: Last day the revision applies; null for the newest revision.
+      - name: is_latest_revision
+        description: TRUE for the newest revision of the code, including codes no longer listed.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source data.

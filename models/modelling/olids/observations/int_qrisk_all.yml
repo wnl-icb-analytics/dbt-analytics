@@ -2,7 +2,8 @@ models:
   - name: int_qrisk_all
     description: 'QRISK cardiovascular risk scores for cardiovascular disease risk assessment and statin therapy decision-making.
 
-      One row per QRISK observation using QRISKSCORE_COD cluster with QRISK type identification (QRISK2, QRISK3) and clinical risk categorisation.'
+      One row per QRISK observation using QRISKSCORE_COD cluster with QRISK type identification (QRISK2, QRISK3) and clinical risk categorisation.
+      Numeric source values are retained without clamping. Results outside 0-100% or non-numeric results are invalid and have no risk category.'
     config:
       meta:
         owner:
@@ -17,3 +18,34 @@ models:
         tests:
           - unique
           - not_null
+      - name: qrisk_score
+        description: Recorded numeric ten-year CVD risk percentage, without clamping; null for non-numeric results.
+      - name: is_valid_qrisk
+        description: Whether the recorded score is between 0 and 100 inclusive. False for non-numeric results.
+      - name: cvd_risk_category
+        description: CVD risk band for valid percentages; null for invalid or non-numeric results.
+
+unit_tests:
+- name: qrisk_preserves_source_and_rejects_invalid
+  model: int_qrisk_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -98101::NUMBER person_id,
+            '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date, column2::VARCHAR result_value,
+            '%'::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+            'Synthetic QRISK3'::VARCHAR mapped_concept_display, 'QRISKSCORE_COD'::VARCHAR cluster_id
+        FROM VALUES ('SYN_NEGATIVE', '-1'), ('SYN_ZERO', '0'), ('SYN_10', '10'),
+            ('SYN_20', '20'), ('SYN_100', '100'), ('SYN_101', '101'),
+            ('SYN_HIGH', '1000'), ('SYN_TEXT', 'synthetic')
+  given: []
+  expect:
+    rows:
+    - {id: SYN_NEGATIVE, qrisk_score: -1, is_valid_qrisk: false, cvd_risk_category: null, is_high_cvd_risk: false}
+    - {id: SYN_ZERO, qrisk_score: 0, is_valid_qrisk: true, cvd_risk_category: 'Low Risk (<10%)', is_high_cvd_risk: false}
+    - {id: SYN_10, qrisk_score: 10, is_valid_qrisk: true, cvd_risk_category: 'Moderate Risk (10-20%)', is_high_cvd_risk: true}
+    - {id: SYN_20, qrisk_score: 20, is_valid_qrisk: true, cvd_risk_category: 'High Risk (≥20%)', is_high_cvd_risk: true}
+    - {id: SYN_100, qrisk_score: 100, is_valid_qrisk: true, cvd_risk_category: 'High Risk (≥20%)', is_high_cvd_risk: true}
+    - {id: SYN_101, qrisk_score: 101, is_valid_qrisk: false, cvd_risk_category: null, is_high_cvd_risk: false}
+    - {id: SYN_HIGH, qrisk_score: 1000, is_valid_qrisk: false, cvd_risk_category: null, is_high_cvd_risk: false}
+    - {id: SYN_TEXT, qrisk_score: null, is_valid_qrisk: false, cvd_risk_category: null, is_high_cvd_risk: false}

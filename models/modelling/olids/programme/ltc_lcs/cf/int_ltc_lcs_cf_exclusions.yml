@@ -1,23 +1,48 @@
 models:
   - name: int_ltc_lcs_cf_exclusions
     description: >
-      Patients with existing Long Term Conditions relevant to case finding exclusions.
-
-      One row per person with boolean flags for 13 conditions: CKD, AF, COPD, HTN, CHD,
-      Stroke/TIA, PAD, HF, Diabetes (all types), Hyperlipidaemia, NAFLD, Asthma, CYP Asthma.
-
-      Provides separate composite flags mirroring EMIS population searches:
-      - has_metabolic_excluding_condition (ICS_METABOLIC_LTC equivalent): metabolic/CV conditions only
-      - has_respiratory_excluding_condition (ICS_RESP_LTC equivalent): COPD, Asthma, CYP Asthma
-      - has_excluding_condition: combined (legacy, prefer specific flags)
+      LTC LCS case-finding exclusions, one row per person with at least one relevant
+      condition. The metabolic flag combines AF, CKD, CHD, hypertension, heart failure,
+      stroke/TIA, PAD, NAFLD and diabetes register membership with any hyperlipidaemia
+      record ever, including descendants in metabolic_conditions_vs1. Hyperlipidaemia
+      is broader than familial hypercholesterolaemia. The respiratory flag combines
+      COPD, adult asthma (age 18+) and CYP asthma register membership.
+      COPD and NAFLD use the programme LTC LCS register models. Both implement the
+      exported EMIS searches, but their aggregate counts differ from EMIS register counts.
+      Other conditions use QOF or clinical register proxies for EMIS library items that
+      are not in the export. The QOF CKD register is known to differ materially from
+      the EMIS LTC LCS CKD register. The diabetes register requires age 17+ and an active
+      DM_COD diagnosis, rather than any historic diabetes or gestational diabetes code.
+      Provides per-condition flags and a combined flag for existing consumers. Each
+      case-finding base chooses which exclusion flags to apply.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
-          column_name: person_id
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 3b4d5851-8dbb-2c24-7899-5ac257a8e478
+              - 08654d02-552a-7784-076c-e7fcc941d284
+              - f0bfa8e2-972c-1cba-326f-573ef42e6124
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: COPD_COD
     columns:
       - name: person_id
-        tests:
+        data_tests:
           - not_null
+          - unique
+      - name: has_hyperlipidaemia
+        description: Any hyperlipidaemia record ever in metabolic_conditions_vs1, including descendants.
+      - name: earliest_excluding_condition_date
+        description: >
+          Earliest known diagnosis or hyperlipidaemia record date among the person's
+          qualifying conditions. NAFLD dates use the exported NAFLD v2 lists with
+          the shared equivalence rule and exclude alcoholic steatosis, alcoholic
+          steatohepatitis and their descendants. Null when no dated diagnosis
+          evidence is available.

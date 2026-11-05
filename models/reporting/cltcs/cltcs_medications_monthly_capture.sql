@@ -2,6 +2,7 @@
     config(
         materialized='incremental',
         incremental_strategy='append',
+        full_refresh=false,
         on_schema_change='append_new_columns',
         cluster_by=['snapshot_month'],
         tags=['cltcs', 'monthly_capture'],
@@ -34,10 +35,9 @@ Grain: one row per (person_id, snapshot_month).
 Retention: a post_hook keeps ~4 years (48 months) of monthly captures.
 Forward-only: history starts at the first run; it cannot backfill months before it existed.
 
-WARNING (operational): never run this model with --full-refresh. The append-only history is not
-reconstructable, so a full refresh drops the table and re-seeds ONLY the current month, permanently
-deleting every previously captured month. The same hazard applies to the sibling
-cltcs_*_monthly_capture models.
+full_refresh=false: the scheduled monthly build on the 1st runs with --full-refresh, which would
+otherwise rebuild this table from scratch and lose every captured month. To rebuild it on purpose,
+copy the table first, then drop it.
 
 cltcs_monthly_covariates consumes the two 12-month columns (medications_recent_12mo,
 unique_active_ingredient_count_12mo) and the current-repeat columns (medications_repeat,

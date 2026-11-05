@@ -1,0 +1,75 @@
+version: 2
+
+models:
+  - name: qadmissions_predictions_validation
+    description: >
+      QAdmissions 2-year emergency-admission risk at each historical index
+      date, for validating the model against qadmissions_outcomes_validation.
+      Scored by the model registered in the Snowflake Model Registry (ClinRisk
+      2013 v4.1) from qadmissions_input_features_validation.
+
+      Grain: one row per person and index date (end_date), for every row of
+      qadmissions_input_features_validation. Rows the model rejects are kept
+      with is_scored false and the error text.
+
+      The inputs are not repeated here; join to
+      qadmissions_input_features_validation on (end_date, person_id). Scores
+      are 2-year risk, unlike the 1-year live scores in
+      qadmissions_predictions.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - end_date
+              - person_id
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('qadmissions_input_features_validation')
+    columns:
+      - name: end_date
+        data_type: date
+        description: "Index date (a month-end) the features describe."
+        data_tests:
+          - not_null
+
+      - name: person_id
+        data_type: varchar
+        description: "OLIDS person identifier. With end_date, identifies a row."
+        data_tests:
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Commissioning patient identifier, carried from qadmissions_input_features_validation."
+
+      - name: scored_at
+        data_type: timestamp_ntz
+        description: "When the model was called for this build."
+
+      - name: model_version
+        data_type: varchar
+        description: "Version of the registered QAdmissions model that produced the score."
+
+      - name: surv
+        data_type: number
+        description: "Prediction horizon in years passed to the model: 2, matching the follow-up in qadmissions_outcomes_validation."
+
+      - name: is_scored
+        data_type: boolean
+        description: "TRUE if the model produced a score; FALSE if it rejected the inputs (see scoring_errors)."
+
+      - name: score_percent
+        data_type: float
+        description: >
+          Predicted risk of an emergency admission within 2 years of end_date,
+          as a percentage (0-100). NULL when is_scored is FALSE.
+
+      - name: scoring_errors
+        data_type: varchar
+        description: >-
+          Reasons for rejection, separated by semicolons, such as BMI outside
+          20-40 or a missing or out-of-range town. NULL when is_scored is TRUE.

@@ -169,7 +169,7 @@ WITH all_audit_scores AS (
     ,audit_date as assessment_date
     ,audit_type as assessment_type
     ,ASSESSED_LAST_12M
-,ROW_NUMBER() OVER (PARTITION BY person_id, analysis_month ORDER BY CASE WHEN assessment_date  >= DATEADD('month', -12, analysis_month) AND assessment_date <= analysis_month THEN 1 ELSE 0 END DESC, assessment_date desc) as row_num
+,ROW_NUMBER() OVER (PARTITION BY person_id, analysis_month ORDER BY CASE WHEN assessment_date::date >= DATEADD('month', -12, analysis_month) AND assessment_date::date <= analysis_month THEN 1 ELSE 0 END DESC, assessment_date desc) as row_num
     FROM (
     -- Get the all AUDIT score for each person
     SELECT distinct
@@ -177,17 +177,22 @@ WITH all_audit_scores AS (
         ,p.analysis_month
         ,DATE(a.clinical_effective_date) AS audit_date
         ,CASE
-    WHEN clinical_effective_date  >= DATEADD('month', -12, p.analysis_month) AND clinical_effective_date <= p.analysis_month THEN 'Met' ELSE 'Not Met' 
+    WHEN clinical_effective_date::date >= DATEADD('month', -12, p.analysis_month) AND clinical_effective_date::date <= p.analysis_month THEN 'Met' ELSE 'Not Met'
     END As ASSESSED_LAST_12M
         ,a.audit_type
-         -- Prefer full AUDIT if same date
-        ,ROW_NUMBER() OVER (PARTITION BY person_id, clinical_effective_date ORDER BY CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END ) AS rn            
+        -- Retain each eligible month; prefer the instrument total over item scores.
+        ,ROW_NUMBER() OVER (
+            PARTITION BY a.person_id, p.analysis_month, a.clinical_effective_date
+            ORDER BY IFF(a.audit_type = 'Full AUDIT', 0, 1), a.audit_score DESC,
+                a.date_recorded DESC NULLS LAST, a.id
+        ) AS rn
         FROM {{ ref('int_alcohol_audit_scores') }} a
         --FROM MODELLING.OLIDS_OBSERVATIONS.INT_ALCOHOL_AUDIT_SCORES a
         INNER JOIN {{ ref('int_smi_population_historical')  }} p USING (PERSON_ID)
         --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_HISTORICAL p USING (PERSON_ID)
         WHERE is_valid_score = TRUE 
-        AND clinical_effective_date <= (select MAX(analysis_month) from {{ ref('int_smi_population_historical') }}) 
+        -- Only evidence known by this month end may compete across alcohol sources.
+        AND a.clinical_effective_date::date <= p.analysis_month
         QUALIFY rn = 1               
     ) a
      QUALIFY row_num = 1
@@ -200,7 +205,7 @@ WITH all_audit_scores AS (
     ,disorder_date as assessment_date
     ,'Alcohol Misuse Disorder' as assessment_type
     ,ASSESSED_LAST_12M
-,ROW_NUMBER() OVER (PARTITION BY person_id, analysis_month ORDER BY CASE WHEN assessment_date  >= DATEADD('month', -12, analysis_month) AND assessment_date <= analysis_month THEN 1 ELSE 0 END DESC, assessment_date desc) as row_num
+,ROW_NUMBER() OVER (PARTITION BY person_id, analysis_month ORDER BY CASE WHEN assessment_date::date >= DATEADD('month', -12, analysis_month) AND assessment_date::date <= analysis_month THEN 1 ELSE 0 END DESC, assessment_date desc) as row_num
     FROM (
     -- Get alcohol disorder history - basic summary- as active and historical
     SELECT DISTINCT
@@ -209,13 +214,13 @@ WITH all_audit_scores AS (
        ,d.concept_display
        ,DATE(d.clinical_effective_date) AS disorder_date
     ,CASE 
-    WHEN clinical_effective_date >= DATEADD('month', -12, p.analysis_month) AND clinical_effective_date <= p.analysis_month THEN 'Met' ELSE 'Not Met' 
+    WHEN clinical_effective_date::date >= DATEADD('month', -12, p.analysis_month) AND clinical_effective_date::date <= p.analysis_month THEN 'Met' ELSE 'Not Met'
     END As ASSESSED_LAST_12M
     FROM {{ ref('int_alcohol_misuse_disorders') }} d
     --FROM MODELLING.OLIDS_OBSERVATIONS.int_alcohol_misuse_disorders d
     INNER JOIN {{ ref('int_smi_population_historical')  }} p USING (PERSON_ID)
     --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_HISTORICAL p USING (PERSON_ID)
-    where clinical_effective_date <= (select MAX(analysis_month) from {{ ref('int_smi_population_historical') }}) 
+    where clinical_effective_date::date <= p.analysis_month
       ) a
    QUALIFY row_num = 1
     )
@@ -227,7 +232,7 @@ WITH all_audit_scores AS (
     ,alcohol_assessment_date as assessment_date
     ,'Alcohol Unit Assessment' as assessment_type
     ,ASSESSED_LAST_12M
-,ROW_NUMBER() OVER (PARTITION BY person_id, analysis_month ORDER BY CASE WHEN assessment_date  >= DATEADD('month', -12, analysis_month) AND assessment_date <= analysis_month THEN 1 ELSE 0 END DESC, assessment_date desc) as row_num
+,ROW_NUMBER() OVER (PARTITION BY person_id, analysis_month ORDER BY CASE WHEN assessment_date::date >= DATEADD('month', -12, analysis_month) AND assessment_date::date <= analysis_month THEN 1 ELSE 0 END DESC, assessment_date desc) as row_num
     FROM (
     --get all unit value assessments using ALC_COD
     select distinct
@@ -235,7 +240,7 @@ WITH all_audit_scores AS (
     ,p.analysis_month
     ,a.clinical_effective_date as alcohol_assessment_date
      ,CASE 
-     WHEN clinical_effective_date >= DATEADD('month', -12, p.analysis_month) AND clinical_effective_date <= p.analysis_month THEN 'Met' ELSE 'Not Met' 
+     WHEN clinical_effective_date::date >= DATEADD('month', -12, p.analysis_month) AND clinical_effective_date::date <= p.analysis_month THEN 'Met' ELSE 'Not Met'
      END As ASSESSED_LAST_12M
     ,a.result_value as alcohol_units
     ,a.result_unit_display as unit_display
@@ -243,7 +248,7 @@ WITH all_audit_scores AS (
     --FROM MODELLING.OLIDS_OBSERVATIONS.int_smi_alcohol_all a
     INNER JOIN {{ ref('int_smi_population_historical')  }} p USING (PERSON_ID)
     --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_HISTORICAL p USING (PERSON_ID)
-    where clinical_effective_date <= (select MAX(analysis_month) from {{ ref('int_smi_population_historical') }}) 
+    where clinical_effective_date::date <= p.analysis_month
    ) a
      QUALIFY row_num = 1
     )

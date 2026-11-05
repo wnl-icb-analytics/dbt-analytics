@@ -1,0 +1,80 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_read_v2_to_snomed_map
+    description: >-
+      National NHS Data Migration Read v2 to SNOMED CT maps from UKHFD, one row
+      per map ID and map effective date. Retains only the latest UKHFD version
+      of each source record, including historical map dates and inactive maps.
+      Map IDs recur across effective dates. The final release was March 2020.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [map_id, map_effective_date]
+    columns:
+      - name: map_id
+        description: Source map identifier; unique together with map_effective_date.
+        data_tests: [not_null]
+      - name: read_code
+        description: Five-character Read v2 code with outer whitespace removed. Case and dots remain significant.
+      - name: term_code
+        description: Read v2 term code with outer whitespace removed; '00' identifies the preferred term.
+      - name: snomed_concept_id
+        description: Mapped SNOMED CT concept identifier as trimmed text.
+      - name: snomed_description_id
+        description: Mapped SNOMED CT description identifier as trimmed text.
+      - name: is_assured
+        description: Whether the source assurance flag is '1'; null when the flag is null.
+      - name: map_effective_date
+        description: Date this map revision took effect, distinct from UKHFD ingestion history.
+        data_tests: [not_null]
+      - name: is_current_map
+        description: Whether this revision has source map status '1'; null when the status is null. Earlier revisions can also carry this status.
+      - name: source_effective_from_at
+        description: Start of the latest retained UKHFD history version of this source record.
+      - name: source_imported_at
+        description: UKHFD ingestion timestamp for the retained source record.
+
+  - name: stg_ukhfd_ctv3_to_snomed_map
+    description: >-
+      National NHS Data Migration CTV3 to SNOMED CT maps from UKHFD, one row
+      per map ID and map effective date. Retains only the latest UKHFD version
+      of each source record, including historical map dates and inactive maps.
+      Map IDs recur across effective dates. The final release was March 2020.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [map_id, map_effective_date]
+    columns:
+      - name: map_id
+        description: Source map identifier; unique together with map_effective_date.
+        data_tests: [not_null]
+      - name: ctv3_code
+        description: CTV3 concept code with outer whitespace removed. Case and dots remain significant.
+      - name: ctv3_term_id
+        description: CTV3 term identifier with outer whitespace removed, distinct from the concept code.
+      - name: ctv3_term_type
+        description: Source term type, P for preferred or S for synonym; null when not supplied.
+      - name: snomed_concept_id
+        description: Mapped SNOMED CT concept identifier as trimmed text.
+      - name: snomed_description_id
+        description: Mapped SNOMED CT description identifier as trimmed text.
+      - name: is_assured
+        description: Whether the source assurance flag is '1'; null when the flag is null.
+      - name: map_effective_date
+        description: Date this map revision took effect, distinct from UKHFD ingestion history.
+        data_tests: [not_null]
+      - name: is_current_map
+        description: Whether this revision has source map status '1'; null when the status is null. Earlier revisions can also carry this status.
+      - name: source_effective_from_at
+        description: Start of the latest retained UKHFD history version of this source record.
+      - name: source_imported_at
+        description: UKHFD ingestion timestamp for the retained source record.

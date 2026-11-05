@@ -1,7 +1,7 @@
 {# Shared macros for the SDL SLAM contract-monitoring feeds (LSACM, LSPLCM,
    LSDrPLCM, LSDePLCM): value parsers for provider-typed free text (formats
-   observed in profiling, 2026-06), the submission-slice CTEs that derive
-   dv_is_latest_submission, and the column blocks common to all 4 staging
+   observed in profiling, 2026-06), the submission-slice CTEs, the
+   stg_*_latest view body, and the column blocks common to all 4 staging
    models. Models supply only feed-specific columns; aliases are fixed:
    `s` = source table, `sl` = submission_slices_ranked. #}
 
@@ -242,24 +242,41 @@ where exists (
 {% endif %}
 {% endmacro %}
 
-{# Body of a stg_*_latest view: staging rows restricted to the file holding
-   the current provider statement of each (provider, FY, month) slice, via
-   the stg_slam_latest_submission lookup. LSACM adds commissioner to the slice
-   (DLP/Local providers submit per-commissioner files) — the lookup's
-   dv_commissioner is NULL for the other feeds, so they stay provider-grain. #}
+{# Body of a stg_*_latest view: staging rows restricted to the files selected
+   in stg_slam_latest_submission (latest upload per site and recipient
+   stream). #}
 {% macro slam_latest_view(staging_model, feed) %}
-select s.*
-from {{ ref(staging_model) }} as s
-join {{ ref('stg_slam_latest_submission') }} as l
+{#- Rows of the files selected in stg_slam_latest_submission. Slices with more
+    than one selected file (parallel contracts, complementary parts,
+    consolidated streams) keep, per content group, only the latest file's rows. -#}
+{%- set slice_join -%}
     on l.feed = '{{ feed }}'
    and l.meta_file_id = s.meta_file_id
-   and l.meta_batch_id = s.meta_batch_id
+   and equal_null(l.meta_batch_id, s.meta_batch_id)
    and equal_null(l.dv_provider_code, s.dv_provider_code)
+   and equal_null(l.submission_site_code, s.meta_provider_code)
    and equal_null(l.dv_financial_year, s.dv_financial_year)
    and equal_null(l.dv_financial_month, s.dv_financial_month)
-{% if feed == 'LSACM' %}
-   and equal_null(l.dv_commissioner, s.commissioner_code)
-{% endif %}
+{%- endset -%}
+select s.*
+from {{ ref(staging_model) }} as s
+inner join {{ ref('stg_slam_latest_submission') }} as l
+{{ slice_join }}
+where l.files_in_slice = 1
+
+union all
+
+select s.*
+from {{ ref(staging_model) }} as s
+inner join {{ ref('stg_slam_latest_submission') }} as l
+{{ slice_join }}
+where l.files_in_slice > 1
+qualify dense_rank() over (
+    partition by s.dv_provider_code, s.meta_provider_code, s.dv_financial_year, s.dv_financial_month,
+                 s.commissioner_code, s.point_of_delivery_code, s.activity_treatment_function_code
+    order by l.is_in_file_financial_year desc, l.submission_loaded_at desc nulls last,
+             l.meta_file_id desc, l.meta_batch_id desc
+) = 1
 {% endmacro %}
 
 {# Join condition matching a source row to its submission slice. Null-safe on

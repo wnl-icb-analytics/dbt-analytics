@@ -54,6 +54,14 @@ models:
         data_type: timestamp_ntz
         description: "Submitted spell discharge date. Null when SUS+ supplied no spell discharge date."
 
+      - name: decided_to_admit_date
+        data_type: date
+        description: Submitted spell decision-to-admit date. No clock is supplied. Null when not recorded.
+
+      - name: discharge_ready_date
+        data_type: date
+        description: Submitted date the patient was ready for discharge. It is not the discharge date. Null when not recorded.
+
       - name: estimated_discharge_date
         data_type: date
         description: >-
@@ -113,6 +121,19 @@ models:
       - name: spell_admission_method
         data_type: varchar
         description: "Method of admission of the spell (code)"
+
+      - name: admission_administrative_category_code
+        data_type: varchar
+        description: >-
+          Administrative category code at the start of the spell, supplied by
+          SUS+. Null means no code was supplied.
+
+      - name: admission_administrative_category_name
+        data_type: varchar
+        description: >-
+          Newest published NHS Data Dictionary description for the administrative
+          category at the start of the spell. Null when the supplied code is
+          missing or has no dictionary match.
 
       - name: admission_method_name
         data_type: varchar
@@ -204,6 +225,30 @@ models:
       - name: treatment_function_code_desc
         data_type: varchar
         description: "Treatment function description for the specialised service within which the patient is treated."
+
+      - name: commissioner_code_at_event
+        data_type: varchar
+        description: >-
+          Commissioner Assignment Method (CAM) commissioner when supplied;
+          otherwise the service-agreement/DSCRO commissioner.
+
+      - name: commissioner_name_at_event
+        data_type: varchar
+        description: >-
+          Latest available organisation name for commissioner_code_at_event,
+          not the name at the activity date. Null when the code is missing or
+          has no organisation lookup match.
+
+      - name: commissioner_source_at_event
+        data_type: varchar
+        description: >-
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO when the service-agreement commissioner
+          was used. Null when neither source supplied a commissioner.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CAM, DSCRO]
 
       - name: hrg_code
         data_type: varchar

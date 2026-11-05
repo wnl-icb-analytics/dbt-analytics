@@ -4,7 +4,7 @@
     Calculates Diabetes register status at one or more reference dates.
 
     Business Logic:
-    - Age ≥17 at reference date
+    - Age ≥17 at reference date, or at death if earlier (ltc_register_age_at)
     - Active diabetes diagnosis (no resolution after the latest diagnosis; same-day resolution retains it)
     - Type classification (Type 1 vs Type 2 vs Unknown)
 
@@ -57,14 +57,7 @@
         SELECT
             diag.reference_date,
             diag.person_id,
-            FLOOR(DATEDIFF(
-                'month',
-                birth.birth_date_approx,
-                CASE
-                    WHEN birth.death_date_approx <= diag.reference_date THEN birth.death_date_approx
-                    ELSE diag.reference_date
-                END
-            ) / 12) AS age
+            {{ ltc_register_age_at('birth', 'diag.reference_date') }} AS age
         FROM diabetes_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON diag.person_id = birth.person_id

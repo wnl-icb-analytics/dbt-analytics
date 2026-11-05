@@ -3,7 +3,10 @@ models:
     description: >
       QOF BMI observations used by the obesity register: numeric BMI values
       (BMIVAL_COD) and BMI30+ codes (BMI30_COD, read as 30). One row per observation
-      with a BMI value. is_valid_bmi marks values from 5 to 400.
+      with a BMI value. is_valid_bmi marks the QOF band from 5 to 400.
+      is_plausible_bmi marks the separate 10-150 band used by int_bmi_all.
+      is_threshold_code identifies BMI30_COD evidence, whose value of 30 is a
+      threshold rather than a measured BMI. These flags do not change QOF eligibility.
     config:
       meta:
         owner:
@@ -31,10 +34,43 @@ models:
       - name: bmi_value
         description: BMI in kg/m²; BMI30_COD codes are read as 30.
       - name: is_valid_bmi
-        description: BMI between 5 and 400.
+        description: BMI between 5 and 400 inclusive, the QOF validity band.
+      - name: is_plausible_bmi
+        description: BMI between 10 and 150 inclusive, matching int_bmi_all. Independent of QOF validity; for threshold codes this assesses the imputed 30, not a measurement.
+      - name: is_threshold_code
+        description: Whether the row is BMI30_COD threshold evidence. Its bmi_value of 30 represents BMI at least 30, not an exact measurement.
       - name: is_bmi_30_plus
         description: BMI30_COD code or BMI of 30 or more.
       - name: is_bmi_27_5_plus
         description: BMI of 27.5 or more; the obesity threshold for people from ethnic groups at higher cardiometabolic risk.
       - name: is_bmi_25_plus
         description: BMI of 25 or more.
+
+unit_tests:
+- name: qof_bmi_plausibility_and_threshold_evidence
+  model: int_bmi_qof_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -98103::NUMBER person_id,
+            '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+            '2026-01-01'::TIMESTAMP_NTZ date_recorded, column2::VARCHAR result_value,
+            'SYN_CODE'::VARCHAR mapped_concept_code, 'Synthetic BMI'::VARCHAR mapped_concept_display,
+            column3::VARCHAR cluster_id
+        FROM VALUES ('SYN_4', '4', 'BMIVAL_COD'), ('SYN_5', '5', 'BMIVAL_COD'),
+            ('SYN_10', '10', 'BMIVAL_COD'), ('SYN_30', '30', 'BMIVAL_COD'),
+            ('SYN_150', '150', 'BMIVAL_COD'), ('SYN_151', '151', 'BMIVAL_COD'),
+            ('SYN_400', '400', 'BMIVAL_COD'), ('SYN_401', '401', 'BMIVAL_COD'),
+            ('SYN_THRESHOLD', NULL, 'BMI30_COD')
+  given: []
+  expect:
+    rows:
+    - {id: SYN_4, bmi_value: 4, is_valid_bmi: false, is_plausible_bmi: false, is_threshold_code: false}
+    - {id: SYN_5, bmi_value: 5, is_valid_bmi: true, is_plausible_bmi: false, is_threshold_code: false}
+    - {id: SYN_10, bmi_value: 10, is_valid_bmi: true, is_plausible_bmi: true, is_threshold_code: false}
+    - {id: SYN_30, bmi_value: 30, is_valid_bmi: true, is_plausible_bmi: true, is_threshold_code: false}
+    - {id: SYN_150, bmi_value: 150, is_valid_bmi: true, is_plausible_bmi: true, is_threshold_code: false}
+    - {id: SYN_151, bmi_value: 151, is_valid_bmi: true, is_plausible_bmi: false, is_threshold_code: false}
+    - {id: SYN_400, bmi_value: 400, is_valid_bmi: true, is_plausible_bmi: false, is_threshold_code: false}
+    - {id: SYN_401, bmi_value: 401, is_valid_bmi: false, is_plausible_bmi: false, is_threshold_code: false}
+    - {id: SYN_THRESHOLD, bmi_value: 30, is_valid_bmi: true, is_plausible_bmi: true, is_threshold_code: true}

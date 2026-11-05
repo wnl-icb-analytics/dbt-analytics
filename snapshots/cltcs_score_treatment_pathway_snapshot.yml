@@ -1,0 +1,52 @@
+snapshots:
+  - name: cltcs_score_treatment_pathway_snapshot
+    relation: ref('cltcs_score_treatment_pathway_snapshot_input')
+    description: >
+      SCD2 history of the candidate C-LTCS treatment score (cltcs_score_treatment_pathway),
+      its scaled domain components, composite z-score and priority tier, keyed on
+      `sk_patient_id` and `inclusion_rule`: one history per patient per C-LTCS cohort
+      ('original_criteria' or 'adults_with_complexity'). Built beside
+      cltcs_score_treatment_snapshot so the candidate can be compared with the current
+      treatment score, and used for control-cohort matching, as-at a given date.
+
+      `check_cols` is `score_treatment` and `score_treatment_age_adjusted`, so a new
+      version opens when either final score changes. Both are checked because the
+      age-adjusted score is capped at 100 and also changes with age alone. The scaled
+      domain scores, composite z-score and tier are carried in the snapshot and captured
+      as-at each version open, but do not themselves trigger a version. The scores are
+      cohort-relative and so can drift between builds without an underlying feature
+      change; because they are rounded to whole points as the model's final step, drift
+      of under half a point will not version, which limits churn.
+
+      The candidate score is still being developed. A change to its domains, indicators
+      or scaling moves the scores for everyone and opens new versions across the cohort,
+      so history either side of such a change is not directly comparable.
+
+      Rows removed from `cltcs_score_treatment_pathway_snapshot_input` (patient leaves
+      the scored population) are closed via `hard_deletes: invalidate`
+      (`dbt_valid_to` set). Re-entry opens a new row.
+
+    config:
+      strategy: check
+      unique_key: [sk_patient_id, inclusion_rule]
+      updated_at: table_refresh_date
+      hard_deletes: invalidate
+      check_cols:
+        - score_treatment
+        - score_treatment_age_adjusted
+
+    columns:
+      - name: sk_patient_id
+        description: "Unique patient identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: inclusion_rule
+        description: "C-LTCS cohort the score belongs to: 'original_criteria' or 'adults_with_complexity'. Part of the snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

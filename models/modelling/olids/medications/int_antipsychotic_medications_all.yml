@@ -1,11 +1,20 @@
 models:
   - name: int_antipsychotic_medications_all
-    description: 'Antipyschotic medication orders using BNF classification Drugs used in psychoses and related disorders. Excludes Lithium as this is already captured in a separate model.'
+    description: >-
+      Antipsychotic orders in OLIDS from BNF 040201 (drugs) and 040202 (depot injections),
+      excluding lithium. One row per dated order linked by staging person_id, including
+      inactive and deceased people. Order dates cannot exceed the latest medication-feed
+      transformation timestamp. An order does not establish an SMI diagnosis or confirm
+      that the medicine was taken.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests: []
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -38,8 +47,8 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'

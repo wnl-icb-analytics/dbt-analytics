@@ -18,10 +18,10 @@ Downstream impact lets an analyst list which models would rebuild if a named mod
 Preconditions:
 
 - Doctor reports `result: ready-warehouse`. Fusion `ls` still talks to the project and may need catalog metadata.
-- Use a real model name. The fixture is `nhs_ethnicity_2001`.
+- Use a real model name. The fixture is `ethnicity_2001`.
 
-- **Self list.** Run `control-dbt-analytics ls -- -s nhs_ethnicity_2001`. Exit code `0`. Stdout contains `nhs_ethnicity_2001` and does not contain person-level data.
-- **Downstream list.** Run `control-dbt-analytics ls -- -s nhs_ethnicity_2001+`. Exit code `0`. Stdout includes the fixture and any consumer model names.
+- **Self list.** Run `control-dbt-analytics ls -- -s ethnicity_2001`. Exit code `0`. Stdout contains `ethnicity_2001` and does not contain person-level data.
+- **Downstream list.** Run `control-dbt-analytics ls -- -s ethnicity_2001+`. Exit code `0`. Stdout includes the fixture and any consumer model names.
 - **Proof.** Keep `dbt-ls.stdout.log` and `dbt-ls.exit_code.txt`. The log is a name list, not a query result.
 
 ## Gotchas

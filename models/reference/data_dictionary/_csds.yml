@@ -1,0 +1,181 @@
+version: 2
+
+# Code lists specific to the Community Services Data Set.
+
+models:
+  - name: csds_activity_type
+    description: >-
+      NHS Data Model and Dictionary Community Care Activity Type codes, used by CSDS. One row
+      per code ever published, with the newest UKHFD definition. Combines the current code set
+      with the retired Community Care Activity Type Code; the current definition is used where
+      a code is in both. Retired codes remain for historical joins.
+    config: &owner_community
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns: &latest_columns
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: category
+        description: Newest published category where supplied.
+      - name: notes
+        description: Newest published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: valid_to_date
+        description: Last date on which the selected definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
+
+  - name: csds_activity_type_history
+    description: >-
+      Community Care Activity Type definition revisions from UKHFD, including the retired code
+      set. One row per source code set, code and UKHFD revision.
+    config: *owner_community
+    data_tests: &history_grain_test
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [source_code_set_name, code, source_effective_from_at]
+    columns: &history_columns
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code.
+        data_tests: [not_null]
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: category
+        description: Published category in this revision where supplied.
+      - name: notes
+        description: Published notes in this revision where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: valid_to_date
+        description: Last date on which the definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
+
+  - name: csds_care_professional_staff_group
+    description: >-
+      NHS Data Model and Dictionary Care Professional Staff Group For Community Care codes,
+      used by CSDS. One row per code ever published, with the newest UKHFD definition. Retired
+      codes remain for historical joins.
+    config: *owner_community
+    columns: *latest_columns
+
+  - name: csds_care_professional_staff_group_history
+    description: >-
+      Care Professional Staff Group For Community Care definition revisions from UKHFD. One
+      row per code and UKHFD revision.
+    config: *owner_community
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: csds_reason_for_referral
+    description: >-
+      NHS Data Model and Dictionary Reason For Referral To Community Care codes, used by CSDS.
+      One row per code ever published, with the newest UKHFD definition. Retired codes remain
+      for historical joins.
+    config: *owner_community
+    columns: *latest_columns
+
+  - name: csds_reason_for_referral_history
+    description: >-
+      Reason For Referral To Community Care definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner_community
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: csds_referral_closure_reason
+    description: >-
+      NHS Data Model and Dictionary Referral Closure Reason codes, used by CSDS. One row per
+      code ever published, with the newest UKHFD definition. Combines the shared Referral
+      Closure Reason code set with the retired Referral Closure Reason For Community Care; the
+      shared definition is used where a code is in both. Retired codes remain for historical
+      joins.
+    config: *owner_community
+    columns: *latest_columns
+
+  - name: csds_referral_closure_reason_history
+    description: >-
+      Referral Closure Reason definition revisions from UKHFD, including the retired code set.
+      One row per source code set, code and UKHFD revision.
+    config: *owner_community
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: csds_service_or_team_type
+    description: >-
+      One row per community service-or-team-type code ever published. Uses the
+      newest UKHFD definition and retains retired codes for historical joins.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: *latest_columns
+
+  - name: csds_service_or_team_type_history
+    description: >-
+      Community service-or-team-type definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: csds_source_of_referral
+    description: >-
+      One row per community source-of-referral code ever published. Uses the
+      newest UKHFD definition and retains retired codes for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: csds_source_of_referral_history
+    description: >-
+      Community source-of-referral definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: csds_waiting_time_measurement_type
+    description: >-
+      NHS Data Model and Dictionary Waiting Time Measurement Type For Community Care codes,
+      used by CSDS. One row per code ever published, with the newest UKHFD definition. Retired
+      codes remain for historical joins.
+    config: *owner_community
+    columns: *latest_columns
+
+  - name: csds_waiting_time_measurement_type_history
+    description: >-
+      Waiting Time Measurement Type For Community Care definition revisions from UKHFD. One
+      row per code and UKHFD revision.
+    config: *owner_community
+    data_tests: *history_grain_test
+    columns: *history_columns

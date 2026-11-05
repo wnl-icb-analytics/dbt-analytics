@@ -3,7 +3,8 @@ select
     event_type,
     person_id,
     patient_id,
-    {{ consistent_sk_patient_id_format('sk_patient_id') }} as sk_patient_id,
+    -- The stable key is already canonical text. TRIM prevents partition pruning here.
+    nullif(sk_patient_id::varchar, '1') as sk_patient_id,
     event_at,
     event_date,
     event_time_precision,

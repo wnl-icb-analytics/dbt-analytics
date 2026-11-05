@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- The APC long-form clinical models retain every non-null source code. Summing
 -- observation_count restores source-record grain after repeated codes are
 -- collapsed within each spell.

@@ -3,12 +3,22 @@ macros:
   - name: get_ltc_lcs_medication_orders_latest
     description: >
       Returns the most recent medication order per person and valueset.
-      Filters by LTC/LCS valueset IDs or friendly names, ordered by clinical_effective_date desc.
+      Filters by LTC/LCS valueset IDs or friendly names. Orders by order_date descending
+      with nulls last, date_recorded descending with nulls last, then medication_order_id descending.
+      Same-day records use EMIS save time; result values do not break ties.
 
 
+      Inherits P2 root permissions: public and equivalent local roots permit
+      mapped concepts and requested descendants within the existing expansion.
+      Other local roots match their original source code only.
     arguments:
       - name: valuesets
         type: string
         description: >
           Comma-separated valueset IDs or friendly names to filter by.
           Can be passed as 'VS001,VS002' or "'VS001','VS002'"
+      - name: match_paths
+        type: string
+        description: >
+          Both mapped and exact source matches by default. 'mapped' omits exact
+          source matches. 'source' uses exact original-source matches only.

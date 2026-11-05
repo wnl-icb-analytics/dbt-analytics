@@ -23,5 +23,5 @@ from {{ ref('stg_mhsds_care_plan') }} as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as plan_label
-    on upper(trim(s.care_plan_type_mh::varchar)) = plan_label.code and plan_label.code_set_name = 'care_plan_type'
+left join {{ ref('mhsds_care_plan_type') }} as plan_label
+    on upper(trim(s.care_plan_type_mh::varchar)) = plan_label.code

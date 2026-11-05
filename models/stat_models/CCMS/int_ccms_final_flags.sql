@@ -5,8 +5,8 @@
 }}
 
 /*
-CCMS final condition flags — collapses the 35 raw flags in
-int_ccms_intermediate_flags into the 20 Cambridge categories used by the
+CCMS final condition flags — collapses the 37 raw flags in
+int_ccms_intermediate_flags into the 21 Cambridge categories used by the
 weighted score.
 
 Combination rules per Payne et al. 2020 / 2022 modified CCMS:

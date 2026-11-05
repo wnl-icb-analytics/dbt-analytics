@@ -1,41 +1,12 @@
 models:
   - name: dim_person_demographics_historical
-    description: 'Historical Person Demographics - SCD Type 2
-
-      Tracks changes to demographic attributes over time using SCD-2 pattern. Pure assembly model joining upstream building blocks without duplicating calculations.
-
-      Grain: One row per person per change period (not per month)
-
-      Key Features:
-
-      • SCD-2 structure with effective_start_date, effective_end_date, is_current, period_sequence
-
-      • Tracks changes in: practice registration, ethnicity, address/geography
-
-      • No age fields (age is derived, not an attribute - calculate in consuming models using calculate_age_attributes macro)
-
-      • Change detection: new period created when practice OR ethnicity OR address changes
-
-      • Pure assembly: joins from int_patient_registrations, int_ethnicity_all, int_person_geography, dim_person_birth_death, etc.
-
-      Storage Efficiency:
-
-      • ~85-90% more efficient than person-month grain
-
-      • Change-based periods (typically 5-10 per person) vs monthly snapshots
-
-      Inclusion Criteria:
-
-      • Must have valid birth_date_approx (required for age calculations in consuming models)
-
-      • Must have registration history (practice_code IS NOT NULL)
-
-      Known Limitations:
-
-      • Address fields use current address for all periods (address SCD dates not yet populated in int_person_geography)
-
-      For monthly snapshots with conditions, use person_month_analysis_base. For current state only, use dim_person_demographics.'
-
+    description: >-
+      Demographic history in OLIDS, one row per person and retained change period,
+      with a valid approximate birth date and practice registration. Registration
+      periods account for death and deregistration. Registration and ethnicity
+      describe the period; address, gender, language and organisation mappings use
+      current records. Address history is unavailable. Age is not stored and must be
+      assessed for the analysis date.
     config:
       meta:
         owner:
@@ -50,15 +21,19 @@ models:
         description: 'Surrogate key for patient record'
 
       - name: effective_start_date
-        description: 'Start date of this demographic period (SCD-2)'
+        description: >-
+          Start of the retained demographic period. Period boundaries follow
+          registration, ethnicity and available address dates.
         tests:
           - not_null
 
       - name: effective_end_date
-        description: 'End date of this demographic period (NULL if current, SCD-2)'
-
+        description: >-
+          Exclusive end of the demographic period. Null means the period is open-ended.
       - name: is_current
-        description: 'Flag for the latest retained period per person. Computed after the registration filter, so deceased patients (whose open-ended period is dropped) keep a current row (SCD-2).'
+        description: >-
+          True for the latest retained period per person, including when that period has
+          ended. It does not mean the person is currently registered.
         tests:
           - not_null
 
@@ -146,8 +121,8 @@ models:
         description: 'Start date of practice registration'
 
       - name: registration_end_date
-        description: 'End date of practice registration (NULL if active)'
-
+        description: >-
+          Recorded practice registration end date; null when none is recorded.
       - name: pcn_code
         description: 'Primary Care Network code'
 
@@ -186,7 +161,7 @@ models:
 
       # REVIEW: plain postcode replaces the removed postcode hash.
       - name: postcode_hash
-        description: 'Pseudonymised residential postcode hash during this period'
+        description: 'Pseudonymised postcode hash of the person''s current address (not period-specific)'
 
       - name: uprn_hash
         description: 'Patient address UPRN hash (placeholder)'
@@ -195,19 +170,19 @@ models:
         description: 'Household identifier (placeholder)'
 
       - name: icb_code_resident
-        description: 'ICB code where patient resided during this period'
+        description: 'ICB code of the person''s current address (not period-specific)'
 
       - name: icb_resident
-        description: 'ICB name where patient resided during this period'
+        description: 'ICB name of the person''s current address (not period-specific)'
 
       - name: local_authority_code
-        description: 'Local Authority code where patient resided during this period'
+        description: 'Local Authority code of the person''s current address (not period-specific)'
 
       - name: local_authority_name
-        description: 'Local Authority name where patient resided during this period'
+        description: 'Local Authority name of the person''s current address (not period-specific)'
 
       - name: borough_resident
-        description: 'London borough where patient resided during this period'
+        description: 'London borough of the person''s current address (not period-specific)'
 
       - name: is_london_resident
         description: 'Flag indicating if patient resided in Greater London'
@@ -216,16 +191,16 @@ models:
         description: 'London area classification (NCL, Other London, Outside London)'
 
       - name: lsoa_code_21
-        description: 'LSOA 2021 code where patient resided during this period'
+        description: 'LSOA 2021 code of the person''s current address (not period-specific)'
 
       - name: lsoa_name_21
-        description: 'LSOA 2021 name where patient resided during this period'
+        description: 'LSOA 2021 name of the person''s current address (not period-specific)'
 
       - name: ward_code
-        description: 'Electoral Ward 2025 code where patient resided during this period'
+        description: 'Electoral Ward 2025 code of the person''s current address (not period-specific)'
 
       - name: ward_name
-        description: 'Electoral Ward 2025 name where patient resided during this period'
+        description: 'Electoral Ward 2025 name of the person''s current address (not period-specific)'
 
       - name: imd_decile_19
         description: 'IMD 2019 decile (1=most deprived, 10=least deprived)'
@@ -246,7 +221,7 @@ models:
         description: 'IMD 2025 numeric quintile (1=most deprived, 5=least deprived)'
 
       - name: neighbourhood_resident
-        description: 'NCL neighbourhood classification'
+        description: 'WNL neighbourhood of residence, from the ward of the postcode (LSOA best-fit ward if the postcode ward is not in the ward lookup); null outside WNL'
 
     tests:
       - dbt_utils.unique_combination_of_columns:

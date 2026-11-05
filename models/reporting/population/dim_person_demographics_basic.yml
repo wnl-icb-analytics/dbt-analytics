@@ -5,12 +5,12 @@ models:
       meta:
         owner:
           name: Jake Kealey
-    description: >
-      Dimensional table providing comprehensive demographic information for persons,
-      including gender, ethnicity, residence and registration details enriched with
-      reference data lookups.
-
-      Documentation available: https://github.com/ncl-icb-analytics/dbt-ncl-analytics/blob/main/docs/model_documentation/dim_person_demographics_basic.md
+    description: >-
+      Cross-system demographics from PDS, SUS and national ethnicity feeds, one row per
+      sk_patient_id. Includes patients without current registration or residence; use
+      the status flags to select a population. Residence geography uses 2021 LSOAs, 2025
+      wards and IMD 2025. Registered borough follows the practice's commissioning
+      relationship, rather than residence.
     columns:
       - name: sk_patient_id
         description: Surrogate key for patient
@@ -76,11 +76,11 @@ models:
         description: Residence ICB group - NCL, NWL, Other London or Outside London
 
       - name: residence_neighbourhood_code
-        description: Neighbourhood code for residence location (NCL only; the WNL
-          source is name-only, so NULL for NWL)
+        description: WNL neighbourhood code for residence location (canonical
+          REFERENCE scheme, e.g. BRE01); null outside WNL
 
       - name: residence_neighbourhood_name
-        description: Neighbourhood name for residence location (NCL + NWL)
+        description: WNL neighbourhood name for residence location; null outside WNL
 
       - name: residence_imd_decile
         description: Index of Multiple Deprivation decile for residence location
@@ -120,7 +120,7 @@ models:
         description: Registered sub-ICB name (NHS North Central London / NHS North West London, curated)
 
       - name: registered_neighbourhood_code
-        description: Neighbourhood code for registered GP practice (NCL + NWL)
+        description: Neighbourhood code for the registered WNL GP practice (canonical REFERENCE scheme, e.g. BRE01)
 
       - name: registered_neighbourhood_name
         description: Neighbourhood name for registered GP practice (NCL + NWL)

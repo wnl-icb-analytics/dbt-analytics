@@ -2,41 +2,14 @@ version: 2
 
 models:
   - name: sem_olids_observations_history
-    description: |
-      OLIDS Clinical Observations History semantic view. OLIDS is the One
-      London Integrated Data Set — primary care data from system suppliers,
-      unified by the One London team.
-
-      Serial / over-time companion to sem_olids_observations. Holds every
-      recorded biomarker reading (one row per person x biomarker x date) so
-      that latest-N, trajectory, variability, and recheck-interval questions
-      can be answered with window functions. Long format — filter to a single
-      observation_type before reading value.
-
-      Not capped at 60 months (unlike sem_olids_appointments/sem_olids_trends):
-      full history is retained for currently-registered persons, enabling
-      long-run per-person trajectories. Left/deceased persons retain only ~5
-      years, so pre-5-year population cross-sections are survivor-biased — use
-      for per-person and currently-registered-cohort change, not long-run
-      population averages.
-
-      Grain: One row per observation event (a person can have multiple
-      readings of one biomarker on the same date; observation_event_id is
-      the tiebreaker).
-
-      Exposes person_id as a pseudonymised linkage dimension for latest-N
-      windowing and cross-view cohort intersection (CTE joins to the other
-      sem_olids_* views); aggregate-only output.
-
-      Tables Included:
-      - int_observation_events_long: long-format biomarker history
-      - dim_person_demographics: patient demographics, geography, deprivation
-
-      Column-level dbt tests are intentionally not defined on this semantic_view.
-      Uniqueness / not-null integrity is enforced upstream on
-      int_observation_events_long, because semantic_view models are not
-      validated as standard queryable relations.
-
+    description: >-
+      Historical OLIDS clinical measurements, one row per observation event from
+      int_observation_events_long. Multiple same-day readings remain distinct;
+      observation_type defines value, unit and category. Demographic and geography
+      fields are current. History has no 60-month cap, but leavers and deceased people
+      have about five years of retained records, so older comparisons favour current
+      registrants. person_id supports serial-reading analysis and cohort linkage;
+      final results must be aggregate-only.
     config:
       materialized: semantic_view
       schema: SEMANTIC

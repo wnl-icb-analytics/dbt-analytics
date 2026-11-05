@@ -1,14 +1,12 @@
 models:
   - name: fct_covid_flu_uptake
-    description: 'Combined COVID and flu vaccination uptake facts without demographics.
-
-      Grain: One row per person per campaign per risk group they qualify for
-
-      Contains: • Programme identifier (COVID/FLU) for filtering • Eligibility status and reasons for each programme • Vaccination status (vaccinated, declined, no record) • Uptake category and timing metrics • Campaign details and dates
-
-      Purpose: Core uptake facts for both programmes. Join with published_reporting_direct_care.covid_flu_dashboard_base for dashboard consumption with demographics.
-
-      Campaigns: the ids listed in covid_reported_campaign_ids() and flu_reported_campaign_ids() - currently COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026, COVID Autumn 2026, Flu 2024-25, Flu 2025-26 and Flu 2026-27'
+    description: >-
+      COVID and flu vaccination uptake for OLIDS, one row per person, programme,
+      reported campaign, eligible risk group and subcohort. Includes eligible people
+      and non-eligible vaccinated people; COVID also includes non-eligible
+      decline-only records. Each programme retains its own population month,
+      eligibility rules, tracking windows and status priority. People can appear in
+      several groups and campaigns, so use distinct-person counts for headcounts.
     config:
       meta:
         indicator:
@@ -79,7 +77,9 @@ models:
               arguments:
                 values: ['COVID', 'FLU']
       - name: campaign_id
-        description: Campaign identifier (programme-specific)
+        description: >-
+          Programme-specific reported campaign selected by covid_reported_campaign_ids()
+          or flu_reported_campaign_ids().
         tests:
           - not_null
 

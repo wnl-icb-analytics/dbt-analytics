@@ -1,0 +1,35 @@
+version: 2
+models:
+  - name: stg_ukhfd_index_of_multiple_deprivation_by_lsoa
+    description: >-
+      Overall Index of Multiple Deprivation by LSOA: one row per LSOA and release held in
+      UKHFD (2010, 2015, 2019 and 2025), with the local authority supplied with the 2019
+      and 2025 releases. Corrects UKHFD's 2025 local authority for LSOA E01027305 to West
+      Northamptonshire, as in MHCLG's corrected release.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - release_year
+              - lsoa_code
+    columns:
+      - name: release_year
+        description: Publication year of the Indices of Deprivation release.
+        data_tests: [not_null]
+      - name: lsoa_code
+        description: ONS LSOA code on the release's boundaries.
+        data_tests: [not_null]
+      - name: local_authority_district_code
+        description: >-
+          ONS local authority district code supplied with the release: 2019 boundaries for
+          2019 and 2024 boundaries for 2025. Null for 2010 and 2015.
+      - name: imd_score
+        description: Index of Multiple Deprivation score. Higher values indicate greater deprivation.
+      - name: imd_rank
+        description: Rank among LSOAs in England for the release; 1 is the most deprived.
+      - name: imd_decile
+        description: Decile among LSOAs in England for the release; 1 is the most deprived 10%.

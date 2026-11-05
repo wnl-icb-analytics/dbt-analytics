@@ -1,0 +1,37 @@
+snapshots:
+  - name: cltcs_ltc_lcs_moc_snapshot
+    relation: ref('cltcs_ltc_lcs_moc_snapshot_input')
+    description: >
+      SCD2 history of each person's LTC LCS Model of Care (MoC) stage and pathway status,
+      keyed on `person_id`. Built for the C-LTCS matched-control panel
+      (cltcs_monthly_covariates), which reads MoC status as-at each index date.
+
+      `check_cols` are the two MoC fields, so a new version opens whenever either changes.
+      Both look back over the last 12 months from the build date, so a version can open when
+      an activity ages out of that window as well as when a new one is recorded. This is
+      separate from fct_person_ltc_lcs_risk_summary_snapshot, which versions only on
+      risk-group changes.
+
+      People who leave the MoC base population are closed via `hard_deletes: invalidate`
+      (`dbt_valid_to` set), so a person with no version valid on a date was not on the MoC
+      base then. Re-entry opens a new row. History starts at the first `dbt snapshot` run.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      updated_at: table_refresh_date
+      hard_deletes: invalidate
+      check_cols:
+        - moc_stage_completed_label
+        - moc_pathway_status
+
+    columns:
+      - name: person_id
+        description: "Unique person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

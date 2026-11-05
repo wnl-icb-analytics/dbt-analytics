@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: biomarker_trajectories_input_features
+    description: >
+      HbA1c readings for the biomarker trajectories model, which fits a Gaussian
+      process to each person's series to estimate their underlying HbA1c trajectory,
+      change points, rate of change and days above clinical thresholds. One row per
+      person, clinical effective date and IFCC value.
+
+      The population is currently registered, living people, excluding test
+      patient records (dim_person_active_patients), with a valid HbA1c
+      (is_valid_hba1c in int_hba1c_all) in the 5 years up to the build date. Values are in IFCC
+      mmol/mol. Where a person has both IFCC and DCCT results on one date, only the
+      IFCC results are kept. Repeated identical values on one date are kept once.
+      The model applies the HbA1c rules used for C-LTCS in cltcs_measurements to
+      this wider population.
+
+      No opt-out filter applies; secondary-use consumers must apply
+      dim_person_secondary_use_allowed.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - clinical_effective_date
+              - hba1c_ifcc
+      # The biomarker trajectories job treats a person missing from this model as having no
+      # readings left and deletes their outputs, so an empty build would clear
+      # every output row.
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: person_id
+        description: OLIDS person identifier.
+
+      - name: clinical_effective_date
+        description: Date the HbA1c test was taken.
+
+      - name: hba1c_ifcc
+        description: >
+          HbA1c in IFCC mmol/mol. DCCT percent results are converted upstream and
+          rounded to a whole number.
+
+      - name: measurement_type
+        description: >
+          Scale the result was recorded on: IFCC (mmol/mol) or DCCT (percent,
+          converted to IFCC in hba1c_ifcc).
+
+      - name: observation_id
+        description: >
+          OLIDS observation id of the retained result. Where the same value was
+          recorded more than once on a date, the IFCC result is kept, then the
+          lowest id.

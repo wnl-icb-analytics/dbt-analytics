@@ -9,16 +9,34 @@ All lipid-regulating medication orders (BNF section 2.12): statins, ezetimibe,
 bempedoic acid, PCSK9 inhibitors, inclisiran, fibrates, bile acid sequestrants,
 nicotinic acid derivatives and omega-3 products.
 
-Legacy BNF codes place every chemical in the section under prefix 0212000, so the
-section filter is the class definition. lipid_lowering_class splits the section by
-chemical substance code so consumers can choose the products that count as
-lipid-lowering therapy for their purpose.
+National STAT_COD, EZETIMIBE_COD, BEMPACID_COD, PCSK9I_COD and INCLISIRAN_COD
+lists classify products within BNF 2.12. Other classes use BNF chemical codes.
+dm+d ingredient counts identify fixed-dose combinations.
 
 Excludes orders dated before 1990 or after the build date; the source carries both.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
 
-WITH base_orders AS (
+WITH list_membership AS (
+    SELECT
+        code,
+        BOOLOR_AGG(source = 'ECL_CACHE' AND cluster_id = 'STAT_COD') AS is_stat_cod,
+        BOOLOR_AGG(source = 'ECL_CACHE' AND cluster_id = 'EZETIMIBE_COD') AS is_ezetimibe_cod,
+        BOOLOR_AGG(source = 'ECL_CACHE' AND cluster_id = 'BEMPACID_COD') AS is_bempacid_cod,
+        BOOLOR_AGG(source = 'ECL_CACHE' AND cluster_id = 'INCLISIRAN_COD') AS is_inclisiran_cod,
+        BOOLOR_AGG(source = 'ECL_CACHE' AND cluster_id = 'PCSK9I_COD') AS is_pcsk9i_cod,
+        BOOLOR_AGG(source = 'OPENCODELISTS' AND cluster_id IN (
+            'NHS_DRUG_REFSETS/HIATORVASTAT_COD', 'NHS_DRUG_REFSETS/HIROSUVASTAT_COD',
+            'NHS_DRUG_REFSETS/HISIMVASTAT_COD')) AS is_high_intensity_statin
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE (source = 'ECL_CACHE' AND cluster_id IN (
+        'STAT_COD', 'EZETIMIBE_COD', 'BEMPACID_COD', 'INCLISIRAN_COD', 'PCSK9I_COD'))
+        OR (source = 'OPENCODELISTS' AND cluster_id IN (
+            'NHS_DRUG_REFSETS/HIATORVASTAT_COD', 'NHS_DRUG_REFSETS/HIROSUVASTAT_COD',
+            'NHS_DRUG_REFSETS/HISIMVASTAT_COD'))
+    GROUP BY code
+),
+base_orders AS (
     SELECT
         person_id,
         medication_order_id,
@@ -44,30 +62,19 @@ WITH base_orders AS (
 
 classified AS (
     SELECT
-        *,
+        bo.*,
+        coalesce(lm.is_stat_cod, false) AS is_stat_cod,
+        coalesce(lm.is_high_intensity_statin, false) AS national_high_intensity,
+        dmd.ingredient_count,
+        dmd.vtm_id,
         CASE
-            WHEN bnf_chemical_code IN (
-                '0212000B0',  -- Atorvastatin
-                '0212000AA',  -- Rosuvastatin
-                '0212000Y0',  -- Simvastatin
-                '0212000X0',  -- Pravastatin
-                '0212000M0',  -- Fluvastatin
-                '0212000C0'   -- Cerivastatin (withdrawn)
-            ) THEN 'STATIN'
-            WHEN bnf_chemical_code IN (
-                '0212000AC',  -- Simvastatin / ezetimibe
-                '0212000AJ'   -- Simvastatin / fenofibrate
-            ) THEN 'STATIN_COMBINATION'
-            WHEN bnf_chemical_code = '0212000L0' THEN 'EZETIMIBE'
-            WHEN bnf_chemical_code IN (
-                '0212000AK',  -- Bempedoic acid
-                '0212000AL'   -- Bempedoic acid / ezetimibe
-            ) THEN 'BEMPEDOIC_ACID'
-            WHEN bnf_chemical_code IN (
-                '0212000AH',  -- Evolocumab
-                '0212000AI'   -- Alirocumab
-            ) THEN 'PCSK9_INHIBITOR'
-            WHEN bnf_chemical_code = '0212000AM' THEN 'INCLISIRAN'
+            WHEN lm.is_stat_cod AND dmd.ingredient_count >= 2 THEN 'STATIN_COMBINATION'
+            WHEN lm.is_stat_cod THEN 'STATIN'
+            WHEN lm.is_bempacid_cod THEN 'BEMPEDOIC_ACID'
+            WHEN lm.is_ezetimibe_cod THEN 'EZETIMIBE'
+            WHEN lm.is_pcsk9i_cod THEN 'PCSK9_INHIBITOR'
+            WHEN lm.is_inclisiran_cod THEN 'INCLISIRAN'
+            -- No national lists are available for the remaining BNF chemical classes.
             WHEN bnf_chemical_code IN (
                 '0212000D0',  -- Bezafibrate
                 '0212000P0',  -- Fenofibrate
@@ -91,7 +98,9 @@ classified AS (
             ) THEN 'OMEGA_3'
             ELSE 'OTHER'     -- e.g. ispaghula husk
         END AS lipid_lowering_class
-    FROM base_orders
+    FROM base_orders bo
+    LEFT JOIN list_membership lm ON bo.mapped_concept_code = lm.code
+    LEFT JOIN {{ ref('dmd_product') }} dmd ON bo.mapped_concept_code = dmd.product_code
 )
 
 SELECT
@@ -111,22 +120,24 @@ SELECT
     bnf_name,
     bnf_chemical_code,
     lipid_lowering_class,
-    lipid_lowering_class IN ('STATIN', 'STATIN_COMBINATION') AS is_statin,
+    is_stat_cod AS is_statin,
 
-    -- Statin intensity by typical LDL reduction; null for non-statin products
-    CASE
-        WHEN bnf_chemical_code IN ('0212000B0', '0212000AA') THEN 'HIGH_INTENSITY'      -- >=50% LDL reduction
-        WHEN bnf_chemical_code IN ('0212000Y0', '0212000X0', '0212000M0') THEN 'MODERATE_INTENSITY'  -- 30-49%
+    -- National high-intensity lists classify product strength, not prescribed daily dose.
+    CAST(CASE
+        WHEN NOT is_stat_cod THEN NULL
+        WHEN national_high_intensity THEN 'HIGH_INTENSITY'
         WHEN lipid_lowering_class = 'STATIN_COMBINATION' THEN 'COMBINATION'
-        WHEN lipid_lowering_class = 'STATIN' THEN 'OTHER_STATIN'
-    END AS statin_intensity,
+        ELSE 'OTHER_STATIN'
+    END AS VARCHAR) AS statin_intensity,
 
-    -- Fixed-dose combination products
-    bnf_chemical_code IN ('0212000AC', '0212000AJ', '0212000AL') AS is_combination_therapy,
+    -- Omega-3 esters are one agent; laropiprant treats nicotinic-acid flushing, not lipids.
+    COALESCE(ingredient_count >= 2, FALSE)
+        AND lipid_lowering_class <> 'OMEGA_3'
+        AND COALESCE(vtm_id <> '15926311000001102', TRUE) AS is_combination_therapy,
 
     -- Order recency at build time; order_date is never after the build date
-    order_date >= DATEADD(day, -90, CURRENT_DATE()) AS is_recent_3m,
-    order_date >= DATEADD(day, -180, CURRENT_DATE()) AS is_recent_6m,
-    order_date >= DATEADD(day, -365, CURRENT_DATE()) AS is_recent_12m
+    {{ medication_date_flags('order_date', include_future_flag=false) }},
+    -- NICE NG238 high intensity means >40% LDL-C reduction; refsets classify product strength.
+    national_high_intensity AS is_high_intensity_statin
 
 FROM classified

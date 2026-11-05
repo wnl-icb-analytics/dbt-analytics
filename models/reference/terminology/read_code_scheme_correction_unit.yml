@@ -1,0 +1,33 @@
+unit_tests:
+- name: read_scheme_correction_preserves_all_membership_evidence
+  model: read_code_scheme_correction
+  given:
+  - input: ref('stg_dictionary_dbo_readcodes')
+    rows:
+    - {read_code: SYN_V2_ONLY, read_code_alt: null, is_read_v2: true, is_ctv3: false}
+    - {read_code: SYN_CTV_ONLY, read_code_alt: null, is_read_v2: false, is_ctv3: true}
+    - {read_code: SYN_BOTH, read_code_alt: null, is_read_v2: true, is_ctv3: true}
+    # Two Dictionary concepts share each alternative. Ambiguity still proves membership.
+    - {read_code: SYN_PARENT_A, read_code_alt: SYN_V2_ALT, is_read_v2: true, is_ctv3: true}
+    - {read_code: SYN_PARENT_B, read_code_alt: SYN_V2_ALT, is_read_v2: true, is_ctv3: true}
+    - {read_code: SYN_PARENT_C, read_code_alt: SYN_CTV_ALT, is_read_v2: true, is_ctv3: true}
+    - {read_code: SYN_PARENT_D, read_code_alt: SYN_CTV_ALT, is_read_v2: true, is_ctv3: true}
+    - {read_code: SYN_V2_ALT, read_code_alt: null, is_read_v2: false, is_ctv3: true}
+    - {read_code: SYN_CTV_ALT, read_code_alt: null, is_read_v2: true, is_ctv3: false}
+    - {read_code: SYN_V2_TERM, read_code_alt: null, is_read_v2: false, is_ctv3: true}
+    - {read_code: SYN_V2_BASE, read_code_alt: null, is_read_v2: false, is_ctv3: true}
+    - {read_code: SYN_CTV_CONCEPT, read_code_alt: null, is_read_v2: true, is_ctv3: false}
+    - {read_code: SYN_CTV_TERM, read_code_alt: null, is_read_v2: true, is_ctv3: false}
+  - input: ref('stg_ukhfd_read_v2_term')
+    rows:
+    - {code: SYN_V2_TERM, read_code: SYN_V2_BASE}
+  - input: ref('stg_ukhfd_ctv3_concept')
+    rows:
+    - {code: SYN_CTV_CONCEPT}
+  - input: ref('stg_ukhfd_ctv3_term')
+    rows:
+    - {code: SYN_CTV_TERM}
+  expect:
+    rows:
+    - {submitted_coding_system: ctv3, code: SYN_V2_ONLY, resolved_coding_system: read_v2}
+    - {submitted_coding_system: read_v2, code: SYN_CTV_ONLY, resolved_coding_system: ctv3}

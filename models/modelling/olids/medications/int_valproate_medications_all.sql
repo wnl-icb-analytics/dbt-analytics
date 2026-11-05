@@ -19,7 +19,7 @@ WITH valproate_from_prog_codes AS (
     SELECT DISTINCT
         mo.id AS medication_order_id,
         NULL AS medication_statement_id,
-        pp.person_id,
+        mo.person_id,
         mo.clinical_effective_date::DATE AS order_date,
         mo.medication_name AS order_medication_name,
         mo.dose AS order_dose,
@@ -35,8 +35,6 @@ WITH valproate_from_prog_codes AS (
         NULL AS bnf_name,
         'PROG_CODES' AS source_method
     FROM {{ ref('stg_olids_medication_order') }} AS mo
-    INNER JOIN {{ ref('int_patient_person_unique') }} AS pp
-        ON mo.patient_id = pp.patient_id
     LEFT JOIN {{ ref('stg_reference_valproate_prog_codes') }} AS vp
         ON
             mo.mapped_concept_code = vp.code
@@ -172,29 +170,28 @@ valproate_enhanced AS (
             ELSE 'UNKNOWN_DOSE'
         END AS dose_category,
 
-        -- Formulation type for bioequivalence monitoring
+        -- Keep the published label vocabulary; exact dm+d form is available separately.
         CASE
-            WHEN
-                vo.order_medication_name ILIKE '%TABLET%' THEN 'TABLET'
-            WHEN
-                vo.order_medication_name ILIKE '%CAPSULE%' THEN 'CAPSULE'
-            WHEN
-                vo.order_medication_name ILIKE '%LIQUID%'
-                OR vo.order_medication_name ILIKE '%SYRUP%'
-                THEN 'LIQUID'
-            WHEN
-                vo.order_medication_name ILIKE '%MODIFIED RELEASE%'
-                OR vo.order_medication_name ILIKE '%MR%'
-                THEN 'MODIFIED_RELEASE'
+            WHEN dmd.form_description ILIKE 'Modified-release%'
+                OR dmd.form_description ILIKE 'Prolonged-release%' THEN 'MODIFIED_RELEASE'
+            WHEN dmd.form_description ILIKE '%tablet%' THEN 'TABLET'
+            WHEN dmd.form_description ILIKE '%capsule%' THEN 'CAPSULE'
+            WHEN dmd.form_description ILIKE '%solution%'
+                OR dmd.form_description ILIKE '%suspension%'
+                OR dmd.form_description ILIKE '%liquid%'
+                OR dmd.form_description ILIKE '%syrup%' THEN 'LIQUID'
             ELSE 'UNKNOWN_FORMULATION'
         END AS formulation_type,
+        coalesce(dmd.form_description, 'UNKNOWN') AS dmd_formulation_type,
+        CASE WHEN dmd.form_description IS NULL THEN NULL
+             ELSE dmd.form_description ILIKE 'Modified-release%'
+                OR dmd.form_description ILIKE 'Prolonged-release%' END AS is_modified_release,
 
         -- Recency flags for clinical monitoring
-        vo.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        vo.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        vo.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('vo.order_date') }}
 
     FROM valproate_orders AS vo
+    LEFT JOIN {{ ref('dmd_product') }} dmd ON vo.mapped_concept_code = dmd.product_code
 )
 
 -- Final selection with ALL persons - no filtering by active status
@@ -227,10 +224,13 @@ SELECT
     ve.is_recent_3m,
     ve.is_recent_6m,
     ve.is_recent_12m,
+    ve.is_future_dated,
 
     -- Add person demographics for reference
     p.current_practice_id,
-    p.total_patients
+    p.total_patients,
+    ve.dmd_formulation_type,
+    ve.is_modified_release
 
 FROM valproate_enhanced AS ve
 -- Join to main person dimension (includes ALL persons)

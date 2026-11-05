@@ -12,7 +12,7 @@ Grain: one row per medication order (issue).
 
 Joins:
 - stg_olids_medication_statement: prescription details (acute/repeat, active status, expiry)
-- int_patient_person_unique: patient_id → person_id
+- Person linkage comes directly from the staging medication order.
 
 BNF hierarchy comes from upstream stg_olids_medication_order (pre-joined in dbt-olids,
 clustered on bnf_chapter):
@@ -27,7 +27,7 @@ SELECT
     -- Order identifiers
     mo.id AS medication_order_id,
     mo.medication_statement_id,
-    pp.person_id,
+    mo.person_id,
     mo.patient_id,
     mo.provider_organisation_id,
     mo.publisher_organisation_code AS practice_code,
@@ -69,10 +69,6 @@ SELECT
     END AS fiscal_year_start
 
 FROM {{ ref('stg_olids_medication_order') }} mo
-
--- Person mapping
-INNER JOIN {{ ref('int_patient_person_unique') }} pp
-    ON mo.patient_id = pp.patient_id
 
 -- Prescription details (statement = the prescription, order = each issue)
 LEFT JOIN {{ ref('stg_olids_medication_statement') }} ms

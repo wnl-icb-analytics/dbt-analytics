@@ -28,6 +28,7 @@ AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 ),
 observations_with_demographics AS (
     SELECT DISTINCT
+        bo.id,
         bo.person_id,
         pd.gender,
         date(bo.clinical_effective_date) as clinical_effective_date,
@@ -35,12 +36,15 @@ observations_with_demographics AS (
         bo.concept_display,
         bo.result_value,
         CASE
-when bo.result_unit_display in ('{units}/wk','units/w','upw','unit/wk','u/ week','u(nits)/we','units/week','Units PW','Units per wk','Units/wk','Unt/Wk','U/wkly','U/wee0') THEN 'U/week'
+WHEN LOWER(TRIM(bo.result_unit_display)) IN ('{units}/wk','units/w','upw','unit/wk','u/ week','u(nits)/we','units/week',
+     'units pw','units per wk','units/wk','unt/wk','u/wkly','u/wee0') THEN 'U/week'
 when bo.result_unit_display ILIKE '%/uweek' THEN 'U/week'
 when bo.result_unit_display ILIKE ('%U/week') THEN 'U/week'
 WHEN bo.result_unit_display ILIKE ('U/week%') THEN 'U/week' 
 WHEN bo.result_unit_display ILIKE ('%unit%per%week%') THEN 'U/week' 
 WHEN bo.result_unit_display ILIKE ('%unit%week%') THEN 'U/week' 
+-- The concept fixes the unit as units per week.
+WHEN bo.concept_code = '1082641000000106' AND LOWER(TRIM(bo.result_unit_display)) = 'per week' THEN 'U/week'
 ELSE bo.result_unit_display END AS result_unit_display
     FROM base_observations bo
     LEFT JOIN {{ ref('dim_person_demographics') }} pd
@@ -74,20 +78,19 @@ WHEN concept_code in ('198431000000105','86933000','160577002','228279004','2282
 --WHEN concept_display ILIKE ANY ('%binge%', '%Increasing%', '%Moderate%','%Unhealthy%','%Problem%') AND result_value IS NULL THEN 'Increasing Risk'
 WHEN concept_code in ('228317009','228326007','228316000','228315001','777631000000108','43783005','160576006','10939881000119105','160592001','228281002') AND result_value IS NULL THEN 'Increasing Risk'
 --LOW RISK --------------------------------------
+-- NHS/CMO: low risk up to 14 units a week; OHID higher risk above 35 (women) or 50 (men).
 --WHEN concept_display ILIKE ANY ('%trivial%','%light%','%lower%') AND result_value IS NULL THEN 'Low Risk'
 WHEN concept_code in ('266917007','228277002','160575005','777671000000105','160593006','228276006') AND result_value IS NULL THEN 'Low Risk'
---WHEN concept_display in ('Alcohol units consumed per week','Alcoholic beverage intake','Alcohol intake') AND result_unit_display = 'U/week' AND result_value > 0 AND result_value < 15 THEN 'Low Risk'
---WHEN concept_display ILIKE ANY ('current drinker', 'beer drinker etc','%alcohol use','%intake','%limits') AND result_unit_display = 'U/week' AND result_value > 0 AND result_value < 15 THEN 'Low Risk'
-WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value > 0 AND result_value < 15 THEN 'Low Risk'
---WHEN concept_display in ('Alcohol units consumed per week','Heavy drinker - 7-9u/day','Light drinker - 1-2u/day','Increasing risk drinking','Moderate drinker - 3-6u/day','Trivial drinker - <1u/day','Very heavy drinker - greater than 9 units/day') AND result_unit_display = 'U/week' AND result_value >= 15 AND result_value < 35 AND GENDER = 'Female' THEN 'Increasing Risk' 
-WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value >= 15 AND result_value < 35 AND GENDER = 'Female' THEN 'Increasing Risk' 
-WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value >= 15 AND result_value < 50 AND GENDER = 'Male' THEN 'Increasing Risk'
---WHEN concept_display ILIKE ANY ('%drinker', 'Drinks%','%alcohol use','%intake','%limits') AND result_unit_display = 'U/week' AND result_value >= 15 AND result_value < 50 AND GENDER = 'Male' THEN 'Increasing Risk'
---WHEN concept_display in ('Alcohol units consumed per week','Heavy drinker - 7-9u/day','Light drinker - 1-2u/day','Increasing risk drinking','Moderate drinker - 3-6u/day','Trivial drinker - <1u/day','Very heavy drinker - greater than 9 units/day') AND result_unit_display = 'U/week' AND result_value >= 35 AND GENDER = 'Female' THEN 'Higher Risk' 
-WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value >= 35 AND GENDER = 'Female' THEN 'Higher Risk' 
---WHEN concept_display in ('Alcohol units consumed per week','Heavy drinker - 7-9u/day','Light drinker - 1-2u/day','Increasing risk drinking','Moderate drinker - 3-6u/day','Trivial drinker - <1u/day','Very heavy drinker - greater than 9 units/day') AND result_unit_display = 'U/week' AND result_value >= 50 AND GENDER = 'Male' THEN 'Higher Risk' 
-WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value >= 50 AND GENDER = 'Male' THEN 'Higher Risk' 
+WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value > 0 AND result_value <= 14 THEN 'Low Risk'
+WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value > 14 AND result_value <= 35 AND GENDER = 'Female' THEN 'Increasing Risk'
+WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value > 14 AND result_value <= 50 AND GENDER = 'Male' THEN 'Increasing Risk'
+WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value > 35 AND GENDER = 'Female' THEN 'Higher Risk'
+WHEN concept_code in ('1082641000000106','897148007','160573003','219006','160589000','160591008','230086006','230085005','896792007','748381000000102','897148007','926322008','28127009','160588008','230088007','160590009') AND result_unit_display = 'U/week' AND result_value > 50 AND GENDER = 'Male' THEN 'Higher Risk'
 ELSE 'Unclear'
 END AS alcohol_risk_category
 from observations_with_demographics
-QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, clinical_effective_date ORDER BY CASE WHEN alcohol_risk_category <> 'Unclear' THEN 1 ELSE 2 END ) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, clinical_effective_date ORDER BY
+    CASE alcohol_risk_category WHEN 'Higher Risk' THEN 1 WHEN 'Increasing Risk' THEN 2 WHEN 'Low Risk' THEN 3
+         WHEN 'Ex-Drinker' THEN 4 WHEN 'Non-Drinker' THEN 5 ELSE 6 END,
+    IFF(result_value IS NOT NULL, 0, 1),
+    id) = 1

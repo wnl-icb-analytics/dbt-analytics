@@ -153,11 +153,9 @@ left join {{ ref('mhsds_service_or_team_type') }} as tt
     on r.service_or_team_type_code = tt.code
 left join {{ ref('mhsds_service_or_team_intended_age_group') }} as intended_age_group
     on upper(trim(r.service_or_team_intended_age_group_code)) = intended_age_group.code
-left join {{ ref('mhsds_referral_code_lookup') }} as rejection_reason
+left join {{ ref('nhs_dd_referral_rejection_reason') }} as rejection_reason
     on upper(trim(r.rejection_reason_code)) = rejection_reason.code
-    and rejection_reason.code_set_name = 'rejection_reason'
-left join {{ ref('mhsds_referral_code_lookup') }} as closure_reason
+left join {{ ref('nhs_dd_referral_closure_reason') }} as closure_reason
     on upper(trim(r.closure_reason_code)) = closure_reason.code
-    and closure_reason.code_set_name = 'closure_reason'
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(r.provider_organisation_code) = upper(provider.organisation_code)

@@ -14,10 +14,8 @@
 -- - Rules 4-5: exclude patients whose latest reading is controlled at stage 1 -
 --   clinic <= 140/90, home/ABPM <= 135/85. Everyone else -> include.
 --
--- Because EMIS excludes the controlled, gated patients with a qualifying
--- comorbidity whose readings do not resolve to a paired value are INCLUDED.
--- Controlled checks use the single latest paired BP event
--- (int_blood_pressure_latest, the established rs convention).
+-- Unresolved latest readings remain included, as the XML excludes only controlled readings.
+-- BP uses date-linked clinic/home components, ordered by clinical date, save time and ID.
 
 with
 -- Parent population: Patients currently on hypertension register
@@ -47,7 +45,7 @@ rule_3_chd as (
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs3") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 3: Stroke/TIA (episode type not Review or Ended)
@@ -56,7 +54,7 @@ rule_3_stroke_tia as (
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs4, on_htn_reg_priority_group_3a_mra_v3_vs5") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 3: PAD (episode type not Review or Ended)
@@ -65,7 +63,7 @@ rule_3_pad as (
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs6") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 3: CKD
@@ -113,15 +111,8 @@ rule_3_comorbidities as (
 -- Clinic: SBP <= 140 and DBP <= 90; Home/ABPM: SBP <= 135 and DBP <= 85
 rules_4_5_bp_controlled as (
     select person_id
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
-      and (
-          (not coalesce(is_home_bp_event or is_abpm_bp_event, false)
-           and systolic_value <= 140 and diastolic_value <= 90)
-          or
-          (coalesce(is_home_bp_event or is_abpm_bp_event, false)
-           and systolic_value <= 135 and diastolic_value <= 85)
-      )
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
+    where {{ ltc_lcs_bp_is_controlled(140, 90, 135, 85) }}
 ),
 
 -- Combine rule results for all hypertension register patients

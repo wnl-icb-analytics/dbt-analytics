@@ -1,20 +1,13 @@
 models:
   - name: fct_person_condition_episodes
-    description: 'Clinical condition episodes fact table tracking historical condition episodes without QOF restrictions.
-
-      Captures multiple on/off cycles per person per condition for comprehensive clinical tracking.
-
-      Key Features:
-
-      • Episode-level granularity with start/end dates
-
-      • Historical tracking of condition cycles (onset/resolved)
-
-      • No age, date, or medication restrictions (unlike QOF registers)
-
-      • Unified schema across all diagnosis-based conditions
-
-      Purpose: Enables analysis of condition patterns, episode durations, and patient journeys across the complete clinical history.'
+    description: >-
+      Recorded OLIDS condition episodes, one row per person, condition and episode
+      number, using evidence dated on or before the build date. Diagnosis and
+      resolution use condition-specific code lists; obesity uses valid BMI categories.
+      A new onset after resolution starts another episode, while episodes without
+      resolution remain active. These are recorded-evidence episodes, including
+      resolution-only records, rather than confirmed clinical onset dates or
+      QOF-register membership.
     config:
       meta:
         indicators:
@@ -812,7 +805,10 @@ models:
               arguments:
                 expression: '>= 1'
       - name: episode_start_date
-        description: 'Date the episode started (first diagnosis/onset event)'
+        description: >-
+          Date of the first recorded event in the episode. This can be a resolution
+          record when earlier diagnosis evidence is unavailable, so it is not
+          necessarily the clinical onset date.
         tests:
           - not_null
 

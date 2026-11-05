@@ -54,6 +54,16 @@ observations_with_demographics AS (
     FROM base_observations bo
     LEFT JOIN {{ ref('dim_person_demographics') }} pd
         ON bo.person_id = pd.person_id
+),
+scored AS (
+    SELECT *,
+        -- AUDIT totals use whole points: AUDIT-C 0-12; full AUDIT 0-40.
+        COALESCE(
+            original_result_value = FLOOR(original_result_value)
+            AND ((source_cluster_id = 'AUDITC_COD' AND original_result_value BETWEEN 0 AND 12)
+              OR (source_cluster_id = 'AUDIT_COD' AND original_result_value BETWEEN 0 AND 40)),
+            FALSE) AS is_valid_score
+    FROM observations_with_demographics
 )
 
 SELECT
@@ -76,18 +86,13 @@ SELECT
         ELSE 'Unknown'
     END AS audit_type,
 
-    -- Data quality validation
-    CASE
-        WHEN source_cluster_id = 'AUDITC_COD' AND audit_score BETWEEN 0 AND 12 THEN TRUE
-        WHEN source_cluster_id = 'AUDIT_COD' AND audit_score BETWEEN 0 AND 40 THEN TRUE
-        ELSE FALSE
-    END AS is_valid_score,
+    is_valid_score,
 
     -- Risk categorisation using UK AUDIT thresholds with detailed lower end
     CASE
         WHEN source_cluster_id = 'AUDITC_COD' THEN
             CASE
-                WHEN audit_score NOT BETWEEN 0 AND 12 THEN 'Invalid'
+                WHEN NOT is_valid_score THEN 'Invalid'
                 WHEN audit_score = 0 THEN 'Non-Drinker'
                 WHEN audit_score <= 2 THEN 'Occasional Drinker'
                 WHEN audit_score <= 4 THEN 'Lower Risk'
@@ -97,7 +102,7 @@ SELECT
             END
         WHEN source_cluster_id = 'AUDIT_COD' THEN
             CASE
-                WHEN audit_score NOT BETWEEN 0 AND 40 THEN 'Invalid'
+                WHEN NOT is_valid_score THEN 'Invalid'
                 WHEN audit_score = 0 THEN 'Non-Drinker'
                 WHEN audit_score <= 3 THEN 'Occasional Drinker'
                 WHEN audit_score <= 7 THEN 'Lower Risk'
@@ -110,6 +115,7 @@ SELECT
 
     -- Simplified risk level (for easier aggregation)
     CASE
+        WHEN NOT is_valid_score THEN NULL
         WHEN source_cluster_id IN ('AUDITC_COD', 'AUDIT_COD') THEN
             CASE
                 WHEN audit_score = 0 THEN 'Non-Drinker'
@@ -128,27 +134,14 @@ SELECT
             END
     END AS simplified_risk_level,
 
-    -- AUDIT-C positive screen flag (score ≥5 indicates potential harm)
-    CASE
-        WHEN source_cluster_id = 'AUDITC_COD' AND audit_score >= 5 THEN TRUE
-        ELSE FALSE
-    END AS auditc_positive_screen,
+    -- Existing thresholds apply only to valid scores.
+    is_valid_score AND source_cluster_id = 'AUDITC_COD' AND audit_score >= 5 AS auditc_positive_screen,
+    is_valid_score AND ((source_cluster_id = 'AUDITC_COD' AND audit_score >= 8)
+        OR (source_cluster_id = 'AUDIT_COD' AND audit_score >= 16)) AS requires_specialist_intervention,
+    is_valid_score AND ((source_cluster_id = 'AUDITC_COD' AND audit_score >= 5)
+        OR (source_cluster_id = 'AUDIT_COD' AND audit_score >= 8)) AS brief_intervention_indicated
 
-    -- Additional flag for high-risk scores requiring specialist intervention
-    CASE
-        WHEN source_cluster_id = 'AUDITC_COD' AND audit_score >= 8 THEN TRUE
-        WHEN source_cluster_id = 'AUDIT_COD' AND audit_score >= 16 THEN TRUE
-        ELSE FALSE
-    END AS requires_specialist_intervention,
-
-    -- Flag for brief intervention threshold
-    CASE
-        WHEN source_cluster_id = 'AUDITC_COD' AND audit_score >= 5 THEN TRUE
-        WHEN source_cluster_id = 'AUDIT_COD' AND audit_score >= 8 THEN TRUE
-        ELSE FALSE
-    END AS brief_intervention_indicated
-
-FROM observations_with_demographics
+FROM scored
 
 -- Sort for consistent output
 ORDER BY person_id, clinical_effective_date DESC

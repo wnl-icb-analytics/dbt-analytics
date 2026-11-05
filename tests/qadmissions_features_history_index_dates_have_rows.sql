@@ -1,5 +1,5 @@
 -- Fails when a configured QAdmissions index date has no rows in
--- qadmissions_input_features_history. The model inner-joins its index dates to
+-- qadmissions_input_features_validation. The model inner-joins its index dates to
 -- int_segmentation_person_month_spine, so a date outside the spine's rolling
 -- 60-month window, or a spine that hasn't been rebuilt since a new month-end,
 -- silently produces no rows for that date while every other test passes.
@@ -15,7 +15,7 @@ with configured_dates as (
 
 built_dates as (
     select distinct end_date
-    from {{ ref('qadmissions_input_features_history') }}
+    from {{ ref('qadmissions_input_features_validation') }}
 )
 
 select c.end_date

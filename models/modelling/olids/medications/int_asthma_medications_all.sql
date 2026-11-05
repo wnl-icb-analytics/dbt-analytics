@@ -29,9 +29,7 @@ asthma_enhanced AS (
     SELECT
         aob.*,
         TRUE AS is_asthma_treatment,
-        aob.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        aob.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        aob.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('aob.order_date', include_future_flag=false) }}
     FROM asthma_orders_base aob
 ),
 

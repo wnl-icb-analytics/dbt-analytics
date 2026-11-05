@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Aggregates ARAF-related events for each person, providing analytics-ready person-level ARAF event status and history.') }}
+    description="Annual Risk Acknowledgement Form (ARAF) evidence for the OLIDS valproate programme, one row per person with a qualifying coded event. ARAF codes follow the programme reference list and code-specific lookback rules, including old-form SNOMED code 1366401000000107 and new-form code 2078951000000106. Current valproate prescribing is not required.") }}
 
 WITH person_level_araf_aggregation AS (
     SELECT

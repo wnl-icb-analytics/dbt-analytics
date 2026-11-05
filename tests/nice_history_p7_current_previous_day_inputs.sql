@@ -44,7 +44,8 @@ synthetic_smoking AS (
         reporting_date AS latest_smoking_status_date,
         NULL::DATE AS latest_never_smoked_date,
         NULL::DATE AS latest_smoking_unsuitable_date,
-        reporting_date AS latest_smoking_intervention_date
+        reporting_date AS latest_smoking_intervention_date,
+        FALSE AS is_ex_smoker_covered
     FROM synthetic_ltc
 ),
 synthetic_orders AS (

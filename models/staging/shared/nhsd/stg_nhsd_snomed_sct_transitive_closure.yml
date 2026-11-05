@@ -1,0 +1,20 @@
+models:
+  - name: stg_nhsd_snomed_sct_transitive_closure
+    description: >
+      SNOMED CT ancestor and descendant pairs in the NHS Digital reporting model.
+      One row per ancestor and descendant pair, including indirect descendants.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [super_type_id, sub_type_id]
+    columns:
+      - name: super_type_id
+        description: Ancestor SNOMED CT concept identifier.
+        data_tests: [not_null]
+      - name: sub_type_id
+        description: Descendant SNOMED CT concept identifier.
+        data_tests: [not_null]

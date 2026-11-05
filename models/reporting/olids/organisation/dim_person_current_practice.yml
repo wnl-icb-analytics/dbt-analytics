@@ -1,21 +1,9 @@
 models:
   - name: dim_person_current_practice
-    description: 'Current practice registration snapshot for each person with registration history and practice context.
-
-      Key Features:
-
-      • One row per person with current/latest practice registration
-
-      • Deduplication logic ensures single row per person via ROW_NUMBER()
-
-      • Practice details including type, postcode, and operational status
-
-      • Registration sequence and timeline for patient mobility analysis
-
-      • Age at registration start for demographic analysis
-
-      Purpose: Supports current state analysis, practice population profiling, and patient registration tracking.'
-
+    description: >-
+      Current practice registration per person in OLIDS. People without a current
+      registration are excluded. If several registrations are current, the most
+      recently started is selected, with practice ID breaking ties.
     config:
       meta:
         owner:
@@ -46,7 +34,7 @@ models:
           - not_null
 
       - name: practice_type_code
-        description: 'Practice type code from OLIDS'
+        description: 'Not populated (always null). OLIDS no longer supplies a practice type code; use practice_type_desc.'
 
       - name: practice_type_desc
         description: 'Practice type description (e.g., GP surgery, health centre)'

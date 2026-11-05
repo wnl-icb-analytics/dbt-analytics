@@ -133,6 +133,7 @@ For general dbt learning: [dbt Fundamentals](https://learn.getdbt.com/courses/db
 | [LTC and QOF registers](docs/ltc-registers.md) | Rule locations, version inventory and QOF upgrade checks |
 | [Monthly LTC register history](docs/ltc-register-history.md) | Month-end membership, population, rebuilds and interpretation |
 | [NICE general practice indicators](docs/nice-indicators.md) | Coverage, register mappings and reasons for indicators not built |
+| [NICE indicator benchmarks](docs/nice-benchmarks.md) | Comparison with QOF and other published data, confidence and fixes |
 
 Older learning guides now live in [docs/archive/](docs/archive/), superseded by the onboarding site.
 

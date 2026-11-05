@@ -1,0 +1,47 @@
+seeds:
+  - name: cltcs_treatment_nice_indicators
+    description: >-
+      NICE indicators used as C-LTCS care pathway gap items (cltcs_gap_items, which feeds the
+      candidate treatment score cltcs_score_treatment_pathway), one row per indicator, with
+      the score domain and group each one contributes to. A C-LTCS scoring choice, not a clinical classification:
+      def_indicator and indicator_classification remain the catalogue. Each group counts
+      once when any of its indicators is not achieved, so a condition with many indicators
+      does not outweigh one with few. Disease control indicators whose result is missing are
+      scored as monitoring gaps in the same group rather than as control gaps.
+    config:
+      column_types:
+        indicator_id: varchar(20)
+        score_domain: varchar(40)
+        score_group: varchar(40)
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: indicator_id
+        description: NICE indicator identifier in def_indicator.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('def_indicator')
+                field: indicator_id
+      - name: score_domain
+        description: >-
+          Treatment score domain: disease_control (result out of target), monitoring_gaps
+          (test, review or care process not done) or treatment_optimisation (under-treatment:
+          indicated treatment or intervention not given; over-treatment and prescribing
+          safety: medication review not done or a harmful prescription).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['disease_control', 'monitoring_gaps', 'treatment_optimisation']
+      - name: score_group
+        description: >-
+          Condition or measured concept the indicator contributes to within its domain.
+          Each group adds 1 to the domain score when any of the person's assessable
+          indicators in it is not achieved. Blood pressure is one group across all registers
+          so the same reading is not counted once per condition.
+        data_tests:
+          - not_null

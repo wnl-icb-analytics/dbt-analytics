@@ -1,16 +1,10 @@
 models:
   - name: dim_households
-    description: 'Geographic reference for household dwellings with location context and occupancy patterns.
-
-      Key Features:
-
-      • UPRN-based household identification
-
-      • LSOA geography and deprivation indices
-
-      • Dwelling activity classification based on registration patterns
-
-      Purpose: Enables geographic analysis of health outcomes at household level.'
+    description: >-
+      Households linked to OLIDS people, one row per known UPRN hash. Registration
+      start dates describe household activity, rather than confirmed occupation dates;
+      deprivation uses IMD 2019. This model is currently empty because demographic
+      records supply no UPRN hashes.
     config:
       meta:
         owner:
@@ -29,7 +23,10 @@ models:
           - not_null
 
       - name: dwelling_activity_status
-        description: 'Classification of dwelling occupancy: Recently active, Previously active, or Historically active only'
+        description: >-
+          Registration-based activity category: Recently active, Previously active, or
+          Historically active only. Uses the most recent registration start among linked
+          people, rather than confirmed occupation dates.
         tests:
           - not_null
           - accepted_values:

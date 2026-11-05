@@ -22,7 +22,9 @@ synthetic_population AS (
     CROSS JOIN synthetic_dates AS dates
 ),
 synthetic_births AS (
-    SELECT DISTINCT person_id, '1970-01-01'::DATE AS birth_date_approx FROM synthetic_population
+    SELECT DISTINCT person_id, '1970-01-01'::DATE AS birth_date_approx,
+        NULL::DATE AS death_date_approx, FALSE AS is_deceased
+    FROM synthetic_population
 ),
 synthetic_diagnoses AS (
     SELECT DISTINCT person_id,

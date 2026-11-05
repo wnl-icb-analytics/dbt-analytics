@@ -1,0 +1,45 @@
+{{
+    config(
+        description="Raw layer (ServicesDataLocal canonical-named feeds, WNL footprint). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.SDL.LOS \ndbt: source(''sdl_wnl'', ''LOS'') \nColumns:\n  META_SK_ROW_ID -> meta_sk_row_id\n  META_FILE_ID -> meta_file_id\n  META_ROW_ID -> meta_row_id\n  META_BATCH_ID -> meta_batch_id\n  META_PARTITION_DATE -> meta_partition_date\n  META_PROVIDER_CODE -> meta_provider_code\n  META_RECIPIENT_CODE -> meta_recipient_code\n  META_VERSION_ID -> meta_version_id\n  ACTIVITY_START_DATE_CONTRACT_MONITORING -> activity_start_date_contract_monitoring\n  ACTIVITY_TREATMENT_FUNCTION_CODE -> activity_treatment_function_code\n  ADMISSION_METHOD_CODE_HOSPITAL_PROVIDER_SPELL -> admission_method_code_hospital_provider_spell\n  COMMISSIONED_SERVICE_CATEGORY_CODE -> commissioned_service_category_code\n  CURRENT_LENGTH_OF_STAY -> current_length_of_stay\n  DATE_AND_TIME_DATA_SET_CREATED -> date_and_time_data_set_created\n  DLP_BASELINE_FINANCIAL_MONTH -> dlp_baseline_financial_month\n  DLP_COMMISSIONER_CODE -> dlp_commissioner_code\n  DLP_FINANCIAL_MONTH -> dlp_financial_month\n  DLP_FINANCIAL_YEAR -> dlp_financial_year\n  DLP_FLEXOR_FREEZE -> dlp_flexor_freeze\n  DV_RECIPIENT_CODE -> dv_recipient_code\n  DV_YEAROF_BIRTH -> dv_yearof_birth\n  FINANCIAL_MONTH -> financial_month\n  FINANCIAL_YEAR -> financial_year\n  FIRST_EPISODE_IN_SPELL -> first_episode_in_spell\n  GENERAL_MEDICAL_PRACTICE_CODE_PATIENT_REGISTRATION -> general_medical_practice_code_patient_registration\n  HOSPITAL_PROVIDER_SPELL_NUMBER -> hospital_provider_spell_number\n  LOCAL_PATIENT_IDENTIFIER_EXTENDED -> local_patient_identifier_extended\n  MAIN_SPECIALTY_CODE -> main_specialty_code\n  ORGANISATION_IDENTIFIER_CODE_OF_COMMISSIONER -> organisation_identifier_code_of_commissioner\n  ORGANISATION_IDENTIFIER_CODE_OF_PROVIDER -> organisation_identifier_code_of_provider\n  ORGANISATION_IDENTIFIER_GP_PRACTICE_RESPONSIBILITY -> organisation_identifier_gp_practice_responsibility\n  POINT_OF_DELIVERY_CODE -> point_of_delivery_code\n  PREDICTED_DISCHARGE_DATE -> predicted_discharge_date\n  PRIMARY_DIAGNOSIS_ICD -> primary_diagnosis_icd\n  PRIMARY_PROCEDURE_OPCS -> primary_procedure_opcs\n  SK_PATIENT_ID_NHS_NUMBER -> sk_patient_id_nhs_number\n  SPECIALISED_SERVICE_CODE -> specialised_service_code\n  UNDISCHARGED_CRITICAL_CARE_DAYS -> undischarged_critical_care_days"
+    )
+}}
+select
+    "META_SK_ROW_ID" as meta_sk_row_id,
+    "META_FILE_ID" as meta_file_id,
+    "META_ROW_ID" as meta_row_id,
+    "META_BATCH_ID" as meta_batch_id,
+    "META_PARTITION_DATE" as meta_partition_date,
+    "META_PROVIDER_CODE" as meta_provider_code,
+    "META_RECIPIENT_CODE" as meta_recipient_code,
+    "META_VERSION_ID" as meta_version_id,
+    "ACTIVITY_START_DATE_CONTRACT_MONITORING" as activity_start_date_contract_monitoring,
+    "ACTIVITY_TREATMENT_FUNCTION_CODE" as activity_treatment_function_code,
+    "ADMISSION_METHOD_CODE_HOSPITAL_PROVIDER_SPELL" as admission_method_code_hospital_provider_spell,
+    "COMMISSIONED_SERVICE_CATEGORY_CODE" as commissioned_service_category_code,
+    "CURRENT_LENGTH_OF_STAY" as current_length_of_stay,
+    "DATE_AND_TIME_DATA_SET_CREATED" as date_and_time_data_set_created,
+    "DLP_BASELINE_FINANCIAL_MONTH" as dlp_baseline_financial_month,
+    "DLP_COMMISSIONER_CODE" as dlp_commissioner_code,
+    "DLP_FINANCIAL_MONTH" as dlp_financial_month,
+    "DLP_FINANCIAL_YEAR" as dlp_financial_year,
+    "DLP_FLEXOR_FREEZE" as dlp_flexor_freeze,
+    "DV_RECIPIENT_CODE" as dv_recipient_code,
+    "DV_YEAROF_BIRTH" as dv_yearof_birth,
+    "FINANCIAL_MONTH" as financial_month,
+    "FINANCIAL_YEAR" as financial_year,
+    "FIRST_EPISODE_IN_SPELL" as first_episode_in_spell,
+    "GENERAL_MEDICAL_PRACTICE_CODE_PATIENT_REGISTRATION" as general_medical_practice_code_patient_registration,
+    "HOSPITAL_PROVIDER_SPELL_NUMBER" as hospital_provider_spell_number,
+    "LOCAL_PATIENT_IDENTIFIER_EXTENDED" as local_patient_identifier_extended,
+    "MAIN_SPECIALTY_CODE" as main_specialty_code,
+    "ORGANISATION_IDENTIFIER_CODE_OF_COMMISSIONER" as organisation_identifier_code_of_commissioner,
+    "ORGANISATION_IDENTIFIER_CODE_OF_PROVIDER" as organisation_identifier_code_of_provider,
+    "ORGANISATION_IDENTIFIER_GP_PRACTICE_RESPONSIBILITY" as organisation_identifier_gp_practice_responsibility,
+    "POINT_OF_DELIVERY_CODE" as point_of_delivery_code,
+    "PREDICTED_DISCHARGE_DATE" as predicted_discharge_date,
+    "PRIMARY_DIAGNOSIS_ICD" as primary_diagnosis_icd,
+    "PRIMARY_PROCEDURE_OPCS" as primary_procedure_opcs,
+    "SK_PATIENT_ID_NHS_NUMBER" as sk_patient_id_nhs_number,
+    "SPECIALISED_SERVICE_CODE" as specialised_service_code,
+    "UNDISCHARGED_CRITICAL_CARE_DAYS" as undischarged_critical_care_days
+from {{ source('sdl_wnl', 'LOS') }}

@@ -89,3 +89,105 @@ models:
                   - 'Mildly Elevated'
                   - 'Moderately Elevated'
                   - 'Severely Elevated'
+
+unit_tests:
+- name: bilirubin_units_unchanged
+  model: int_bilirubin_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, column2::NUMBER person_id,
+        column3::TIMESTAMP_NTZ clinical_effective_date, column3::TIMESTAMP_NTZ date_recorded,
+        column4::VARCHAR result_value, column5::VARCHAR result_unit_code,
+        column5::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+        'Synthetic observation'::VARCHAR mapped_concept_display, 'BILIRUBIN_LEVEL'::VARCHAR cluster_id
+        FROM VALUES ('SYN_BILI_1', -9300, '2026-01-01', 10, 'mg/dL'),
+        ('SYN_BILI_2', -9301, '2026-01-01', -5, 'umol/L'),
+        ('SYN_BILI_3', -9302, '2026-01-01', 2000, 'mg/dL'),
+        ('SYN_BILI_CONVERT', -18113, '2026-01-01', 100000, 'pmol/L'),
+        ('SYN_BILI_PREC', -18115, '2026-01-01', 123456.7, 'pmol/L')
+  given:
+  - input: ref('observation_unit_rules')
+    rows:
+    - DEFINITION_ID: null
+      DEFINITION_NAME: bilirubin_level
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: umol/L
+      CONVERT_TO_UNIT: umol/L
+      MULTIPLY_BY: 1.0
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+    - DEFINITION_ID: null
+      DEFINITION_NAME: bilirubin_level
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: mg/dL
+      CONVERT_TO_UNIT: umol/L
+      MULTIPLY_BY: 17.1
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+    - DEFINITION_ID: null
+      DEFINITION_NAME: bilirubin_level
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: pmol/L
+      CONVERT_TO_UNIT: umol/L
+      MULTIPLY_BY: 1.0e-06
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+    - DEFINITION_ID: null
+      DEFINITION_NAME: bilirubin_level
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: mmol/L
+      CONVERT_TO_UNIT: umol/L
+      MULTIPLY_BY: 1000.0
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+  - input: ref('observation_standard_units')
+    rows:
+    - DEFINITION_ID: null
+      DEFINITION_NAME: bilirubin_level
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      UNIT: umol/L
+      PRIMARY_UNIT: true
+  - input: ref('observation_value_bounds')
+    rows:
+    - DEFINITION_ID: null
+      DEFINITION_NAME: bilirubin_level
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      ABSOLUTE_LOWER: 0.0
+      ABSOLUTE_UPPER: 1500.0
+      CANONICAL_EXPONENT: null
+      BIOLOGICAL_LOWER: null
+      BIOLOGICAL_UPPER: 1000.0
+  expect:
+    rows:
+    - id: SYN_BILI_1
+      value_was_converted: false
+      inferred_value: 10
+      is_negative: false
+      conversion_reason: No value conversion, unit was assumed to be incorrect
+    - id: SYN_BILI_2
+      value_was_converted: false
+      conversion_reason: Value out of plausible range, kept unchanged
+      inferred_value: -5
+      is_negative: true
+    - id: SYN_BILI_3
+      value_was_converted: false
+      conversion_reason: Value out of plausible range, kept unchanged
+      inferred_value: 2000
+      is_negative: false
+    - id: SYN_BILI_CONVERT
+      is_negative: false
+      conversion_reason: Value converted using known unit factor (x1e-06)
+      inferred_value: 0.1
+      value_was_converted: true
+    - id: SYN_BILI_PREC
+      is_negative: false
+      conversion_reason: Value converted using known unit factor (x1e-06)
+      inferred_value: 0.123457
+      value_was_converted: true

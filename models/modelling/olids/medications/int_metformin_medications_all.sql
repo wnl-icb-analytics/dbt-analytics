@@ -48,9 +48,7 @@ WITH metformin_orders_base AS (
 metformin_enhanced AS (
     SELECT
         mob.*,
-        mob.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        mob.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        mob.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('mob.order_date') }}
     FROM metformin_orders_base mob
 ),
 

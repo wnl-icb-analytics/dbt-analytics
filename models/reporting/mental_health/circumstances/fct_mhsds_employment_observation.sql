@@ -25,9 +25,9 @@ from {{ ref('stg_mhsds_employment') }} as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as status_label
-    on upper(trim(s.employ_status::varchar)) = status_label.code and status_label.code_set_name = 'employment_status'
-left join {{ ref('mhsds_domain_code_lookup') }} as contract_label
-    on upper(trim(s.pat_prim_emp_cont_type_mh::varchar)) = contract_label.code and contract_label.code_set_name = 'employment_contract_type'
-left join {{ ref('mhsds_domain_code_lookup') }} as hours_label
-    on upper(trim(s.week_hours_worked::varchar)) = hours_label.code and hours_label.code_set_name = 'weekly_hours_worked'
+left join {{ ref('mhsds_employment_status') }} as status_label
+    on upper(trim(s.employ_status::varchar)) = status_label.code
+left join {{ ref('mhsds_employment_contract_type') }} as contract_label
+    on upper(trim(s.pat_prim_emp_cont_type_mh::varchar)) = contract_label.code
+left join {{ ref('nhs_dd_weekly_hours_worked') }} as hours_label
+    on upper(trim(s.week_hours_worked::varchar)) = hours_label.code

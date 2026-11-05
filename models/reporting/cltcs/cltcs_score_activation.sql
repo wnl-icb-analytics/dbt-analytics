@@ -3,6 +3,7 @@
 with inclusion_list as (
     select *
     from {{ ref('cltcs_adult_population') }}
+    where is_case_finding_eligible = TRUE
     ),
 
 encoding_features as(

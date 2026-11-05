@@ -22,22 +22,29 @@ select
     , uniq_mh_act_episode_id
     , person_id
     , nhsd_legal_status
+    , nullif(upper(trim(legal_status_code)), '') as legal_status_code
+    , nullif(upper(trim(legal_status_class_period_start_reason)), '') as legal_status_class_period_start_reason
+    , nullif(upper(trim(legal_status_class_period_end_reason)), '') as legal_status_class_period_end_reason
+    , nullif(upper(trim(mental_cat)), '') as mental_cat
     -- 1899/1900 values are source missing-date sentinels from Excel epochs.
     , iff(
         start_date_mh_act_legal_status_class::date < '1901-01-01'::date
         , null
         , start_date_mh_act_legal_status_class::date
     ) as start_date_mh_act_legal_status_class
+    , start_time_mh_act_legal_status_class::time as start_time_mh_act_legal_status_class
     , iff(
         end_date_mh_act_legal_status_class::date < '1901-01-01'::date
         , null
         , end_date_mh_act_legal_status_class::date
     ) as end_date_mh_act_legal_status_class
+    , end_time_mh_act_legal_status_class::time as end_time_mh_act_legal_status_class
     , iff(
         expiry_date_mh_act_legal_status_class::date < '1901-01-01'::date
         , null
         , expiry_date_mh_act_legal_status_class::date
     ) as expiry_date_mh_act_legal_status_class
+    , expiry_time_mh_act_legal_status_class::time as expiry_time_mh_act_legal_status_class
     , org_id_prov
     , unique_local_patient_id
     , uniq_submission_id

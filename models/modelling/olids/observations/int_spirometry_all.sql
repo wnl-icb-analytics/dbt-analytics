@@ -18,11 +18,11 @@ WITH base_observations AS (
         obs.person_id,
         obs.clinical_effective_date,
         obs.date_recorded,
-        -- Normalise: values >1 are percentages (e.g. 70 = 0.70)
+        -- FEV1/FVC is a ratio (0.1-1) or a percentage (10-100).
+        -- Values between 1 and 10 do not establish a ratio.
         CASE
-            WHEN obs.result_value > 1.0
-                THEN obs.result_value / 100.0
-            ELSE obs.result_value
+            WHEN obs.result_value BETWEEN 0.1 AND 1 THEN obs.result_value
+            WHEN obs.result_value BETWEEN 10 AND 100 THEN obs.result_value / 100.0
         END AS fev1_fvc_ratio,
         CAST(obs.result_value AS NUMBER(10,3)) AS fev1_fvc_ratio_raw,
         obs.result_unit_display,
@@ -48,7 +48,7 @@ SELECT
     code_description,
     source_cluster_id,
 
-    -- Core legacy boolean flag (matching legacy exactly)
+    -- Coded or valid measured evidence below 0.7
     CASE
         WHEN source_cluster_id = 'FEV1FVCL70_COD' THEN TRUE -- Pre-coded as less than 0.7
         WHEN source_cluster_id = 'FEV1FVC_COD' AND fev1_fvc_ratio < 0.7 THEN TRUE -- Raw value less than 0.7
@@ -57,11 +57,7 @@ SELECT
 
     -- Enhanced analytics flags
     -- Validate spirometry reading (fev1_fvc_ratio is already normalised)
-    CASE
-        WHEN source_cluster_id = 'FEV1FVCL70_COD' THEN TRUE
-        WHEN source_cluster_id = 'FEV1FVC_COD' AND fev1_fvc_ratio BETWEEN 0.1 AND 1.0 THEN TRUE
-        ELSE FALSE
-    END AS is_valid_spirometry,
+    (source_cluster_id = 'FEV1FVCL70_COD' OR fev1_fvc_ratio IS NOT NULL) AS is_valid_spirometry,
 
     -- Clinical interpretation
     CASE
@@ -71,12 +67,12 @@ SELECT
         ELSE 'Invalid'
     END AS spirometry_interpretation,
 
-    -- COPD severity staging based on FEV1/FVC ratio
+    -- Obstruction status does not describe COPD severity
     CASE
         WHEN source_cluster_id = 'FEV1FVCL70_COD' OR fev1_fvc_ratio < 0.7 THEN 'Airway Obstruction'
         WHEN fev1_fvc_ratio >= 0.7 THEN 'Normal'
         ELSE 'Unknown'
-    END AS copd_staging,
+    END AS obstruction_status,
 
     -- Analytics-ready COPD risk indicators
     CASE

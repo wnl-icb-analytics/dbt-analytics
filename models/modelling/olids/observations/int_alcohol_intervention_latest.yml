@@ -1,19 +1,45 @@
 models:
   - name: int_alcohol_intervention_latest
-    description: 'Determine latest alcohol education or referrals. Built for SMI for Longer Lives campaign.'
+    description: >-
+      Latest recorded alcohol education, intervention or decline per person in OLIDS,
+      by clinical date up to the build date. Includes inactive and deceased people
+      with qualifying evidence, without age or SMI-register restrictions.
+      Same-day records prefer completion, then decline, then the lowest concept code.
     config:
       meta:
         owner:
           name: KateHomer55
-
-          columns:
     columns:
       - name: person_id
         description: Person identifier
         tests:
           - not_null
           - unique
-   
 
-
-    
+unit_tests:
+- name: alcohol_intervention_latest_same_day_precedence
+  model: int_alcohol_intervention_latest
+  given:
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::VARCHAR AS concept_code, column4::VARCHAR AS alcohol_advice_services
+      FROM VALUES
+          (-9601, '2024-03-01 15:00:00'::TIMESTAMP_NTZ, 'SYN_B', 'Declined'),
+          (-9601, '2024-03-01 09:00:00'::TIMESTAMP_NTZ, 'SYN_C', 'Yes'),
+          (-18212, DATEADD(day, -2, CURRENT_DATE()), 'SYN_A', 'Yes'),
+          (-18212, DATEADD(day, -1, CURRENT_DATE()), 'SYN_Z', 'Declined'),
+          (-18213, DATEADD(day, -1, CURRENT_DATE()), 'SYN_A', 'Yes'),
+          (-18213, DATEADD(day, -1, CURRENT_DATE()), 'SYN_Z', 'Yes')
+  expect:
+    rows:
+    - person_id: -9601
+      concept_code: SYN_C
+      alcohol_advice_services: 'Yes'
+    - person_id: -18212
+      concept_code: SYN_Z
+      alcohol_advice_services: 'Declined'
+    - person_id: -18213
+      concept_code: SYN_A
+      alcohol_advice_services: 'Yes'

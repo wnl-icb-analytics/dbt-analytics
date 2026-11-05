@@ -6,7 +6,7 @@
 
 /*
 All beta blocker medication orders for cardiovascular protection and rate control.
-Uses BNF classification (2.4) for beta-adrenoceptor blocking drugs.
+Uses the national licensed and unlicensed beta-blocker drug refsets.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
 
@@ -27,29 +27,10 @@ SELECT
     bnf_name,
 
     -- Order recency flags (beta blockers are typically long-term therapy)
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m,
-
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 365 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_12m,
-    EXISTS (
-        SELECT 1
-        FROM {{ ref('stg_reference_combined_codesets') }} AS codes
-        WHERE codes.source = 'OPENCODELISTS'
-            AND codes.cluster_id = 'NHS_DRUG_REFSETS/LBB_COD'
-            AND codes.code = base_orders.mapped_concept_code
-    ) AS is_hf_licensed
+    {{ medication_date_flags('order_date') }},
+    cluster_id = 'NHS_DRUG_REFSETS/LBB_COD' AS is_hf_licensed
 
 FROM (
-    {{ get_medication_orders(bnf_code='0204') }}
+    {{ get_medication_orders(cluster_id=['NHS_DRUG_REFSETS/LBB_COD', 'NHS_DRUG_REFSETS/ULBB_COD'], source='OPENCODELISTS') }}
 ) base_orders
 ORDER BY person_id, order_date DESC

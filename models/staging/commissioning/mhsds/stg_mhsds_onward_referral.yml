@@ -1,0 +1,28 @@
+version: 2
+models:
+- name: stg_mhsds_onward_referral
+  description: >-
+    MHS105 onward referrals from accepted provider submissions. Each row is one submitted source
+    record of a referral made from a mental health service to another organisation or service.
+    Repeated reports remain available for later version selection. Source dates before 1901 are
+    missing-date markers and are shown as null; codes are trimmed and upper case.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: mhs105_uniq_id
+    description: Identifier of the accepted source record.
+    data_tests:
+    - not_null
+    - unique
+  - name: uniq_serv_req_id
+    description: Provider-qualified identifier of the referral the onward referral was made from.
+  - name: onward_refer_date
+    description: Date the onward referral was made.
+  - name: onward_refer_reason
+    description: Submitted onward referral reason code.
+  - name: org_id_receiving
+    description: Submitted ODS code of the organisation receiving the onward referral.
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
