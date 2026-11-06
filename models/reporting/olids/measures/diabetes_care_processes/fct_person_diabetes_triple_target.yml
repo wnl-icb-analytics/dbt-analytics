@@ -8,18 +8,19 @@ models:
       {{ doc('diabetes_triple_target_rules') }}
     config:
       meta:
-        clinical_source: https://digital.nhs.uk/data-and-information/publications/statistical/national-diabetes-audit/report-1-care-processes-and-treatment-targets-2021-22-full-report/methodology-copy
+        clinical_source: https://digital.nhs.uk/data-and-information/publications/statistical/national-diabetes-audit/report-1-cp-and-tt-data-release-2024-25/nda-report-1-cp-and-tt-data-release-2024-25
         indicator:
           id: "DM_TRIPLE_TARGET"
           type: "MEASURE"
           category: "DIABETES_QUALITY"
           clinical_domain: "Cardiometabolic"
           name_short: "Diabetes Triple Target Achievement"
-          description_short: "NDA treatment targets: HbA1c ≤58 mmol/mol, BP ≤140/80 mmHg and statin where indicated"
+          description_short: "NDA treatment targets: HbA1c ≤58 mmol/mol, BP ≤140/90 mmHg and statin where indicated"
           description_long: >
-            National Diabetes Audit treatment targets in the 15 calendar months ending in the
+            National Diabetes Audit treatment targets in the 12 calendar months ending in the
             reporting month: latest HbA1c at or below 58 mmol/mol, latest blood pressure at or
-            below 140/80 mmHg, and a statin prescribed for people aged 40 to 80 or with CVD.
+            below 140/90 mmHg, and a statin prescribed for people aged 40 to 80 or with CVD.
+            The NDA rate excludes people without a valid HbA1c or blood pressure reading.
           is_qof: false
           source_column: "all_three_targets_met"
           usage_contexts:
@@ -119,6 +120,8 @@ models:
         description: A statin order is dated in the audit period.
       - name: is_statin_target_met
         description: "{{ doc('diabetes_triple_target_is_statin_target_met') }}"
+      - name: is_in_nda_denominator
+        description: "{{ doc('diabetes_triple_target_is_in_nda_denominator') }}"
       - name: all_three_targets_met
         description: "{{ doc('diabetes_triple_target_all_three_targets_met') }}"
         data_tests:
