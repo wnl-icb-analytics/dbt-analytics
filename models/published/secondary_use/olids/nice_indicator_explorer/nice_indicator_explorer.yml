@@ -1,0 +1,194 @@
+models:
+  - name: nice_indicator_explorer_achievement
+    description: >-
+      Current NICE indicator achievement by practice and inequality breakdown, for the NICE
+      Indicator Explorer app. One row per indicator, practice, breakdown and breakdown value
+      on the build date.
+
+
+      Counts come from fct_person_nice_indicator_status, excluding people with a National
+      Data Opt-Out or Type 1 opt-out. Breakdown 'Total' holds every person once; each other
+      breakdown splits the same people into exhaustive values, so filter to one breakdown
+      before summing. Sum numerator and denominator across practices rather than averaging
+      percentages. Practice, PCN, neighbourhood and borough use the current mapping. Join
+      indicator_id to def_indicator for names and descriptions.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - indicator_id
+              - practice_code
+              - breakdown
+              - breakdown_value
+    columns: &achievement_columns
+      - name: reporting_date
+        description: >-
+          Date of assessment: the build date for current results or a completed month-end for
+          monthly results.
+      - name: indicator_id
+        description: NICE indicator identifier; joins to def_indicator.
+      - name: practice_code
+        description: ODS code of the registration practice at the reporting date.
+      - name: practice_name
+        description: Current practice name; null if the practice is not mapped.
+      - name: pcn_code
+        description: Current primary care network ODS code; null if not mapped.
+      - name: pcn_name
+        description: Current primary care network name; null if not mapped.
+      - name: neighbourhood_code
+        description: >-
+          Current integrated neighbourhood team (INT) code of the practice; null if the
+          practice has no neighbourhood.
+      - name: neighbourhood_name
+        description: Current integrated neighbourhood team (INT) name of the practice.
+      - name: borough
+        description: Current borough of the practice registration population.
+      - name: breakdown
+        description: >-
+          Inequality breakdown: Total, Deprivation (IMD 2025), Ethnicity, Ethnicity (detailed),
+          Age band, Sex, Population segment, Long-term conditions, Frailty (eFI2), Learning
+          disability, Severe mental illness, Interpreter needed and, in current results only,
+          Cambridge Multimorbidity Score and Housebound or care home.
+        data_tests:
+          - not_null
+      - name: breakdown_value
+        description: >-
+          Group within the breakdown. Deprivation uses the national IMD 2025 quintile of the
+          resident LSOA (1 most deprived; quintile 1 is the Core20 group). Ethnicity is the
+          latest recorded category; the detailed version uses the census subcategory, with
+          not stated, refused and unknown grouped. Age band uses age at the reporting date. Segment, long-term
+          condition count, frailty and register membership are taken at the reporting date;
+          frailty is scored for people aged 65 and over only. Deprivation, ethnicity, sex and
+          interpreter need use current values for every month. Multimorbidity score bands use
+          the current Cambridge Multimorbidity Score. Housebound or care home uses the latest
+          recorded status; care home takes precedence. 'Total' rows use 'All people'.
+        data_tests:
+          - not_null
+      - name: denominator
+        description: People in the indicator denominator, before personalised care adjustments.
+      - name: numerator
+        description: People in the denominator who meet the achievement rule.
+      - name: not_achieved
+        description: Denominator minus numerator.
+      - name: not_recorded_in_period
+        description: Not achieved because no qualifying record was found in the period.
+      - name: outside_target
+        description: Not achieved because the latest reading is above target or out of range.
+      - name: not_treated
+        description: >-
+          Not achieved because the required treatment was not given in the period, was never
+          given, or an anticoagulant choice did not meet the rule.
+      - name: not_assessable
+        description: Not achieved because the latest result could not be assessed.
+      - name: numerator_at_age_rates
+        description: >-
+          Achievements the row's people would have at the rate of everyone in their ESP 2013
+          five-year age band on the same indicator, across all practices (indirect age
+          standardisation). Additive like numerator: numerator minus this, over the denominator,
+          is the age-adjusted gap.
+      - name: variance_at_age_rates
+        description: >-
+          Sum of p(1 - p) over the row's people, where p is their age band's rate. Binomial
+          variance of numerator around numerator_at_age_rates, for intervals.
+
+  - name: nice_indicator_explorer_achievement_by_month
+    description: >-
+      Monthly NICE indicator achievement by practice and inequality breakdown, for the NICE
+      Indicator Explorer app. One row per completed month-end, indicator, practice, breakdown
+      and breakdown value over the last 60 months.
+
+
+      Counts come from fct_person_nice_indicator_status_by_month, excluding people with a
+      National Data Opt-Out or Type 1 opt-out (current status, applied to every month).
+      Results are recalculated with current rules, so later corrections can change past
+      months. Breakdown 'Total' holds every person once; each other breakdown splits the same
+      people into exhaustive values, so filter to one breakdown before summing. The Cambridge
+      Multimorbidity Score and housebound or care home breakdowns are current only. Practice, PCN,
+      neighbourhood and borough use the current mapping.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - reporting_date
+              - indicator_id
+              - practice_code
+              - breakdown
+              - breakdown_value
+    columns: *achievement_columns
+
+  - name: nice_indicator_explorer_care_gaps
+    description: >-
+      People by number of unmet NICE indicators, for proactive care cohorts in the NICE
+      Indicator Explorer app. One row per practice, population segment, frailty category,
+      deprivation quintile, ethnicity, age band, residence and unmet count on the build date.
+
+
+      Includes people in at least one NICE indicator denominator in
+      fct_person_nice_indicator_status, excluding people with a National Data Opt-Out or Type
+      1 opt-out. Each indicator counts once, so the count reflects how many indicator
+      denominators a person is in as well as their care. Practice, PCN, neighbourhood and
+      borough use the current mapping.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - segment
+              - frailty
+              - imd_quintile
+              - ethnicity
+              - age_band
+              - residence
+              - indicators_unmet
+    columns:
+      - name: reporting_date
+        description: Build date on which indicator results are assessed.
+      - name: practice_code
+        description: ODS code of the current registration practice.
+      - name: practice_name
+        description: Current practice name.
+      - name: pcn_code
+        description: Current primary care network ODS code.
+      - name: pcn_name
+        description: Current primary care network name.
+      - name: neighbourhood_code
+        description: Current integrated neighbourhood team (INT) code of the practice.
+      - name: neighbourhood_name
+        description: Current integrated neighbourhood team (INT) name of the practice.
+      - name: borough
+        description: Current borough of the practice registration population.
+      - name: segment
+        description: Current population segment number and name, or 'Not segmented'.
+      - name: frailty
+        description: >-
+          Current eFI2 frailty category (Fit, Mild, Moderate, Severe); 'Not scored' under 65 or with no score.
+      - name: imd_quintile
+        description: National IMD 2025 quintile of the resident LSOA; 1 is most deprived.
+      - name: ethnicity
+        description: Latest recorded ethnicity category.
+      - name: age_band
+        description: Age band at the build date.
+      - name: residence
+        description: >-
+          Latest recorded care home or housebound status: Care home, Housebound or Neither
+          recorded. Care home takes precedence.
+      - name: indicators_unmet
+        description: NICE indicators the person is due but has not met, capped at 10 (10 means 10 or more).
+      - name: people
+        description: Number of people.
+      - name: unmet_results
+        description: Total unmet NICE indicators for these people, without the cap.
+      - name: indicators_due
+        description: Total NICE indicator denominators these people are in.
