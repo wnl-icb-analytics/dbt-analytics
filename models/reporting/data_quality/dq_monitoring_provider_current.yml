@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: dq_monitoring_provider_current
+    description: >
+      Latest provider-level DQ assessment for each configured core provider
+      and monitored dataset. Intended as the primary provider-level datasource
+      for Streamlit reporting and subsequent alert generation.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: Date of the latest provider assessment.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Identifier of the monitored dataset.
+        tests:
+          - not_null
+
+      - name: dataset_group
+        description: Dataset family controlling the provider assessment logic.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['SUS', 'SLAM']
+
+      - name: provider_code
+        description: Provider organisation code.
+        tests:
+          - not_null
+
+      - name: provider_name
+        description: Provider organisation name.
+        tests:
+          - not_null
+
+      - name: provider_scope
+        description: Operational provider monitoring classification.
+        tests:
+          - not_null
+
+      - name: row_count
+        description: Latest provider-level row count.
+
+      - name: row_count_change
+        description: Latest absolute provider row-count movement.
+
+      - name: row_count_change_pct
+        description: Latest provider row-count percentage movement.
+
+      - name: latest_refresh_date
+        description: Latest valid source dataset-created date observed for the provider.
+
+      - name: latest_actual_financial_year
+        description: Latest financial year containing actual provider activity where applicable.
+
+      - name: latest_actual_financial_month
+        description: Latest financial month containing actual provider activity where applicable.
+
+      - name: latest_update_date
+        description: Latest provider source processing or update date.
+
+      - name: expected_financial_year
+        description: Expected SLAM actual financial year for the latest assessment.
+
+      - name: expected_financial_month
+        description: Expected SLAM actual financial month for the latest assessment.
+
+      - name: provider_status
+        description: Latest provider traffic-light assessment.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: status_rank
+        description: Numeric severity rank used for sorting.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+
+      - name: status_reason
+        description: Human-readable explanation of the latest provider status.
+        tests:
+          - not_null
