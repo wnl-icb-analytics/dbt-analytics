@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: dq_monitoring_status
+    description: >
+      Monitoring status for configured datasets.
+      Combines freshness monitoring and row count variance
+      monitoring to generate traffic light status indicators.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: Date the monitoring measurement was taken.
+        tests:
+          - not_null
+
+      - name: measured_at
+        description: Timestamp the monitoring measurement was taken.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Monitored object identifier.
+        tests:
+          - not_null
+
+      - name: freshness_status
+        description: Status derived from refresh age thresholds.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: status_rank
+        description: Sort order for monitoring severity.
+        tests:
+          - not_null
+
+      - name: variance_status
+        description: Status derived from row count variance thresholds.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED']
+
+      - name: overall_status
+        description: Combined monitoring status.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED']
+
+      - name: row_count_change_pct
+        description: Percentage change from previous measurement.
+
+      - name: status_reason
+        description: Human readable explanation for the assigned status.
