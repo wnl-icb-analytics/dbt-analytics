@@ -92,3 +92,80 @@ models:
         description: Human-readable explanation of the latest provider status.
         tests:
           - not_null
+
+      - name: provider_shorthand
+        description: Short reporting name for the provider from the governed submission model.
+
+      - name: submitted_financial_year
+        description: Financial year associated with the provider's latest submission.
+
+      - name: fy_month_submitted
+        description: Latest financial month submitted by the provider.
+
+      - name: submitted_meta_file_id
+        description: SDL metadata file identifier for the latest selected submission.
+
+      - name: submitted_file_version
+        description: File version associated with the latest selected submission.
+
+      - name: submission_due_date
+        description: Required submission date for the latest submitted financial month.
+
+      - name: date_submitted
+        description: Date on which the latest selected file was submitted.
+
+      - name: submitted_row_count
+        description: >
+          Row count recorded in SDL metadata for the latest submitted file.
+          This is distinct from the provider row count observed in the
+          resulting downstream dataset.
+
+      - name: latest_month_received
+        description: >
+          Indicates whether the provider's latest submission matches
+          the latest financial month received across the monitored
+          SLAM provider population.
+
+      - name: submission_status
+        description: Governed submission status from the contract dataset submission model.
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Submitted on time
+                  - Submitted late
+                  - Not Submitted
+                  - Exempt
+                  - Not onboarded
+
+      - name: submission_completeness_status
+        description: >
+          Current completeness assessment of the expected SLAM submission.
+          Kept separate from provider output health and submission timeliness.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - GREEN
+                  - RED
+                  - GREY
+                  - NOT_APPLICABLE
+
+      - name: submission_timeliness_status
+        description: >
+          Timeliness assessment derived from the latest submission date
+          and required due date.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - GREEN
+                  - AMBER
+                  - RED
+                  - GREY
+                  - NOT_APPLICABLE
+
+      - name: submission_status_reason
+        description: Human-readable explanation of submission completeness and timeliness.
