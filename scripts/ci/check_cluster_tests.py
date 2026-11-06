@@ -9,10 +9,11 @@ A model that reads a codeset table directly and filters it on cluster_id literal
 (cluster_id = 'X' or cluster_id IN (...)) must list those IDs in a cluster_ids_exist test.
 
 Checks the models passed as arguments (changed .sql or .yml files under models/).
-With --all, checks every model. Calls whose cluster argument is not a string literal
-cannot be checked statically and are reported as notices.
+With --all, checks every model. Shared observation evidence lists are resolved from
+their macro. Other dynamic cluster arguments are reported as notices.
 """
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -43,6 +44,9 @@ QUOTED_PATTERN = re.compile(r"'([^']*)'")
 DIRECT_EQ_PATTERN = re.compile(r"\bcluster_id\s*\)?\s*=\s*'([^']+)'", re.IGNORECASE)
 DIRECT_IN_PATTERN = re.compile(r"\bcluster_id\s*\)?\s+IN\s*\(([^)]*)\)", re.IGNORECASE)
 DIRECT_LIKE_PATTERN = re.compile(r"\bcluster_id\s*\)?\s+I?LIKE\s*'([^']+)'", re.IGNORECASE)
+EVIDENCE_MACRO = Path('macros/clinical/observation_evidence_cluster_ids.sql')
+CHECKER = Path('scripts/ci/check_cluster_tests.py')
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def read_call_args(text: str, start: int) -> str:
@@ -124,6 +128,44 @@ def tokens(literal: str) -> list[str]:
     return [t.upper() for t in TOKEN_PATTERN.findall(literal)]
 
 
+def evidence_cluster_literal(value: str | None) -> str | None:
+    """Resolve the evidence macro's literal arguments against its single list dict."""
+    if value is None:
+        return None
+    call = re.fullmatch(r'observation_evidence_cluster_ids\s*\((.*)\)', value.strip(), re.DOTALL)
+    if not call:
+        return None
+    positional, keyword = split_args(call.group(1))
+    if len(positional) > 2 or set(keyword) - {'consumer', 'source'}:
+        raise ValueError(f'Unsupported evidence list arguments: {value}')
+    consumer = string_literal(keyword.get('consumer', positional[0] if positional else "'all'"))
+    source_arg = keyword.get('source', positional[1] if len(positional) > 1 else 'none')
+    source = None if source_arg.lower() == 'none' else string_literal(source_arg)
+    if consumer is None or (source is None and source_arg.lower() != 'none'):
+        raise ValueError(f'Evidence list arguments must be literal: {value}')
+
+    macro = (PROJECT_ROOT / EVIDENCE_MACRO).read_text(encoding='utf-8')
+    match = re.search(r'{%-?\s*set\s+lists\s*=\s*(\{.*?\})\s*-?%}', macro, re.DOTALL)
+    try:
+        lists = ast.literal_eval(match.group(1)) if match else None
+    except (SyntaxError, ValueError) as error:
+        raise ValueError('Cannot parse the evidence macro lists dict') from error
+    if not isinstance(lists, dict) or any(
+        not isinstance(name, str) or not isinstance(sources, dict) or any(
+            not isinstance(list_source, str) or not isinstance(ids, list)
+            or not ids or any(not isinstance(cluster, str) for cluster in ids)
+            for list_source, ids in sources.items()
+        ) for name, sources in lists.items()
+    ):
+        raise ValueError('Evidence macro lists must be a literal consumer/source/list dict')
+    ids = [cluster for name, sources in lists.items() if consumer == 'all' or consumer == name
+           for list_source, clusters in sources.items() if source is None or source == list_source
+           for cluster in clusters]
+    if not ids:
+        raise ValueError(f'No evidence lists for {consumer} / {source}')
+    return ','.join(ids)
+
+
 def find_usages(sql: str) -> tuple[set[tuple[str, str | None, bool]], set[str], list[str]]:
     """Return (cluster, source, versioned) usages, value set tokens and dynamic calls."""
     sql = re.sub(r'{#.*?#}', '', sql, flags=re.DOTALL)
@@ -173,7 +215,7 @@ def find_usages(sql: str) -> tuple[set[tuple[str, str | None, bool]], set[str], 
             if raw is None or raw.strip().lower() == 'none':
                 continue  # BNF-only call
 
-        literal = string_literal(raw) or list_literal(raw)
+        literal = evidence_cluster_literal(raw) or string_literal(raw) or list_literal(raw)
         source_literal = string_literal(source) if source and source.strip().lower() != 'none' else None
         if literal is None or (source and source.strip().lower() != 'none' and source_literal is None):
             dynamic.append(f'{macro}({args.strip()[:60]})')
@@ -192,6 +234,11 @@ def find_direct_usages(sql: str) -> tuple[set[str], list[str]]:
     sql = re.sub(r'--[^\n]*', '', sql)
     if not any(ref in sql for ref in CODESET_REFS):
         return set(), []
+    # Expand the same macro in direct codeset filters, including the classifier union.
+    sql = re.sub(r'{{\s*(.*?)\s*}}', lambda m: (
+        ','.join(f"'{cluster}'" for cluster in tokens(literal))
+        if (literal := evidence_cluster_literal(m.group(1))) is not None else m.group(0)
+    ), sql, flags=re.DOTALL)
     clusters = {m.group(1).strip().upper() for m in DIRECT_EQ_PATTERN.finditer(sql)}
     for match in DIRECT_IN_PATTERN.finditer(sql):
         clusters.update(q.strip().upper() for q in QUOTED_PATTERN.findall(match.group(1)))
@@ -247,8 +294,11 @@ def as_tokens(value) -> set[str]:
 def check_model(sql_path: Path) -> tuple[list[str], list[str]]:
     """Return (failures, notices) for one model."""
     sql = sql_path.read_text(encoding='utf-8', errors='ignore')
-    clusters, valuesets, dynamic = find_usages(sql)
-    direct, patterns = find_direct_usages(sql)
+    try:
+        clusters, valuesets, dynamic = find_usages(sql)
+        direct, patterns = find_direct_usages(sql)
+    except ValueError as error:
+        return [f'{sql_path}: {error}'], []
     # A direct read is covered by any unversioned test listing the cluster
     clusters |= {(cluster, None, False) for cluster in direct}
     notices = [f'{sql_path}: cannot check dynamic call {call}' for call in dynamic]
@@ -284,6 +334,10 @@ def models_for(paths: list[str]) -> set[Path]:
     models = set()
     for p in paths:
         path = Path(p)
+        if path == EVIDENCE_MACRO:
+            models.update(p for p in Path('models').rglob('*.sql')
+                          if 'observation_evidence_cluster_ids(' in p.read_text(encoding='utf-8'))
+            continue
         if not str(path).replace('\\', '/').startswith('models/') or '/raw/' in str(path).replace('\\', '/'):
             continue
         if path.suffix == '.sql' and path.exists():
@@ -301,7 +355,7 @@ def models_for(paths: list[str]) -> set[Path]:
 
 
 def main() -> int:
-    if '--all' in sys.argv:
+    if '--all' in sys.argv or any(Path(arg) == CHECKER for arg in sys.argv[1:]):
         models = {p for p in Path('models').rglob('*.sql') if '/raw/' not in str(p).replace('\\', '/')}
     else:
         models = models_for(sys.argv[1:])
