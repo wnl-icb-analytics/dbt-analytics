@@ -76,7 +76,7 @@ WHEN ods.status_code = 'D' THEN 'DORMANT'
 WHEN ods.status_code = 'A' THEN 'ACTIVE'
 WHEN ods.status_code = 'C' THEN 'INACTIVE'
 WHEN ods.status_code = 'P' THEN 'OTHER'
-ELSE ods.status_code END AS practice_status_code ,
+ELSE ods.status_code END AS practice_status_code,
 u.reg_practice_pcn_name_latest as pcn_name,
 u.reg_practice_health_borough_name_latest as health_borough,
 u.reg_practice_neighbourhood_name_latest as practice_neighbourhood,
@@ -93,7 +93,6 @@ WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' 
 WHEN u.site_name = 'Moorfields Eye Hospital (City Road Campus)' THEN 'Moorfields City Road'
 WHEN u.site_name LIKE '%Desmond%' THEN 'Richard Desmond Eye Centre' ELSE u.site_name END AS site_name,
 --department
---u.pod as dept_code,
 CASE 
 WHEN u.department_type = '01' THEN 'Major'
 WHEN u.department_type = '02' THEN 'Mono'
@@ -233,6 +232,8 @@ LEFT JOIN borough_res_category g on COALESCE(u.lsoa_21_at_event,pds.lsoa_21) = g
 LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org on u.reg_practice_at_event = org.organisation_code
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION org on u.reg_practice_at_event = org.organisation_code
 LEFT JOIN lookup_icb icb on icb.sk_organisation_id = org.sk_organisation_id_health_authority
+LEFT JOIN {{ ref('stg_ukhfd_all_gp_and_gdp_practices') }} ods on ods.organisation_code = COALESCE(u.reg_practice_at_event,pds.practice_code)
+--LEFT JOIN STAGING.UKHFD.STG_UKHFD_ALL_GP_AND_GDP_PRACTICES ods on ods.organisation_code = COALESCE(u.reg_practice_at_event,pds.practice_code)
 WHERE u.start_date >= DATEADD(
     'year', -2,
     DATE_FROM_PARTS(
