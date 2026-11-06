@@ -1,0 +1,74 @@
+unit_tests:
+- name: dmd_product_unit_dose_strength_units_and_retained_ingredients
+  model: dmd_product
+  given:
+  - input: ref('stg_ukhfd_dmd_vmp')
+    format: sql
+    rows: |-
+      SELECT NULL::VARCHAR AS vtm_id, NULL::VARCHAR AS vmp_name, column1::VARCHAR AS vpid, column2::FLOAT AS unit_dose_form_size, column3::VARCHAR AS unit_dose_form_size_unit_code
+      FROM VALUES ('SYN_5', 100, '258773002'),
+          ('SYN_4', 5, '258773002'),
+          ('SYN_60', 1, '258773002'),
+          ('SYN_119', 1.7000000476837158, '258773002'),
+          ('SYN_POWDER', NULL, NULL),
+          ('SYN_MULTI', 1, '258773002'),
+          ('SYN_MISMATCH', 1, '258684004'),
+          ('SYN_ZERO', 1, '258773002'),
+          ('SYN_UNKNOWN', NULL, NULL),
+          ('SYN_RETAINED', NULL, NULL),
+          ('SYN_G', NULL, NULL)
+  - input: ref('stg_ukhfd_dmd_amp')
+    format: sql
+    rows: SELECT 'SYN_A5'::VARCHAR AS apid, 'SYN_5'::VARCHAR AS vpid
+  - input: ref('stg_ukhfd_dmd_vtm')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS vtm_id, NULL::VARCHAR AS vtm_name WHERE FALSE
+  - input: ref('stg_ukhfd_dmd_vmp_drug_form')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS vpid, NULL::VARCHAR AS form_code WHERE FALSE
+  - input: ref('stg_ukhfd_dmd_lookup_form')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS form_code, NULL::VARCHAR AS form_description WHERE FALSE
+  - input: ref('stg_ukhfd_dmd_vmp_ingredient')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS vpid, column2::VARCHAR AS ingredient_substance_id, column3::FLOAT AS strength_numerator_value, column4::VARCHAR AS strength_numerator_unit_code, column5::FLOAT AS strength_denominator_value, column6::VARCHAR AS strength_denominator_unit_code, column7::BOOLEAN AS is_in_latest_source
+      FROM VALUES ('SYN_5', 'I1', 50, '258685003', 1, '258773002', TRUE),
+          ('SYN_5', 'OLD', 999, '258684004', NULL, NULL, FALSE),
+          ('SYN_4', 'I1', 800, '258685003', 1, '258773002', TRUE),
+          ('SYN_60', 'I1', 60, '258684004', 1, '258773002', TRUE),
+          ('SYN_119', 'I1', 70, '258684004', 1, '258773002', TRUE),
+          ('SYN_POWDER', 'I1', 4, '258684004', NULL, NULL, TRUE),
+          ('SYN_MULTI', 'I1', 5, '258684004', NULL, NULL, TRUE),
+          ('SYN_MULTI', 'I2', 10, '258684004', NULL, NULL, TRUE),
+          ('SYN_MISMATCH', 'I1', 5, '258684004', 1, '258773002', TRUE),
+          ('SYN_ZERO', 'I1', 5, '258684004', 0, '258773002', TRUE),
+          ('SYN_UNKNOWN', 'I1', 5, 'SYN_UNKNOWN_UNIT', NULL, NULL, TRUE),
+          ('SYN_RETAINED', 'I1', 5, '258684004', NULL, NULL, FALSE),
+          ('SYN_G', 'I1', 0.005, '258682000', NULL, NULL, TRUE)
+  expect:
+    rows:
+    - product_code: SYN_5
+      unit_dose_strength_mg: 5
+    - product_code: SYN_A5
+      unit_dose_strength_mg: 5
+    - product_code: SYN_4
+      unit_dose_strength_mg: 4
+    - product_code: SYN_60
+      unit_dose_strength_mg: 60
+    - product_code: SYN_119
+      unit_dose_strength_mg: 119
+    - product_code: SYN_POWDER
+      unit_dose_strength_mg: 4
+    - product_code: SYN_MULTI
+      unit_dose_strength_mg: null
+    - product_code: SYN_MISMATCH
+      unit_dose_strength_mg: null
+    - product_code: SYN_ZERO
+      unit_dose_strength_mg: null
+    - product_code: SYN_UNKNOWN
+      unit_dose_strength_mg: null
+    - product_code: SYN_RETAINED
+      unit_dose_strength_mg: 5
+    - product_code: SYN_G
+      unit_dose_strength_mg: 5
