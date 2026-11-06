@@ -64,7 +64,7 @@ models:
     description: UKHFD label of the submitted scheme, or specification-fixed SNOMED CT. Unchanged by Read
       scheme correction. A dictionary label does not establish version-specific submission validity.
   - name: clinical_label_status
-    description: labelled, code_missing, coding_scheme_unrecognised, reference_not_available, code_or_expression_unmatched
+    description: labelled, code_missing, coding_scheme_unrecognised, reference unavailable, code_or_expression_unmatched
       or defined_by_data_element for weight, height and length. Reference availability is distinct from clinical validity.
     data_tests:
     - accepted_values:
@@ -74,7 +74,7 @@ models:
           - defined_by_data_element
           - code_missing
           - coding_scheme_unrecognised
-          - reference_not_available
+          - reference unavailable
           - code_or_expression_unmatched
   - name: clinical_at
     description: Unzoned same-submission contact timestamp, or the submitted immunisation, diagnosis, screening,
@@ -107,12 +107,12 @@ models:
       for interpreted assessment values. Source text remains available; parsing alone does not establish
       a valid score. Null for the ETOS unknown-length value 99.9.
   - name: clinical_value_parse_status
-    description: value_missing, value_unknown (person_length 99.9, the ETOS unknown-length value), numeric, numeric_rounded,
-      numeric_format_unverified or not_numeric_or_out_of_range.
+    description: no value, unknown value (person_length 99.9, the ETOS unknown-length value), numeric, numeric (rounded),
+      numeric (format not checked) or not numeric or out of range.
       Non-numeric does not necessarily mean an invalid assessment response.
   - name: assessment_response_status
-    description: value_missing, known_non_score, enumerated_response, within_published_range, response_unmatched
-      or reference_not_available. Null outside assessments. This describes the latest available reference,
+    description: no value, non-score response, listed response, within published range, unmatched response
+      or reference unavailable. Null outside assessments. This describes the latest available reference,
       not historic submission validity.
   - name: is_assessment_response_non_score
     description: True for explicitly missing, unknown or not-applicable responses. False for other enumerated
@@ -256,3 +256,25 @@ models:
     description: How the submitted Read code matched its reference. Dictionary alternatives
       are explicit source mappings. UKHFD historical terms match the complete five-character
       Read v2 code plus its two-character term code, without inferring a SNOMED mapping.
+  - name: snomed_code
+    description: >-
+      Selected SNOMED CT concept identifier. Recognised recorded SNOMED CT first, then the national preferred-term Read map, then the legacy Read dictionary. Inactive concepts are retained; unresolved codes remain null.
+  - name: snomed_code_name
+    description: >-
+      Latest retained preferred term belonging to snomed_code.
+  - name: snomed_mapping_method
+    description: >-
+      {{ doc('navigation_snomed_mapping_method') }}
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Recorded as SNOMED CT
+          - National CTV3 map
+          - National Read v2 map
+          - Legacy Read dictionary
+  - name: is_snomed_mapping_assured
+    description: >-
+      {{ doc('navigation_is_snomed_mapping_assured') }}
+  data_tests:
+  - navigation_snomed_method
