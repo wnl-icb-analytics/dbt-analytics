@@ -17,6 +17,10 @@ models:
     available spirometry. No personalised care adjustments are applied. Based on NICE
     NG245. Code lists: AST_COD, ASTRES_COD (PCD); FENO_COD, ASTSPIR_COD, PEFRVAR_COD,
     BRONCCHALENG_COD, SKINTEST_COD, IGE_COD, EOS_COUNT, FBC_COD (ECL cache).
+
+
+    External validation: matches QOF AST012 (2025/26, by practice) once a known difference is
+    allowed for. QOF counts diagnoses since April 2025 from age 6, with its own list of tests.
   config:
     meta:
       owner:
@@ -48,6 +52,12 @@ models:
         usage_contexts:
         - NICE_GUIDANCE
         sort_order: NICE_IND272
+        external_validation:
+          status: validated
+          result: difference_explained
+          comparator: "QOF AST012 (2025/26, by practice)"
+          note: "QOF counts diagnoses since April 2025 from age 6, with its own list of tests"
+          reference: docs/nice-benchmarks.md
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:
