@@ -39,33 +39,49 @@ SELECT *
 FROM {{ ref('stg_reference_lsoa21_ward25_lad25') }}
 --FROM STAGING.REFERENCE.STG_REFERENCE_LSOA21_WARD25_LAD25
 )
---build main table for last 3 financial years and rolling 12m flag
+--build table for last 3 financial years and rolling 12m flag
+,base_table as (
 SELECT
 --commissioning and primary care
 u.sk_patient_id,
 u.commissioner_code_at_event as commissioner_code,
 IFF(u.commissioner_code_at_event IN ('07X','07M','08H','08D','07R','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','93C','93C00','Z9B2Z','QRV','QRV00','QMJ','QMJ00'),'WNL','Other') comm_group,
-u.reg_practice_at_event as practice_code,
+--substitute PDS registered code where missing,
+COALESCE(u.reg_practice_at_event,pds.practice_code) as practice_code,
 CASE
+    WHEN u.reg_practice_at_event is NULL THEN pds.practice_name
     WHEN u.reg_practice_name_latest = 'HESA MEDICAL CENTRE - Y00352' THEN 'HESA Medical Centre'
     WHEN u.reg_practice_at_event in ('V81998','V81999') THEN 'Practice Code Unknown/NA'
     WHEN u.reg_practice_at_event = 'V81997' THEN 'Not registered with GP'
+    WHEN u.reg_practice_at_event = 'E85062' THEN 'HYIOS'
+    --legacy Medicus practice codes
+    WHEN u.reg_practice_at_event in ('F85003','F85652','F85027','F85024','F85703','F85707','F85048','F85055','F85076','F85656','F85681','F85036','F85684') THEN 'Medicus Health Partners'
     ELSE
+    REGEXP_REPLACE(
+    REGEXP_REPLACE(
         REGEXP_REPLACE(
             REGEXP_REPLACE(
                 INITCAP(LOWER(u.reg_practice_name_latest)),
                 '\\bGp\\b', 'GP'
             ),
             '\\bPcn\\b', 'PCN'
-        )
+        ),
+        '\\bHmp\\b', 'HMP'
+    ),
+    '\\bWic\\b', 'WIC'
+)
 END AS practice_name,
-NVL(u.reg_practice_pcn_name_latest,'Not WNL/Unknown') as pcn_name,
-NVL(u.reg_practice_neighbourhood_name_latest,'Not WNL/Unknown') as practice_neighbourhood,
-NVL(u.reg_practice_health_borough_name_latest,'Not WNL/Unknown') as health_borough,
-CASE WHEN u.reg_practice_health_borough_name_latest is null THEN FALSE ELSE TRUE END AS is_wnl_registered,
+CASE 
+WHEN ods.status_code = 'D' THEN 'DORMANT'
+WHEN ods.status_code = 'A' THEN 'ACTIVE'
+WHEN ods.status_code = 'C' THEN 'INACTIVE'
+WHEN ods.status_code = 'P' THEN 'OTHER'
+ELSE ods.status_code END AS practice_status_code ,
+u.reg_practice_pcn_name_latest as pcn_name,
+u.reg_practice_health_borough_name_latest as health_borough,
+u.reg_practice_neighbourhood_name_latest as practice_neighbourhood,
 CASE 
 WHEN u.reg_practice_at_event in ('E84023','E84624','E84667') THEN 'West and North London'
-WHEN icb.icb_name IS NULL THEN 'Unknown'
 ELSE icb.icb_name END AS icb_name,
 --provider
 u.organisation_id as provider_code,
@@ -87,8 +103,8 @@ WHEN department_type = '05' THEN 'SDEC'
 ELSE department_type END as dept_type_desc,
 --attendance dates
 u.start_date as attendance_date,
-u.financial_year,
 CASE WHEN u.start_date >= DATEADD('month', -12, CURRENT_DATE) THEN TRUE ELSE FALSE END AS is_last_12m,
+u.financial_year,
 CASE 
         WHEN MONTH(u.start_date) >= 4 
         THEN YEAR(u.start_date) || '/' || RIGHT(YEAR(u.start_date) + 1, 2)
@@ -105,7 +121,7 @@ u.start_time,
 DATE_PART('HOUR', u.start_time) AS hour_of_arrival,
 u.duration,
 --duration > 240 mins (4hrs)
-u.is_four_hour_breach as is_4_hour_breach,
+u.duration > 240 is_4_hour_breach,
 --duration > 720 mins (12 hrs)
 u.duration >720 is_12_hour_breach,
 --duration > 4320 mins (72 hrs)
@@ -176,13 +192,6 @@ WHEN discharge_destination_group = 'Admitted' THEN TRUE ELSE FALSE END AS is_adm
 CASE WHEN g.lad25_nm IS NOT NULL AND g.residential_location = 'WNL' THEN TRUE ELSE FALSE END AS is_wnl_resident,
 g.lad25_nm as borough_resident,
 NVL(g.residential_location,'Unknown') as residence_group, 
--- 5-year age bands
--- CASE
---     WHEN u.age_at_event < 0 THEN 'Unknown'
---     WHEN u.age_at_event >= 85 THEN '85+'
---     ELSE TO_VARCHAR(FLOOR(u.age_at_event / 5) * 5) || '-' || TO_VARCHAR(FLOOR(u.age_at_event / 5) * 5 + 4)
--- END AS age_band_5y,
--- NHS Digital age bands (used in Health Survey for England)
 CASE
     WHEN u.age_at_event < 0 OR u.age_at_event IS NULL THEN 'Unknown'
     WHEN u.age_at_event < 5 THEN '0-4'
@@ -230,4 +239,73 @@ WHERE u.start_date >= DATEADD(
         YEAR(CURRENT_DATE) - IFF(MONTH(CURRENT_DATE) < 4, 1, 0),
         4,        1
     ) )
- 
+)
+,base_clean as (
+select
+b.sk_patient_id,
+b.commissioner_code,
+b.comm_group,
+b.practice_status_code,
+b.practice_code,
+b.practice_name,
+--add missing neighbourhood and borough information
+COALESCE(b.pcn_name,p.pcn_name) as pcn_name,
+COALESCE(b.practice_neighbourhood,p.neighbourhood_name) as practice_neighbourhood,
+COALESCE(b.health_borough,p.registered_borough_name) as health_borough,
+CASE 
+WHEN b.icb_name = 'North West London' THEN 'West and North London' ELSE b.icb_name END AS icb_name,
+b.provider_code,
+b.provider_shorthand,
+b.provider_name,
+b.site_id,
+b.site_name,
+b.dept_code,
+b.dept_type_desc,
+b.attendance_date,
+b.day_of_week,
+b.day_of_week_sort,
+b.start_time,
+b.hour_of_arrival,
+b.is_last_12m,
+b.financial_year_label,
+b.month_start_date,
+b.month_label,
+b.month_sort,
+b.week_start_date,
+b.week_label,
+b.duration,
+b.is_4_hour_breach,
+b.is_12_hour_breach,
+b.is_72_hour_breach,
+b.arrival_mode_desc,
+b.arrival_by_ambulance,
+b.hrg_code,
+b.core_hrg_desc,
+b.chief_complaint_group,
+b.primary_diagnosis_group,
+b.primary_treatment_group,
+b.primary_investigation_group,
+b.is_mental_health_related_attendance,
+b.acuity_level,
+b.acuity_level_sort,
+b.admission_status,
+b.is_wnl_resident,
+b.borough_resident,
+b.residence_group,
+b.age_band_nhs,
+b.age_sort,
+b.gender,
+b.ethnicity_code,
+b.ethnicity,
+b.imd_decile_25,
+b.lsoa_21,
+b.attendance_count
+FROM base_table b
+LEFT JOIN  {{ ref('practice_wnl_all') }} p using (practice_code)
+--LEFT JOIN REFERENCE.PRIMARY_CARE.PRACTICE_WNL_ALL p using (practice_code)
+)
+--add in is_registered flag and highlight on GP codes (PCN, WIC and other UEC sources that are not registered GP practices).
+select *,
+CASE WHEN health_borough IS NOT NULL THEN TRUE ELSE FALSE END AS is_wnl_registered,
+CASE WHEN health_borough IS NULL AND icb_name = 'West and North London' THEN TRUE ELSE FALSE END AS other_org_code
+from base_clean
