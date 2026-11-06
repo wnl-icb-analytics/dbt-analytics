@@ -3,11 +3,18 @@ version: 2
 models:
   - name: int_observation_events_long
     description: |
-      Long-format biomarker observation history. One row per observation event
+      Biomarker history, one row per distinct non-BP reading or existing BP row
       across blood pressure (systolic + diastolic), total cholesterol, LDL, HDL, non-HDL, triglycerides, total cholesterol to HDL ratio, QRISK,
       HbA1c, BMI, waist circumference, eGFR, creatinine, urine ACR, ALT, GGT,
       bilirubin, haemoglobin, platelets, eosinophils, eFI/eFI2, and Rockwood
       frailty assessments.
+
+      Non-BP readings with the same person, mapped concept, clinical calendar
+      date and recorded value appear once. Different standardised values or units
+      remain separate. The latest clinical timestamp, recorded timestamp and
+      source identifier select the retained row. BP keeps its existing grain.
+      Different source patient records or publishers remain separate. Missing
+      source metadata or an unknown clinical day retains the source identifier.
 
       Backs sem_olids_observations_history. Supports serial / latest-N /
       trajectory questions via window functions over (person_id,
@@ -70,7 +77,7 @@ unit_tests:
   - input: ref('int_haemoglobin_all')
     format: sql
     rows: |-
-      SELECT column1::VARCHAR AS id, -18114::NUMBER AS person_id,
+      SELECT NULL::VARCHAR AS concept_code, column1::VARCHAR AS id, -18114::NUMBER AS person_id,
           column2::TIMESTAMP_NTZ AS clinical_effective_date,
           column2::TIMESTAMP_NTZ AS date_recorded, column3::FLOAT AS inferred_value,
           column4::BOOLEAN AS is_out_of_range, FALSE::BOOLEAN AS is_negative,
@@ -85,86 +92,333 @@ unit_tests:
   - input: ref('int_cholesterol_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
   - input: ref('int_cholesterol_ldl_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS ldl_cvd_target_met WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS ldl_cvd_target_met WHERE FALSE
   - input: ref('int_cholesterol_hdl_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
   - input: ref('int_cholesterol_non_hdl_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
   - input: ref('int_triglycerides_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS triglycerides_value, NULL::VARCHAR AS triglycerides_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS triglycerides_value, NULL::VARCHAR AS triglycerides_category WHERE FALSE
   - input: ref('int_cholesterol_hdl_ratio_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS cholesterol_hdl_ratio WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS cholesterol_hdl_ratio WHERE FALSE
   - input: ref('int_qrisk_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS qrisk_score, NULL::VARCHAR AS cvd_risk_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS qrisk_score, NULL::VARCHAR AS cvd_risk_category WHERE FALSE
   - input: ref('int_hba1c_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS hba1c_ifcc, NULL::VARCHAR AS hba1c_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS hba1c_ifcc, NULL::VARCHAR AS hba1c_category WHERE FALSE
   - input: ref('int_bmi_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS bmi_value, NULL::VARCHAR AS bmi_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS bmi_value, NULL::VARCHAR AS bmi_category WHERE FALSE
   - input: ref('int_waist_circumference_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS waist_circumference_value, NULL::VARCHAR AS waist_risk_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS waist_circumference_value, NULL::VARCHAR AS waist_risk_category WHERE FALSE
   - input: ref('int_egfr_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS egfr_value, NULL::VARCHAR AS ckd_stage WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS egfr_value, NULL::VARCHAR AS ckd_stage WHERE FALSE
   - input: ref('int_creatinine_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS creatinine_value, NULL::VARCHAR AS creatinine_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS creatinine_value, NULL::VARCHAR AS creatinine_category WHERE FALSE
   - input: ref('int_urine_acr_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS acr_value, NULL::VARCHAR AS acr_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS acr_value, NULL::VARCHAR AS acr_category WHERE FALSE
   - input: ref('int_alt_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS alt_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS alt_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
   - input: ref('int_ggt_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS ggt_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS ggt_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
   - input: ref('int_bilirubin_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS bilirubin_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS bilirubin_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
   - input: ref('int_platelets_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS platelets_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS platelets_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
   - input: ref('int_eosinophil_count')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS eosinophil_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS eosinophil_category, NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
   - input: ref('int_efi_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS efi_value, NULL::VARCHAR AS efi_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS efi_value, NULL::VARCHAR AS efi_category WHERE FALSE
   - input: ref('int_rockwood_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS rockwood_score, NULL::VARCHAR AS frailty_category WHERE FALSE
+      SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS rockwood_score, NULL::VARCHAR AS frailty_category WHERE FALSE
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS code, 'WEIGHT'::VARCHAR AS cluster_id WHERE FALSE
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT fixture.*, IFF(fixture.id='SYN_OTHER_RECORD','SYN_OTHER_RECORD','SYN_RECORD')::VARCHAR AS patient_id,
+          IFF(fixture.id='SYN_OTHER_RECORD','SYN_OTHER_PRACTICE','SYN_PRACTICE')::VARCHAR AS publisher_organisation_code
+      FROM (
+          SELECT NULL::VARCHAR AS id, NULL::VARCHAR AS mapped_concept_code, NULL::FLOAT AS result_value, NULL::TIMESTAMP_NTZ AS date_recorded WHERE FALSE
+      ) AS fixture
   expect:
     rows:
     - person_id: -18114
       source_observation_id: SYN_VALID
       observation_type: Haemoglobin
       value: 135
+
+- name: observation_history_keeps_distinct_concepts_dates_and_values
+  model: int_observation_events_long
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS source_observation_id,
+        NULL::VARCHAR AS observation_type, NULL::FLOAT AS value WHERE FALSE
+  given:
+  - input: ref('int_haemoglobin_all')
+    format: sql
+    rows: |-
+      SELECT NULL::VARCHAR AS concept_code, column1::VARCHAR AS id, -18114::NUMBER AS person_id,
+          column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column2::TIMESTAMP_NTZ AS date_recorded, column3::FLOAT AS inferred_value,
+          column4::BOOLEAN AS is_out_of_range, FALSE::BOOLEAN AS is_negative,
+          FALSE::BOOLEAN AS is_extreme_outlier, 'g/L'::VARCHAR AS inferred_unit,
+          'SYN_CATEGORY'::VARCHAR AS haemoglobin_category
+      FROM VALUES ('SYN_VALID', '2024-01-01', 135, FALSE),
+          ('SYN_BAD', '2024-02-01', 1.5, TRUE)
+  - input: ref('int_blood_pressure_all')
+    format: sql
+    rows: SELECT -145411::NUMBER AS person_id, '2024-01-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+      column1::VARCHAR AS systolic_observation_id, NULL::VARCHAR AS diastolic_observation_id, 120::FLOAT
+      AS systolic_value, NULL::FLOAT AS diastolic_value, FALSE::BOOLEAN AS is_home_bp_event, FALSE::BOOLEAN
+      AS is_abpm_bp_event, FALSE::BOOLEAN AS is_hypertensive_range FROM VALUES ('SYN_BP_A'), ('SYN_BP_B')
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+  - input: ref('int_cholesterol_ldl_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS ldl_cvd_target_met WHERE FALSE
+  - input: ref('int_cholesterol_hdl_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+  - input: ref('int_cholesterol_non_hdl_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS cholesterol_value, NULL::VARCHAR AS cholesterol_category WHERE FALSE
+  - input: ref('int_triglycerides_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS triglycerides_value, NULL::VARCHAR AS triglycerides_category WHERE FALSE
+  - input: ref('int_cholesterol_hdl_ratio_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::VARCHAR AS cholesterol_hdl_ratio WHERE FALSE
+  - input: ref('int_qrisk_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS qrisk_score, NULL::VARCHAR AS cvd_risk_category WHERE FALSE
+  - input: ref('int_hba1c_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::VARCHAR AS concept_code,
+          column5::FLOAT AS result_value, column5::FLOAT AS hba1c_ifcc, 'SYN_CATEGORY'::VARCHAR AS hba1c_category
+      FROM VALUES ('SYN_EARLY', -145411, '2024-01-01 09:00:00', 'SYN_C', 50),
+      ('SYN_LATER', -145411, '2024-01-01 18:00:00', 'SYN_C', 50),
+      ('SYN_OTHER_CONCEPT', -145411, '2024-01-01 09:00:00', 'SYN_OTHER', 50),
+      ('SYN_VALUE', -145411, '2024-01-01', 'SYN_C', 51),
+      ('SYN_NEXT_DAY', -145411, '2024-01-02', 'SYN_C', 50),
+      ('SYN_ID_A', -145411, '2024-02-01', 'SYN_C', 60),
+      ('SYN_ID_Z', -145411, '2024-02-01', 'SYN_C', 60),
+      ('SYN_OTHER_PERSON', -145412, '2024-01-01', 'SYN_C', 50),
+      ('SYN_OTHER_RECORD', -145411, '2024-01-01', 'SYN_C', 50),
+      ('SYN_UNKNOWN_A', -145411, '1900-01-01', 'SYN_C', 50),
+      ('SYN_UNKNOWN_B', -145411, '1900-01-01', 'SYN_C', 50)
+      UNION ALL
+      SELECT column1::VARCHAR, -145411::NUMBER, '2024-04-01'::TIMESTAMP_NTZ,
+          'SYN_MISSING'::VARCHAR, 90::FLOAT, 90::FLOAT, 'SYN_CATEGORY'::VARCHAR
+      FROM VALUES ('SYN_MISSING_A'), ('SYN_MISSING_B')
+      UNION ALL
+      SELECT column1::VARCHAR, -145411::NUMBER, '2024-03-01'::TIMESTAMP_NTZ,
+          'SYN_TIE'::VARCHAR, 70::FLOAT, 70::FLOAT, 'SYN_CATEGORY'::VARCHAR
+      FROM VALUES ('SYN_TIE_A'), ('SYN_TIE_Z')
+      UNION ALL
+      SELECT column1::VARCHAR, -145411::NUMBER, '2024-05-01'::TIMESTAMP_NTZ,
+          'SYN_UNIT_CONFLICT'::VARCHAR, 5::FLOAT, column2::FLOAT, 'SYN_CATEGORY'::VARCHAR
+      FROM VALUES ('SYN_CONVERTED_A',80), ('SYN_CONVERTED_Z',81)
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, -145411::NUMBER AS person_id,
+          column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          'CALCULATED_BMI'::VARCHAR AS concept_code,
+          23::FLOAT AS bmi_value, 'SYN_CATEGORY'::VARCHAR AS bmi_category
+      FROM VALUES ('SYN_WEIGHT_A', '2024-06-01 09:00:00'),
+          ('SYN_WEIGHT_B', '2024-06-01 18:00:00')
+  - input: ref('int_waist_circumference_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS waist_circumference_value, NULL::VARCHAR AS waist_risk_category WHERE FALSE
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS egfr_value, NULL::VARCHAR AS ckd_stage WHERE FALSE
+  - input: ref('int_creatinine_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS creatinine_value, NULL::VARCHAR AS creatinine_category WHERE FALSE
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS acr_value, NULL::VARCHAR AS acr_category WHERE FALSE
+  - input: ref('int_alt_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS alt_category, NULL::BOOLEAN
+      AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_ggt_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS ggt_category, NULL::BOOLEAN
+      AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_bilirubin_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS bilirubin_category,
+      NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_platelets_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS platelets_category,
+      NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_eosinophil_count')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS inferred_value, NULL::VARCHAR AS inferred_unit, NULL::VARCHAR AS eosinophil_category,
+      NULL::BOOLEAN AS is_negative, NULL::BOOLEAN AS is_extreme_outlier WHERE FALSE
+  - input: ref('int_efi_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS efi_value, NULL::VARCHAR AS efi_category WHERE FALSE
+  - input: ref('int_rockwood_all')
+    format: sql
+    rows: SELECT NULL::VARCHAR AS concept_code, NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date,
+      NULL::FLOAT AS rockwood_score, NULL::VARCHAR AS frailty_category WHERE FALSE
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: SELECT 'SYN_WEIGHT_CODE'::VARCHAR AS code, 'WEIGHT'::VARCHAR AS cluster_id
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT fixture.*, IFF(fixture.id='SYN_OTHER_RECORD','SYN_OTHER_RECORD','SYN_RECORD')::VARCHAR AS patient_id,
+          IFF(fixture.id='SYN_OTHER_RECORD','SYN_OTHER_PRACTICE','SYN_PRACTICE')::VARCHAR AS publisher_organisation_code
+      FROM (
+          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+              column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::VARCHAR AS mapped_concept_code,
+              column5::FLOAT AS result_value, IFF(column1 = 'SYN_ID_A', '2024-02-03', '2024-02-02')::TIMESTAMP_NTZ AS date_recorded
+          FROM VALUES ('SYN_EARLY', -145411, '2024-01-01 09:00:00', 'SYN_C', 50),
+          ('SYN_LATER', -145411, '2024-01-01 18:00:00', 'SYN_C', 50),
+          ('SYN_OTHER_CONCEPT', -145411, '2024-01-01 09:00:00', 'SYN_OTHER', 50),
+          ('SYN_VALUE', -145411, '2024-01-01', 'SYN_C', 51),
+          ('SYN_NEXT_DAY', -145411, '2024-01-02', 'SYN_C', 50),
+          ('SYN_ID_A', -145411, '2024-02-01', 'SYN_C', 60),
+          ('SYN_ID_Z', -145411, '2024-02-01', 'SYN_C', 60),
+          ('SYN_OTHER_PERSON', -145412, '2024-01-01', 'SYN_C', 50),
+          ('SYN_OTHER_RECORD', -145411, '2024-01-01', 'SYN_C', 50),
+          ('SYN_UNKNOWN_A', -145411, '1900-01-01', 'SYN_C', 50),
+          ('SYN_UNKNOWN_B', -145411, '1900-01-01', 'SYN_C', 50)
+          UNION ALL
+          SELECT column1::VARCHAR, -145411::NUMBER, '2024-03-01'::TIMESTAMP_NTZ,
+              'SYN_TIE'::VARCHAR, 70::FLOAT, '2024-03-02'::TIMESTAMP_NTZ
+          FROM VALUES ('SYN_TIE_A'), ('SYN_TIE_Z')
+          UNION ALL
+          SELECT column1::VARCHAR, -145411::NUMBER, '2024-05-01'::TIMESTAMP_NTZ,
+              'SYN_UNIT_CONFLICT'::VARCHAR, 5::FLOAT, '2024-05-02'::TIMESTAMP_NTZ
+          FROM VALUES ('SYN_CONVERTED_A'), ('SYN_CONVERTED_Z')
+          UNION ALL
+          SELECT column1::VARCHAR, -145411::NUMBER, '2024-06-01'::TIMESTAMP_NTZ,
+              'SYN_WEIGHT_CODE'::VARCHAR, 70::FLOAT, '2024-06-02'::TIMESTAMP_NTZ
+          FROM VALUES ('SYN_WEIGHT_A'), ('SYN_WEIGHT_B')
+          UNION ALL
+          SELECT 'SYN_BP_A'::VARCHAR, -145411::NUMBER, '2024-01-01'::TIMESTAMP_NTZ,
+              'SYN_BP'::VARCHAR, 120::FLOAT, '2024-01-02'::TIMESTAMP_NTZ
+          FROM VALUES (1), (2)
+      ) AS fixture
+  expect:
+    rows:
+    - source_observation_id: SYN_WEIGHT_B
+      observation_type: BMI
+      value: 23
+    - source_observation_id: SYN_OTHER_RECORD
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_UNKNOWN_A
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_UNKNOWN_B
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_LATER
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_OTHER_CONCEPT
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_VALUE
+      observation_type: HbA1c
+      value: 51
+    - source_observation_id: SYN_NEXT_DAY
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_ID_A
+      observation_type: HbA1c
+      value: 60
+    - source_observation_id: SYN_OTHER_PERSON
+      observation_type: HbA1c
+      value: 50
+    - source_observation_id: SYN_BP_A
+      observation_type: Systolic BP
+      value: 120
+    - source_observation_id: SYN_BP_B
+      observation_type: Systolic BP
+      value: 120
+    - source_observation_id: SYN_VALID
+      observation_type: Haemoglobin
+      value: 135
+    - source_observation_id: SYN_MISSING_A
+      observation_type: HbA1c
+      value: 90
+    - source_observation_id: SYN_MISSING_B
+      observation_type: HbA1c
+      value: 90
+    - source_observation_id: SYN_TIE_Z
+      observation_type: HbA1c
+      value: 70
+    - source_observation_id: SYN_CONVERTED_A
+      observation_type: HbA1c
+      value: 80
+    - source_observation_id: SYN_CONVERTED_Z
+      observation_type: HbA1c
+      value: 81

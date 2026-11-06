@@ -1,23 +1,31 @@
 models:
   - name: fct_person_copd_register
-    description: >-
+    description: >
       Unresolved COPD register (NICE IND190). One row per register member.
-
 
       Registration status is not filtered. People of any age qualify with unresolved COPD
       evidence. Disorder diagnoses have no expiry; administrative codes must be in the 2 years
       before the build date. A resolution removes membership until evidence on a later date.
       Spirometry is optional, including for diagnoses on or after 1 April 2023. When present,
-      qualifying spirometry is an unrounded FEV1/FVC ratio below 0.7 or a coded result, from 93
-      days before to 186 days after diagnosis or recent registration. NICE requires post-bronchodilator confirmation around newer diagnoses. Clinical evidence is dated by the
+      qualifying spirometry is an unrounded FEV1/FVC ratio below 0.7 or a coded result, from
+      93 days before to 186 days after diagnosis or recent registration. NICE requires post-
+      bronchodilator confirmation around newer diagnoses. Clinical evidence is dated by the
       build date. For NICE counts, select people registered on the build date. Based on NICE
       NG115. Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, FEV1FVC_COD, FEV1FVCL70_COD
       (PCD).
+
+      Observation counts include each person, concept, clinical calendar date and recorded
+      value once, including value-free entries. Register membership and first/last dates use
+      the full evidence history. Missing clinical days keep separate observation ids.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
 
     columns:
+      - name: total_unable_spirometry_records
+        description: Distinct unable-to-perform spirometry readings by concept, clinical calendar date and recorded value, including null results.
+      - name: total_spirometry_tests
+        description: Distinct spirometry readings by concept, clinical calendar date and recorded value, including null results.
       - name: person_id
         description: Unique identifier for the person
         tests:
@@ -40,13 +48,11 @@ models:
         description: Latest COPD resolved code date up to the achievement date (COPDRES_DAT)
 
       - name: copd_disorder_code_count
-        description: Count of disorder-code observations used as current register evidence
-
+        description: Distinct COPD disorder readings by concept, clinical calendar date and recorded value, including null results.
       - name: copd_admin_code_count
-        description: Count of administrative-code observations in the preceding two years used as current register evidence
-
+        description: Distinct COPD administrative readings by concept, clinical calendar date and recorded value, including null results.
       - name: copd_diagnosis_count
-        description: Total disorder and in-window administrative observations used as current register evidence
+        description: Distinct COPD diagnosis readings by concept, clinical calendar date and recorded value, including null results.
 
     config:
       meta:

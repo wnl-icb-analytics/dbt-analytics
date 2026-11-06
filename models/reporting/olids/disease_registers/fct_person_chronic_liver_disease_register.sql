@@ -57,7 +57,7 @@ WITH cld_diagnoses AS (
         ) AS latest_cirrhosis_date,
 
         -- Count of CLD diagnoses
-        COUNT(CASE WHEN is_diagnosis_code THEN 1 END)
+        COUNT(DISTINCT IFF(is_diagnosis_code, {{ observation_reading_key(value=none) }}, NULL))
             AS total_cld_diagnoses,
 
         -- Traceability arrays
