@@ -1,10 +1,11 @@
 models:
   - name: int_bowel_screening_prompt_latest
     description: >-
-      Latest bowel screening prompt per person in OLIDS. Uses SNOMED CT
+      Last recorded bowel screening prompt per person in OLIDS. Uses SNOMED CT
       382161000000102 from SMI_LONGER_LIVES_CANCER_SCREEN_PROMPTS in ECL_CACHE. People
       need not have SMI; age, sex, registration and death are unrestricted. Future
-      prompts are excluded; missing dates appear as 1900-01-01.
+      prompts are excluded; missing dates appear as 1900-01-01. No further validity
+      filter applies. Ties use the latest save time, then the highest observation ID.
     config:
       meta:
         owner:
@@ -14,6 +15,10 @@ models:
     #       arguments:
     #         min_value: 1
 
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id]
     columns:
       - name: person_id
         tests:

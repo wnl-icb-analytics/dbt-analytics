@@ -4,7 +4,8 @@ models:
       Latest recorded alcohol education, intervention or decline per person in OLIDS,
       by clinical date up to the build date. Includes inactive and deceased people
       with qualifying evidence, without age or SMI-register restrictions.
-      Same-day records prefer completion, then decline, then the lowest concept code.
+      Same-day records prefer completion, then decline, then the latest save time and highest observation ID.
+      Selects the last recorded event in its input, including any unassessable result.
     config:
       meta:
         owner:
@@ -19,11 +20,15 @@ models:
 unit_tests:
 - name: alcohol_intervention_latest_same_day_precedence
   model: int_alcohol_intervention_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS alcohol_advice_services WHERE FALSE
   given:
   - input: ref('int_alcohol_intervention')
     format: sql
     rows: |
       SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::VARCHAR AS observation_id, column2::TIMESTAMP_NTZ AS date_recorded,
           column3::VARCHAR AS concept_code, column4::VARCHAR AS alcohol_advice_services
       FROM VALUES
           (-9601, '2024-03-01 15:00:00'::TIMESTAMP_NTZ, 'SYN_B', 'Declined'),
@@ -41,5 +46,5 @@ unit_tests:
       concept_code: SYN_Z
       alcohol_advice_services: 'Declined'
     - person_id: -18213
-      concept_code: SYN_A
+      concept_code: SYN_Z
       alcohol_advice_services: 'Yes'

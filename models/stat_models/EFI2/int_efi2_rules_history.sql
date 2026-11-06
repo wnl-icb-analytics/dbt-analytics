@@ -20,6 +20,5 @@ newer months.
     cohort_relation=ref('int_efi2_cohort_snomed_codes_history'),
     haemoglobin_relation=ref('int_haemoglobin_all'),
     historical=true,
-    deduplicate_output=true,
-    evidence_tiebreak_expression='evidence_id'
+    deduplicate_output=true
 ) }}

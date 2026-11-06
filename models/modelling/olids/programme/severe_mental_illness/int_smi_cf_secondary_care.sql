@@ -41,26 +41,6 @@ and mpi.DMIC_CCG_CODE = '93C'
 and smi.HAS_ACTIVE_SMI_DIAGNOSIS
 and mpi.pers_death_date is null -- extra check to exclude people who have died as they will not be in the EPR system and therefore will not have case finding data. This is in addition to the death date check in the population base definition.
 )
---ward code look up - use reporting fct table
-,WARD_DETAILS AS (
-select distinct ward_code, site_name 
-from (
-select distinct ward_code, WARD_SITE_CODE,
-CASE 
-WHEN WARD_SITE_CODE = 'A0G9K' THEN 'Edgware'
-WHEN WARD_SITE_CODE = 'A3D2M' THEN 'St Anns'
-WHEN WARD_SITE_CODE = 'A3C5P' THEN 'Barnet'
-WHEN WARD_SITE_CODE = 'A5E8R' THEN 'Highgate'
-WHEN WARD_SITE_CODE in ('A1D5T','A1X5K') AND WARD_CODE <> 'FXAvew' THEN 'Chase Farm'
-WHEN WARD_SITE_CODE = 'A1D5T' and ward_code in ('FXAvew') THEN 'Avesbury'
-WHEN WARD_SITE_CODE is null and ward_code = 'CumbriaFX' THEN 'Chase Farm'
-WHEN WARD_SITE_CODE is null and ward_code = 'HCPH' THEN 'Haringey'
-ELSE 'Unknown' END AS site_name
---FROM REPORTING.MENTAL_HEALTH.FCT_MHSDS_WARD_STAY
-FROM {{ ref('fct_mhsds_ward_stay') }}
-where provider_organisation_code = 'G6V2S'
-) a
-)
 --DEFINE SMI POP
 ,SMIPOPULATION as (
 SELECT DISTINCT
@@ -121,7 +101,19 @@ WHERE HAS_ACTIVE_SMI_DIAGNOSIS
     ,sp.source_record_id as spell_number
     ,ws.uniq_ward_stay_id
     ,ws.ward_code
-    ,wd.site_name
+    ,CASE
+WHEN ws.ward_code IS NULL THEN NULL
+WHEN ws.ward_site_code = 'A0G9K' THEN 'Edgware'
+WHEN ws.ward_site_code = 'A3D2M' THEN 'St Anns'
+WHEN ws.ward_site_code = 'A3C5P' THEN 'Barnet'
+WHEN ws.ward_site_code = 'A5E8R' THEN 'Highgate'
+WHEN ws.ward_site_code in ('A1D5T','A1X5K') AND ws.ward_code <> 'FXAvew' THEN 'Chase Farm'
+WHEN ws.ward_site_code = 'A1D5T' and ws.ward_code in ('FXAvew') THEN 'Avesbury'
+WHEN ws.ward_site_code is null and ws.ward_code = 'CumbriaFX' THEN 'Chase Farm'
+WHEN ws.ward_site_code is null and ws.ward_code = 'HCPH' THEN 'Haringey'
+ELSE 'Unknown' END::VARCHAR(10) AS site_name
+    ,sp.admitted_at
+    ,ws.ward_stay_started_at
     ,DATE(sp.admission_date) as spell_start_date
     ,DATE(sp.discharge_date) spell_discharge_date
     ,sp.discharge_date is null as is_current_spell 
@@ -144,11 +136,10 @@ FROM {{ ref('fct_mhsds_hospital_provider_spell') }} sp
 INNER JOIN SMIPOPULATION p ON p.mpi_person_id = sp.person_id
 LEFT JOIN {{ ref('fct_mhsds_ward_stay') }} ws on sp.source_record_id = ws.RECORDED_HOSPITAL_PROVIDER_SPELL_ID
 --LEFT JOIN REPORTING.MENTAL_HEALTH.FCT_MHSDS_WARD_STAY ws on sp.source_record_id = ws.RECORDED_HOSPITAL_PROVIDER_SPELL_ID
-LEFT JOIN WARD_DETAILS wd on ws.ward_code = wd.ward_code
 WHERE sp.source_derived_icb_commissioner_code = '93C'
 and sp.provider_organisation_code = 'G6V2S' --use NLFT code only C&I legacy patients are not found in the NLFT EPR system
 --deduplicate selecting latest ward_start_date only
-QUALIFY ROW_NUMBER() OVER (PARTITION BY sp.person_id, sp.source_record_id ORDER BY start_date_ward_stay DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY sp.person_id, sp.source_record_id ORDER BY ws.ward_stay_started_at DESC NULLS LAST, ws.uniq_ward_stay_id DESC) = 1
 )
 --select people who are inpatients currently or who have been admitted in the last 6 months
 ,SPELL_6M AS (
@@ -163,6 +154,8 @@ sk_patient_id
 ,site_name
 ,spell_number
 ,spell_start_date
+,admitted_at
+,ward_stay_started_at
 ,start_date_ward_stay
 ,spell_discharge_date
 ,is_current_spell
@@ -174,7 +167,7 @@ where last_6mths_flag = 'Yes' OR is_current_spell
 ,latest_spell as (
 select *
 from spell_6m sp
-QUALIFY ROW_NUMBER() OVER (PARTITION BY sp.sk_patient_id ORDER BY spell_start_date DESC, start_date_ward_stay DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY sp.sk_patient_id ORDER BY admitted_at DESC NULLS LAST, ward_stay_started_at DESC NULLS LAST, spell_number DESC, uniq_ward_stay_id DESC) = 1
 )
 --final add back in population characteristics and health check flags and local patient id for NFLT.
 select 

@@ -1,12 +1,15 @@
 models:
   - name: int_cholesterol_non_hdl_latest
-    description: Non-HDL cholesterol for all people, including inactive and deceased people. One row per
-      person with a valid recorded result. Validity is filtered before ranking by clinical effective date
-      descending, then observation ID descending for ties. People without valid results are absent. When a later
-      result exists that is not valid, the row is the most recent valid one and has_later_unassessable_result
-      is true. Valid means 0.1 to 20 mmol/L inclusive. Concentrations retain source precision after
-      unit conversion; values are not rounded before comparison. The general healthy-adult reference limit
-      is below 4 mmol/L. NICE secondary prevention uses a separate target of 2.6 mmol/L or below.
+    description: >-
+      Non-HDL cholesterol for all people, including inactive and deceased people. One
+      row per person with a valid recorded result. Only valid results are ranked
+      by clinical calendar date descending, then save time and observation ID descending for ties.
+      People without valid results are absent. When a later result exists that is not
+      valid, the row is the most recent valid one and has_later_unassessable_result is
+      true. Valid means 0.1 to 20 mmol/L inclusive. Concentrations retain source
+      precision after unit conversion; values are not rounded before comparison. The
+      general healthy-adult reference limit is below 4 mmol/L. NICE secondary
+      prevention uses a separate target of 2.6 mmol/L or below.
     config:
       meta:
         owner:
@@ -92,8 +95,8 @@ models:
         description: The general healthy-adult reference limit is below 4 mmol/L. NICE secondary prevention
           uses a separate target of 2.6 mmol/L or below.
       - name: most_recent_result_date
-        description: Clinical effective date of the person's most recent result of any validity. Equal to
-          clinical_effective_date unless a later result was invalid.
+        description: Clinical timestamp of the person's latest result of any validity, ranked by calendar
+          date, save time and observation ID.
       - name: has_later_unassessable_result
         description: True when a result more recent than this row exists but failed validity, for example an
           LDL that the laboratory could not calculate. The row is then an older valid result, not the person's

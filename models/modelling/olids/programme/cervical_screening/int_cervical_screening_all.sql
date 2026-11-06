@@ -32,6 +32,7 @@ This is OBSERVATION-LEVEL data - one row per cervical screening observation.
 
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,

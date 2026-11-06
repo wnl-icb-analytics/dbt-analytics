@@ -8,6 +8,7 @@
 with blood_gluc as (
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -26,7 +27,7 @@ deduplicated AS (
     FROM blood_gluc
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY person_id, concept_code, clinical_effective_date
-        ORDER BY person_id
+        ORDER BY date_recorded DESC NULLS LAST, id DESC, source_cluster_id DESC
     ) = 1
 ),
 
@@ -36,8 +37,10 @@ fasting_codes AS (
     WHERE cluster_id = 'FASPLASGLUC_COD'
 )
 
-select 
-glucose.person_id
+select
+glucose.id AS observation_id
+,glucose.date_recorded
+,glucose.person_id
 ,glucose.clinical_effective_date
 ,glucose.concept_code
 ,glucose.concept_display

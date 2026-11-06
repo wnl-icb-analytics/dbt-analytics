@@ -1,16 +1,19 @@
 models:
   - name: int_alcohol_units_latest
     description: >-
-      Latest alcohol consumption from ALC_COD in OLIDS GP records, one row per person
-      with evidence up to the build date. Includes inactive and deceased people
-      without age or SMI-register restrictions. Same-date records favour a non-null
-      result, but coded statuses need no numeric value. Units and risk categories
-      follow int_alcohol_units_all.
+      Last recorded alcohol-consumption date per person from ALC_COD, up to the build
+      date. Includes inactive and deceased people, with no age or SMI-register
+      restriction. int_alcohol_units_all selects one record per day using its existing
+      risk priority, numeric-result priority, latest save time and highest observation
+      ID. Coded statuses need no numeric result.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id]
