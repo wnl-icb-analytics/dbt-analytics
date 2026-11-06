@@ -21,10 +21,12 @@ Rockwood Clinical Frailty Scale:
 - 9: Terminally Ill
 
 Clinical categorisation:
-- 1-3: Not Frail
+- 1-3: Fit
 - 4: Vulnerable
-- 5-6: Frail
-- 7-9: Severely Frail
+- 5: Mild Frailty
+- 6: Moderate Frailty
+- 7-8: Severe Frailty
+- 9: Terminally Ill
 */
 
 WITH rockwood_mapping AS (
@@ -37,7 +39,7 @@ WITH rockwood_mapping AS (
         ('1129381000000102', 6, 'Moderately Frail', 'Moderate Frailty'),
         ('1129391000000100', 7, 'Severely Frail', 'Severe Frailty'),
         ('1129401000000102', 8, 'Very Severely Frail', 'Severe Frailty'),
-        ('1129411000000100', 9, 'Terminally Ill', 'Severe Frailty')
+        ('1129411000000100', 9, 'Terminally Ill', 'Terminally Ill')
     AS rockwood_lookup(concept_code, score, description, category)
 ),
 
@@ -69,8 +71,8 @@ SELECT
     
     -- Data quality flags
     rm.concept_code IS NOT NULL AS is_valid_rockwood_code,
-    rm.score >= 5 AS is_frail,
-    rm.score >= 7 AS is_severely_frail
+    rm.score BETWEEN 5 AND 8 AS is_frail,
+    rm.score BETWEEN 7 AND 8 AS is_severely_frail
 
 FROM base_observations bo
 LEFT JOIN rockwood_mapping rm
