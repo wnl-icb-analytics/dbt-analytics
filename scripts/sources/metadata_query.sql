@@ -755,6 +755,21 @@ WITH schema_metadata AS (
     ordinal_position
   FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
   WHERE table_schema = 'TAT'
+  
+  UNION ALL
+  
+    -- amb_wnl: LAS commissioning data
+  SELECT 
+    'WNL_ServicesDataLocal' as database_name,
+    'AMB' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "WNL_ServicesDataLocal".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'AMB'
 )
 
 SELECT 
