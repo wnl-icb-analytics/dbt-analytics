@@ -5,9 +5,12 @@ models:
     description: |
       Long-format biomarker observation history. One row per observation event
       across blood pressure (systolic + diastolic), total cholesterol, LDL, HDL, non-HDL, triglycerides, total cholesterol to HDL ratio, QRISK,
-      HbA1c, BMI, waist circumference, eGFR, creatinine, urine ACR, ALT, GGT,
+      HbA1c, BMI, waist circumference, adult waist-to-height ratio, eGFR, creatinine, urine ACR, ALT, GGT,
       bilirubin, haemoglobin, platelets, eosinophils, eFI/eFI2, and Rockwood
       frailty assessments.
+
+      Waist Circumference includes only valid readings in the local 30 to 250 cm
+      range; out-of-range readings remain in int_waist_circumference_all.
 
       Backs sem_olids_observations_history. Supports serial / latest-N /
       trajectory questions via window functions over (person_id,
@@ -35,7 +38,7 @@ models:
         description: >
           Biomarker label (Systolic BP, Diastolic BP, Total Cholesterol,
           LDL Cholesterol, HDL Cholesterol, Non-HDL Cholesterol, Triglycerides,
-          Total Cholesterol to HDL Ratio, QRISK, HbA1c, BMI, Waist Circumference, eGFR,
+          Total Cholesterol to HDL Ratio, QRISK, HbA1c, BMI, Waist Circumference, Waist-to-height Ratio, eGFR,
           Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets,
           Eosinophils, Electronic Frailty Index (eFI), Rockwood Frailty Scale).
           Filter to a single type before aggregating value.
@@ -61,11 +64,11 @@ models:
         description: Source observation id from the originating _all model (traceability).
 
 unit_tests:
-- name: observation_history_rejects_out_of_range_haemoglobin
+- name: observation_history_haemoglobin_and_waist_ratio
   model: int_observation_events_long
   overrides:
     macros:
-      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS source_observation_id, NULL::VARCHAR AS observation_type, NULL::FLOAT AS value WHERE FALSE
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS source_observation_id, NULL::VARCHAR AS observation_type, NULL::FLOAT AS value, NULL::VARCHAR AS category WHERE FALSE
   given:
   - input: ref('int_haemoglobin_all')
     format: sql
@@ -121,7 +124,13 @@ unit_tests:
   - input: ref('int_waist_circumference_all')
     format: sql
     rows: |-
-      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS waist_circumference_value, NULL::VARCHAR AS waist_risk_category WHERE FALSE
+      SELECT -19800::NUMBER AS person_id, id::VARCHAR AS id, '2024-03-01'::DATE AS clinical_effective_date,
+          waist::FLOAT AS waist_circumference_value, ratio::FLOAT AS waist_to_height_ratio,
+          band::VARCHAR AS waist_to_height_ratio_category, valid::BOOLEAN AS is_valid_waist_circumference
+      FROM (VALUES ('SYN_W_RATIO',100,0.5,'Increased central adiposity',TRUE),
+          ('SYN_W_NOHEIGHT',90,NULL,NULL,TRUE),
+          ('SYN_W_TOO_SMALL',29,NULL,NULL,FALSE),
+          ('SYN_W_TOO_LARGE',251,NULL,NULL,FALSE)) v(id,waist,ratio,band,valid)
   - input: ref('int_egfr_all')
     format: sql
     rows: |-
@@ -168,3 +177,7 @@ unit_tests:
       source_observation_id: SYN_VALID
       observation_type: Haemoglobin
       value: 135
+      category: SYN_CATEGORY
+    - {person_id: -19800, source_observation_id: SYN_W_RATIO, observation_type: Waist Circumference, value: 100, category: null}
+    - {person_id: -19800, source_observation_id: SYN_W_NOHEIGHT, observation_type: Waist Circumference, value: 90, category: null}
+    - {person_id: -19800, source_observation_id: SYN_W_RATIO, observation_type: Waist-to-height Ratio, value: 0.5, category: Increased central adiposity}

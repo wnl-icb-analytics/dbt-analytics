@@ -6,11 +6,24 @@ models:
       without age or SMI-register restrictions. Same-day records prefer higher risk
       (Higher, Increasing, Low, Ex-Drinker, Non-Drinker, Unclear), then a numeric
       reading, then the lowest observation id. Weekly-unit variants use U/week;
-      other units stay as recorded.
+      explicit daily readings convert to weekly units before banding. The daily
+      concept 1082631000000102 converts only with blank, alcohol-unit or daily-unit
+      text. Weekly concept 1082641000000106 uses U/week with blank or bare
+      alcohol-unit text. Container, volume, mass and unknown text stay unconverted
+      and Unclear. Recognised weekly labels include explicit units of alcohol,
+      wine, beer or spirits per week.
+      Daily and weekly concepts with the opposite explicit time basis stay
+      unconverted, flagged and Unclear, except zero remains Non-Drinker evidence.
+      Other numeric alcohol-unit concepts convert only with an explicit daily unit
+      label. Source value and source-first unit display remain available.
       Risk uses coded status or weekly units: low up to 14 units a week; increasing
       above 14; higher above 35 for women or 50 for men (NHS/OHID), using current
-      gender. Unit matching is case-insensitive. A bare "per week" on "Alcohol units
-      consumed per week" is read as units.
+      gender. Unit matching is case-insensitive. A bare "per week" is read as
+      weekly units for numeric alcohol-unit concepts and preserves zero coded
+      Ex-Drinker or Non-Drinker evidence. Non-zero coded status with bare weekly
+      text stays Unclear. Numbered periods such as "2 weekly" and "4wks", and
+      numbered quantities without an alcohol-unit word, stay Unclear. The observed
+      zero labels "0/week" and "0u/week" remain recognised.
     config:
       meta:
         owner:
@@ -24,6 +37,17 @@ models:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD
+    columns:
+      - name: original_result_value
+        description: Numeric source result before any daily-to-weekly conversion.
+      - name: source_result_unit_display
+        description: Source unit concept display, falling back to the mapped display when absent.
+      - name: is_converted_from_daily
+        description: Source value was multiplied by seven because the concept or unit explicitly states per day.
+      - name: is_daily_unit_conflict
+        description: Daily or weekly concept contradicts the explicit unit time basis, including a missing value but excluding zero. Value is unconverted and risk is Unclear.
+      - name: conversion_reason
+        description: Daily concept multiplied by 7, Explicit daily unit multiplied by 7, Daily concept with weekly unit; not converted, Weekly concept with daily unit; not converted, or No daily conversion.
 
 unit_tests:
   - name: alcohol_units_bands_and_normalisation
@@ -82,7 +106,7 @@ unit_tests:
         - {person_id: -9505, concept_code: '1082641000000106', result_value: 35.5, alcohol_risk_category: Higher Risk, result_unit_display: U/week}
         - {person_id: -9506, concept_code: '1082641000000106', result_value: 50, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
         - {person_id: -9507, concept_code: '1082641000000106', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
-        - {person_id: -9508, concept_code: '160573003', result_value: 20, alcohol_risk_category: Unclear, result_unit_display: per week}
+        - {person_id: -9508, concept_code: '160573003', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
         - {person_id: -9509, concept_code: '86933000', result_value: null, alcohol_risk_category: Higher Risk, result_unit_display: null}
         - {person_id: -9510, concept_code: '1082641000000106', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
         - {person_id: -9511, concept_code: '160573003', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
