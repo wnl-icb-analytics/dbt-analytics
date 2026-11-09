@@ -5,7 +5,7 @@
 -#}
 {% macro nice_ind192(reference='current') %}
 -- NICE IND192: https://www.nice.org.uk/indicators/ind192
--- Echo or specialist assessment within three months either side of heart failure diagnosis for diagnoses three to fifteen months before reporting.
+-- The headline retains all ECOG_COD evidence, including requests and referrals, in the diagnosis window.
 WITH candidates AS (
     SELECT
         population.person_id,

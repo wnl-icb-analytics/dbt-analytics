@@ -1,3 +1,5 @@
+{# Returns one completed-imaging breakdown row per headline person and reporting date.
+   Reference is 'current' or 'by_month' and selects the corresponding headline denominator. #}
 {% macro nice_ind192_confirmation_breakdown(reference='current') %}
 {% set suffix = '_by_month' if reference == 'by_month' else '' %}
 with confirmation as (
