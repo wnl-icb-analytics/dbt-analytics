@@ -52,12 +52,29 @@ synthetic_reviews AS (
 synthetic_profile AS ({{ profile.sql }}),
 actual AS ({{ indicator.sql }}),
 failures AS (
-    SELECT person_id, reporting_date
+    SELECT person_id, reporting_date, 'INCORRECT_EVIDENCE' AS failure_reason
     FROM actual
     WHERE indicator_status IS DISTINCT FROM IFF(reporting_date = '2024-07-31', 'ACHIEVED', 'NOT_TREATED_IN_PERIOD')
         OR latest_anticoagulant_type IS DISTINCT FROM IFF(person_id = -143301, 'DOAC', 'VKA')
         OR (person_id = -143301 AND latest_doac_order_date IS DISTINCT FROM '2024-01-31'::DATE)
         OR (person_id = -143302 AND latest_vka_order_date IS DISTINCT FROM '2024-01-31'::DATE)
+),
+key_failures AS (
+    SELECT COALESCE(expected.person_id, actual.person_id) AS person_id,
+        COALESCE(expected.reporting_date, actual.reporting_date) AS reporting_date,
+        CASE WHEN expected.person_id IS NULL THEN 'EXTRA_CASE'
+             WHEN actual.case_count IS NULL THEN 'MISSING_CASE'
+             ELSE 'DUPLICATE_CASE' END AS failure_reason
+    FROM synthetic_population AS expected
+    FULL OUTER JOIN (
+        SELECT person_id, reporting_date, COUNT(*) AS case_count
+        FROM actual
+        GROUP BY person_id, reporting_date
+    ) AS actual
+        ON expected.person_id = actual.person_id
+        AND expected.reporting_date = actual.reporting_date
+    WHERE expected.person_id IS NULL OR actual.case_count IS DISTINCT FROM 1
 )
-SELECT (SELECT COUNT(*) FROM failures) + ABS((SELECT COUNT(*) FROM actual) - 4) AS failure_count
-HAVING failure_count > 0
+SELECT person_id, reporting_date, failure_reason FROM failures
+UNION ALL
+SELECT person_id, reporting_date, failure_reason FROM key_failures
