@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- Context must retain every submitted contact and preserve explicit team pointers.
 with checks as (
     select
