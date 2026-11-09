@@ -6,7 +6,7 @@
 }}
 
 with accepted_records as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs502wardstay')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs502wardstay'), 'mhs502_uniq_id') }}
 )
 
 select

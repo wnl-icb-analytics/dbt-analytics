@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 with spell_expected as (
     select
         fact.admission_source_code
