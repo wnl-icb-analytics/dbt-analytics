@@ -71,7 +71,9 @@ unit_tests:
           (-9917, NULL, '2026-01-01', 'Electronic'),
           (-9918, NULL, '2026-01-01', NULL),
           (-9919, NULL, '2026-01-01', 'Electronic'),
-          (-9920, NULL, '2026-01-01', 'Electronic')
+          (-9920, NULL, '2026-01-01', 'Electronic'),
+          (-9931, -9929, '2026-01-01', 'Electronic'),
+          (-9932, -9930, NULL, 'Electronic')
   - input: ref('stg_olids_patient')
     format: sql
     rows: SELECT NULL::VARCHAR AS id, NULL::NUMBER AS sk_patient_id WHERE FALSE
@@ -91,7 +93,9 @@ unit_tests:
           (-9925, -9925, NULL, '2026-01-02', NULL, 'SYN_ZOL_BRAND', 'Synthetic authorisation', '0606020V0SYN'),
           (-9926, -9926, '2026-01-01', '2026-01-02', NULL, 'SYN_NOT_IN_LIST', 'Synthetic authorisation', '0606020V0SYN'),
           (-9927, -9927, '2026-01-01', '2026-01-02', NULL, 'SYN_DEN_BRAND', 'Synthetic authorisation', '0606020Z0SYN'),
-          (-9928, -9928, '2026-01-01', '2026-01-02', NULL, 'SYN_STAT_OTHER_SOURCE', 'Synthetic wrong source', '0606020Z0SYN')
+          (-9928, -9928, '2026-01-01', '2026-01-02', NULL, 'SYN_STAT_OTHER_SOURCE', 'Synthetic wrong source', '0606020Z0SYN'),
+          (-9929, -9929, '2026-01-01', '2026-01-02', NULL, 'SYN_ZOL_BRAND', 'Synthetic dated linked order', '0606020V0SYN'),
+          (-9930, -9930, '2026-01-01', '2026-01-02', NULL, 'SYN_ZOL_BRAND', 'Synthetic undated linked order', '0606020V0SYN')
   expect:
     rows:
     - record_id: '-9891'
@@ -201,6 +205,14 @@ unit_tests:
     - record_id: '-9927'
       therapy_source: MEDICATION_STATEMENT
       therapy_type: DENOSUMAB
+      coverage_months: null
+      is_authorisation_only: true
+      has_administration_evidence: false
+      is_oncology_regimen: null
+      is_outside_prescription: null
+    - record_id: '-9930'
+      therapy_source: MEDICATION_STATEMENT
+      therapy_type: ZOLEDRONIC_ACID
       coverage_months: null
       is_authorisation_only: true
       has_administration_evidence: false
