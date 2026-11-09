@@ -16,10 +16,7 @@
 --   Patients with no BP reading in 12 months, or an uncontrolled latest
 --   reading, are included.
 --
--- BP note: EMIS tests latest clinic and latest home/ABPM readings as separate
--- same-date linked-criteria chains; this port follows the established HTN rs
--- convention of testing the single latest BP event (int_blood_pressure_latest)
--- with thresholds chosen by reading type.
+-- BP uses the latest clinic/home date-linked components, ordered by save time then ID.
 
 with
 -- Parent population: Patients currently on Stroke/TIA register
@@ -54,48 +51,12 @@ rule_3_stale_stroke as (
 ),
 
 -- Rules 4-8: latest BP within 12 months, controlled per age-banded thresholds
-latest_bp as (
-    select
-        person_id,
-        systolic_value,
-        diastolic_value,
-        coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date > dateadd(month, -12, current_date())
-),
-
-ages as (
-    select person_id, age
-    from {{ ref('dim_person_age') }}
-),
-
 bp_controlled as (
     select bp.person_id
-    from latest_bp bp
-    left join ages a on bp.person_id = a.person_id
-    where
-        (
-            coalesce(a.age, 0) <= 80
-            and (
-                (not bp.is_home_or_abpm
-                    and bp.systolic_value between 1 and 140
-                    and bp.diastolic_value between 1 and 90)
-                or (bp.is_home_or_abpm
-                    and bp.systolic_value between 1 and 135
-                    and bp.diastolic_value between 1 and 85)
-            )
-        )
-        or (
-            coalesce(a.age, 0) > 80
-            and (
-                (not bp.is_home_or_abpm
-                    and bp.systolic_value between 1 and 150
-                    and bp.diastolic_value between 1 and 90)
-                or (bp.is_home_or_abpm
-                    and bp.systolic_value between 1 and 145
-                    and bp.diastolic_value between 1 and 85)
-            )
-        )
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }} as bp
+    left join {{ ref('dim_person_age') }} as a on bp.person_id = a.person_id
+    where {{ ltc_lcs_bp_is_controlled(140, 90, 135, 85) }}
+        or (a.age > 80 and {{ ltc_lcs_bp_is_controlled(150, 90, 145, 85) }})
 ),
 
 -- Combine rule results for all Stroke/TIA register patients

@@ -4,8 +4,7 @@ models:
       Geographic flag booleans for CWT pathway records, for North Central London
       (NCL) and North West London (NWL). Determines whether a pathway record
       relates to each geography by residence, registered practice or
-      organisation codes, with an overall `<geo>_geo_flag__any`. There are no
-      checkpoint-specific flags.
+      organisation codes.
     config:
       meta:
         owner:
@@ -16,7 +15,7 @@ models:
         data_tests:
           - unique
           - not_null
-      
+
       - name: ncl_geo_flag__residence_at_event
         description: True when `la_of_residence` is in the NCL borough codes (residence at event).
         data_tests:
@@ -24,7 +23,7 @@ models:
               arguments:
                 min_value: true
                 max_value: true
-      
+
       - name: ncl_geo_flag__registered_at_event
         description: True when the registered practice is in NCL (determined from the joined practice table).
         data_tests:
@@ -32,7 +31,7 @@ models:
               arguments:
                 min_value: true
                 max_value: true
-      
+
       - name: ncl_geo_flag__trust
         description: True when any organisation identifier on the pathway maps to an NCL acute trust.
         data_tests:
@@ -40,7 +39,7 @@ models:
               arguments:
                 min_value: true
                 max_value: true
-      
+
       - name: ncl_geo_flag__any
         description: True when any of the residence, registered or trust flags for NCL are True.
         data_tests:
@@ -80,6 +79,132 @@ models:
               arguments:
                 min_value: true
                 max_value: true
+
+      - name: wnl_geo_flag__residence_at_event
+        description: True when the pathway is in either the NCL or NWL residence geography.
+
+      - name: wnl_geo_flag__registered_at_event
+        description: True when the pathway is in either the NCL or NWL registered practice geography.
+
+      - name: wnl_geo_flag__trust
+        description: True when the pathway is in either the NCL or NWL trust geography.
+
+      - name: wnl_geo_flag__any
+        description: True when the pathway is in either the NCL or NWL geography overall.
+
+      - name: ncl_geo_flag__consultant_upgrade_trust
+        description: True when the `org__consultant_upgrade_trust_code` is in the NCL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: ncl_geo_flag__first_seen_trust
+        description: True when the `org__first_seen_trust_code` is in the NCL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: ncl_geo_flag__faster_diagnosis_pathway_end_trust
+        description: True when the `org__faster_diagnosis_pathway_end_trust_code` is in the NCL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: ncl_geo_flag__patient_pathway_identifier_issuer_trust
+        description: True when the `org__patient_pathway_identifier_issuer_trust_code` is in the NCL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: ncl_geo_flag__accountable_investigating_trust
+        description: True when the `org__accountable_investigating_trust_code` is in the NCL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: ncl_geo_flag__accountable_treating_trust
+        description: True when the `org__accountable_treating_trust_code` is in the NCL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__consultant_upgrade_trust
+        description: True when the `org__consultant_upgrade_trust_code` is in the NWL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__first_seen_trust
+        description: True when the `org__first_seen_trust_code` is in the NWL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__faster_diagnosis_pathway_end_trust
+        description: True when the `org__faster_diagnosis_pathway_end_trust_code` is in the NWL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__patient_pathway_identifier_issuer_trust
+        description: True when the `org__patient_pathway_identifier_issuer_trust_code` is in the NWL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__accountable_investigating_trust
+        description: True when the `org__accountable_investigating_trust_code` is in the NWL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__accountable_treating_trust
+        description: True when the `org__accountable_treating_trust_code` is in the NWL acute trust list.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: wnl_geo_flag__consultant_upgrade_trust
+        description: True when the pathway is flagged for the consultant upgrade trust in either NCL or NWL.
+
+      - name: wnl_geo_flag__first_seen_trust
+        description: True when the pathway is flagged for the first-seen trust in either NCL or NWL.
+
+      - name: wnl_geo_flag__faster_diagnosis_pathway_end_trust
+        description: True when the pathway is flagged for the FDS end trust in either NCL or NWL.
+
+      - name: wnl_geo_flag__patient_pathway_identifier_issuer_trust
+        description: True when the pathway is flagged for the patient pathway identifier issuer trust in either NCL or NWL.
+
+      - name: wnl_geo_flag__accountable_investigating_trust
+        description: True when the pathway is flagged for the accountable investigating trust in either NCL or NWL.
+
+      - name: wnl_geo_flag__accountable_treating_trust
+        description: True when the pathway is flagged for the accountable treating trust in either NCL or NWL.
 
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
