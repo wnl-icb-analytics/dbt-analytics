@@ -236,6 +236,30 @@ models:
         data_type: varchar
         description: "Treatment function description for the specialised service within which the patient is treated."
 
+      - name: commissioner_code_at_event
+        data_type: varchar
+        description: >-
+          Commissioner Assignment Method (CAM) commissioner when supplied;
+          otherwise the service-agreement/DSCRO commissioner.
+
+      - name: commissioner_name_at_event
+        data_type: varchar
+        description: >-
+          Latest available organisation name for commissioner_code_at_event,
+          not the name at the activity date. Null when the code is missing or
+          has no organisation lookup match.
+
+      - name: commissioner_source_at_event
+        data_type: varchar
+        description: >-
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO when the service-agreement commissioner
+          was used. Null when neither source supplied a commissioner.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CAM, DSCRO]
+
       - name: hrg_code
         data_type: varchar
         description: "The spell level HRG returned by the grouper as a result of grouping non-excluded episodes."
