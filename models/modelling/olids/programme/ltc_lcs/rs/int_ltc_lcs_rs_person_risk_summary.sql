@@ -103,6 +103,8 @@ ranked as (
     from all_rs
     inner join {{ ref('int_ltc_lcs_moc_base') }} base using (person_id)
     where base.is_in_moc_base
+        -- XML HRC uses the full MoC base. The programme Check & Test-only extension stays LR.
+        and (not base.is_moc_check_test_only or all_rs.condition <> 'Type 1 Diabetes')
 ),
 
 highest_per_condition as (
