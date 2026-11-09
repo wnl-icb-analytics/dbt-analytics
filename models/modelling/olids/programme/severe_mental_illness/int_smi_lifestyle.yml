@@ -6,8 +6,10 @@ models:
       Excludes people with lithium alone or resolved diagnoses. Covers smoking,
       alcohol, drugs, BMI, nutrition, exercise, dental reviews and referrals, with
       12-month flags. Recorded declines remain distinct from completed assessments.
-      Valid same-day AUDIT records prefer the full instrument, then the highest
-      total, latest recorded date and observation id. Same-day classified alcohol
+      Local same-day rule: prefer full AUDIT, then the higher instrument-specific
+      risk category, then AUDIT-PC over AUDIT-C, then the highest score, latest
+      recorded date and observation id. Risk takes priority over the total because
+      the shortened instruments use different scales. Same-day classified alcohol
       sources prefer AUDIT, then weekly units, then disorders.
     config:
       meta:
@@ -125,7 +127,13 @@ unit_tests:
           ('SYN_full_older_recorded', -9801, 'Full AUDIT', 9, '2024-03-01', 'SYN_wrong_recorded'),
           ('SYN_full_item', -9801, 'Full AUDIT', 4, '2024-03-03', 'Lower Risk'),
           ('SYN_screen', -9801, 'AUDIT-C', 12, '2024-03-03', 'Possible Dependence'),
-          ('SYN_unclear', -9803, 'AUDIT-C', 0, '2024-03-03', 'Unclear')
+          ('SYN_unclear', -9803, 'AUDIT-C', 0, '2024-03-03', 'Unclear'),
+          ('SYN_C11', -18250, 'AUDIT-C', 11, '2024-03-02', 'Possible Dependence'),
+          ('SYN_PC12', -18250, 'AUDIT-PC', 12, '2024-03-03', 'Increasing Risk'),
+          ('SYN_C9', -18251, 'AUDIT-C', 9, '2024-03-02', 'Higher Risk'),
+          ('SYN_PC10', -18251, 'AUDIT-PC', 10, '2024-03-03', 'Increasing Risk'),
+          ('SYN_C7', -18252, 'AUDIT-C', 7, '2024-03-03', 'Increasing Risk'),
+          ('SYN_PC5', -18252, 'AUDIT-PC', 5, '2024-03-02', 'Increasing Risk')
       UNION ALL
       SELECT 'SYN_older_full', -9801, DATEADD(day, -60, CURRENT_DATE())::TIMESTAMP_NTZ,
           'Full AUDIT', 20, CURRENT_DATE()::TIMESTAMP_NTZ, 'SYN_wrong_older', TRUE
@@ -275,9 +283,10 @@ unit_tests:
       smoking_cessation_services: Declined
       alcohol_advice_services: null
       subs_misuse_services: null
-      alc_source: null
-      alcohol_risk_category: null
-      alcohol_last_12m: 'No'
+      alc_source: AUDIT
+      alcohol_risk_category: Possible Dependence
+      alcohol_last_12m: 'Yes'
+      high_alcohol_use_flag: 'Yes'
     - person_id: -18251
       smok_int_last_12m: 'No'
       alc_int_last_12m: 'No'
@@ -285,9 +294,10 @@ unit_tests:
       smoking_cessation_services: Declined
       alcohol_advice_services: null
       subs_misuse_services: null
-      alc_source: null
-      alcohol_risk_category: null
-      alcohol_last_12m: 'No'
+      alc_source: AUDIT
+      alcohol_risk_category: Higher Risk
+      alcohol_last_12m: 'Yes'
+      high_alcohol_use_flag: 'Yes'
     - person_id: -18252
       smok_int_last_12m: 'No'
       alc_int_last_12m: 'Yes'
@@ -295,9 +305,10 @@ unit_tests:
       smoking_cessation_services: null
       alcohol_advice_services: Declined
       subs_misuse_services: null
-      alc_source: null
-      alcohol_risk_category: null
-      alcohol_last_12m: 'No'
+      alc_source: AUDIT
+      alcohol_risk_category: Increasing Risk
+      alcohol_last_12m: 'Yes'
+      high_alcohol_use_flag: 'Yes'
     - person_id: -18253
       smok_int_last_12m: 'No'
       alc_int_last_12m: 'No'

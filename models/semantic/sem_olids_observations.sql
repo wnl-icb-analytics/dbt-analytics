@@ -368,9 +368,9 @@ DIMENSIONS(
     efi2.efi2_category AS category WITH SYNONYMS = ('calculated frailty category', 'eFI2 category', 'electronic frailty index 2 category') COMMENT = 'Calculated eFI2 category for living people aged 65+: Robust (<0.0857), Mild Frailty (>=0.0857 to <0.1624), Moderate Frailty (>=0.1624 to <=0.2391), Severe Frailty (>0.2391). Use this rather than efi2_score for population health counts. Separate from GP-recorded eFI/eFI2 and Rockwood categories.',
 
     -- Rockwood Clinical Frailty Scale
-    rockwood.frailty_category AS frailty_category WITH SYNONYMS = ('Rockwood category', 'CFS category') COMMENT = 'Rockwood frailty category (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty)',
-    rockwood.is_frail AS is_frail COMMENT = 'Rockwood score >=5 (frail)',
-    rockwood.is_severely_frail AS is_severely_frail COMMENT = 'Rockwood score >=7 (severely frail)'
+    rockwood.frailty_category AS frailty_category WITH SYNONYMS = ('Rockwood category', 'CFS category') COMMENT = 'Rockwood frailty category (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty, Terminally Ill)',
+    rockwood.is_frail AS is_frail COMMENT = 'Rockwood scores 5-8 (frail); CFS 9 is terminal illness',
+    rockwood.is_severely_frail AS is_severely_frail COMMENT = 'Rockwood scores 7-8 (severely frail); excludes CFS 9'
 )
 
 METRICS(
@@ -470,8 +470,8 @@ METRICS(
 
     -- Frailty (Rockwood)
     rockwood.patients_with_rockwood AS COUNT(DISTINCT rockwood.person_id) COMMENT = 'Patients with Rockwood assessment',
-    rockwood.rockwood_frail_count AS COUNT(DISTINCT CASE WHEN rockwood.is_frail THEN rockwood.person_id END) COMMENT = 'Patients frail (Rockwood >=5)',
-    rockwood.rockwood_severely_frail_count AS COUNT(DISTINCT CASE WHEN rockwood.is_severely_frail THEN rockwood.person_id END) COMMENT = 'Patients severely frail (Rockwood >=7)',
+    rockwood.rockwood_frail_count AS COUNT(DISTINCT CASE WHEN rockwood.is_frail THEN rockwood.person_id END) COMMENT = 'Patients frail (Rockwood 5-8)',
+    rockwood.rockwood_severely_frail_count AS COUNT(DISTINCT CASE WHEN rockwood.is_severely_frail THEN rockwood.person_id END) COMMENT = 'Patients severely frail (Rockwood 7-8)',
 
     -- Liver Function
     lft.patients_with_lft AS COUNT(DISTINCT lft.person_id) COMMENT = 'Patients with any liver function test',

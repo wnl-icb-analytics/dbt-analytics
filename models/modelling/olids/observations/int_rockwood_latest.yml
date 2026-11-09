@@ -2,13 +2,13 @@ models:
   - name: int_rockwood_latest
     description: 'Latest Rockwood Clinical Frailty Scale score per person.
 
-      One row per person with their most recent Rockwood assessment using latest clinical_effective_date.'
+      One row per person with their most recent Rockwood assessment using latest clinical_effective_date. CFS 9 is Terminally Ill, separate from frailty.'
 
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -17,18 +17,18 @@ models:
     columns:
       - name: person_id
         description: Unique identifier for the person
-        tests:
+        data_tests:
           - not_null
           - unique
 
       - name: id
         description: Identifier for the most recent Rockwood observation
-        tests:
+        data_tests:
           - not_null
 
       - name: clinical_effective_date
         description: Date of the most recent Rockwood assessment
-        tests:
+        data_tests:
           - not_null
 
       - name: concept_code
@@ -50,13 +50,13 @@ models:
         description: Latest specific Rockwood frailty level (Level 1-9 with description)
 
       - name: frailty_category
-        description: Latest grouped frailty category (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty)
+        description: Latest grouped frailty category (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty, Terminally Ill)
 
       - name: is_valid_rockwood_code
         description: Flag indicating if concept code is a valid Rockwood score
 
       - name: is_frail
-        description: Flag indicating current frailty status (score 5+)
+        description: Flag indicating current frailty status (scores 5-8; excludes terminal illness at CFS 9)
 
       - name: is_severely_frail
-        description: Flag indicating current severe frailty status (score 7+)
+        description: Flag indicating current severe frailty status (scores 7-8; excludes terminal illness at CFS 9)
