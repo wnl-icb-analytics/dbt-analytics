@@ -153,7 +153,7 @@ def evidence_cluster_literal(value: str | None) -> str | None:
     if not isinstance(lists, dict) or any(
         not isinstance(name, str) or not isinstance(sources, dict) or any(
             not isinstance(list_source, str) or not isinstance(ids, list)
-            or not ids or any(not isinstance(cluster, str) for cluster in ids)
+            or not ids or any(not isinstance(cluster, str) or not cluster.strip() for cluster in ids)
             for list_source, ids in sources.items()
         ) for name, sources in lists.items()
     ):

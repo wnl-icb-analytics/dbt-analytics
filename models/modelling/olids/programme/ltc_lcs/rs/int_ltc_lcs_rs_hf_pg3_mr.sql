@@ -64,12 +64,12 @@ rule_3_nyha_class_2 as (
     from (
         select person_id, observation_id
         from (
-            select distinct person_id, observation_id, clinical_effective_date
-            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs2, on_hf_reg_pg3_mr_vs3") }})
+            select distinct person_id, observation_id, clinical_effective_date, date_recorded
+            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs2, on_hf_reg_pg3_mr_vs3", include_date_recorded=true) }})
         )
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
         ) = 1
     ) latest_nyha
     inner join ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs3") }}) class_2
@@ -82,12 +82,12 @@ rule_4_oedema as (
     from (
         select person_id, observation_id
         from (
-            select distinct person_id, observation_id, clinical_effective_date
-            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs4, on_hf_reg_pg3_mr_vs5") }})
+            select distinct person_id, observation_id, clinical_effective_date, date_recorded
+            from ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs4, on_hf_reg_pg3_mr_vs5", include_date_recorded=true) }})
         )
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
         ) = 1
     ) latest_oedema
     inner join ({{ get_ltc_lcs_observations("on_hf_reg_pg3_mr_vs5") }}) ankle_feet
