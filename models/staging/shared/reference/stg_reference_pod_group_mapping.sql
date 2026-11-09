@@ -11,6 +11,7 @@ select
     nullif(upper(trim(local_point_of_delivery_code)), '')        as local_pod_code,
     nullif(upper(trim(local_point_of_delivery_description)), '') as local_pod_description,
     pod_group_overview_master                                    as pod_group,
+    pod_lookup,
     notes,
     updated_at
 from {{ ref('raw_pod_group_mapping') }}

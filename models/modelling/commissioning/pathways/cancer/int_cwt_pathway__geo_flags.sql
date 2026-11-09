@@ -78,17 +78,73 @@ select
         
     ) as nwl_geo_flag__trust,
 
-    nwl_geo_flag__residence_at_event or nwl_geo_flag__registered_at_event or nwl_geo_flag__trust as nwl_geo_flag__any
+    nwl_geo_flag__residence_at_event or nwl_geo_flag__registered_at_event or nwl_geo_flag__trust as nwl_geo_flag__any,
 
-    /* In the original script for debugging but unused so commented out here
+    -- WNL (Combined)
+    (
+        ncl_geo_flag__residence_at_event or 
+        nwl_geo_flag__residence_at_event
+    ) as wnl_geo_flag__residence_at_event,
+
+    (
+        ncl_geo_flag__registered_at_event or 
+        nwl_geo_flag__registered_at_event
+    ) as wnl_geo_flag__registered_at_event,
+
+    (
+        ncl_geo_flag__trust or 
+        nwl_geo_flag__trust
+    ) as wnl_geo_flag__trust,
+
+    (
+        ncl_geo_flag__any or
+        nwl_geo_flag__any
+    ) as wnl_geo_flag__any,
+
     --Pathway checkpoint specific flags
     org__consultant_upgrade_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__consultant_upgrade_trust,
     org__first_seen_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__first_seen_trust,
     org__faster_diagnosis_pathway_end_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__faster_diagnosis_pathway_end_trust,
     org__patient_pathway_identifier_issuer_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__patient_pathway_identifier_issuer_trust,
     org__accountable_investigating_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__accountable_investigating_trust,
-    org__accountable_treating_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__accountable_treating_trust
-    */
+    org__accountable_treating_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__accountable_treating_trust,
+
+    org__consultant_upgrade_trust_code in {{ nwl_trust_codes_full() }} as nwl_geo_flag__consultant_upgrade_trust,
+    org__first_seen_trust_code in {{ nwl_trust_codes_full() }} as nwl_geo_flag__first_seen_trust,
+    org__faster_diagnosis_pathway_end_trust_code in {{ nwl_trust_codes_full() }} as nwl_geo_flag__faster_diagnosis_pathway_end_trust,
+    org__patient_pathway_identifier_issuer_trust_code in {{ nwl_trust_codes_full() }} as nwl_geo_flag__patient_pathway_identifier_issuer_trust,
+    org__accountable_investigating_trust_code in {{ nwl_trust_codes_full() }} as nwl_geo_flag__accountable_investigating_trust,
+    org__accountable_treating_trust_code in {{ nwl_trust_codes_full() }} as nwl_geo_flag__accountable_treating_trust,
+
+    (
+        ncl_geo_flag__consultant_upgrade_trust or
+        nwl_geo_flag__consultant_upgrade_trust
+    ) as wnl_geo_flag__consultant_upgrade_trust,
+
+    (
+        ncl_geo_flag__first_seen_trust or
+        nwl_geo_flag__first_seen_trust
+    ) as wnl_geo_flag__first_seen_trust,
+
+    (
+        ncl_geo_flag__faster_diagnosis_pathway_end_trust or
+        nwl_geo_flag__faster_diagnosis_pathway_end_trust
+    ) as wnl_geo_flag__faster_diagnosis_pathway_end_trust,
+
+    (
+        ncl_geo_flag__patient_pathway_identifier_issuer_trust or
+        nwl_geo_flag__patient_pathway_identifier_issuer_trust
+    ) as wnl_geo_flag__patient_pathway_identifier_issuer_trust,
+
+    (
+        ncl_geo_flag__accountable_investigating_trust or
+        nwl_geo_flag__accountable_investigating_trust
+    ) as wnl_geo_flag__accountable_investigating_trust,
+
+    (
+        ncl_geo_flag__accountable_treating_trust or
+        nwl_geo_flag__accountable_treating_trust
+    ) as wnl_geo_flag__accountable_treating_trust
 
 from {{ ref('int_cwt_pathway__data_tidy') }} cwt
 

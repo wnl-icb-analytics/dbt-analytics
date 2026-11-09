@@ -1,7 +1,7 @@
 {{ config(materialized='view', tags=['mhsds']) }}
 
 with active_records as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs902serviceteamdetails')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs902serviceteamdetails'), 'mhs902_uniq_id') }}
 )
 
 select

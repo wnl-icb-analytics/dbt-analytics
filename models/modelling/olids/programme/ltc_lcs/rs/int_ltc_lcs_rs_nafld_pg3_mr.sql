@@ -20,22 +20,22 @@ nafld_register as (
 -- Latest NAFLD fibrosis score within the last 3 years
 latest_fibrosis_score as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("on_nafld_reg_pg3_mr_vs1") }})
+    from ({{ get_ltc_lcs_observations("on_nafld_reg_pg3_mr_vs1", include_date_recorded=true, exclude_result_headers=true) }})
     where clinical_effective_date > dateadd(year, -3, current_date())
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
 -- Latest ELF score within the last 3 years
 latest_elf_score as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("on_nafld_reg_pg3_mr_vs2") }})
+    from ({{ get_ltc_lcs_observations("on_nafld_reg_pg3_mr_vs2", include_date_recorded=true, exclude_result_headers=true) }})
     where clinical_effective_date > dateadd(year, -3, current_date())
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
