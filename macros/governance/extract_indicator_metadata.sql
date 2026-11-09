@@ -48,7 +48,11 @@
             'source_column': model_meta.source_column|upper,
             'is_qof': model_meta.get('is_qof', false),
             'qof_indicator': model_meta.get('qof_indicator'),
-            'sort_order': model_meta.get('sort_order', sort_order)
+            'sort_order': model_meta.get('sort_order', sort_order),
+            'validation_status': model_meta.get('external_validation', {}).get('status'),
+            'validation_result': model_meta.get('external_validation', {}).get('result'),
+            'validation_comparator': model_meta.get('external_validation', {}).get('comparator'),
+            'validation_note': model_meta.get('external_validation', {}).get('note')
           }) %}
           
           {# Add usage contexts #}
@@ -118,7 +122,11 @@
             'source_column': ind_meta.source_column|upper,
             'is_qof': ind_meta.get('is_qof', false),
             'qof_indicator': ind_meta.get('qof_indicator'),
-            'sort_order': ind_meta.get('sort_order', sort_order)
+            'sort_order': ind_meta.get('sort_order', sort_order),
+            'validation_status': ind_meta.get('external_validation', {}).get('status'),
+            'validation_result': ind_meta.get('external_validation', {}).get('result'),
+            'validation_comparator': ind_meta.get('external_validation', {}).get('comparator'),
+            'validation_note': ind_meta.get('external_validation', {}).get('note')
           }) %}
           
           {# Add usage contexts #}
@@ -202,7 +210,11 @@
               'source_column': col_meta.source_column|upper,
               'is_qof': col_meta.get('is_qof', false),
               'qof_indicator': col_meta.get('qof_indicator'),
-              'sort_order': col_meta.get('sort_order', sort_order)
+              'sort_order': col_meta.get('sort_order', sort_order),
+              'validation_status': col_meta.get('external_validation', {}).get('status'),
+              'validation_result': col_meta.get('external_validation', {}).get('result'),
+              'validation_comparator': col_meta.get('external_validation', {}).get('comparator'),
+              'validation_note': col_meta.get('external_validation', {}).get('note')
             }) %}
             
             {# Add usage contexts #}

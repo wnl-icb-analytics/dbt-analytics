@@ -13,6 +13,11 @@ models:
       diabetes treatment recorded in that period. No personalised care adjustments are
       applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
       IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+
+
+      External validation: matches QOF DM020 (2025/26, by practice) once a known difference is
+      allowed for. NICE leaves out people already on maximum treatment; QOF's figure keeps
+      them.
     config:
       meta:
         owner:
@@ -40,6 +45,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND179"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF DM020 (2025/26, by practice)"
+            note: "NICE leaves out people already on maximum treatment; QOF's figure keeps them"
+            reference: docs/nice-benchmarks.md
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
@@ -104,6 +115,11 @@ models:
       diabetes treatment recorded in that period. No personalised care adjustments are
       applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
       IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+
+
+      External validation: matches QOF DM021 (2025/26, by practice) once a known difference is
+      allowed for. NICE leaves out people already on maximum treatment; QOF's figure keeps
+      them.
     config:
       meta:
         owner:
@@ -131,6 +147,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND180"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF DM021 (2025/26, by practice)"
+            note: "NICE leaves out people already on maximum treatment; QOF's figure keeps them"
+            reference: docs/nice-benchmarks.md
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
@@ -194,6 +216,11 @@ models:
       invalid latest readings are unassessable, with no older reading substituted. No
       personalised care adjustments are applied. Based on NICE NG17. Code lists: BP_COD,
       SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
+
+
+      External validation: matches QOF DM036 (2025/26, by practice) once a known difference is
+      allowed for. NICE counts readings below 140/90; QOF also counts readings of exactly
+      140/90.
     config:
       meta:
         owner:
@@ -221,6 +248,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND249"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF DM036 (2025/26, by practice)"
+            note: "NICE counts readings below 140/90; QOF also counts readings of exactly 140/90"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -292,6 +325,11 @@ models:
       No numeric result is needed. Protein:creatinine ratio tests and albumin measurements
       without a creatinine ratio do not count. No personalised care adjustments are applied.
       Based on NICE NG17. Code lists: NDAALB_COD (PCD).
+
+
+      External validation: matches NDA urine albumin (Mar 2026, by practice) once a known
+      difference is allowed for. NICE allows 15 months for the urine test; the audit counts
+      12.
     config:
       meta:
         owner:
@@ -315,6 +353,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND111"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "NDA urine albumin (Mar 2026, by practice)"
+            note: "NICE allows 15 months for the urine test; the audit counts 12"
+            reference: docs/nice-benchmarks.md
     columns: &record_columns
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -357,6 +401,11 @@ models:
       with retinal screening completion or attendance in the 12 months before the build
       date, regardless of the screening programme interval. No personalised care adjustments
       are applied. Based on NICE NG17. Code lists: RETSCREN_COD, CVDRETSCRN_COD (PCD).
+
+
+      Not externally validated: differs from NHS diabetic eye screening programme uptake (12
+      months to Sep 2024, NCL) for a plausible reason that could not be tested. The programme
+      reports attendance among people invited; many results do not reach GP records as codes.
     config:
       meta:
         owner:
@@ -380,6 +429,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND137"
+          external_validation:
+            status: not_validated
+            result: difference_not_tested
+            comparator: "NHS diabetic eye screening programme uptake (12 months to Sep 2024, NCL)"
+            note: "The programme reports attendance among people invited; many results do not reach GP records as codes"
+            reference: docs/nice-benchmarks.md
     columns: *record_columns
   - name: fct_person_diabetes_foot_examination_ind160
     description: >-
@@ -393,6 +448,11 @@ models:
       do not count. A performed test counts despite a decline or unsuitability on the same
       day. No personalised care adjustments are applied. Based on NICE NG19. Code lists:
       FOOTEXAM_COD, FEDEC_COD, FEPU_COD (PCD).
+
+
+      External validation: matches QOF DM012 (2025/26, by practice) once a known difference is
+      allowed for. NICE counts a foot sensation (monofilament) test; QOF counts a foot risk
+      classification.
     config:
       meta:
         owner:
@@ -417,6 +477,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND160"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF DM012 (2025/26, by practice)"
+            note: "NICE counts a foot sensation (monofilament) test; QOF counts a foot risk classification"
+            reference: docs/nice-benchmarks.md
     columns: *record_columns
   - name: fct_person_ndh_glycaemic_test_ind172
     description: >-
@@ -430,6 +496,9 @@ models:
       months before the build date. No numeric result is needed. No personalised care
       adjustments are applied. Based on NICE PH38. Code lists: IFCCHBAM_COD,
       DCCTHBA1C_COD, FASPLASGLUC_COD (PCD).
+
+
+      External validation: matches NDA NDH HbA1c/FPG (Mar 2026, by practice).
     config:
       meta:
         owner:
@@ -455,6 +524,11 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND172"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "NDA NDH HbA1c/FPG (Mar 2026, by practice)"
+            reference: docs/nice-benchmarks.md
     columns: *record_columns
   - name: fct_person_gestational_diabetes_hba1c_ind173
     description: >-
@@ -468,6 +542,11 @@ models:
       No numeric result is needed. No sex filter is applied. No personalised care adjustments
       are applied. Based on NICE NG3. Code lists: GESTDIAB_COD, DM_COD, DMTYPE1_COD,
       DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
+
+
+      Not externally validated: only a related published figure exists (CPRD-HES annual
+      glucose testing after GDM (GDM diagnoses 2000-18, England)). Only a published study of
+      older cohorts exists.
     config:
       meta:
         owner:
@@ -492,6 +571,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND173"
+          external_validation:
+            status: not_validated
+            result: related_figure_only
+            comparator: "CPRD-HES annual glucose testing after GDM (GDM diagnoses 2000-18, England)"
+            note: "Only a published study of older cohorts exists"
+            reference: docs/nice-benchmarks.md
     columns: *record_columns
   - name: fct_person_diabetes_hba1c_ind165
     description: >-
@@ -508,6 +593,9 @@ models:
       personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
       DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD
       (PCD).
+
+
+      External validation: matches NDA HbA1c <=58 (Mar 2026, by practice).
     config:
       meta:
         owner:
@@ -535,6 +623,11 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND165"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "NDA HbA1c <=58 (Mar 2026, by practice)"
+            reference: docs/nice-benchmarks.md
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
@@ -606,6 +699,11 @@ models:
       personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
       DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD
       (PCD).
+
+
+      External validation: matches QOF DM020 (2025/26, by practice) once a known difference is
+      allowed for. NICE uses a 64 mmol/mol target for everyone; QOF uses 58 and leaves out
+      moderate or severe frailty.
     config:
       meta:
         owner:
@@ -633,6 +731,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND135"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF DM020 (2025/26, by practice)"
+            note: "NICE uses a 64 mmol/mol target for everyone; QOF uses 58 and leaves out moderate or severe frailty"
+            reference: docs/nice-benchmarks.md
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
@@ -704,6 +808,11 @@ models:
       personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
       DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD
       (PCD).
+
+
+      External validation: matches NDA HbA1c <=75 (Mar 2026, by practice) once a known
+      difference is allowed for. The audit counts only people with a valid HbA1c result; NICE
+      counts everyone on the register.
     config:
       meta:
         owner:
@@ -731,6 +840,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND136"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "NDA HbA1c <=75 (Mar 2026, by practice)"
+            note: "The audit counts only people with a valid HbA1c result; NICE counts everyone on the register"
+            reference: docs/nice-benchmarks.md
     data_tests:
       - dbt_utils.expression_is_true:
           arguments:
@@ -800,6 +915,11 @@ models:
       contraindication in the last 12 months. No personalised care adjustments are applied.
       Based on NICE NG17. Code lists: PRT_COD, MAL_COD (PCD); 0205051, 0205052 (BNF);
       XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
+
+
+      External validation: matches QOF DM006 (2025/26, by practice) once a known difference is
+      allowed for. NICE leaves out people who cannot take these medicines; QOF's figure keeps
+      them.
     config:
       meta:
         owner:
@@ -825,6 +945,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND134"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF DM006 (2025/26, by practice)"
+            note: "NICE leaves out people who cannot take these medicines; QOF's figure keeps them"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -878,6 +1004,11 @@ models:
       the 15 months before the build date. Both feet must be checked unless the other foot is
       absent. No personalised care adjustments are applied. Based on NICE NG19. Code lists:
       FOOTEXAM_COD, FRC_COD, CONABL_COD, CONABR_COD, AMPL_COD, AMPR_COD (PCD).
+
+
+      External validation: matches NDA foot surveillance (Mar 2026, by practice) once a known
+      difference is allowed for. NICE allows 15 months for the foot check; the audit counts
+      12.
     config:
       meta:
         owner:
@@ -902,6 +1033,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND81"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "NDA foot surveillance (Mar 2026, by practice)"
+            note: "NICE allows 15 months for the foot check; the audit counts 12"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -954,6 +1091,9 @@ models:
       diagnosis year. Achieved with a structured education referral from diagnosis to 9 months
       afterwards. Attendance or an offer alone does not count. No personalised care
       adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DSEP_COD (PCD).
+
+
+      External validation: matches QOF DM014 (2025/26, by practice).
     config:
       meta:
         owner:
@@ -979,6 +1119,11 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND88"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "QOF DM014 (2025/26, by practice)"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -1031,6 +1176,11 @@ models:
       and the build date. Invitations and referrals to local prevention programmes do not
       count. No personalised care adjustments are applied. Based on NICE PH38. Code lists:
       NDH_COD, DPPOFF_COD (PCD); 1025321000000109, 1025301000000100 (SNOMED CT).
+
+
+      External validation: matches NDA NDH cumulative DPP offers (Mar 2026, by practice) once
+      a known difference is allowed for. NICE counts referrals of newly identified people; the
+      audit counts offers to everyone with the condition, ever.
     config:
       meta:
         owner:
@@ -1056,6 +1206,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND171"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "NDA NDH cumulative DPP offers (Mar 2026, by practice)"
+            note: "NICE counts referrals of newly identified people; the audit counts offers to everyone with the condition, ever"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -1113,6 +1269,9 @@ models:
       DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD, CHOL2_COD, EGFR_COD, NDAALB_COD,
       FOOTEXAM_COD, AMPL_COD, AMPR_COD, CONABL_COD, CONABR_COD, BMIVAL_COD, HEIGHT, WEIGHT,
       SMOK_COD, EXSMOK_COD, LSMOK_COD, NSMOK_COD (PCD).
+
+
+      External validation: matches NDA eight care processes (Mar 2026, by practice).
     config:
       meta:
         owner:
@@ -1143,6 +1302,11 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND120"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "NDA eight care processes (Mar 2026, by practice)"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
