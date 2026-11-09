@@ -54,6 +54,18 @@ class EvidenceListsTest(unittest.TestCase):
         self.assertIn('source: PCD', failures[0])
         self.assertEqual(notices, [])
 
+    def test_blank_cluster_ids_fail_instead_of_disappearing(self):
+        for cluster in ('', '   ', '\t\n'):
+            with self.subTest(cluster=cluster):
+                self.macro.write_text(
+                    "{% set lists = " + repr({'review': {'PCD': ['SYN_A', cluster]}}) + " %}",
+                    encoding='utf-8',
+                )
+                failures, notices = CHECKER.check_model(self.sql)
+                self.assertEqual(len(failures), 1)
+                self.assertIn('Evidence macro lists must be a literal consumer/source/list dict', failures[0])
+                self.assertEqual(notices, [])
+
     def test_classifier_union_is_checked(self):
         self.sql.write_text(
             "select * from {{ ref('stg_reference_combined_codesets') }} "

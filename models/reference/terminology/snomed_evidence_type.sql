@@ -6,6 +6,7 @@ with codes as (
     where upper(cluster_id) in ({{ observation_evidence_cluster_ids() }})
     group by code
 ), context as (
+    -- Context attributes: 408730004 procedure, 408732007 subject relationship, 408731000 temporal.
     select r.source_id::varchar as snomed_code,
         max(iff(r.type_id = 408730004, r.destination_id::varchar, null)) as procedure_context,
         count(distinct iff(r.type_id = 408730004, r.destination_id, null)) as procedure_context_count,
@@ -13,6 +14,7 @@ with codes as (
         boolor_agg(r.type_id = 408731000 and r.destination_id not in (410511007, 410512000, 410513005)) as unsupported_time_context
     from {{ ref('stg_nhsd_snomed_sct_relationship') }} as r
     inner join codes on r.source_id::varchar = codes.snomed_code
+    -- 900000000000011006 selects inferred relationships.
     where r.active and r.characteristic_type_id = 900000000000011006
         and r.type_id in (408730004, 408731000, 408732007)
     group by r.source_id
@@ -33,6 +35,7 @@ with codes as (
             or regexp_like(wording, '.*(planned|awaited).*') as is_planned_or_awaited,
         case
             when other_subject or unsupported_time_context or procedure_context_count > 1 then null
+            -- Procedure context: refused, requested, planned, done and started, respectively.
             when procedure_context not in ('443390004', '385644000', '397943006', '385658003', '385652002') then null
             when regexp_like(wording, '.*(not done|not performed|cancelled|canceled|not indicated|contraindicat).*') then null
             when procedure_context = '443390004' or regexp_like(wording, '.*(declined|refused).*') then 'declined'

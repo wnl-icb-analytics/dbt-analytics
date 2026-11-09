@@ -1,3 +1,6 @@
+{# Returns quoted, comma-separated IDs for IN (...). Consumer is a lists key or 'all'.
+   Source selects a bucket (PCD, ECL_CACHE or OPENCODELISTS), not the codeset source column.
+   With source set, 'all' buckets are excluded. No matching lists raises a compiler error. #}
 {% macro observation_evidence_cluster_ids(consumer='all', source=none) %}
     {%- set lists = {
         'dietary_review': {
