@@ -3,13 +3,18 @@ version: 2
 models:
   - name: fct_person_ltc_lcs_outcomes_htn_bp_control_fy_last
     description: |
-      LTC LCS outcome: hypertension good blood pressure control - LAST COMPLETED FINANCIAL YEAR.
+      Hypertension BP control in the last completed financial year, one row per eligible register member in the ICS_HTN_21 denominator.
 
       Same ICS_HTN_21 denominator and NICE targets as fct_person_ltc_lcs_outcomes_htn_bp_control
-      (see that model for exclusions and thresholds), but the last-known-BP window is the previous complete
+      (see that model for exclusions and thresholds), but the latest BP window is the previous complete
       financial year (1 April -> 31 March). Provides the fixed end-of-year achievement baseline
       to compare against the rolling and current-FY views.
       Exclusions are assessed on the build date.
+      BP components link by calendar date before ranking by raw clinical date, save time and
+      observation ID. Only the home-setting wrapper ranks before linking. Values must be >=1,
+      without plausibility fallback.
+      Frailty uses raw clinical dates and the same tie order, then tests only the moderate/severe
+      finding codes. Missing clinical dates do not qualify. Same-second entry order is unknown.
     config:
       meta:
         indicator:
@@ -18,7 +23,12 @@ models:
           category: "OUTCOMES"
           clinical_domain: "Cardiovascular"
           name_short: "HTN BP control (last FY)"
-          description_short: "Hypertension register members with BP below NICE target (last known reading, last completed FY)"
+          description_short: "Hypertension register members with BP below NICE target (latest date-linked reading, last completed FY)"
+          description_long: >
+            Hypertension BP control in the last completed financial year, one row per eligible register member.
+            Raw-date clinic/home components link by calendar date before ranking by clinical date, save time and ID.
+            Only the home-setting wrapper ranks before linking. Values must be >=1 and below strict NICE targets. Frailty excludes
+            only a latest moderate/severe finding, with the same date and save-time ordering.
           is_qof: false
           source_column: "is_bp_controlled"
           sort_order: "LTC_LCS_OUTCOME_003"
@@ -39,21 +49,21 @@ models:
       - name: age
         description: Current age in years (from the hypertension register / dim_person_age); sets the age band for the targets
       - name: latest_bp_date
-        description: Date of the last known paired BP reading within the last completed FY (null if none)
+        description: Date of the latest date-linked BP reading within the last completed FY (null if none)
       - name: latest_systolic_value
-        description: Systolic value (mmHg) of the last known paired reading in the last completed FY (null if none)
+        description: Systolic value (mmHg) of the latest date-linked reading in the last completed FY (null if none)
       - name: latest_diastolic_value
-        description: Diastolic value (mmHg) of the last known paired reading in the last completed FY (null if none)
+        description: Diastolic value (mmHg) of the latest date-linked reading in the last completed FY (null if none)
       - name: is_home_bp_event
-        description: True if the reading was a home BP measurement; home/ABPM targets apply
+        description: True if the selected chain is home BP rather than ABPM; home/ABPM targets apply
       - name: is_abpm_bp_event
-        description: True if the reading was an ABPM measurement; home/ABPM targets apply
+        description: True if the selected home-chain diastolic is in ABPM_COD; home/ABPM targets apply
       - name: systolic_threshold
         description: Systolic value (mmHg) the reading must be below. Under 80 - clinic 140, home/ABPM 135; 80 and over - clinic 150, home/ABPM 145. Clinic targets apply when there is no reading.
       - name: diastolic_threshold
         description: Diastolic value (mmHg) the reading must be below. Clinic 90, home/ABPM 85. Clinic target applies when there is no reading.
       - name: has_bp_in_window
-        description: True if the person has at least one qualifying paired BP reading in the last completed FY
+        description: True if the latest setting has a resolved date-linked chain in the window; threshold validity is assessed separately.
         data_tests:
           - not_null
       - name: is_bp_controlled
