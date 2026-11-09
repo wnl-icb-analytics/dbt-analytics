@@ -14,7 +14,7 @@ with base as (
 -- Equivalent local laboratory roots also permit mapped concepts and requested descendants.
 positive_uacr as (
     select o.person_id, o.observation_id, o.clinical_effective_date, o.date_recorded, o.result_value, o.valueset_id
-    from ({{ get_ltc_lcs_observations("c75746ce-5d7b-1647-f08a-ef5b10445f4c", match_paths='both', include_date_recorded=true) }}) as o
+    from ({{ get_ltc_lcs_observations("c75746ce-5d7b-1647-f08a-ef5b10445f4c", match_paths='both', include_date_recorded=true, exclude_result_headers=true) }}) as o
     inner join base as b on o.person_id = b.person_id
     where o.result_value > 0
 ),
