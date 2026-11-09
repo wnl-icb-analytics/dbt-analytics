@@ -54,7 +54,7 @@ cvd_62_woex as (
 
 latest_non_hdl as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("23f72268-d2d1-6fb0-9fe5-19eeb497790e", include_date_recorded=true) }})
+    from ({{ get_ltc_lcs_observations("23f72268-d2d1-6fb0-9fe5-19eeb497790e", include_date_recorded=true, exclude_result_headers=true) }})
     qualify row_number() over (
         partition by person_id, valueset_id
         order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc

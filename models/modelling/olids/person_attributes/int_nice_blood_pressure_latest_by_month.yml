@@ -1,0 +1,67 @@
+models:
+  - name: int_nice_blood_pressure_latest_by_month
+    description: >-
+      Latest complete blood pressure pair for people on hypertension, coronary heart disease,
+      stroke, peripheral arterial disease, kidney disease or diabetes registers. One row per
+      registered, living, non-test person with evidence by the month-end. An invalid latest
+      pair remains selected; an older valid pair does not replace it. People without a
+      complete pair have no row. Recalculated for each of the last 60 month-ends with current
+      rules, code lists and records, so later corrections can change past months.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - reporting_date
+    columns:
+      - name: person_id
+        description: Active, non-test member of at least one BP control register at the month-end.
+        data_tests:
+          - not_null
+      - name: reporting_date
+        description: >-
+          Completed month-end on which population and evidence are assessed.
+        data_tests:
+          - not_null
+      - name: latest_bp_date
+        description: Latest complete-pair clinical date through the month-end.
+      - name: latest_systolic_value
+        description: Selected systolic value in mmHg, retained when implausible.
+      - name: latest_diastolic_value
+        description: Selected diastolic value in mmHg, retained when implausible.
+      - name: is_valid_bp
+        description: Both selected components are plausible.
+      - name: is_home_bp_event
+        description: Selected pair has home monitoring evidence.
+      - name: is_abpm_bp_event
+        description: Selected pair has ambulatory monitoring evidence.
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM for the selected pair.
+
+unit_tests:
+  - name: nice_bp_monthly_latest_complete_pair
+    model: int_nice_blood_pressure_latest_by_month
+    config:
+      tags: ['monthly-full', 'nice-history']
+    overrides:
+      macros:
+        nice_register: |
+          SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date
+          FROM VALUES (-9101, '2026-08-31'), (-9101, '2026-09-30'), (-9102, '2026-09-30')
+        nice_reference_population: |
+          SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date
+          FROM VALUES (-9101, '2026-08-31'), (-9101, '2026-09-30'), (-9102, '2026-09-30')
+    given:
+      - input: ref('int_nice_blood_pressure_all')
+        rows:
+          - {person_id: -9101, reading_date: '2026-08-01', reading_id: SYN_VALID, systolic_value: 130, diastolic_value: 80, is_valid_bp: true, is_home_bp_event: true, is_abpm_bp_event: false, applied_measurement_context: HBPM_ABPM}
+          - {person_id: -9101, reading_date: '2026-09-30', reading_id: SYN_INVALID, systolic_value: 400, diastolic_value: 250, is_valid_bp: false, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}
+          - {person_id: -9101, reading_date: '2026-10-01', reading_id: SYN_FUTURE, systolic_value: 110, diastolic_value: 70, is_valid_bp: true, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}
+    expect:
+      rows:
+        - {person_id: -9101, reporting_date: '2026-08-31', latest_bp_date: '2026-08-01', latest_systolic_value: 130, latest_diastolic_value: 80, is_valid_bp: true, is_home_bp_event: true, is_abpm_bp_event: false, applied_measurement_context: HBPM_ABPM}
+        - {person_id: -9101, reporting_date: '2026-09-30', latest_bp_date: '2026-09-30', latest_systolic_value: 400, latest_diastolic_value: 250, is_valid_bp: false, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}
