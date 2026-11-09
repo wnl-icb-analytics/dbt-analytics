@@ -16,7 +16,7 @@ Indicator definitions are in [nice-indicators.md](nice-indicators.md).
 ## Blood pressure selection update
 
 BP control indicators now take independent daily systolic and diastolic minima within
-each clinic, home and ambulatory context. This is a local rule consistent with the
+each clinic, home and ambulatory context. This is a local rule informed by the
 [National Diabetes Audit methodology](https://digital.nhs.uk/data-and-information/publications/statistical/national-diabetes-audit/report-1-care-processes-and-treatment-targets-2021-22-full-report/methodology-copy),
 not a QOF same-day rule. On the latest eligible date, any context can achieve against
 its own indicator target. NICE targets remain strict, while QOF and the CVDPREVENT
@@ -24,7 +24,7 @@ comparison use inclusive targets.
 
 Clinic readings qualify. Complete home averages take priority over self-reported or
 unspecified home readings on the same date. Single home readings count when no complete
-average exists. Night-time averages and minimum ABPM readings are excluded before pairing;
+average exists. Night-time averages and minimum or maximum ABPM readings are excluded before pairing;
 daytime (day-interval) averages are preferred, and 24-hour averages are a same-day fallback.
 Unspecified ABPM ranks between daytime and 24-hour averages, with valid complete readings
 preferred before this priority. These selection rules follow the local decision in
@@ -38,10 +38,13 @@ targets separates the threshold difference from evidence selection. All five com
 CVDPREVENT BP measures remain within the project's three-percentage-point tolerance.
 Similar headline results do not prove identical extraction or same-day selection.
 Register populations and retrospective records still differ between extracts.
-The general BP control and diabetes triple-target flags use the same eligible context
-evidence, retaining their existing populations and targets. Displayed BP values and recording
-dates use the latest valid general reading. General BP staging does too. Recording-only indicators,
-general BP events and LTC LCS keep their existing rules.
+General BP control uses the same eligible context evidence, retaining its existing
+population and targets. Its displayed BP values, recording dates and staging use the
+latest valid general reading. The NDA diabetes triple target retains the complete-pair
+selection, audit window and inclusive target agreed in
+[PR #1562](https://github.com/wnl-icb-analytics/dbt-analytics/pull/1562), for both current
+and monthly results. Recording-only indicators, general BP events and LTC LCS keep
+their existing rules.
 
 ## How to read this
 

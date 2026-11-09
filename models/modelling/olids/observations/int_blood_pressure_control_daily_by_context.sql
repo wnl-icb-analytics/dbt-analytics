@@ -1,6 +1,6 @@
 {{ config(materialized='table', cluster_by=['person_id', 'reading_date']) }}
 
--- Local NDA-consistent control rule. Values can come from different readings,
+-- Local daily control rule. Values can come from different readings,
 -- but never from different dates or measurement contexts.
 WITH reading_rows AS (
     SELECT

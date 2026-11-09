@@ -51,19 +51,135 @@ synthetic_context AS (
 
 synthetic_latest AS ({{ latest }}),
 actual AS ({{ evidence }}),
-strict_actual AS ({{ stricter }})
+strict_actual AS ({{ stricter }}),
 
-SELECT COUNT(*) AS failure_count
-FROM actual
-HAVING COUNT(*) <> 11
-    OR COUNT_IF(person_id = -14421 AND applied_measurement_context = 'CLINIC') <> 1
-    OR COUNT_IF(person_id = -14422 AND is_home_bp_event) <> 1
-    OR COUNT_IF(person_id = -14423 AND latest_systolic_value = 140 AND latest_diastolic_value = 90) <> 1
-    OR COUNT_IF(person_id = -14424 AND latest_bp_date = '2026-08-01' AND latest_systolic_value = 150) <> 1
-    OR COUNT_IF(person_id = -14425 AND NOT is_valid_bp) <> 1
-    OR COUNT_IF(person_id = -14426 AND applied_measurement_context = 'CLINIC') <> 1
-    OR COUNT_IF(person_id = -14429 AND reporting_date = '2026-08-31' AND is_valid_bp) <> 1
-    OR COUNT_IF(person_id = -14429 AND reporting_date = '2026-09-30' AND NOT is_valid_bp) <> 1
-    OR (SELECT COUNT_IF(person_id = -14427 AND applied_measurement_context = 'CLINIC') FROM strict_actual) <> 1
-    OR (SELECT COUNT_IF(person_id = -14428 AND is_abpm_bp_event) FROM strict_actual) <> 1
-    OR COUNT_IF(person_id = -14430 AND latest_systolic_value = 130 AND latest_diastolic_value = 95 AND NOT (latest_systolic_value < 135 AND latest_diastolic_value < 85)) <> 1
+checks AS (
+    SELECT 'row_count' AS check_name, 11 AS expected_count, COUNT(*) AS actual_count,
+        NULL::ARRAY AS selected_evidence
+    FROM actual
+
+    UNION ALL
+    SELECT 'clinic_passes_home_fails', 1, COALESCE(COUNT_IF(applied_measurement_context = 'CLINIC'), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14421
+
+    UNION ALL
+    SELECT 'home_passes_clinic_at_boundary', 1, COALESCE(COUNT_IF(is_home_bp_event), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14422
+
+    UNION ALL
+    SELECT 'strict_boundary_keeps_clinic', 1, COALESCE(COUNT_IF(latest_systolic_value = 140 AND latest_diastolic_value = 90), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14423
+
+    UNION ALL
+    SELECT 'latest_day_overrides_older_passing_home', 1, COALESCE(COUNT_IF(latest_bp_date = '2026-08-01' AND latest_systolic_value = 150), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14424
+
+    UNION ALL
+    SELECT 'invalid_latest_day_remains_invalid', 1, COALESCE(COUNT_IF(NOT is_valid_bp), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14425
+
+    UNION ALL
+    SELECT 'both_pass_clinic_priority', 1, COALESCE(COUNT_IF(applied_measurement_context = 'CLINIC'), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14426
+
+    UNION ALL
+    SELECT 'history_before_invalid_reading', 1, COALESCE(COUNT_IF(reporting_date = '2026-08-31' AND is_valid_bp), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14429
+
+    UNION ALL
+    SELECT 'history_after_invalid_reading', 1, COALESCE(COUNT_IF(reporting_date = '2026-09-30' AND NOT is_valid_bp), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14429
+
+    UNION ALL
+    SELECT 'stricter_target_clinic_passes', 1, COALESCE(COUNT_IF(applied_measurement_context = 'CLINIC'), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM strict_actual
+    WHERE person_id = -14427
+
+    UNION ALL
+    SELECT 'stricter_target_abpm_passes', 1, COALESCE(COUNT_IF(is_abpm_bp_event), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM strict_actual
+    WHERE person_id = -14428
+
+    UNION ALL
+    SELECT 'home_average_diastolic_above_target', 1, COALESCE(COUNT_IF(latest_systolic_value = 130 AND latest_diastolic_value = 95 AND NOT (latest_systolic_value < 135 AND latest_diastolic_value < 85)), 0),
+        ARRAY_AGG(OBJECT_CONSTRUCT_KEEP_NULL(
+            'person_id', person_id, 'reporting_date', reporting_date,
+            'latest_bp_date', latest_bp_date, 'context', applied_measurement_context,
+            'systolic', latest_systolic_value, 'diastolic', latest_diastolic_value,
+            'is_valid_bp', is_valid_bp
+        ))
+    FROM actual
+    WHERE person_id = -14430
+)
+
+SELECT check_name, expected_count, actual_count, selected_evidence
+FROM checks
+WHERE actual_count <> expected_count

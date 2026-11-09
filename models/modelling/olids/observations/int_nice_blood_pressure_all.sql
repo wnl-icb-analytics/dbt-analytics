@@ -1,6 +1,6 @@
 {{ config(materialized='table', cluster_by=['person_id', 'reading_date']) }}
 
--- NICE recording evidence: one complete pair per person and clinical day, including invalid-only days.
+-- Recording and NDA evidence: one complete pair per person/day, including invalid-only days.
 WITH reading_rows AS (
     SELECT
         person_id,

@@ -24,7 +24,7 @@ models:
     name: latest_frailty_severity
   - description: "Latest clinical date with eligible complete numeric control evidence. May precede the measurement window; null when absent."
     name: latest_bp_date
-  - description: "Latest eligible control date for BP indicators. Other indicators retain their own evidence date. Null when absent."
+  - description: "Latest eligible BP date within the 12-month measurement window; null when none falls in the window. Other indicators retain their own evidence date. Null where the field does not apply to an indicator."
     name: latest_record_date
   - description: "Selected daily values have systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive, with systolic above diastolic. Null when no complete evidence exists."
     name: is_valid_bp
@@ -45,9 +45,9 @@ models:
     name: indicator_systolic_threshold
   - description: Diastolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists.
     name: indicator_diastolic_threshold
-  - description: Whether the latest complete blood pressure reading falls in the 12 months before the reporting date, including both boundary dates.
+  - description: Whether the latest eligible blood pressure date falls in the 12 months before the reporting date, including both boundary dates.
     name: is_bp_recorded_in_last_12m
-  - description: Whether the latest complete blood pressure reading is valid and both values are strictly below their thresholds, regardless of its date.
+  - description: Whether the selected daily context minima are valid and strictly below both thresholds, regardless of their date.
     name: is_latest_bp_within_indicator_target
   - description: Always true. Every row belongs to the denominator before personalised care adjustments.
     name: is_in_denominator
@@ -65,15 +65,15 @@ models:
     month-end.
 
     People registered at the month-end aged 17 to 79 on the diabetes register without moderate or
-    severe frailty. Achieved when both values of the latest complete blood pressure reading in the
-    last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at home or on ambulatory
-    monitoring. Incomplete readings do not count; invalid latest readings are unassessable, with no
-    older reading substituted. No personalised care adjustments are applied. Based on NICE NG17.
-    Recalculated for each of the last 60 month-ends with current rules, code lists and records, so
-    later corrections can change past months. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
-    HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD). At the latest eligible date, any clinic, home or
-    ambulatory context can achieve against its own strict target. Independent daily minima are
-    local. {{ doc('bp_control_evidence_rule') }}
+    severe frailty. Achieved when the independent daily minima in one context on the latest eligible
+    blood pressure date in the last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at home
+    or on ambulatory monitoring. Incomplete readings do not count; invalid latest readings are
+    unassessable, with no older reading substituted. No personalised care adjustments are applied.
+    Based on NICE NG17. Recalculated for each of the last 60 month-ends with current rules, code
+    lists and records, so later corrections can change past months. Code lists: BP_COD, SYSBP_COD,
+    DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD). At the latest eligible date, any clinic,
+    home or ambulatory context can achieve against its own strict target. Independent daily minima
+    are local. {{ doc('bp_control_evidence_rule') }}
   name: fct_person_diabetes_bp_ind249_by_month
   data_tests:
   - dbt_utils.unique_combination_of_columns:
