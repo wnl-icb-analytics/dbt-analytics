@@ -82,7 +82,7 @@ arm_med_sglt2 as (
 
 bnp_observations as (
     select observation_id, person_id, clinical_effective_date, date_recorded, result_value
-    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs5", include_date_recorded=true) }})
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs5", include_date_recorded=true, exclude_result_headers=true) }})
 ),
 
 bnp_400_latest as (

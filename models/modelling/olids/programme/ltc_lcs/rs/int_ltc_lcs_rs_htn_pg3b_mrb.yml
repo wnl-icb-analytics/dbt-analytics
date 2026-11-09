@@ -1,22 +1,7 @@
 models:
   - name: int_ltc_lcs_rs_htn_pg3b_mrb
-    description: |
-      Hypertension Register Priority Group 3B - Medium Risk (b).
-      Exclusion-shaped per the EMIS v3 search: patients with a BP monitoring
-      code in the last 12 months, not in PG1, PG2, or PG3A, are included
-      unless their latest paired BP reading is controlled at age-banded
-      thresholds. No comorbidity required.
-
-      Age <= 80 controlled:
-      - Clinic: systolic <= 140 and diastolic <= 90
-      - Home/ABPM: systolic <= 135 and diastolic <= 85
-
-      Age > 80 controlled (relaxed systolic):
-      - Clinic: systolic <= 150 and diastolic <= 90
-      - Home/ABPM: systolic <= 145 and diastolic <= 85
-
-      Patients whose monitoring codes have no resolvable paired reading
-      are included, mirroring the EMIS exclude-the-controlled structure.
+    description: >
+      Hypertension MRb membership, one row per register member outside PG1/PG2/PG3A with BP monitoring in 12 months. Excludes control at clinic <=140/90 or home/ABPM <=135/85, relaxed above age 80 to <=150/90 or <=145/85. Unresolved chains remain included. BP components link by calendar date to the XML setting markers before ranking by clinical date, save time and observation ID. Only the home-setting wrapper ranks before linking. Values need only be >=1; there is no plausibility fallback.
     config:
       meta:
         owner:

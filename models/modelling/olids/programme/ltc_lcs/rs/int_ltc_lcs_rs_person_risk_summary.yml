@@ -3,6 +3,8 @@ models:
   - name: int_ltc_lcs_rs_person_risk_summary
     description: |-
       Adult MoC risk groups, one row per eligible person with a condition risk result at the build date. Covers the adult MoC base, including the LR hypertension-only and LR adult-asthma-only Check & Test-only members. CYP-only people are excluded; Type 1 diabetes contributes HRC separately.
+      BP components link by calendar date to the XML setting markers before ranking by clinical date, save time and observation ID. Only the home-setting wrapper ranks before linking. Values need only be >=1; there is no plausibility fallback. Diabetes keeps its XML component pools and 140/90 rule; CKD PG2 retains its existing BP rule.
+      Type 1 HRC applies within the full MoC base; the single-condition Check & Test-only extension remains LR.
     config:
       meta:
         owner:
@@ -104,4 +106,4 @@ models:
         data_tests:
           - not_null
       - name: is_type_1_diabetes_hrc
-        description: Latest diabetes diagnosis/resolution qualifies for the separate EMIS Type 1 HRC rule.
+        description: Qualifies for the EMIS Type 1 HRC rule within the full MoC base. False for the Check & Test-only extension.

@@ -1,0 +1,34 @@
+models:
+  - name: fct_cwt_pathway__breakdown_62_day
+    description: >
+      Fact table containing 62 Day performance allocation details for CWT records. 
+      Seperate from the OBT table due to records having potentially multiple accountable organisations for the 62 Day metric.
+      This table structure allows for categorising and aggregating 62 Day performance.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: CWT Record ID
+        data_tests:
+          - not_null
+          - unique
+
+      - name: d62__accountable_diagnostic_trust_code
+        description: Trust code for the trust accountable for the diagnostic portion of the 62 Day pathway.
+        data_tests:
+          - not_null
+
+      - name: d62__accountable_treatment_trust_code
+        description:  Trust code for the trust accountable for the Treatment portion of the 62 Day pathway.
+        data_tests:
+          - not_null
+
+      - name: d62__allocation_method
+        description: The method used to assign accountability ('Solo', '50-50', '6 Scenarios')
+        data_tests:
+          - not_null
+
+      - name: d62__6_scenario_id
+        description: The Scenario ID for when the allocation method is '6 Scenarios'
