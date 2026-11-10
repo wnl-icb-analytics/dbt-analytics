@@ -4,25 +4,51 @@
         cluster_by=['person_id'])
 }}
 
-/*
-Intermediate: CKD Lab Classification
-This table classifies each person’s most recent eGFR and ACR lab results according to CKD thresholds and staging criteria. It supports case finding and audit by identifying people whose labs are consistent with CKD, regardless of clinical diagnosis.
-- Uses int_egfr_all, int_egfr_latest, and (if present) int_acr_all/int_acr_latest as sources.
-- Applies CKD clinical rules: eGFR stage and ACR category labels, persistent abnormal results (successive abnormal results 90-730 days apart), and combined inferred stage.
-- Mirrors and improves on the legacy INTERMEDIATE_CKD_LAB_INFERENCE logic.
-*/
-
-WITH latest_egfr AS (
+WITH previous_egfr AS (
     SELECT
-        person_id,
-        egfr_value AS latest_egfr_value,
-        clinical_effective_date AS latest_egfr_date,
-        ckd_stage AS latest_egfr_stage
-    FROM {{ ref('int_egfr_latest') }}
+        e.person_id,
+        e.clinical_effective_date,
+        e.egfr_value
+    FROM {{ ref('int_egfr_all') }} AS e
+    INNER JOIN {{ ref('int_egfr_latest') }} AS le
+        ON e.person_id = le.person_id
+        AND e.clinical_effective_date::DATE < le.clinical_effective_date::DATE
+    WHERE e.is_eligible_egfr = TRUE
+    -- Same-day results are one occasion; ordering must match int_egfr_latest.
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY e.person_id
+        ORDER BY e.clinical_effective_date::DATE DESC,
+            e.date_recorded DESC NULLS LAST, e.id DESC
+    ) = 1
+),
+
+latest_egfr_pair AS (
+    SELECT
+        le.person_id,
+        le.egfr_value AS latest_egfr_value,
+        le.clinical_effective_date AS latest_egfr_date,
+        le.ckd_stage AS latest_egfr_stage,
+        pe.egfr_value AS previous_egfr_value,
+        pe.clinical_effective_date AS previous_egfr_date
+    FROM {{ ref('int_egfr_latest') }} AS le
+    LEFT JOIN previous_egfr AS pe ON le.person_id = pe.person_id
+),
+
+latest_egfr AS (
+    SELECT
+        *,
+        -- CVDP002CKD uses the last two eGFRs, more than three months apart.
+        -- https://api.cvdprevent.nhs.uk/indicator/13/details
+        COALESCE(
+            latest_egfr_value < 60
+            AND previous_egfr_value < 60
+            AND latest_egfr_date::DATE > DATEADD(month, 3, previous_egfr_date::DATE),
+            FALSE
+        ) AS has_confirmed_low_egfr
+    FROM latest_egfr_pair
 ),
 
 latest_acr AS (
-    -- Replace with actual ACR latest logic/model if available
     SELECT
         person_id,
         acr_value AS latest_acr_value,
@@ -31,86 +57,23 @@ latest_acr AS (
     FROM {{ ref('int_urine_acr_latest') }}
 ),
 
-egfr_all AS (
-    SELECT
-        person_id,
-        clinical_effective_date,
-        egfr_value
-    FROM {{ ref('int_egfr_all') }}
-    WHERE egfr_value IS NOT NULL
-),
-
-acr_all AS (
-    SELECT
-        person_id,
-        clinical_effective_date,
-        acr_value
-    FROM {{ ref('int_urine_acr_all') }}
-    WHERE acr_value IS NOT NULL
-),
-
-low_egfr_events AS (
-    SELECT
-        *,
-        LAG(clinical_effective_date)
-            OVER (PARTITION BY person_id ORDER BY clinical_effective_date)
-            AS prev_low_egfr_date
-    FROM egfr_all
-    WHERE egfr_value < 60
-),
-
 high_acr_events AS (
     SELECT
-        *,
-        LAG(clinical_effective_date)
-            OVER (PARTITION BY person_id ORDER BY clinical_effective_date)
-            AS prev_high_acr_date
-    FROM acr_all
-    WHERE acr_value >= 3
-),
-
-egfr_confirmation AS (
-    SELECT
         person_id,
-        MAX(
-            CASE
-                WHEN
-                    prev_low_egfr_date IS NOT NULL
-                    AND DATEDIFF(
-                        'day', prev_low_egfr_date, clinical_effective_date
-                    )
-                    >= 90
-                    AND DATEDIFF(
-                        'day', prev_low_egfr_date, clinical_effective_date
-                    )
-                    <= 730
-                    THEN 1
-                ELSE 0
-            END
-        ) AS has_confirmed_low_egfr
-    FROM low_egfr_events
-    GROUP BY person_id
+        -- Check the full date window, not just the preceding high result.
+        COUNT(clinical_effective_date) OVER (
+            PARTITION BY person_id
+            ORDER BY clinical_effective_date::DATE
+            RANGE BETWEEN 730 PRECEDING AND 90 PRECEDING
+        ) > 0 AS has_prior_high_acr
+    FROM {{ ref('int_urine_acr_all') }}
+    WHERE acr_value >= 3
 ),
 
 acr_confirmation AS (
     SELECT
         person_id,
-        MAX(
-            CASE
-                WHEN
-                    prev_high_acr_date IS NOT NULL
-                    AND DATEDIFF(
-                        'day', prev_high_acr_date, clinical_effective_date
-                    )
-                    >= 90
-                    AND DATEDIFF(
-                        'day', prev_high_acr_date, clinical_effective_date
-                    )
-                    <= 730
-                    THEN 1
-                ELSE 0
-            END
-        ) AS has_confirmed_high_acr
+        BOOLOR_AGG(has_prior_high_acr) AS has_confirmed_high_acr
     FROM high_acr_events
     GROUP BY person_id
 ),
@@ -123,14 +86,11 @@ ckd_lab_classification AS (
         la.latest_acr_value,
         la.latest_acr_date,
         la.latest_acr_stage,
-        COALESCE(ec.has_confirmed_low_egfr, 0)::BOOLEAN
+        COALESCE(le.has_confirmed_low_egfr, FALSE)
             AS has_confirmed_low_egfr,
-        -- Combined inferred stage
-        COALESCE(ac.has_confirmed_high_acr, 0)::BOOLEAN
+        COALESCE(ac.has_confirmed_high_acr, FALSE)
             AS has_confirmed_high_acr,
-        -- Latest labs meet CKD criteria
-        COALESCE(e.person_id, a.person_id) AS person_id,
-        -- Confirmation flags
+        COALESCE(le.person_id, la.person_id) AS person_id,
         CASE
             WHEN
                 le.latest_egfr_stage IS NOT NULL
@@ -147,15 +107,18 @@ ckd_lab_classification AS (
             ELSE FALSE
         END AS latest_labs_meet_ckd_criteria,
         (
-            COALESCE(ec.has_confirmed_low_egfr, 0) = 1
-            OR COALESCE(ac.has_confirmed_high_acr, 0) = 1
-        ) AS has_confirmed_ckd_by_labs
+            COALESCE(le.has_confirmed_low_egfr, FALSE)
+            OR COALESCE(ac.has_confirmed_high_acr, FALSE)
+        ) AS has_confirmed_ckd_by_labs,
+        -- The retained 730-day cap is local, not part of CVDPREVENT.
+        COALESCE(
+            le.has_confirmed_low_egfr
+            AND DATEDIFF('day', le.previous_egfr_date, le.latest_egfr_date) <= 730,
+            FALSE
+        ) AS has_confirmed_low_egfr_within_2_years_local
     FROM latest_egfr AS le
     FULL OUTER JOIN latest_acr AS la ON le.person_id = la.person_id
-    LEFT JOIN egfr_confirmation AS ec ON le.person_id = ec.person_id
     LEFT JOIN acr_confirmation AS ac ON la.person_id = ac.person_id
-    LEFT JOIN egfr_all AS e ON le.person_id = e.person_id
-    LEFT JOIN acr_all AS a ON la.person_id = a.person_id
 )
 
-SELECT DISTINCT * FROM ckd_lab_classification
+SELECT * FROM ckd_lab_classification
