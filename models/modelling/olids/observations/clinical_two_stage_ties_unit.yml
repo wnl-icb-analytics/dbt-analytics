@@ -1,0 +1,81 @@
+unit_tests:
+  - name: pulmonary_day_dedup_keeps_the_latest_saved_offer
+    model: int_referral_pulmonary_rehab
+    given: []
+    overrides:
+      macros:
+        get_observations: |
+          SELECT -144594::NUMBER AS person_id, column1::VARCHAR AS id,
+              column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              column3::TIMESTAMP_NTZ AS date_recorded,
+              column4::VARCHAR AS mapped_concept_code,
+              'Synthetic referral'::VARCHAR AS mapped_concept_display,
+              column5::VARCHAR AS cluster_id
+          FROM VALUES
+              ('SYN_MORNING', '2024-03-01 09:00', '2024-03-04', 'SYN_OFFER', 'PULRHBOFF_COD'),
+              ('SYN_AFTERNOON', '2024-03-01 15:00', '2024-03-02', 'SYN_OFFER', 'PULRHBOFF_COD'),
+              ('SYN_DECLINE', '2024-03-01 12:00', '2024-03-03', 'SYN_DECLINE', 'PULRHBDEC_COD')
+    expect:
+      rows:
+        - {person_id: -144594, observation_id: SYN_MORNING, clinical_effective_at: '2024-03-01 09:00:00', pr_obs_type: Pulmonary Rehab Offered}
+        - {person_id: -144594, observation_id: SYN_DECLINE, clinical_effective_at: '2024-03-01 12:00:00', pr_obs_type: Pulmonary Rehab Declined}
+
+  - name: pulmonary_latest_keeps_the_offer_retained_by_day_dedup
+    model: int_referral_pulmonary_rehab_latest
+    overrides:
+      macros:
+        get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS pr_obs_type WHERE FALSE
+    given:
+      - input: ref('int_referral_pulmonary_rehab')
+        format: sql
+        rows: |
+          SELECT -144594::NUMBER AS person_id, '2024-03-01'::DATE AS clinical_effective_date,
+              column1::VARCHAR AS observation_id, column2::TIMESTAMP_NTZ AS clinical_effective_at,
+              column3::TIMESTAMP_NTZ AS date_recorded, column4::VARCHAR AS concept_code,
+              'Synthetic referral'::VARCHAR AS concept_display, column5::VARCHAR AS pr_obs_type
+          FROM VALUES
+              ('SYN_MORNING', '2024-03-01 09:00', '2024-03-04', 'SYN_OFFER', 'Pulmonary Rehab Offered'),
+              ('SYN_DECLINE', '2024-03-01 12:00', '2024-03-03', 'SYN_DECLINE', 'Pulmonary Rehab Declined')
+    expect:
+      rows:
+        - {person_id: -144594, pr_obs_type: Pulmonary Rehab Offered}
+
+  - name: alcohol_day_dedup_uses_priority_before_save_time
+    model: int_alcohol_intervention
+    given: []
+    overrides:
+      macros:
+        get_observations: |
+          SELECT -144595::NUMBER AS person_id, column1::VARCHAR AS id,
+              column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              column3::TIMESTAMP_NTZ AS date_recorded,
+              'SYN_ALCOHOL'::VARCHAR AS mapped_concept_code,
+              'Synthetic alcohol intervention'::VARCHAR AS mapped_concept_display,
+              column4::VARCHAR AS cluster_id
+          FROM VALUES
+              ('SYN_MORNING', '2024-03-01 09:00', '2024-03-04', 'ALCOHOLINT_COD'),
+              ('SYN_AFTERNOON', '2024-03-01 15:00', '2024-03-02', 'ALCOHOLINT_COD'),
+              ('SYN_DECLINE', '2024-03-01 17:00', '2024-03-05', 'ALCBRINTDEC_COD')
+    expect:
+      rows:
+        - {person_id: -144595, observation_id: SYN_MORNING, clinical_effective_date: '2024-03-01 09:00:00', alcohol_advice_services: 'Yes'}
+
+  - name: alcohol_latest_keeps_the_completion_retained_by_day_dedup
+    model: int_alcohol_intervention_latest
+    overrides:
+      macros:
+        get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS alcohol_advice_services WHERE FALSE
+    given:
+      - input: ref('int_alcohol_intervention')
+        format: sql
+        rows: |
+          SELECT -144595::NUMBER AS person_id, column1::VARCHAR AS observation_id,
+              column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              column3::TIMESTAMP_NTZ AS date_recorded,
+              column4::VARCHAR AS concept_code, column5::VARCHAR AS alcohol_advice_services
+          FROM VALUES
+              ('SYN_MORNING', '2024-03-01 09:00', '2024-03-04', 'SYN_ALCOHOL', 'Yes'),
+              ('SYN_OTHER_DECLINE', '2024-03-01 17:00', '2024-03-05', 'SYN_DECLINE', 'Declined')
+    expect:
+      rows:
+        - {person_id: -144595, alcohol_advice_services: 'Yes'}

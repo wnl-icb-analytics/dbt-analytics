@@ -13,6 +13,7 @@ Includes ALL persons (active, inactive, deceased) following intermediate layer p
 WITH base_observations AS (
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -50,6 +51,7 @@ unit_labels AS (
 observations_with_demographics AS (
     SELECT DISTINCT
         bo.id,
+        bo.date_recorded,
         bo.person_id,
         pd.gender,
         date(bo.clinical_effective_date) as clinical_effective_date,
@@ -84,6 +86,8 @@ ELSE bo.source_result_unit_display END AS result_unit_display
         ON bo.person_id = pd.person_id
 )
 select
+id AS observation_id,
+date_recorded,
 person_id,
 gender,
 clinical_effective_date,
@@ -135,4 +139,4 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, clinical_effective_date ORDER
     CASE alcohol_risk_category WHEN 'Higher Risk' THEN 1 WHEN 'Increasing Risk' THEN 2 WHEN 'Low Risk' THEN 3
          WHEN 'Ex-Drinker' THEN 4 WHEN 'Non-Drinker' THEN 5 ELSE 6 END,
     IFF(result_value IS NOT NULL, 0, 1),
-    id) = 1
+    date_recorded DESC NULLS LAST, id DESC) = 1

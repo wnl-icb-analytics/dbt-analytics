@@ -1,0 +1,387 @@
+unit_tests:
+- name: breast_screening_latest_uses_save_time_then_id
+  model: int_breast_screening_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_breast_screening_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS screening_observation_type,
+          NULL::BOOLEAN AS is_completed_screening,
+          NULL::BOOLEAN AS is_declined_screening,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: breast_screening_prompt_latest_uses_save_time_then_id
+  model: int_breast_screening_prompt_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_breast_screening_prompt_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: bowel_screening_latest_uses_save_time_then_id
+  model: int_bowel_screening_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_bowel_screening_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS screening_observation_type,
+          NULL::BOOLEAN AS is_completed_screening,
+          NULL::BOOLEAN AS is_declined_screening,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: bowel_screening_prompt_latest_uses_save_time_then_id
+  model: int_bowel_screening_prompt_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_bowel_screening_prompt_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: cervical_screening_latest_uses_save_time_then_id
+  model: int_cervical_screening_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_cervical_screening_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id,
+          NULL::VARCHAR AS screening_observation_type,
+          NULL::BOOLEAN AS is_completed_screening,
+          NULL::BOOLEAN AS is_unsuitable_screening,
+          NULL::BOOLEAN AS is_declined_screening,
+          NULL::BOOLEAN AS is_non_response_screening,
+          NULL::BOOLEAN AS is_cervix_removal,
+          column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: cervical_screening_prompt_latest_uses_save_time_then_id
+  model: int_cervical_screening_prompt_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_cervical_screening_prompt_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: nhs_health_check_latest_uses_save_time_then_id
+  model: int_nhs_health_check_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_nhs_health_check_all')
+    format: sql
+    rows: |-
+      SELECT
+          column1::VARCHAR AS id,
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          NULL::BOOLEAN AS is_completed_health_check,
+          NULL::BOOLEAN AS health_check_current_12m,
+          NULL::BOOLEAN AS health_check_current_24m,
+          NULL::BOOLEAN AS health_check_current_5y,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: referral_ndpp_latest_uses_save_time_then_id
+  model: int_referral_ndpp_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS concept_display WHERE FALSE
+  given:
+  - input: ref('int_referral_ndpp_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS concept_display,
+          column1::VARCHAR AS observation_id,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      concept_display: SYN_WINNER
+    - person_id: -144582
+      concept_display: SYN_WINNER
+    - person_id: -144583
+      concept_display: SYN_WINNER
+- name: smoking_status_latest_uses_save_time_then_id
+  model: int_smoking_status_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS code_description WHERE FALSE
+  given:
+  - input: ref('int_smoking_status_all')
+    format: sql
+    rows: |-
+      SELECT
+          column2::NUMBER AS person_id,
+          column1::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded,
+          'SYN_CODE'::VARCHAR AS concept_code,
+          column5::VARCHAR AS code_description,
+          'LSMOK_COD'::VARCHAR AS source_cluster_id,
+          NULL::BOOLEAN AS is_smoker_code,
+          NULL::BOOLEAN AS is_ex_smoker_code,
+          NULL::BOOLEAN AS is_never_smoked_code,
+          NULL::VARCHAR AS smoking_status,
+          NULL::BOOLEAN AS is_current_smoker,
+          NULL::BOOLEAN AS is_ex_smoker,
+          NULL::BOOLEAN AS is_never_smoker,
+          NULL::BOOLEAN AS has_smoking_history
+      FROM VALUES
+          ('SYN_Z', -144581, '2024-03-01 15:00', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_A', -144581, '2024-03-01 09:00', '2024-03-03', 'SYN_WINNER'),
+          ('SYN_A', -144582, '2024-03-01', '2024-03-02', 'SYN_OTHER'),
+          ('SYN_Z', -144582, '2024-03-01', '2024-03-02', 'SYN_WINNER'),
+          ('SYN_Z', -144583, '2024-03-01', NULL, 'SYN_OTHER'),
+          ('SYN_A', -144583, '2024-03-01', '2024-03-02', 'SYN_WINNER')
+  expect:
+    rows:
+    - person_id: -144581
+      code_description: SYN_WINNER
+    - person_id: -144582
+      code_description: SYN_WINNER
+    - person_id: -144583
+      code_description: SYN_WINNER
+- name: breast_screening_prompt_all_uses_save_time_then_id
+  model: int_breast_screening_prompt_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+                column3::TIMESTAMP_NTZ AS date_recorded, '710871000000104'::VARCHAR AS mapped_concept_code,
+                'Synthetic prompt'::VARCHAR AS mapped_concept_display
+                FROM VALUES ('SYN_Z', -144591, '2024-03-02'), ('SYN_A', -144591, '2024-03-03'),
+                    ('SYN_A', -144592, '2024-03-02'), ('SYN_Z', -144592, '2024-03-02')
+  expect:
+    rows:
+    - person_id: -144591
+      observation_id: SYN_A
+    - person_id: -144592
+      observation_id: SYN_Z
+- name: bowel_screening_prompt_all_uses_save_time_then_id
+  model: int_bowel_screening_prompt_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+                column3::TIMESTAMP_NTZ AS date_recorded, '382161000000102'::VARCHAR AS mapped_concept_code,
+                'Synthetic prompt'::VARCHAR AS mapped_concept_display
+                FROM VALUES ('SYN_Z', -144591, '2024-03-02'), ('SYN_A', -144591, '2024-03-03'),
+                    ('SYN_A', -144592, '2024-03-02'), ('SYN_Z', -144592, '2024-03-02')
+  expect:
+    rows:
+    - person_id: -144591
+      observation_id: SYN_A
+    - person_id: -144592
+      observation_id: SYN_Z
+- name: cervical_screening_prompt_all_uses_save_time_then_id
+  model: int_cervical_screening_prompt_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+                column3::TIMESTAMP_NTZ AS date_recorded, '851141000000101'::VARCHAR AS mapped_concept_code,
+                'Synthetic prompt'::VARCHAR AS mapped_concept_display
+                FROM VALUES ('SYN_Z', -144591, '2024-03-02'), ('SYN_A', -144591, '2024-03-03'),
+                    ('SYN_A', -144592, '2024-03-02'), ('SYN_Z', -144592, '2024-03-02')
+  expect:
+    rows:
+    - person_id: -144591
+      observation_id: SYN_A
+    - person_id: -144592
+      observation_id: SYN_Z
+- name: ndpp_event_grain_uses_save_time_then_id
+  model: int_referral_ndpp_all
+  given: []
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, -144593::NUMBER AS person_id,
+                column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::TIMESTAMP_NTZ AS date_recorded,
+                'SYN_NDPP'::VARCHAR AS mapped_concept_code, 'Synthetic NDPP event'::VARCHAR AS mapped_concept_display
+                FROM VALUES ('SYN_MORNING', '2024-03-01 09:00', '2024-03-04'),
+                    ('SYN_Z', '2024-03-01 15:00', '2024-03-02'), ('SYN_A', '2024-03-01 15:00', '2024-03-03'),
+                    ('SYN_NEXT', '2024-03-02 09:00', NULL)
+  expect:
+    rows:
+    - person_id: -144593
+      observation_id: SYN_MORNING
+      clinical_effective_date: '2024-03-01'
+    - person_id: -144593
+      observation_id: SYN_NEXT
+      clinical_effective_date: '2024-03-02'

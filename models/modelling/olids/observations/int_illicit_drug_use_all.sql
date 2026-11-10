@@ -12,6 +12,8 @@ ILLICIT DRUG USE defined by PCD REFSET CLUSTER
 WITH base_observations AS (
 SELECT
     obs.id,
+    obs.date_recorded,
+    obs.cluster_id AS source_cluster_id,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
