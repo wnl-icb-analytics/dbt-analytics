@@ -184,11 +184,20 @@ events AS (
 
     UNION ALL
     SELECT person_id, id, 'Waist Circumference', 'Metabolic',
-        clinical_effective_date, waist_circumference_value::FLOAT, 'cm', waist_risk_category::VARCHAR
+        clinical_effective_date, waist_circumference_value::FLOAT, 'cm', NULL::VARCHAR
     FROM (
         {{ distinct_observation_history_readings(
             'int_waist_circumference_all', value='waist_circumference_value::FLOAT', unit="'cm'",
-            condition='waist_circumference_value IS NOT NULL') }}
+            condition='waist_circumference_value IS NOT NULL AND is_valid_waist_circumference') }}
+    )
+
+    UNION ALL
+    SELECT person_id, id, 'Waist-to-height Ratio', 'Metabolic',
+        clinical_effective_date, waist_to_height_ratio::FLOAT, 'ratio', waist_to_height_ratio_category::VARCHAR
+    FROM (
+        {{ distinct_observation_history_readings(
+            'int_waist_circumference_all', value='waist_to_height_ratio::FLOAT', unit="'ratio'",
+            condition='waist_to_height_ratio IS NOT NULL') }}
     )
 
     -- Renal: eGFR, Creatinine, Urine ACR

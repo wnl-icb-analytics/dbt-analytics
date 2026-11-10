@@ -1,0 +1,307 @@
+unit_tests:
+- name: waist_ratio_adult_pairing_and_ng246_boundaries
+  model: int_waist_circumference_all
+  overrides:
+    macros:
+      get_observations: |-
+        select id::varchar id,person::number person_id,cluster::varchar cluster_id,
+         iff(day_offset=9999,dateadd(day,1,current_date()),dateadd(day,day_offset,'2024-03-01'::date))::timestamp_ntz clinical_effective_date,
+         clinical_effective_date as clinical_effective_date_raw,saved::timestamp_ntz date_recorded,
+         value::varchar result_value,unit::varchar result_unit_display,unit::varchar result_unit_code,
+         null::varchar result_units_source_concept_id,age::number age_at_event,
+         'SYN_CODE'::varchar mapped_concept_code,'Synthetic length'::varchar mapped_concept_display
+        from (values
+        ('SYN_W_1',-19501,'WAIST_COD',0,80,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_1',-19501,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_2',-19502,'WAIST_COD',0,99.98,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_2',-19502,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_3',-19503,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_3',-19503,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_4',-19504,'WAIST_COD',0,119.98,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_4',-19504,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_5',-19505,'WAIST_COD',0,120,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_5',-19505,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_6',-19506,'WAIST_COD',0,79.98,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_6',-19506,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_7',-19507,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_8',-19508,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_ZERO',-19508,'HEIGHT',0,0,'cm',18,null),
+        ('SYN_W_9',-19509,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_CHILD',-19509,'HEIGHT',0,200,'cm',17,null),
+        ('SYN_W_10',-19510,'WAIST_COD',0,100,'cm',17,'2024-03-01 12:00:00'),
+        ('SYN_H_10',-19510,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_11',-19511,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_WINDOW_11',-19511,'HEIGHT',365,200,'cm',18,null),
+        ('SYN_W_12',-19512,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_WINDOW_12',-19512,'HEIGHT',366,200,'cm',18,null),
+        ('SYN_W_13',-19513,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_WINDOW_13',-19513,'HEIGHT',-365,200,'cm',18,null),
+        ('SYN_W_14',-19514,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_WINDOW_14',-19514,'HEIGHT',-366,200,'cm',18,null),
+        ('SYN_W_15',-19515,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_FAR',-19515,'HEIGHT',-20,100,'cm',18,null),
+        ('SYN_NEAR',-19515,'HEIGHT',10,200,'cm',18,null),
+        ('SYN_W_16',-19516,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_BEFORE',-19516,'HEIGHT',-10,100,'cm',18,null),
+        ('SYN_AFTER',-19516,'HEIGHT',10,200,'cm',18,null),
+        ('SYN_W_17',-19517,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_SAVE_A',-19517,'HEIGHT',-1,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_SAVE_Z',-19517,'HEIGHT',-1,100,'cm',18,'2024-03-01 09:00:00'),
+        ('SYN_SAVE_ZZ',-19517,'HEIGHT',-1,50,'cm',18,null),
+        ('SYN_W_18',-19518,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_ID_A',-19518,'HEIGHT',-1,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_ID_Z',-19518,'HEIGHT',-1,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_19',-19519,'WAIST_COD',0,1,'m',18,'2024-03-01 12:00:00'),
+        ('SYN_H_M',-19519,'HEIGHT',0,2,'m',18,null),
+        ('SYN_W_20',-19520,'WAIST_COD',0,40,'in',18,'2024-03-01 12:00:00'),
+        ('SYN_H_IN',-19520,'HEIGHT',0,80,'in',18,null),
+        ('SYN_W_21',-19521,'WAIST_COD',0,0,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_21',-19521,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_22',-19522,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_22',-19522,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_23',-19523,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_23',-19523,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_24',-19524,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_24',-19524,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_25',-19525,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_25',-19525,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_26',-19526,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_26',-19526,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_27',-19527,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_CLOSE_BAD',-19527,'HEIGHT',0,0,'cm',18,null),
+        ('SYN_PRIOR_GOOD',-19527,'HEIGHT',-1,200,'cm',18,null),
+        ('SYN_W_28',-19528,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_FUTURE',-19528,'HEIGHT',9999,200,'cm',18,null),
+        ('SYN_W_29',-19529,'WAIST_COD',0,100,null,18,'2024-03-01 12:00:00'),
+        ('SYN_H_29',-19529,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_30',-19530,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_MM',-19530,'HEIGHT',0,2000,'mm',18,null),
+        ('SYN_W_31',-19531,'WAIST_COD',0,100,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_31',-19531,'HEIGHT',0,200,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_W_METRE_06',-19532,'WAIST_COD',0,1.005,'m',18,'2024-03-01 12:00:00'),
+        ('SYN_H_METRE_06',-19532,'HEIGHT',0,1.675,'m',18,'2024-03-01 12:00:00'),
+        ('SYN_W_CM_06',-19533,'WAIST_COD',0,100.5,'cm',18,'2024-03-01 12:00:00'),
+        ('SYN_H_CM_06',-19533,'HEIGHT',0,167.5,'cm',18,'2024-03-01 12:00:00')
+        ) v(id,person,cluster,day_offset,value,unit,age,saved)
+      get_empty_subquery_sql: select null::varchar id,null::float waist_to_height_ratio,null::float height_cm,null::varchar
+        waist_to_height_ratio_category where false
+  given:
+  - input: ref('stg_olids_concept')
+    format: sql
+    rows: select null::varchar concept_id,null::varchar display where false
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: |-
+      select person::number person_id,('SYN_BMI_' || row_number() over(order by person,source))::varchar id,
+       dateadd(day,days,'2024-03-01'::date)::timestamp_ntz clinical_effective_date,
+       '2024-03-02'::timestamp_ntz date_recorded,value::float bmi_value,valid::boolean is_valid_bmi,source::varchar bmi_source
+      from (values
+      (-19532,25,0,true,'recorded'),
+      (-19533,25,0,true,'recorded'),
+      (-19501,25,0,true,'recorded'),
+      (-19502,25,0,true,'recorded'),
+      (-19503,25,0,true,'recorded'),
+      (-19504,25,0,true,'recorded'),
+      (-19505,25,0,true,'recorded'),
+      (-19506,25,0,true,'recorded'),
+      (-19507,25,0,true,'recorded'),
+      (-19508,25,0,true,'recorded'),
+      (-19509,25,0,true,'recorded'),
+      (-19510,25,0,true,'recorded'),
+      (-19511,25,0,true,'recorded'),
+      (-19512,25,0,true,'recorded'),
+      (-19513,25,0,true,'recorded'),
+      (-19514,25,0,true,'recorded'),
+      (-19515,25,0,true,'recorded'),
+      (-19516,25,0,true,'recorded'),
+      (-19517,25,0,true,'recorded'),
+      (-19518,25,0,true,'recorded'),
+      (-19519,25,0,true,'recorded'),
+      (-19520,25,0,true,'recorded'),
+      (-19521,25,0,true,'recorded'),
+      (-19522,35,0,true,'recorded'),
+      (-19524,25,91,true,'recorded'),
+      (-19525,25,90,true,'recorded'),
+      (-19526,25,0,false,'recorded'),
+      (-19527,25,0,true,'recorded'),
+      (-19528,25,0,true,'recorded'),
+      (-19529,25,0,true,'recorded'),
+      (-19530,25,0,true,'recorded'),
+      (-19531,25,0,true,'recorded'),
+      (-19531,40,0,true,'calculated')
+      ) v(person,value,days,valid,source)
+  expect:
+    rows:
+    - id: SYN_W_1
+      waist_to_height_ratio: 0.4
+      height_cm: 200
+      waist_to_height_ratio_category: Healthy central adiposity
+    - id: SYN_W_2
+      waist_to_height_ratio: 0.4999
+      height_cm: 200
+      waist_to_height_ratio_category: Healthy central adiposity
+    - id: SYN_W_3
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_4
+      waist_to_height_ratio: 0.5999
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_5
+      waist_to_height_ratio: 0.6
+      height_cm: 200
+      waist_to_height_ratio_category: High central adiposity
+    - id: SYN_W_6
+      waist_to_height_ratio: 0.3999
+      height_cm: 200
+      waist_to_height_ratio_category: null
+    - id: SYN_W_7
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_8
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_9
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_10
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_11
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_12
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_13
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_14
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_15
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_16
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_17
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_18
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_19
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_20
+      waist_to_height_ratio: 0.5
+      height_cm: 203.2
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_21
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_22
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: null
+    - id: SYN_W_23
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: null
+    - id: SYN_W_24
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: null
+    - id: SYN_W_25
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_26
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: null
+    - id: SYN_W_27
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_28
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_29
+      waist_to_height_ratio: null
+      height_cm: null
+      waist_to_height_ratio_category: null
+    - id: SYN_W_30
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_31
+      waist_to_height_ratio: 0.5
+      height_cm: 200
+      waist_to_height_ratio_category: Increased central adiposity
+    - id: SYN_W_METRE_06
+      waist_to_height_ratio: 0.6
+      height_cm: 167.5
+      waist_to_height_ratio_category: High central adiposity
+    - id: SYN_W_CM_06
+      waist_to_height_ratio: 0.6
+      height_cm: 167.5
+      waist_to_height_ratio_category: High central adiposity
+- name: waist_latest_keeps_missing_ratio_and_resolves_same_day
+  model: int_waist_circumference_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number person_id,null::varchar id,null::float waist_to_height_ratio where
+        false
+  given:
+  - input: ref('int_waist_circumference_all')
+    format: sql
+    rows: |-
+      select person::number person_id,id::varchar id,dateadd(day,days,'2024-03-01'::date)::timestamp_ntz clinical_effective_date,
+       saved::timestamp_ntz date_recorded,100::number(10,2) waist_circumference_value,
+       'SYN_CODE'::varchar concept_code,'Synthetic waist'::varchar concept_display,'WAIST_COD'::varchar source_cluster_id,
+       100::varchar original_result_value,'cm'::varchar original_result_unit_display,valid::boolean is_valid_waist_circumference,
+       iff(ratio is null,null,200)::float height_cm,clinical_effective_date height_measurement_date,25::float bmi_value_at_waist,
+       clinical_effective_date bmi_measurement_date,ratio::float waist_to_height_ratio,
+       iff(ratio is null,null,'Increased central adiposity')::varchar waist_to_height_ratio_category
+      from (values
+      (-19600,'SYN_OLD',1,'2024-03-01 12:00:00',0.6,true),
+      (-19600,'SYN_NEW_NO_HEIGHT',2,'2024-03-02 12:00:00',null,true),
+      (-19601,'SYN_Z_EARLY',2,'2024-03-02 09:00:00',0.6,true),
+      (-19601,'SYN_A_LATE',2,'2024-03-02 12:00:00',0.5,true),
+      (-19602,'SYN_ID_A',2,'2024-03-02 12:00:00',0.6,true),
+      (-19602,'SYN_ID_Z',2,'2024-03-02 12:00:00',0.5,true),
+      (-19603,'SYN_INVALID',3,'2024-03-03 12:00:00',null,false),
+      (-19603,'SYN_VALID_PRIOR',2,'2024-03-02 12:00:00',0.5,true)
+      ) v(person,id,days,saved,ratio,valid)
+  expect:
+    rows:
+    - person_id: -19600
+      id: SYN_NEW_NO_HEIGHT
+      waist_to_height_ratio: null
+    - person_id: -19601
+      id: SYN_A_LATE
+      waist_to_height_ratio: 0.5
+    - person_id: -19602
+      id: SYN_ID_Z
+      waist_to_height_ratio: 0.5
+    - person_id: -19603
+      id: SYN_VALID_PRIOR
+      waist_to_height_ratio: 0.5

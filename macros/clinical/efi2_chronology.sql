@@ -286,12 +286,9 @@ with
     -- BNF code (chars 1-2 chapter, 3-4 section, 5-6 paragraph) - the same
     -- definition as int_medication_order_bnf.bnf_paragraph.
     --
-    -- NOTE - no code exclusions applied here (differs from this repo's
-    -- int_polypharmacy_* pipeline). That pipeline scopes to NHSBSA in-scope BNF
-    -- chapters via the bnf_polypharmacy_exclusions seed; the lds pipeline
-    -- counts across ALL BNF sub-subchapters, so we deliberately do NOT apply those
-    -- exclusions - every prescribed med with a BNF code counts. Applying
-    -- the exclusion list as minimising divergence.
+    -- The int_polypharmacy_* pipeline filters BNF chapters 01 to 04 and 06 to 10.
+    -- eFI2 counts across all BNF paragraphs, so every prescribed medicine with
+    -- a BNF code counts here without that chapter filter.
     relevant_meds as (
         select
             im.person_id,
