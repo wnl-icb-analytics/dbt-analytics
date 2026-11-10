@@ -10,6 +10,7 @@ models:
       Rule instructions and gender are required by downstream rules. Monthly
       full refreshes incorporate late-arriving observations across all 60
       months.
+      Identical evidence keeps the latest save time, then the highest observation ID.
     config:
       meta:
         owner:
@@ -21,6 +22,16 @@ models:
               - evidence_id
               - end_date
     columns:
+      - name: observation_id
+        description: >-
+          Source observation selected within the existing evidence grain, populated only
+          for BMI rows. Null for other deficits and months stored before the column was
+          added, until the history full refresh backfills BMI rows.
+      - name: date_recorded
+        description: >-
+          EMIS save time of the selected BMI observation. Populated only for BMI rows;
+          null for other deficits, unavailable save times and months stored before the
+          column was added, until the history full refresh backfills BMI rows.
       - name: evidence_id
         description: Identifier derived from the current eFI2 evidence grain.
         data_tests:

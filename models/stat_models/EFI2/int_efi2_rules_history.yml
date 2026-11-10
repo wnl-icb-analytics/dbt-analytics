@@ -4,8 +4,7 @@ models:
       eFI2 deficit rules evaluated at each historical month-end. One row
       represents one distinct deficit result for a person and scoring month.
       BMI and haemoglobin use the latest eligible reading at that month-end.
-      Same-day BMI ties use the derived evidence identifier without preferring
-      a higher or lower result.
+      Same-day BMI ties use the latest save time, then the highest observation ID.
       Repeated month-expanded rule results are removed before storage; this is
       score-neutral because chronology uses the same distinct score keys.
     config:
@@ -54,7 +53,7 @@ unit_tests:
   - input: ref('int_efi2_cohort_snomed_codes_history')
     format: sql
     rows: |-
-      SELECT -18114::NUMBER AS person_id, 'MALE'::VARCHAR AS gender,
+      SELECT 'SYN_HB'::VARCHAR AS observation_id, NULL::TIMESTAMP_NTZ AS date_recorded, -18114::NUMBER AS person_id, 'MALE'::VARCHAR AS gender,
           '2024-03-31'::DATE AS end_date, 'Anaemia & haematinic deficiency'::VARCHAR AS deficit,
           'SYN_RULE'::VARCHAR AS other_instructions, 1::FLOAT AS result_value,
           '2024-01-01'::TIMESTAMP_NTZ AS clinical_effective_date,
@@ -64,12 +63,13 @@ unit_tests:
     rows: |-
       SELECT column1::VARCHAR AS id, -18114::NUMBER AS person_id,
           column2::TIMESTAMP_NTZ AS clinical_effective_date,
-          column2::TIMESTAMP_NTZ AS date_recorded, column3::FLOAT AS inferred_value,
+          column5::TIMESTAMP_NTZ AS date_recorded, column3::FLOAT AS inferred_value,
           column4::BOOLEAN AS is_out_of_range, FALSE::BOOLEAN AS is_negative,
           FALSE::BOOLEAN AS is_extreme_outlier, 'g/L'::VARCHAR AS inferred_unit,
           'SYN_CATEGORY'::VARCHAR AS haemoglobin_category
-      FROM VALUES ('SYN_VALID', '2024-01-01', 135, FALSE),
-          ('SYN_BAD', '2024-02-01', 1.5, TRUE)
+      FROM VALUES ('SYN_VALID', '2024-01-01 09:00', 135, FALSE, '2024-01-04'),
+          ('SYN_EARLIER_SAVE', '2024-01-01 15:00', 80, FALSE, '2024-01-02'),
+          ('SYN_BAD', '2024-02-01', 1.5, TRUE, '2024-02-02')
   expect:
     rows:
     - person_id: -18114

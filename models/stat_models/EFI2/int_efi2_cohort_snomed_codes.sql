@@ -6,7 +6,9 @@
 }}
 
 
-select distinct
+select
+    obs.id AS observation_id,
+    obs.date_recorded,
     pd.person_id,
     cd.deficit,
     cd.other_instructions,
@@ -42,3 +44,12 @@ where
         datediff(year, pd.date_of_birth, date(obs.clinical_effective_date)) >= cd.age_limit
         or cd.age_limit is null
     )
+
+-- Keep the existing evidence grain when choosing the source observation.
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY pd.person_id, cd.deficit, cd.other_instructions,
+        cd.snomedct_conceptid, cd.code_description, cd.time_constraint_years,
+        cd.age_limit, obs.result_value, obs.result_unit_display,
+        obs.clinical_effective_date, pd.end_date
+    ORDER BY obs.date_recorded DESC NULLS LAST, obs.id DESC
+) = 1

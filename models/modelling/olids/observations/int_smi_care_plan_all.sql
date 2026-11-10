@@ -13,6 +13,7 @@ Includes ALL persons (active, inactive, deceased) following intermediate layer p
 with planmh as (
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -32,10 +33,12 @@ WHERE obs.clinical_effective_date IS NOT NULL
 AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 )
 --select all to then deduplicate by person, code and date
-select person_id
+select id AS observation_id
+,date_recorded
+,person_id
 ,clinical_effective_date
 ,concept_code
 ,concept_display
 ,MH_care_plan_current_12m
 from planmh
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY PERSON_ID) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY date_recorded DESC NULLS LAST, id DESC) = 1

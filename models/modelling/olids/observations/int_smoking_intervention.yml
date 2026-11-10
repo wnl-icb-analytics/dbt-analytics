@@ -20,6 +20,10 @@ models:
           arguments:
             cluster_ids: SMOKINGINT_COD
     columns:
+      - name: observation_id
+        description: Source observation selected within the model's event grain.
+      - name: date_recorded
+        description: EMIS save time of the selected observation; null when unavailable.
       - name: person_id
         tests:
           - not_null
@@ -30,7 +34,7 @@ unit_tests:
     overrides:
       macros:
         get_observations: |
-          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+          SELECT '2024-03-01'::TIMESTAMP_NTZ AS date_recorded, column1::VARCHAR AS id, column2::NUMBER AS person_id,
                  column3::DATE AS clinical_effective_date,
                  column4::VARCHAR AS mapped_concept_code,
                  'SYN_intervention'::VARCHAR AS mapped_concept_display

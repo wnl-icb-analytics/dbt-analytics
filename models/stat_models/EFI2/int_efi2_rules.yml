@@ -5,11 +5,22 @@ models:
       occurred by scoring, using the first day of their approximate birth month. Rows
       identify a person, deficit, sub-deficit, rule and evidence date; several results
       can remain for one deficit. Anaemia uses the latest valid haemoglobin. BMI uses
-      the latest eligible reading, unlike the earliest-reading rule in legacy AIC.
+      the latest eligible reading, with save time then observation ID breaking ties, unlike the earliest-reading rule in legacy AIC.
     config:
       meta:
         owner:
           name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - end_date
+              - deficit
+              - other_instructions
+              - has_deficit
+              - sub_deficit
+              - last_date
     columns:
       - name: person_id
         description: Person identifier.
