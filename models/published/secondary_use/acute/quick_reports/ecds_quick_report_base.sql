@@ -277,7 +277,7 @@ b.practice_name,
 --add missing neighbourhood and borough information
 COALESCE(b.pcn_name,p.pcn_name) as pcn_name,
 COALESCE(b.practice_neighbourhood,p.neighbourhood_name) as practice_neighbourhood,
-COALESCE(b.health_borough,p.registered_borough_name) as health_borough,
+COALESCE(p.registered_borough_name,b.health_borough) as health_borough,
 CASE 
 WHEN b.icb_name = 'North West London' THEN 'West and North London' ELSE b.icb_name END AS icb_name,
 b.provider_code,
