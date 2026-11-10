@@ -133,124 +133,139 @@ group by
         provider_code,
         provider_name
 
+       union all
+
+    -- =====================================================
+    -- SLAM Aggregate Contract Monitoring
+    --
+    -- Provider row counts for the latest submitted
+    -- financial period only.
+    -- =====================================================
+
+    select
+        current_date()                    as measurement_date,
+        current_timestamp()               as measured_at,
+        'SLAM_LSACM'                      as table_id,
+        a.dv_provider_code                as provider_code,
+        a.dv_provider_code                as provider_name,
+        count(*)                          as row_count,
+
+        max(
+            case
+                when a.dv_dataset_created_at <= current_timestamp()
+                then to_date(a.dv_dataset_created_at)
+            end
+        )                                 as latest_refresh_date,
+
+        a.dv_financial_year               as latest_actual_financial_year,
+        a.dv_financial_month              as latest_actual_financial_month,
+
+        max(
+            to_date(a.submission_loaded_at)
+        )                                 as latest_update_date
+
+    from {{ ref('stg_lsacm_latest') }} a
+
+    inner join (
+
+        select
+            financial_year,
+            fy_month_submitted
+
+        from {{ ref('int_ls_contract_dataset_submissions') }}
+
+        where dataset = 'LSACM'
+          and financial_year is not null
+          and fy_month_submitted is not null
+
+        qualify row_number() over (
+            order by
+                financial_year desc,
+                fy_month_submitted desc
+        ) = 1
+
+    ) latest_period
+        on try_to_number(
+            left(a.dv_financial_year, 4)
+        ) = latest_period.financial_year
+
+       and a.dv_financial_month
+            = latest_period.fy_month_submitted
+
+    where a.dv_provider_code is not null
+
+    group by
+        a.dv_provider_code,
+        a.dv_financial_year,
+        a.dv_financial_month
+
+
     union all
 
     -- =====================================================
-    -- SLAM Local Standard Aggregate Contract Monitoring
-    -- Monthly aggregate contract monitoring
+    -- SLAM Patient Level Contract Monitoring
     --
-    -- Latest actual financial period is based only on
-    -- periods containing > 0 actual activity, preventing
-    -- future planned months from being treated as received
-    -- actual activity.
+    -- Provider row counts for the latest submitted
+    -- financial period only.
     -- =====================================================
 
     select
-        current_date()                       as measurement_date,
-        current_timestamp()                  as measured_at,
-        'SLAM_LSACM'                         as table_id,
-        a."Dv_ProviderCode"                  as provider_code,
-        a."Dv_ProviderCode"                  as provider_name,
-        count(*)                             as row_count,
+        current_date()                    as measurement_date,
+        current_timestamp()               as measured_at,
+        'SLAM_LSPLCM'                     as table_id,
+        p.dv_provider_code                as provider_code,
+        p.dv_provider_code                as provider_name,
+        count(*)                          as row_count,
 
         max(
             case
-                when a.DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
-                then to_date(a.DV_DATEANDTIMEDATASETCREATED)
+                when p.dv_dataset_created_at <= current_timestamp()
+                then to_date(p.dv_dataset_created_at)
             end
-        )                                    as latest_refresh_date,
+        )                                 as latest_refresh_date,
+
+        p.dv_financial_year               as latest_actual_financial_year,
+        p.dv_financial_month              as latest_actual_financial_month,
 
         max(
-            case
-                when coalesce(
-                    a."CONTRACT MONITORING ACTUAL ACTIVITY",
-                    0
-                ) > 0
-                then a.DV_FINANCIALYEAR
-            end
-        )                                    as latest_actual_financial_year,
+            to_date(p.submission_loaded_at)
+        )                                 as latest_update_date
 
-        max(
-            case
-                when coalesce(
-                    a."CONTRACT MONITORING ACTUAL ACTIVITY",
-                    0
-                ) > 0
+    from {{ ref('stg_lsplcm_latest') }} p
 
-                and a.DV_FINANCIALYEAR = (
-                    select max(y.DV_FINANCIALYEAR)
-                    from DATA_LAKE.SERVICES_DATA
-                        ."LSACM_LocalStandardAggregateContractMonitoring" y
+    inner join (
 
-                    where y."Dv_ProviderCode" = a."Dv_ProviderCode"
+        select
+            financial_year,
+            fy_month_submitted
 
-                      and coalesce(
-                          y."CONTRACT MONITORING ACTUAL ACTIVITY",
-                          0
-                      ) > 0
-                )
+        from {{ ref('int_ls_contract_dataset_submissions') }}
 
-                then a.DV_FINANCIALMONTH
-            end
-        )                                    as latest_actual_financial_month,
+        where dataset = 'LSPLCM'
+          and financial_year is not null
+          and fy_month_submitted is not null
 
-        max(to_date(a."LastUpdateTime"))     as latest_update_date
+        qualify row_number() over (
+            order by
+                financial_year desc,
+                fy_month_submitted desc
+        ) = 1
 
-    from DATA_LAKE.SERVICES_DATA
-        ."LSACM_LocalStandardAggregateContractMonitoring" a
+    ) latest_period
+        on try_to_number(
+            left(p.dv_financial_year, 4)
+        ) = latest_period.financial_year
 
-    where a."Dv_ProviderCode" is not null
+       and p.dv_financial_month
+            = latest_period.fy_month_submitted
+
+    where p.dv_provider_code is not null
 
     group by
-        a."Dv_ProviderCode"
+        p.dv_provider_code,
+        p.dv_financial_year,
+        p.dv_financial_month
 
-
-        union all
-
-    -- =====================================================
-    -- SLAM Local Standard Patient Level Contract Monitoring
-    -- Monthly patient-level contract monitoring
-    --
-    -- Invalid future dataset-created dates are excluded
-    -- from the freshness calculation.
-    -- =====================================================
-
-    select
-        current_date()                       as measurement_date,
-        current_timestamp()                  as measured_at,
-        'SLAM_LSPLCM'                        as table_id,
-        p."Dv_ProviderCode"                  as provider_code,
-        p."Dv_ProviderCode"                  as provider_name,
-        count(*)                             as row_count,
-
-        max(
-            case
-                when p.DV_DATEANDTIMEDATASETCREATED <= current_timestamp()
-                then to_date(p.DV_DATEANDTIMEDATASETCREATED)
-            end
-        )                                    as latest_refresh_date,
-        max(p.DV_FINANCIALYEAR)              as latest_actual_financial_year,
-        max(
-            case
-                when p.DV_FINANCIALYEAR = (
-                    select max(y.DV_FINANCIALYEAR)
-
-                    from DATA_LAKE.SERVICES_DATA
-                        ."LSPLCM_LocalStandardPatientLevelContractMonitoring" y
-
-                    where y."Dv_ProviderCode" = p."Dv_ProviderCode"
-                )
-
-                then p.DV_FINANCIALMONTH
-            end
-        )                                    as latest_actual_financial_month,
-        max(to_date(p."LastUpdateTime"))     as latest_update_date
-
-    from DATA_LAKE.SERVICES_DATA
-        ."LSPLCM_LocalStandardPatientLevelContractMonitoring" p
-    where p."Dv_ProviderCode" is not null
-    group by
-        p."Dv_ProviderCode"
 )
 
 select *
