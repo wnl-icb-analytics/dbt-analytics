@@ -112,6 +112,8 @@ WHEN u.department_type = '02' THEN 'Mono'
 WHEN u.department_type = '03' THEN 'UTC'
 WHEN department_type = '04' THEN 'WIC'
 WHEN department_type = '05' THEN 'SDEC'
+WHEN department_type = '06' THEN 'UTC Extended Care'
+WHEN department_type = '99' THEN 'Unknown'
 ELSE department_type END as dept_type_desc,
 --ATTENDANCE DATE/TIME
 u.start_date as attendance_date,
@@ -122,6 +124,11 @@ CASE
         THEN YEAR(u.start_date) || '/' || RIGHT(YEAR(u.start_date) + 1, 2)
         ELSE (YEAR(u.start_date) - 1) || '/' || RIGHT(YEAR(u.start_date), 2)
     END as financial_year_label,
+CASE 
+    WHEN MONTH(u.start_date) >= 4 
+        THEN MONTH(u.start_date) - 3
+    ELSE MONTH(u.start_date) + 9
+END AS financial_month_no,
 DATE_TRUNC('month', u.start_date) AS month_start_date,
 TO_CHAR(u.start_date, 'mon-yy') AS month_label,
 TO_NUMBER(TO_CHAR(u.start_date, 'YYYYMM')) AS month_sort,
