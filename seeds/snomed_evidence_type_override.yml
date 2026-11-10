@@ -1,0 +1,23 @@
+seeds:
+  - name: snomed_evidence_type_override
+    description: >-
+      Reviewed evidence-type exceptions, one row per SNOMED CT code. These take
+      precedence over automatic rules. Add a code and its review basis when the
+      shared context and wording rules do not establish its agreed meaning.
+    config:
+      column_types:
+        snomed_code: varchar(32)
+        evidence_type: varchar(32)
+        basis: varchar(500)
+    columns:
+      - name: snomed_code
+        data_tests: [unique, not_null]
+      - name: evidence_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [completed, requested_or_referred, advised, declined, finding, administrative]
+      - name: basis
+        description: Recorded reason for overriding the automatic evidence type.
+        data_tests: [not_null]
