@@ -11,14 +11,18 @@
 
     Serial / over-time companion to sem_olids_observations. Where that view
     holds the LATEST value per biomarker (one row per person), this view holds
-    EVERY recorded reading (one row per observation event) so you can answer
+    distinct non-BP readings and BP rows at their existing grain, so you can answer
     "latest 2", trajectory, variability, and recheck-interval questions.
 
     OLIDS is the One London Integrated Data Set — primary care data from system
     suppliers (currently EMIS Web, with TPP to follow), unified by the One
     London team.
 
-    Grain: One row per observation event (person x biomarker x date).
+    Grain: One row per distinct non-BP reading. Re-entries with the same person,
+    biomarker, concept, calendar date and recorded value within one source patient
+    record and publisher appear once. Different concepts, standardised values,
+    units, source patient records or publishers remain distinct. Unknown clinical
+    days retain separate source entries. BP keeps its existing grain.
 
     Retention asymmetry (important):
     OLIDS keeps FULL history for currently-registered persons, but only ~5
@@ -44,7 +48,7 @@
 
     Biomarkers: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol,
     HDL Cholesterol, Non-HDL Cholesterol, Triglycerides, Total Cholesterol to HDL
-    Ratio, QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT,
+    Ratio, QRISK, HbA1c, BMI, Waist Circumference, Waist-to-height Ratio, eGFR, Creatinine, Urine ACR, ALT,
     GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, Electronic
     Frailty Index (eFI) (GP-recorded eFI and eFI2 scores), Rockwood Frailty Scale. Calculated eFI2 has no
     serial history and is only in sem_olids_observations.
@@ -53,7 +57,7 @@
 TABLES(
     obs AS {{ ref('int_observation_events_long') }}
         PRIMARY KEY (observation_event_id)
-        COMMENT = 'One row per biomarker observation event. Filter to a single observation_type before aggregating value.',
+        COMMENT = 'One row per distinct non-BP reading; BP keeps its existing grain. Filter to a single observation_type before aggregating value.',
 
     demographics AS {{ ref('dim_person_demographics') }}
         PRIMARY KEY (person_id)
@@ -75,11 +79,11 @@ DIMENSIONS(
 
     -- Observation
     obs.observation_event_id AS observation_event_id COMMENT = 'Stable per-event surrogate key. Use as the final ORDER BY tiebreaker in latest-N windows so tied clinical_effective_dates rank deterministically.',
-    obs.observation_type AS observation_type WITH SYNONYMS = ('biomarker', 'measurement', 'test') COMMENT = 'Biomarker label. Filter to one value before aggregating: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol, HDL Cholesterol, Non-HDL Cholesterol, Triglycerides, Total Cholesterol to HDL Ratio, QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, Electronic Frailty Index (eFI) (GP-recorded eFI and eFI2 scores), Rockwood Frailty Scale. Calculated eFI2 is not in this history view.',
+    obs.observation_type AS observation_type WITH SYNONYMS = ('biomarker', 'measurement', 'test') COMMENT = 'Biomarker label. Filter to one value before aggregating: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol, HDL Cholesterol, Non-HDL Cholesterol, Triglycerides, Total Cholesterol to HDL Ratio, QRISK, HbA1c, BMI, Waist Circumference, Waist-to-height Ratio, eGFR, Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, Electronic Frailty Index (eFI) (GP-recorded eFI and eFI2 scores), Rockwood Frailty Scale. Calculated eFI2 is not in this history view.',
     obs.observation_group AS observation_group COMMENT = 'Clinical group (Cardiovascular, Metabolic, Renal, Liver, Haematology, Frailty)',
     obs.clinical_effective_date AS clinical_effective_date WITH SYNONYMS = ('observation date', 'test date', 'date') COMMENT = 'Date of the reading',
     obs.unit AS unit COMMENT = 'Unit of measure for value',
-    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. Diastolic BP and Total Cholesterol to HDL Ratio have no category (NULL). Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK, waist and frailty types use their upstream clinical categories.',
+    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. Diastolic BP, Total Cholesterol to HDL Ratio and Waist Circumference have no category (NULL). Waist-to-height Ratio uses Healthy central adiposity, Increased central adiposity or High central adiposity from NG246 for paired adult readings with BMI below 35; otherwise its category is null. Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK and frailty types use their upstream clinical categories.',
     obs.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage for paired BP events: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Uses the event''s clinic or home/ABPM context; NULL for non-BP types.',
 
     -- Core Demographics
@@ -125,13 +129,13 @@ DIMENSIONS(
 )
 
 METRICS(
-    obs.observation_count AS COUNT(obs.observation_event_id) COMMENT = 'Number of observation events (filter to one observation_type)',
+    obs.observation_count AS COUNT(obs.observation_event_id) COMMENT = 'Number of distinct readings; BP keeps its existing grain (filter to one observation_type)',
     obs.patient_count AS COUNT(DISTINCT obs.person_id) COMMENT = 'Distinct patients with a reading (filter to one observation_type)',
     obs.avg_value AS AVG(obs.value) COMMENT = 'Average value — only meaningful when filtered to a single observation_type',
     obs.min_value AS MIN(obs.value) COMMENT = 'Minimum value (filter to one observation_type)',
     obs.max_value AS MAX(obs.value) COMMENT = 'Maximum value (filter to one observation_type)'
 )
 
-COMMENT = 'Historical OLIDS clinical measurements, one row per observation event from int_observation_events_long. Multiple same-day readings remain distinct; observation_type defines value, unit and category. Demographic and geography fields are current. History has no 60-month cap, but leavers and deceased people have about five years of retained records, so older comparisons favour current registrants. person_id supports serial-reading analysis and cohort linkage; final results must be aggregate-only.'
+COMMENT = 'Historical OLIDS clinical measurements from int_observation_events_long. Non-BP re-entries with the same person, observation type, concept, calendar date and recorded value within one source patient record and publisher appear once. BP rows and differing concepts, standardised values, units, source patient records or publishers stay distinct. Unknown clinical days retain separate source entries; observation_count counts distinct readings. observation_type defines value, unit and category. Demographic and geography fields are current. History has no 60-month cap, but leavers and deceased people have about five years of retained records, so older comparisons favour current registrants. person_id supports serial-reading analysis and cohort linkage; final results must be aggregate-only.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE and keep person_id out of the final output. This view is observation-event grain, so keep the events: reduce to one row per person only when joining to a person-grain view. For latest-N, trajectory or change questions, hold clinical_effective_date and observation_event_id in the CTE and rank with ROW_NUMBER() in the OUTER query, filtering rn <= N there. filter one observation_type and clinical_effective_date window before linkage. Future-dated readings are excluded at source; legacy readings can be decades old, so date windows must state their range. Example: SELECT clinical_effective_date, AGG(patient_count) FROM SEM_OLIDS_OBSERVATIONS_HISTORY WHERE observation_type = ''HbA1c'' GROUP BY clinical_effective_date. Example linkage: reduce latest HbA1c values here and medication exposure in sem_olids_prescribing before joining. For latest-N, first isolate a person-grain CTE over this view (no window functions inside the semantic-view query — they do not compile there), then rank the CTE result in the OUTER query with ROW_NUMBER() OVER (PARTITION BY person_id, observation_type ORDER BY clinical_effective_date DESC, observation_event_id DESC). For change/trajectory questions, take each person''s latest reading and a baseline reading on or before DATEADD(month, -N, latest date), require both, then difference. Blood pressure is two observation_types: Systolic BP and Diastolic BP. HbA1c: filter unit = ''mmol/mol'' (IFCC) before applying IFCC thresholds such as 48, 58 or 75; DCCT % readings are converted to mmol/mol upstream, so today every HbA1c row carries that unit. RETENTION: full history is kept for currently-registered persons but only ~5 years for left/deceased persons — per-person trajectories in the current cohort are fine, but do not treat population cross-sections older than 5 years as representative (survivor bias). Use sem_olids_observations for current latest values.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: serial biomarker readings, latest-2 / last-N values, trends in an individual or cohort over time, variability, rate of change, time between readings, and recheck intervals. Frailty rows are GP-recorded eFI (eFI and eFI2 scores) or Rockwood assessments; calculated eFI2 has no history and is only in sem_olids_observations. For the single most recent value per biomarker (current state) use sem_olids_observations. For condition prevalence/demographics use sem_olids_population. For condition incidence/prevalence trends use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker trajectory x medication exposure) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

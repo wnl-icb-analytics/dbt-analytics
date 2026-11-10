@@ -1,0 +1,260 @@
+# Synthetic observations only. Negative person IDs are test fixtures.
+unit_tests:
+- name: egfr_latest_eligibility_boundaries
+  model: int_egfr_latest
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT e.*, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+          'EGFR_COD'::VARCHAR AS source_cluster_id, egfr_value < 60 AS is_ckd_indicator,
+          egfr_value AS original_result_value
+      FROM (
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr, column6::VARCHAR AS ckd_stage, column7::TIMESTAMP_NTZ AS date_recorded,
+          COALESCE(column5::BOOLEAN AND column3::TIMESTAMP_NTZ::DATE != '1900-01-01'::DATE
+              AND column3::TIMESTAMP_NTZ::DATE <= CURRENT_DATE(), FALSE) AS is_eligible_egfr
+      FROM VALUES
+          (-143801, 'SYN_EGFR_0001', '2023-01-01', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143801, 'SYN_EGFR_0002', '2023-04-02', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143802, 'SYN_EGFR_0003', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143802, 'SYN_EGFR_0004', '2023-04-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-01'),
+          (-143803, 'SYN_EGFR_0005', '2023-01-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-31'),
+          (-143803, 'SYN_EGFR_0006', '2023-04-30', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-30'),
+          (-143804, 'SYN_EGFR_0007', '2023-01-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-31'),
+          (-143804, 'SYN_EGFR_0008', '2023-05-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-05-01'),
+          (-143805, 'SYN_EGFR_0009', '2023-08-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-08-31'),
+          (-143805, 'SYN_EGFR_0010', '2023-11-30', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-11-30'),
+          (-143806, 'SYN_EGFR_0011', '2023-08-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-08-31'),
+          (-143806, 'SYN_EGFR_0012', '2023-12-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-12-01'),
+          (-143807, 'SYN_EGFR_0013', '2021-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2021-01-01'),
+          (-143807, 'SYN_EGFR_0014', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143808, 'SYN_EGFR_0015', '2021-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2021-01-01'),
+          (-143808, 'SYN_EGFR_0016', '2023-01-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-02'),
+          (-143809, 'SYN_EGFR_0017', '2023-01-01', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143809, 'SYN_EGFR_0018', '2023-04-02', 60, TRUE, 'Mild decrease (60-89)', '2023-04-02'),
+          (-143810, 'SYN_EGFR_0019', '2023-01-01', 60, TRUE, 'Mild decrease (60-89)', '2023-01-01'),
+          (-143810, 'SYN_EGFR_0020', '2023-04-02', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143811, 'SYN_EGFR_0021', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143811, 'SYN_EGFR_0022', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143811, 'SYN_EGFR_0023', '2023-09-01', 80, TRUE, 'Mild decrease (60-89)', '2023-09-01'),
+          (-143812, 'SYN_EGFR_0024', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143812, 'SYN_EGFR_0025', '2023-04-02', 80, TRUE, 'Mild decrease (60-89)', '2023-04-02'),
+          (-143812, 'SYN_EGFR_0026', '2023-09-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-09-01'),
+          (-143813, 'SYN_EGFR_0027', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143813, 'SYN_EGFR_0028', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143813, 'SYN_EGFR_0029', '2023-04-03', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-03'),
+          (-143814, 'SYN_EGFR_0030', '2020-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2020-01-01'),
+          (-143814, 'SYN_EGFR_0031', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143815, 'SYN_EGFR_0032', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143816, 'SYN_EGFR_0033', '2023-01-01', 0, FALSE, 'Invalid', '2023-01-01'),
+          (-143816, 'SYN_EGFR_0034', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143817, 'SYN_EGFR_0035', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143817, 'SYN_EGFR_0036', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143817, 'SYN_EGFR_0037', '2023-09-01', 0, FALSE, 'Invalid', '2023-09-01'),
+          (-143818, 'SYN_EGFR_0038', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143818, 'SYN_EGFR_0039', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143818, 'SYN_EGFR_0040', '2999-01-01', 80, TRUE, 'Mild decrease (60-89)', '2999-01-01'),
+          (-143819, 'SYN_EGFR_0041', '1900-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '1900-01-01'),
+          (-143819, 'SYN_EGFR_0042', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143820, 'SYN_EGFR_0043', NULL, 50, TRUE, 'CKD Stage 3a (45-59)', NULL),
+          (-143820, 'SYN_EGFR_0044', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02')
+      ) AS e
+  expect:
+    rows:
+    - person_id: -143801
+      id: SYN_EGFR_0002
+      egfr_value: 59.9
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143802
+      id: SYN_EGFR_0004
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143803
+      id: SYN_EGFR_0006
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143804
+      id: SYN_EGFR_0008
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143805
+      id: SYN_EGFR_0010
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143806
+      id: SYN_EGFR_0012
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143807
+      id: SYN_EGFR_0014
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143808
+      id: SYN_EGFR_0016
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143809
+      id: SYN_EGFR_0018
+      egfr_value: 60
+      ckd_stage: Mild decrease (60-89)
+    - person_id: -143810
+      id: SYN_EGFR_0020
+      egfr_value: 59.9
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143811
+      id: SYN_EGFR_0023
+      egfr_value: 80
+      ckd_stage: Mild decrease (60-89)
+    - person_id: -143812
+      id: SYN_EGFR_0026
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143813
+      id: SYN_EGFR_0029
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143814
+      id: SYN_EGFR_0031
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143815
+      id: SYN_EGFR_0032
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143816
+      id: SYN_EGFR_0034
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143817
+      id: SYN_EGFR_0036
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143818
+      id: SYN_EGFR_0039
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143819
+      id: SYN_EGFR_0042
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143820
+      id: SYN_EGFR_0044
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id,
+            NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value,
+            NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+            NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS ckd_stage,
+            NULL::BOOLEAN AS is_ckd_indicator, NULL::FLOAT AS original_result_value WHERE FALSE
+- name: egfr_latest_same_day_tie_break
+  model: int_egfr_latest
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT e.*, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+          'EGFR_COD'::VARCHAR AS source_cluster_id, egfr_value < 60 AS is_ckd_indicator,
+          egfr_value AS original_result_value
+      FROM (
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr, column6::VARCHAR AS ckd_stage, column7::TIMESTAMP_NTZ AS date_recorded,
+          COALESCE(column5::BOOLEAN AND column3::TIMESTAMP_NTZ::DATE != '1900-01-01'::DATE
+              AND column3::TIMESTAMP_NTZ::DATE <= CURRENT_DATE(), FALSE) AS is_eligible_egfr
+      FROM VALUES
+          (-143851, 'SYN_EGFR_0045', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143851, 'SYN_EGFR_0046', '2023-04-02 10:00:00', 40, TRUE, 'CKD Stage 3b (30-44)', '2023-04-02 17:00:00'),
+          (-143851, 'SYN_EGFR_0047', '2023-04-02 14:00:00', 80, TRUE, 'Mild decrease (60-89)', '2023-04-02 16:00:00'),
+          (-143852, 'SYN_EGFR_0048', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143852, 'SYN_TIE_A', '2023-04-02', 40, TRUE, 'CKD Stage 3b (30-44)', '2023-04-02 17:00:00'),
+          (-143852, 'SYN_TIE_Z', '2023-04-02', 80, TRUE, 'Mild decrease (60-89)', '2023-04-02 17:00:00'),
+          (-143853, 'SYN_EGFR_0051', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143853, 'SYN_NULL_SAVED', '2023-04-02', 80, TRUE, 'Mild decrease (60-89)', NULL),
+          (-143853, 'SYN_EGFR_0052', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 17:00:00'),
+          (-143854, 'SYN_EGFR_0053', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143854, 'SYN_EGFR_0054', '2023-04-02', 45, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 16:00:00'),
+          (-143854, 'SYN_EGFR_0055', '2023-04-02', 40, TRUE, 'CKD Stage 3b (30-44)', '2023-04-02 17:00:00'),
+          (-143857, 'SYN_EGFR_0056', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143857, 'SYN_EGFR_0057', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143858, 'SYN_EGFR_0058', '2999-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2999-01-01'),
+          (-143859, 'SYN_DUP_OLD', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143859, 'SYN_DUP_A', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 16:00:00'),
+          (-143859, 'SYN_DUP_Z', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 17:00:00'),
+          (-143860, 'SYN_PRIOR_LOW', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01 16:00:00'),
+          (-143860, 'SYN_PRIOR_HIGH', '2023-01-01', 80, TRUE, 'Mild decrease (60-89)', '2023-01-01 17:00:00'),
+          (-143860, 'SYN_PRIOR_LATEST', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02')
+      ) AS e
+  expect:
+    rows:
+    - person_id: -143851
+      id: SYN_EGFR_0046
+      egfr_value: 40
+      ckd_stage: CKD Stage 3b (30-44)
+    - person_id: -143852
+      id: SYN_TIE_Z
+      egfr_value: 80
+      ckd_stage: Mild decrease (60-89)
+    - person_id: -143853
+      id: SYN_EGFR_0052
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143854
+      id: SYN_EGFR_0055
+      egfr_value: 40
+      ckd_stage: CKD Stage 3b (30-44)
+    - person_id: -143857
+      id: SYN_EGFR_0057
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143859
+      id: SYN_DUP_Z
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+    - person_id: -143860
+      id: SYN_PRIOR_LATEST
+      egfr_value: 50
+      ckd_stage: CKD Stage 3a (45-59)
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id,
+            NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value,
+            NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+            NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS ckd_stage,
+            NULL::BOOLEAN AS is_ckd_indicator, NULL::FLOAT AS original_result_value WHERE FALSE
+- name: egfr_latest_egfr_build_day_and_ineligible_only_people
+  model: int_egfr_latest
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT e.*, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+          'EGFR_COD'::VARCHAR AS source_cluster_id, egfr_value < 60 AS is_ckd_indicator,
+          egfr_value AS original_result_value
+      FROM (
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr, column6::VARCHAR AS ckd_stage, column7::TIMESTAMP_NTZ AS date_recorded,
+          COALESCE(column5::BOOLEAN AND column3::TIMESTAMP_NTZ::DATE != '1900-01-01'::DATE
+              AND column3::TIMESTAMP_NTZ::DATE <= CURRENT_DATE(), FALSE) AS is_eligible_egfr
+      FROM VALUES
+          (-143881, 'SYN_EGFR_0065', DATEADD(month, -4, CURRENT_DATE()), 50, TRUE, 'CKD Stage 3a (45-59)', DATEADD(month, -4, CURRENT_DATE())),
+          (-143881, 'SYN_BUILD_DAY', DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ), 55, TRUE, 'CKD Stage 3a (45-59)', DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ)),
+          (-143881, 'SYN_EGFR_0067', DATEADD(day, 1, CURRENT_DATE()), 90, TRUE, 'Normal/High (≥90)', DATEADD(day, 1, CURRENT_DATE())),
+          (-143882, 'SYN_EGFR_0068', '2999-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2999-01-01'),
+          (-143883, 'SYN_EGFR_0069', '2023-01-01', 0, FALSE, 'Invalid', '2023-01-01'),
+          (-143884, 'SYN_EGFR_0070', '1900-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '1900-01-01')
+      ) AS e
+  expect:
+    rows:
+    - person_id: -143881
+      id: SYN_BUILD_DAY
+      egfr_value: 55
+      ckd_stage: CKD Stage 3a (45-59)
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id,
+            NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value,
+            NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
+            NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS ckd_stage,
+            NULL::BOOLEAN AS is_ckd_indicator, NULL::FLOAT AS original_result_value WHERE FALSE

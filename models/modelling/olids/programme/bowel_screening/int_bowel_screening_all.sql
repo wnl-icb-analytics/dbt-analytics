@@ -31,6 +31,7 @@ SELECT
     obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
+    obs.result_value,
     obs.mapped_concept_code AS concept_code,
     obs.mapped_concept_display AS concept_display,
     obs.cluster_id AS source_cluster_id,

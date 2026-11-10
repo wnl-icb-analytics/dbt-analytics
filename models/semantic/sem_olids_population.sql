@@ -76,7 +76,7 @@ FACTS(
     conditions.neurology_conditions AS neurology_conditions COMMENT = 'Count of neurology conditions (Epilepsy, Stroke/TIA, Parkinsons, Cerebral Palsy, MND, MS)',
     conditions.geriatric_conditions AS geriatric_conditions COMMENT = 'Count of geriatric conditions (Frailty)',
     ccms.cambridge_comorbidity_score AS cambridge_comorbidity_score WITH SYNONYMS = ('CCMS', 'comorbidity score', 'Cambridge score') COMMENT = 'Cambridge Comorbidity Score (2022 modified, 20-category weighted sum). Higher = greater comorbidity burden; can be negative. Continuous score per the CCMS literature — no external clinical cut-points exist. Only populated for persons aged 16+.',
-    status.medication_count AS medication_count COMMENT = 'Number of current medications',
+    status.medication_count AS medication_count COMMENT = 'Count of distinct current nine-character BNF chemicals in scope',
     status.behavioural_risk_count AS behavioural_risk_count COMMENT = 'Count of behavioural risk factors',
     demographics.esp_weight AS esp_weight COMMENT = 'ESP 2013 population weight for this persons age band (out of 100,000 total). Use with age_band_esp for age-standardised rate calculation.',
     demographics.esp_proportion AS esp_proportion COMMENT = 'ESP 2013 weight as proportion (esp_weight / 100,000). Multiply stratum-specific rate by this and SUM across bands to get the ASR.'
@@ -217,8 +217,8 @@ DIMENSIONS(
     status.alcohol_requires_intervention AS alcohol_requires_intervention COMMENT = 'Requires alcohol intervention (AUDIT score >=5)',
 
     -- Polypharmacy
-    status.is_polypharmacy_5plus AS is_polypharmacy_5plus COMMENT = 'Has 5+ current medications',
-    status.is_polypharmacy_10plus AS is_polypharmacy_10plus COMMENT = 'Has 10+ current medications (severe polypharmacy)',
+    status.is_polypharmacy_5plus AS is_polypharmacy_5plus COMMENT = 'Local flag for at least five current BNF chemicals',
+    status.is_polypharmacy_10plus AS is_polypharmacy_10plus COMMENT = 'Flag for at least ten current BNF chemicals, supporting medication review prioritisation',
     status.medication_count_band AS medication_count_band COMMENT = 'Medication count band (0, 1-4, 5-9, 10-14, 15+)',
 
     -- Pregnancy
@@ -315,9 +315,9 @@ METRICS(
     status.vulnerable_count AS COUNT(DISTINCT CASE WHEN status.has_vulnerability_flag THEN status.person_id END) COMMENT = 'Patients with any vulnerability',
 
     -- Polypharmacy
-    status.avg_medication_count AS AVG(status.medication_count) COMMENT = 'Average medications per patient',
-    status.polypharmacy_5plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_5plus THEN status.person_id END) COMMENT = 'Patients with 5+ medications',
-    status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'Patients with 10+ medications'
+    status.avg_medication_count AS AVG(status.medication_count) COMMENT = 'Average current BNF chemical count per person',
+    status.polypharmacy_5plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_5plus THEN status.person_id END) COMMENT = 'People with the local flag for at least five current BNF chemicals',
+    status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'People with at least ten current BNF chemicals, supporting medication review prioritisation'
 )
 
 COMMENT = 'Current population health measures for OLIDS, one row per person in dim_person_demographics with linked conditions, statuses and Cambridge Comorbidity Scores. Includes inactive and deceased people; is_active identifies current registrants. Conditions use QOF v51 and project non-QOF definitions. Cambridge scores apply from age 16; ESP 2013 groups and weights support standardisation. person_id supports cohort linkage; final results must be aggregate-only.'
