@@ -153,20 +153,36 @@ unit_tests:
         select null::number as person_id, null::varchar as mapped_concept_code, null::varchar as
         medication_order_id, null::number as latest_duration where false
 
-- name: valproate_latest_inclusive_boundary_and_final_id
+- name: valproate_latest_date_recorded_and_final_id
   model: int_valproate_medications_6m_latest
   given:
   - input: ref('int_valproate_medications_all')
     format: sql
     rows: |-
       select person::number person_id,id::varchar medication_order_id,
-       iff(id='SYN_BOUNDARY',dateadd(month,-6,current_date()),dateadd(day,days,current_date()))::date order_date,
+       case when id='SYN_BOUNDARY' then dateadd(month,-6,current_date())
+        when id='SYN_BEFORE_BOUNDARY' then dateadd(day,-1,dateadd(month,-6,current_date()))
+        else dateadd(day,days,current_date()) end::date order_date,
+       case when id in ('SYN_SAVE_A','SYN_OLD_DAY','SYN_SAME_SAVE_A','SYN_SAME_SAVE_Z') then '2026-01-03 12:00:00'
+        when id='SYN_SAVE_Z' then '2026-01-03 09:00:00'
+        when id='SYN_NEW_DAY' then '2026-01-02 09:00:00' end::timestamp_ntz date_recorded,
        null::varchar medication_statement_id, null::varchar order_medication_name, null::varchar order_dose, null::varchar order_quantity_unit, null::varchar statement_medication_name, null::varchar mapped_concept_code, null::varchar mapped_concept_display, null::number order_quantity_value,null::number order_duration_days
-       from (values (-18340,'SYN_A',-1),(-18340,'SYN_Z',-1),(-18340,'SYN_FUTURE',1),(-18341,'SYN_BOUNDARY',0)) v(person,id,days)
+       from (values
+        (-18340,'SYN_A',-1),(-18340,'SYN_Z',-1),(-18340,'SYN_FUTURE',1),
+        (-18341,'SYN_BOUNDARY',0),
+        (-18342,'SYN_BEFORE_BOUNDARY',0),(-19463,'SYN_TODAY',0),
+        (-19460,'SYN_SAVE_A',-1),(-19460,'SYN_SAVE_Z',-1),(-19460,'SYN_SAVE_ZZ_NULL',-1),
+        (-19461,'SYN_NEW_DAY',-1),(-19461,'SYN_OLD_DAY',-2),
+        (-19462,'SYN_SAME_SAVE_A',-1),(-19462,'SYN_SAME_SAVE_Z',-1)
+       ) v(person,id,days)
   expect:
     format: sql
     rows: |-
-      select -18340::number person_id,'SYN_Z'::varchar medication_order_id,2::number recent_order_count union all select -18341,'SYN_BOUNDARY',1
+      select person::number person_id,id::varchar medication_order_id,n::number recent_order_count
+      from (values (-18340,'SYN_Z',2),(-18341,'SYN_BOUNDARY',1),
+        (-19460,'SYN_SAVE_A',3),(-19461,'SYN_NEW_DAY',2),(-19462,'SYN_SAME_SAVE_Z',2),
+        (-19463,'SYN_TODAY',1)
+      ) v(person,id,n)
   overrides:
     macros:
       get_empty_subquery_sql: >-

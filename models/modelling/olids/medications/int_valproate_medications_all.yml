@@ -4,7 +4,7 @@ models:
       with pregnancy safety monitoring.
 
       One row per medication order with dual matching logic, high teratogenic risk
-      flagging, and dose categorisation for bioequivalence monitoring.'
+      flagging and dm+d formulation. Includes all people, with no age or registration restriction.'
 
     config:
       meta:
@@ -17,7 +17,7 @@ models:
     columns:
       - name: medication_order_id
         description: 'Unique identifier for the medication order - primary key'
-        tests:
+        data_tests:
           - unique
           - not_null
 
@@ -29,6 +29,9 @@ models:
 
       - name: order_date
         description: 'Date when valproate medication was ordered'
+
+      - name: date_recorded
+        description: EMIS save timestamp used to resolve same-day orders; null when not supplied.
 
       - name: order_medication_name
         description: 'Name of the valproate medication as ordered'
@@ -79,12 +82,6 @@ models:
 
       - name: is_high_teratogenic_risk
         description: 'Flag indicating high teratogenic risk (always true for valproate)'
-
-      - name: clinical_indication
-        description: 'Legacy product-name inference; not a validated indication. Retained pending interface approval.'
-
-      - name: dose_category
-        description: 'Legacy dose-string inference; not a validated daily dose. Retained pending interface approval.'
 
       - name: formulation_type
         description: 'dm+d dose form grouped into existing TABLET, CAPSULE, LIQUID, MODIFIED_RELEASE and UNKNOWN_FORMULATION labels. Modified- and prolonged-release forms take priority over tablet or capsule.'

@@ -5,12 +5,54 @@ models:
       with evidence up to the build date. Includes inactive and deceased people
       without age or SMI-register restrictions. Same-date records favour a non-null
       result, but coded statuses need no numeric value. Units and risk categories
-      follow int_alcohol_units_all.
+      follow int_alcohol_units_all. Explicit daily values are weekly after conversion;
+      original value, unit, conversion reason and daily/weekly conflict flag remain available.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD
+    columns:
+      - name: original_result_value
+        description: >-
+          Numeric source result before conversion. Null means no numeric value
+          was recorded; coded drinking status may still be available.
+      - name: source_result_unit_display
+        description: >-
+          Source unit concept display, falling back to the mapped display when
+          absent. Null means neither supplies a unit; the daily or weekly
+          concept may still establish the time basis.
+      - name: result_value
+        description: >-
+          Numeric result after any daily-to-weekly conversion. Converted values
+          are UK alcohol units per week; otherwise the source value is retained.
+          Null means no numeric value was recorded.
+      - name: result_unit_display
+        description: >-
+          U/week for recognised or converted weekly alcohol units; otherwise
+          the source-first unit text. Null means no unit text was supplied and
+          no weekly normalisation applies.
+      - name: is_converted_from_daily
+        description: >-
+          True when the source value was multiplied by seven under the daily
+          concept or explicit daily-unit rules in int_alcohol_units_all.
+          False when no conversion occurred, including missing numeric values.
+      - name: is_daily_unit_conflict
+        description: >-
+          True when a daily or weekly concept contradicts the explicit unit
+          time basis, including missing numeric values but excluding zero.
+          Conflicts retain the source value and have Unclear risk. False
+          otherwise.
+      - name: conversion_reason
+        description: >-
+          Non-null explanation of conversion or conflict. Daily concept
+          multiplied by 7 and Explicit daily unit multiplied by 7 identify
+          conversions. Daily concept with weekly unit; not converted and Weekly
+          concept with daily unit; not converted identify conflicts. No daily
+          conversion covers all other readings, including missing values.
+      - name: person_id
+        description: One latest alcohol record per person.
+        data_tests: [unique, not_null]
