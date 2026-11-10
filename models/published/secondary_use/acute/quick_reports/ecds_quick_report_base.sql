@@ -29,13 +29,18 @@ where organisation_name like '%Integrated Care Board'
 )
 --get accurate residential location.
 ,borough_res_category as (
-SELECT *
-,CASE
-    WHEN lad25_cd IN ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'WNL'
-    WHEN lad25_cd NOT IN ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033')
-    AND lad25_cd LIKE 'E09%' THEN 'Other London' 
-    WHEN lad25_cd IS NULL THEN 'Unknown' 
-    ELSE 'Outside London' END AS residential_location
+    SELECT 
+    lsoa21_cd, 
+    lsoa21_nm, 
+    wd25_cd, 
+    wd25_nm, 
+    lad25_cd, 
+    lad25_nm,
+    CASE
+        WHEN lad25_cd IN ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'WNL'
+        WHEN lad25_cd LIKE 'E09%' THEN 'Other London'
+        WHEN lad25_cd IS NULL THEN 'Unknown' 
+        ELSE 'Outside London' END AS residential_location
 FROM {{ ref('stg_reference_lsoa21_ward25_lad25') }}
 --FROM STAGING.REFERENCE.STG_REFERENCE_LSOA21_WARD25_LAD25
 )
@@ -46,30 +51,35 @@ SELECT
 u.sk_patient_id,
 u.commissioner_code_at_event as commissioner_code,
 IFF(u.commissioner_code_at_event IN ('07X','07M','08H','08D','07R','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','93C','93C00','Z9B2Z','QRV','QRV00','QMJ','QMJ00'),'WNL','Other') comm_group,
---substitute PDS registered code where missing,
+--PRIMARY CARE substitute PDS registered code where missing,
 COALESCE(u.reg_practice_at_event,pds.practice_code) as practice_code,
 CASE
-    WHEN u.reg_practice_at_event is NULL THEN pds.practice_name
-    WHEN u.reg_practice_name_latest = 'HESA MEDICAL CENTRE - Y00352' THEN 'HESA Medical Centre'
     WHEN u.reg_practice_at_event in ('V81998','V81999') THEN 'Practice Code Unknown/NA'
     WHEN u.reg_practice_at_event = 'V81997' THEN 'Not registered with GP'
     WHEN u.reg_practice_at_event = 'E85062' THEN 'HYIOS'
     --legacy Medicus practice codes
     WHEN u.reg_practice_at_event in ('F85003','F85652','F85027','F85024','F85703','F85707','F85048','F85055','F85076','F85656','F85681','F85036','F85684') THEN 'Medicus Health Partners'
+    -- specific name correction
+    WHEN u.reg_practice_name_latest = 'HESA MEDICAL CENTRE - Y00352' THEN 'HESA Medical Centre'
     ELSE
-    REGEXP_REPLACE(
-    REGEXP_REPLACE(
         REGEXP_REPLACE(
             REGEXP_REPLACE(
-                INITCAP(LOWER(u.reg_practice_name_latest)),
-                '\\bGp\\b', 'GP'
+                REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                        INITCAP(LOWER(
+                            COALESCE(
+                                u.reg_practice_name_latest,
+                                pds.practice_name
+                            )
+                        )),
+                        '\\bGp\\b', 'GP'
+                    ),
+                    '\\bPcn\\b', 'PCN'
+                ),
+                '\\bHmp\\b', 'HMP'
             ),
-            '\\bPcn\\b', 'PCN'
-        ),
-        '\\bHmp\\b', 'HMP'
-    ),
-    '\\bWic\\b', 'WIC'
-)
+            '\\bWic\\b', 'WIC'
+        )
 END AS practice_name,
 CASE 
 WHEN ods.status_code = 'D' THEN 'DORMANT'
@@ -83,16 +93,19 @@ u.reg_practice_neighbourhood_name_latest as practice_neighbourhood,
 CASE 
 WHEN u.reg_practice_at_event in ('E84023','E84624','E84667') THEN 'West and North London'
 ELSE icb.icb_name END AS icb_name,
---provider
+--PROVIDER
 u.organisation_id as provider_code,
-wnl.provider_shorthand,
-wnl.provider_name,
+CASE 
+WHEN u.organisation_id = 'RAP' THEN 'RFL' ELSE wnl.provider_shorthand END AS provider_shorthand,
+CASE 
+WHEN u.organisation_id = 'RAP' THEN 'Royal Free London NHS Foundation Trust'
+ELSE COALESCE(wnl.provider_name,org2.organisation_name) END AS provider_name,
 u.site_id,
 CASE 
 WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'WMUH UTC'
 WHEN u.site_name = 'Moorfields Eye Hospital (City Road Campus)' THEN 'Moorfields City Road'
 WHEN u.site_name LIKE '%Desmond%' THEN 'Richard Desmond Eye Centre' ELSE u.site_name END AS site_name,
---department
+--DEPARTMENT
 CASE 
 WHEN u.department_type = '01' THEN 'Major'
 WHEN u.department_type = '02' THEN 'Mono'
@@ -100,7 +113,7 @@ WHEN u.department_type = '03' THEN 'UTC'
 WHEN department_type = '04' THEN 'WIC'
 WHEN department_type = '05' THEN 'SDEC'
 ELSE department_type END as dept_type_desc,
---attendance dates
+--ATTENDANCE DATE/TIME
 u.start_date as attendance_date,
 CASE WHEN u.start_date >= DATEADD('month', -12, CURRENT_DATE) THEN TRUE ELSE FALSE END AS is_last_12m,
 u.financial_year,
@@ -118,6 +131,7 @@ DAYNAME(u.start_date) AS day_of_week,
 DAYOFWEEKISO(u.start_date) AS day_of_week_sort,
 u.start_time,
 DATE_PART('HOUR', u.start_time) AS hour_of_arrival,
+--DURATION AND BREACHES
 u.duration,
 --duration > 240 mins (4hrs)
 u.duration > 240 is_4_hour_breach,
@@ -125,6 +139,7 @@ u.duration > 240 is_4_hour_breach,
 u.duration >720 is_12_hour_breach,
 --duration > 4320 mins (72 hrs)
 u.duration > 4320 is_72_hour_breach,
+--ARRIVAL MODE
 CASE 
 WHEN u.arrival_mode_code in ('1048031000000100','1048041000000109') THEN 'Emergency Ambulance'
 WHEN u.arrival_mode_code in ('1048051000000107','1048081000000101') THEN 'Air Ambulance'
@@ -134,9 +149,8 @@ WHEN u.arrival_mode_code in ('1048061000000105') THEN 'Public Transport'
 WHEN u.arrival_mode_code in ('1048021000000102') THEN 'Non Emergency Ambulance'
 WHEN u.arrival_mode_code IS NULL THEN 'Unknown'
 END AS arrival_mode_short,
-CASE
-WHEN u.arrival_mode_code IS NOT NULL AND u.arrival_mode_code in ('1048031000000100', '1048041000000109','1048051000000107') THEN TRUE ELSE FALSE END AS arrival_by_ambulance,
---clinical details
+u.arrival_mode_code IN ('1048031000000100','1048041000000109', '1048051000000107') AS arrival_by_ambulance,
+--CLINICAL GROUPINGS
 u.hrg_code,
 u.core_hrg_desc,
 CASE
@@ -183,11 +197,11 @@ WHEN u.acuity_desc = 'Standard level emergency care' THEN 4
 WHEN u.acuity_desc = 'Non-urgent level emergency care' THEN 5
 WHEN u.acuity_desc IS NULL THEN 6
 END AS acuity_level_sort,
---outcome
+--OUTCOME AND DISCHARGE DESTINATION
 discharge_destination_group as admission_status,
 CASE
 WHEN discharge_destination_group = 'Admitted' THEN TRUE ELSE FALSE END AS is_admitted,
---person_demographics
+--DEMOGRAPHICS
 CASE WHEN g.lad25_nm IS NOT NULL AND g.residential_location = 'WNL' THEN TRUE ELSE FALSE END AS is_wnl_resident,
 g.lad25_nm as borough_resident,
 NVL(g.residential_location,'Unknown') as residence_group, 
@@ -205,7 +219,7 @@ CASE
     ELSE '85+'
 END AS age_band_nhs,
 CASE
-    WHEN u.age_at_event < 0 THEN 0
+    WHEN u.age_at_event < 0 OR u.age_at_event IS NULL THEN 0
     WHEN u.age_at_event < 5 THEN 1
     WHEN u.age_at_event < 15 THEN 2
     WHEN u.age_at_event < 25 THEN 3
@@ -222,10 +236,14 @@ COALESCE(u.ethnicity_at_event,pds.ethnicity_code) as ethnicity_code,
 COALESCE(u.ethnicity_desc_at_event,pds.ethnicity_desc) as ethnicity,
 COALESCE(u.deprivation_decile_at_event,pds.residence_imd_decile) as imd_decile_25,
 COALESCE(u.lsoa_21_at_event,pds.lsoa_21) as lsoa_21,
+g.wd25_cd as ward_code,
+g.wd25_nm as ward_name,
 u.attendance_count
 FROM {{ ref("obt_encounter_uec") }} u
 --FROM REPORTING.ACUTE.OBT_ENCOUNTER_UEC u
-INNER JOIN WNL_NAMES wnl on u.organisation_id = wnl.provider_code
+LEFT JOIN WNL_NAMES wnl on u.organisation_id = wnl.provider_code
+LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org2 on u.organisation_id = org2.organisation_code
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION org2 on u.organisation_id = org2.organisation_code
 LEFT JOIN {{ ref("int_person_pds_demographics") }} pds using (sk_patient_id)
 --LEFT JOIN MODELLING.POPULATION.INT_PERSON_PDS_DEMOGRAPHICS pds using (sk_patient_id)
 LEFT JOIN borough_res_category g on COALESCE(u.lsoa_21_at_event,pds.lsoa_21) = g.lsoa21_cd
@@ -257,7 +275,7 @@ CASE
 WHEN b.icb_name = 'North West London' THEN 'West and North London' ELSE b.icb_name END AS icb_name,
 b.provider_code,
 b.provider_shorthand,
-b.provider_name,
+COALESCE(b.provider_name,REGEXP_REPLACE(b.site_name,'\\bUtc\\b', 'UTC')) as provider_name,
 b.site_id,
 b.site_name,
 b.dept_type_desc,
@@ -301,6 +319,8 @@ b.ethnicity_code,
 b.ethnicity,
 b.imd_decile_25,
 b.lsoa_21,
+b.ward_code,
+b.ward_name,
 b.attendance_count
 FROM base_table b
 LEFT JOIN  {{ ref('practice_wnl_all') }} p using (practice_code)
@@ -308,6 +328,7 @@ LEFT JOIN  {{ ref('practice_wnl_all') }} p using (practice_code)
 )
 --add in is_registered flag and highlight on GP codes (PCN, WIC and other UEC sources that are not registered GP practices).
 select *,
-CASE WHEN health_borough IS NOT NULL THEN TRUE ELSE FALSE END AS is_wnl_registered,
-CASE WHEN health_borough IS NULL AND icb_name = 'West and North London' THEN TRUE ELSE FALSE END AS other_org_code
+health_borough IS NOT NULL AS is_wnl_registered,
+health_borough IS NULL AND icb_name = 'West and North London' AS is_wnl_non_practice_organisation,
+IFF(provider_shorthand IS NOT NULL, 'WNL', 'Other') AS provider_group
 from base_clean
