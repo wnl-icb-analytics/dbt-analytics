@@ -5,5 +5,9 @@ SELECT
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
-    obs.mapped_concept_display AS concept_display
-FROM ({{ get_observations("'ECOG_COD'", source='PCD') }}) AS obs
+    obs.mapped_concept_display AS concept_display,
+    classification.evidence_type,
+    COALESCE(classification.evidence_type IN ('completed', 'finding'), FALSE) AS is_completed_confirmation
+FROM ({{ get_observations(observation_evidence_cluster_ids('heart_failure_confirmation'), source='PCD') }}) AS obs
+LEFT JOIN {{ ref('snomed_evidence_type') }} AS classification
+    ON obs.mapped_concept_code = classification.snomed_code
