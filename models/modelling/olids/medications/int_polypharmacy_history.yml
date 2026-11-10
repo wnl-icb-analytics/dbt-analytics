@@ -1,33 +1,26 @@
 models:
   - name: int_polypharmacy_history
     description: |
-      Historical polypharmacy medication counts as SCD Type 2 (last 5 years).
-
-      Grain: One row per person per distinct medication count period (5-year lookback)
-
-      Inclusion criteria:
-      - Repeat prescriptions only (authorisation_type = '182918009')
-      - Polypharmacy-scope medications (via int_polypharmacy_medications_list)
-      - Medication count periods lasting 3+ days (smoothed to filter transient fluctuations)
-      - Last 5 years only
-
-      Polypharmacy scope uses exclusion-based filtering:
-      - Excludes most infections (except HIV and hepatitis antivirals)
-      - Excludes vitamins, minerals, nutrition products
-      - Excludes contraceptives, thyroid drugs, topicals
-      - Excludes devices, dressings, appliances
-      - See int_polypharmacy_medications_list for complete scope definition
-
-      Event-based SCD tracking medication burden changes over time.
-      Creates new row only when medication count changes and persists for 3+ days.
-
-      Example periods:
-      - 2020-01-15 to 2021-08-10: 4 medications (not polypharmacy)
-      - 2021-08-11 to 2023-03-05: 5 medications (polypharmacy starts)
-      - 2023-03-06 to 2025-10-06: 6 medications (current)
-
-      Use for trending analysis and historical polypharmacy status.
-      Not used for current state (see int_polypharmacy_current instead).
+      Estimated repeat chemical-count periods, one row per person and valid_from
+      date over issues in the last five years. Counts distinct nine-character BNF
+      chemicals in chapters 01 to 04 and 06 to 10, including each fixed combination
+      as one chemical code. Overlapping products of one chemical count once.
+      Supply duration, fallback, grace and cancellation cap follow the
+      medication_supply_columns macro.
+      Selects one issue per person, product and clinical date by recorded time
+      (nulls last), then higher order ID, before checking expiry or cancellation.
+      Each later issue replaces the product's previous supply across authorisations.
+      Cancellation of the latest issue's authorisation ends supply from that date,
+      even if an older authorisation's issue has supply left; cancellations of other
+      authorisations are ignored; a later issue from an uncancelled authorisation
+      restarts supply. Future issues are excluded, although
+      expiry of existing issues can create future periods. Changes lasting under
+      three days are smoothed, except the final point; adjacent equal counts merge.
+      Zero-count periods are omitted. Five or more is local; ten or more supports
+      medication review prioritisation. GP-issued repeat supply differs from NHSBSA
+      monthly acute and repeat dispensing. Use int_polypharmacy_current for current
+      status. History uses the same product selection and supply rules within its
+      five-year issue window, then applies smoothing and projects future expiry periods.
 
     config:
       meta:
@@ -39,7 +32,7 @@ models:
         data_tests:
           - not_null
       - name: medication_count
-        description: Count of distinct polypharmacy-scope medications during this period
+        description: Count of distinct nine-character BNF chemicals during this period
         data_tests:
           - not_null
           - dbt_utils.expression_is_true:
@@ -56,7 +49,7 @@ models:
           count falls to zero after the last issues run out; that zero period is not output.
 
       - name: is_polypharmacy_5plus
-        description: Flag for standard polypharmacy (5+ medications) during this period
+        description: Local flag for at least five BNF chemicals during this period
         data_tests:
           - not_null
           - accepted_values:
@@ -64,7 +57,7 @@ models:
                 values: [true, false]
 
       - name: is_polypharmacy_10plus
-        description: Flag for severe/complex polypharmacy (10+ medications) during this period
+        description: Flag for at least ten BNF chemicals during this period
         data_tests:
           - not_null
           - accepted_values:
@@ -110,17 +103,18 @@ unit_tests:
   - input: ref('stg_olids_medication_statement')
     format: sql
     rows: |-
-      select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code
+      select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code,null::date cancellation_date
   - input: ref('stg_olids_medication_order')
     format: sql
     rows: |-
-      select -18314::number person_id,'SYN_UNMAPPED'::varchar patient_id,'SYN_STATEMENT'::varchar medication_statement_id,
+      select 'SYN_' || code::varchar as id,current_date()::timestamp_ntz date_recorded,
+       -18314::number person_id,'SYN_UNMAPPED'::varchar patient_id,'SYN_STATEMENT'::varchar medication_statement_id,
        code::varchar mapped_concept_code,dateadd(day,days,current_date())::date clinical_effective_date,28::number duration_days
        from (values ('SYN_PRODUCT_A',-10),('SYN_PRODUCT_B',5)) v(code,days)
   - input: ref('int_polypharmacy_medications_list')
     format: sql
     rows: |-
-      select column1::varchar snomed_code from values ('SYN_PRODUCT_A'),('SYN_PRODUCT_B')
+      select column1::varchar snomed_code,'0201000AA'::varchar bnf_chemical_code from values ('SYN_PRODUCT_A'),('SYN_PRODUCT_B')
   expect:
     format: sql
     rows: |-

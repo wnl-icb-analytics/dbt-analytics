@@ -2,12 +2,16 @@
 models:
   - name: int_medication_orders_repeat_current
     description: |
-      Latest repeat issue per person and product, current when issue date plus source
-      duration reaches the build date. Null duration defaults to 28 days. Future issues
-      are excluded before choosing the latest issue; same-date ties go to the patient
-      record that entered the issue first (the original rather than a GP2GP copy), then
-      the longest supply on that record (null duration defaults to 28 days), then higher
-      order id. An order is an issue, not a dispensing event.
+      Estimated current repeat supply, one row per person and SNOMED product with a
+      latest eligible GP issue whose inclusive supply end reaches the build date.
+      Supply duration, fallback, grace and cancellation cap follow the
+      medication_supply_columns macro. Cancellation of the latest issue's
+      authorisation ends supply from that date, even if an older authorisation's
+      issue has supply left; cancellations of other authorisations are ignored;
+      a later issue from an uncancelled authorisation restarts supply.
+      Future and missing clinical dates are excluded. Latest selection uses clinical
+      date, recorded time (nulls last), then higher order ID, before testing expiry.
+      An issue is not evidence of dispensing. QOF six-month recency is separate.
 
     config:
       meta:
@@ -40,8 +44,13 @@ models:
           - not_null
 
       - name: latest_duration
-        description: Duration in days for most recent order (NULL defaults to 28
-          days in currency calculation)
+        description: Normalised recorded duration in days for the selected issue; null means unknown. See effective_duration_days for the local estimate.
 
       - name: medication_order_id
         description: Selected latest eligible medication issue identifier.
+      - name: effective_duration_days
+        description: Local supply estimate in days, recorded duration when 1 to 365 inclusive, otherwise 28.
+      - name: is_duration_imputed
+        description: True when the local 28-day fallback replaces a missing or implausible duration.
+      - name: supply_end_date
+        description: Issue date plus effective duration, inclusive, giving one day's grace. Capped at the day before authorisation cancellation.

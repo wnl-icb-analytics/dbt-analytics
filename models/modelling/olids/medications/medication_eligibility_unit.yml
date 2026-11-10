@@ -90,11 +90,11 @@ unit_tests:
     rows: select 'SYN_REPEAT'::varchar code,'REPEAT_PRESCRIPTION'::varchar cluster_id
   - input: ref('stg_olids_medication_statement')
     format: sql
-    rows: select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code
+    rows: select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code,null::date cancellation_date
   - input: ref('stg_olids_medication_order')
     format: sql
     rows: |-
-      select id::varchar id, person::number person_id, iff(id in ('SYN_49','SYN_NULL'), 'SYN_PATIENT_COPY', 'SYN_PATIENT_' || person)::varchar patient_id,
+      select id::varchar id, person::number person_id,
        code::varchar mapped_concept_code,
        dateadd(day,days,current_date())::date clinical_effective_date, iff(id in ('SYN_NULL','SYN_N_A','SYN_N_Z'),null,dateadd(day,iff(id in ('SYN_41','SYN_62','SYN_81'),-2,-1),current_date()))::timestamp_ntz date_recorded,
        duration::number duration_days, 'SYN_STATEMENT'::varchar medication_statement_id
@@ -117,16 +117,16 @@ unit_tests:
       latest_duration: 28
     - person_id: -9104
       mapped_concept_code: SYN_D
-      medication_order_id: SYN_41
-      latest_duration: 28
-    - person_id: -9105
-      mapped_concept_code: SYN_E
-      medication_order_id: SYN_51
-      latest_duration: null
+      medication_order_id: SYN_49
+      latest_duration: 56
     - person_id: -9106
       mapped_concept_code: SYN_F
-      medication_order_id: SYN_62
+      medication_order_id: SYN_61
       latest_duration: 28
+    - person_id: -9107
+      mapped_concept_code: SYN_G
+      medication_order_id: SYN_72
+      latest_duration: 0
     - person_id: -9108
       mapped_concept_code: SYN_H
       medication_order_id: SYN_82

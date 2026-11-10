@@ -1,0 +1,499 @@
+# Synthetic observations only. Negative person IDs are test fixtures.
+# Explicit output types avoid Fusion's UUID schema-probe limitation.
+unit_tests:
+- name: ckd_last_two_egfr_persistence_boundaries
+  model: int_ckd_lab_classification
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr, column6::VARCHAR AS ckd_stage, column7::TIMESTAMP_NTZ AS date_recorded,
+          COALESCE(column5::BOOLEAN AND column3::TIMESTAMP_NTZ::DATE != '1900-01-01'::DATE
+              AND column3::TIMESTAMP_NTZ::DATE <= CURRENT_DATE(), FALSE) AS is_eligible_egfr
+      FROM VALUES
+          (-143801, 'SYN_EGFR_0001', '2023-01-01', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143801, 'SYN_EGFR_0002', '2023-04-02', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143802, 'SYN_EGFR_0003', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143802, 'SYN_EGFR_0004', '2023-04-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-01'),
+          (-143803, 'SYN_EGFR_0005', '2023-01-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-31'),
+          (-143803, 'SYN_EGFR_0006', '2023-04-30', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-30'),
+          (-143804, 'SYN_EGFR_0007', '2023-01-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-31'),
+          (-143804, 'SYN_EGFR_0008', '2023-05-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-05-01'),
+          (-143805, 'SYN_EGFR_0009', '2023-08-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-08-31'),
+          (-143805, 'SYN_EGFR_0010', '2023-11-30', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-11-30'),
+          (-143806, 'SYN_EGFR_0011', '2023-08-31', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-08-31'),
+          (-143806, 'SYN_EGFR_0012', '2023-12-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-12-01'),
+          (-143807, 'SYN_EGFR_0013', '2021-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2021-01-01'),
+          (-143807, 'SYN_EGFR_0014', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143808, 'SYN_EGFR_0015', '2021-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2021-01-01'),
+          (-143808, 'SYN_EGFR_0016', '2023-01-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-02'),
+          (-143809, 'SYN_EGFR_0017', '2023-01-01', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143809, 'SYN_EGFR_0018', '2023-04-02', 60, TRUE, 'Mild decrease (60-89)', '2023-04-02'),
+          (-143810, 'SYN_EGFR_0019', '2023-01-01', 60, TRUE, 'Mild decrease (60-89)', '2023-01-01'),
+          (-143810, 'SYN_EGFR_0020', '2023-04-02', 59.9, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143811, 'SYN_EGFR_0021', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143811, 'SYN_EGFR_0022', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143811, 'SYN_EGFR_0023', '2023-09-01', 80, TRUE, 'Mild decrease (60-89)', '2023-09-01'),
+          (-143812, 'SYN_EGFR_0024', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143812, 'SYN_EGFR_0025', '2023-04-02', 80, TRUE, 'Mild decrease (60-89)', '2023-04-02'),
+          (-143812, 'SYN_EGFR_0026', '2023-09-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-09-01'),
+          (-143813, 'SYN_EGFR_0027', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143813, 'SYN_EGFR_0028', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143813, 'SYN_EGFR_0029', '2023-04-03', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-03'),
+          (-143814, 'SYN_EGFR_0030', '2020-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2020-01-01'),
+          (-143814, 'SYN_EGFR_0031', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143815, 'SYN_EGFR_0032', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143816, 'SYN_EGFR_0033', '2023-01-01', 0, FALSE, 'Invalid', '2023-01-01'),
+          (-143816, 'SYN_EGFR_0034', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143817, 'SYN_EGFR_0035', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143817, 'SYN_EGFR_0036', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143817, 'SYN_EGFR_0037', '2023-09-01', 0, FALSE, 'Invalid', '2023-09-01'),
+          (-143818, 'SYN_EGFR_0038', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143818, 'SYN_EGFR_0039', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143818, 'SYN_EGFR_0040', '2999-01-01', 80, TRUE, 'Mild decrease (60-89)', '2999-01-01'),
+          (-143819, 'SYN_EGFR_0041', '1900-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '1900-01-01'),
+          (-143819, 'SYN_EGFR_0042', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143820, 'SYN_EGFR_0043', NULL, 50, TRUE, 'CKD Stage 3a (45-59)', NULL),
+          (-143820, 'SYN_EGFR_0044', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02')
+  - input: ref('int_egfr_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::VARCHAR AS ckd_stage
+      FROM VALUES
+          (-143801, 'SYN_EGFR_0002', '2023-04-02', 59.9, 'CKD Stage 3a (45-59)'),
+          (-143802, 'SYN_EGFR_0004', '2023-04-01', 50, 'CKD Stage 3a (45-59)'),
+          (-143803, 'SYN_EGFR_0006', '2023-04-30', 50, 'CKD Stage 3a (45-59)'),
+          (-143804, 'SYN_EGFR_0008', '2023-05-01', 50, 'CKD Stage 3a (45-59)'),
+          (-143805, 'SYN_EGFR_0010', '2023-11-30', 50, 'CKD Stage 3a (45-59)'),
+          (-143806, 'SYN_EGFR_0012', '2023-12-01', 50, 'CKD Stage 3a (45-59)'),
+          (-143807, 'SYN_EGFR_0014', '2023-01-01', 50, 'CKD Stage 3a (45-59)'),
+          (-143808, 'SYN_EGFR_0016', '2023-01-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143809, 'SYN_EGFR_0018', '2023-04-02', 60, 'Mild decrease (60-89)'),
+          (-143810, 'SYN_EGFR_0020', '2023-04-02', 59.9, 'CKD Stage 3a (45-59)'),
+          (-143811, 'SYN_EGFR_0023', '2023-09-01', 80, 'Mild decrease (60-89)'),
+          (-143812, 'SYN_EGFR_0026', '2023-09-01', 50, 'CKD Stage 3a (45-59)'),
+          (-143813, 'SYN_EGFR_0029', '2023-04-03', 50, 'CKD Stage 3a (45-59)'),
+          (-143814, 'SYN_EGFR_0031', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143815, 'SYN_EGFR_0032', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143816, 'SYN_EGFR_0034', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143817, 'SYN_EGFR_0036', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143818, 'SYN_EGFR_0039', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143819, 'SYN_EGFR_0042', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143820, 'SYN_EGFR_0044', '2023-04-02', 50, 'CKD Stage 3a (45-59)')
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS acr_value WHERE FALSE
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS acr_value, NULL::VARCHAR AS acr_category WHERE FALSE
+  expect:
+    rows:
+    - person_id: -143801
+      latest_egfr_value: 59.9
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143802
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143803
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143804
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143805
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143806
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143807
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143808
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143809
+      latest_egfr_value: 60
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143810
+      latest_egfr_value: 59.9
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143811
+      latest_egfr_value: 80
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143812
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143813
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143814
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143815
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143816
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143817
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143818
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143819
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143820
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::FLOAT AS latest_egfr_value, NULL::TIMESTAMP_NTZ AS latest_egfr_date,
+            NULL::VARCHAR AS latest_egfr_stage, NULL::FLOAT AS latest_acr_value,
+            NULL::TIMESTAMP_NTZ AS latest_acr_date, NULL::VARCHAR AS latest_acr_stage,
+            NULL::BOOLEAN AS has_confirmed_low_egfr, NULL::BOOLEAN AS has_confirmed_high_acr,
+            NULL::NUMBER AS person_id, NULL::VARCHAR AS latest_ckd_stage_inferred,
+            NULL::BOOLEAN AS latest_labs_meet_ckd_criteria, NULL::BOOLEAN AS has_confirmed_ckd_by_labs,
+            NULL::BOOLEAN AS has_confirmed_low_egfr_within_2_years_local WHERE FALSE
+- name: ckd_same_day_ordering_and_acr_composition
+  model: int_ckd_lab_classification
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr, column6::VARCHAR AS ckd_stage, column7::TIMESTAMP_NTZ AS date_recorded,
+          COALESCE(column5::BOOLEAN AND column3::TIMESTAMP_NTZ::DATE != '1900-01-01'::DATE
+              AND column3::TIMESTAMP_NTZ::DATE <= CURRENT_DATE(), FALSE) AS is_eligible_egfr
+      FROM VALUES
+          (-143851, 'SYN_EGFR_0045', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143851, 'SYN_EGFR_0046', '2023-04-02 10:00:00', 40, TRUE, 'CKD Stage 3b (30-44)', '2023-04-02 17:00:00'),
+          (-143851, 'SYN_EGFR_0047', '2023-04-02 14:00:00', 80, TRUE, 'Mild decrease (60-89)', '2023-04-02 16:00:00'),
+          (-143852, 'SYN_EGFR_0048', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143852, 'SYN_TIE_A', '2023-04-02', 40, TRUE, 'CKD Stage 3b (30-44)', '2023-04-02 17:00:00'),
+          (-143852, 'SYN_TIE_Z', '2023-04-02', 80, TRUE, 'Mild decrease (60-89)', '2023-04-02 17:00:00'),
+          (-143853, 'SYN_EGFR_0051', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143853, 'SYN_NULL_SAVED', '2023-04-02', 80, TRUE, 'Mild decrease (60-89)', NULL),
+          (-143853, 'SYN_EGFR_0052', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 17:00:00'),
+          (-143854, 'SYN_EGFR_0053', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143854, 'SYN_EGFR_0054', '2023-04-02', 45, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 16:00:00'),
+          (-143854, 'SYN_EGFR_0055', '2023-04-02', 40, TRUE, 'CKD Stage 3b (30-44)', '2023-04-02 17:00:00'),
+          (-143857, 'SYN_EGFR_0056', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143857, 'SYN_EGFR_0057', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02'),
+          (-143858, 'SYN_EGFR_0058', '2999-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2999-01-01'),
+          (-143859, 'SYN_DUP_OLD', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01'),
+          (-143859, 'SYN_DUP_A', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 16:00:00'),
+          (-143859, 'SYN_DUP_Z', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02 17:00:00'),
+          (-143860, 'SYN_PRIOR_LOW', '2023-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-01-01 16:00:00'),
+          (-143860, 'SYN_PRIOR_HIGH', '2023-01-01', 80, TRUE, 'Mild decrease (60-89)', '2023-01-01 17:00:00'),
+          (-143860, 'SYN_PRIOR_LATEST', '2023-04-02', 50, TRUE, 'CKD Stage 3a (45-59)', '2023-04-02')
+  - input: ref('int_egfr_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::VARCHAR AS ckd_stage
+      FROM VALUES
+          (-143851, 'SYN_EGFR_0046', '2023-04-02 10:00:00', 40, 'CKD Stage 3b (30-44)'),
+          (-143852, 'SYN_TIE_Z', '2023-04-02', 80, 'Mild decrease (60-89)'),
+          (-143853, 'SYN_EGFR_0052', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143854, 'SYN_EGFR_0055', '2023-04-02', 40, 'CKD Stage 3b (30-44)'),
+          (-143857, 'SYN_EGFR_0057', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143859, 'SYN_DUP_Z', '2023-04-02', 50, 'CKD Stage 3a (45-59)'),
+          (-143860, 'SYN_PRIOR_LATEST', '2023-04-02', 50, 'CKD Stage 3a (45-59)')
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::FLOAT AS acr_value
+      FROM VALUES
+          (-143855, '2023-04-02', 2),
+          (-143856, '2023-01-01', 5),
+          (-143856, '2023-04-02', 6),
+          (-143856, '2024-01-01', 2),
+          (-143857, '2023-01-01', 5),
+          (-143857, '2023-04-02', 6),
+          (-143858, '2023-04-02', 2)
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::FLOAT AS acr_value, column4::VARCHAR AS acr_category
+      FROM VALUES
+          (-143855, '2023-04-02', 2, 'Normal (<3)'),
+          (-143856, '2024-01-01', 2, 'Normal (<3)'),
+          (-143857, '2023-04-02', 6, 'Mildly Increased (3-30)'),
+          (-143858, '2023-04-02', 2, 'Normal (<3)')
+  expect:
+    rows:
+    - person_id: -143851
+      latest_egfr_value: 40
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143852
+      latest_egfr_value: 80
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143853
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143854
+      latest_egfr_value: 40
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143855
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+      latest_acr_stage: Normal (<3)
+    - person_id: -143856
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: true
+      has_confirmed_ckd_by_labs: true
+      latest_acr_stage: Normal (<3)
+    - person_id: -143857
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: true
+      has_confirmed_ckd_by_labs: true
+      latest_acr_stage: Mildly Increased (3-30)
+    - person_id: -143858
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+      latest_acr_stage: Normal (<3)
+    - person_id: -143859
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143860
+      latest_egfr_value: 50
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::FLOAT AS latest_egfr_value, NULL::TIMESTAMP_NTZ AS latest_egfr_date,
+            NULL::VARCHAR AS latest_egfr_stage, NULL::FLOAT AS latest_acr_value,
+            NULL::TIMESTAMP_NTZ AS latest_acr_date, NULL::VARCHAR AS latest_acr_stage,
+            NULL::BOOLEAN AS has_confirmed_low_egfr, NULL::BOOLEAN AS has_confirmed_high_acr,
+            NULL::NUMBER AS person_id, NULL::VARCHAR AS latest_ckd_stage_inferred,
+            NULL::BOOLEAN AS latest_labs_meet_ckd_criteria, NULL::BOOLEAN AS has_confirmed_ckd_by_labs,
+            NULL::BOOLEAN AS has_confirmed_low_egfr_within_2_years_local WHERE FALSE
+- name: ckd_egfr_build_day_and_ineligible_only_people
+  model: int_ckd_lab_classification
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr, column6::VARCHAR AS ckd_stage, column7::TIMESTAMP_NTZ AS date_recorded,
+          COALESCE(column5::BOOLEAN AND column3::TIMESTAMP_NTZ::DATE != '1900-01-01'::DATE
+              AND column3::TIMESTAMP_NTZ::DATE <= CURRENT_DATE(), FALSE) AS is_eligible_egfr
+      FROM VALUES
+          (-143881, 'SYN_EGFR_0065', DATEADD(month, -4, CURRENT_DATE()), 50, TRUE, 'CKD Stage 3a (45-59)', DATEADD(month, -4, CURRENT_DATE())),
+          (-143881, 'SYN_BUILD_DAY', DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ), 55, TRUE, 'CKD Stage 3a (45-59)', DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ)),
+          (-143881, 'SYN_EGFR_0067', DATEADD(day, 1, CURRENT_DATE()), 90, TRUE, 'Normal/High (≥90)', DATEADD(day, 1, CURRENT_DATE())),
+          (-143882, 'SYN_EGFR_0068', '2999-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '2999-01-01'),
+          (-143883, 'SYN_EGFR_0069', '2023-01-01', 0, FALSE, 'Invalid', '2023-01-01'),
+          (-143884, 'SYN_EGFR_0070', '1900-01-01', 50, TRUE, 'CKD Stage 3a (45-59)', '1900-01-01')
+  - input: ref('int_egfr_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::VARCHAR AS ckd_stage
+      FROM VALUES
+          (-143881, 'SYN_BUILD_DAY', DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ), 55, 'CKD Stage 3a (45-59)')
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS acr_value WHERE FALSE
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS acr_value, NULL::VARCHAR AS acr_category WHERE FALSE
+  expect:
+    rows:
+    - person_id: -143881
+      latest_egfr_value: 55
+      has_confirmed_low_egfr: true
+      has_confirmed_low_egfr_within_2_years_local: true
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::FLOAT AS latest_egfr_value, NULL::TIMESTAMP_NTZ AS latest_egfr_date,
+            NULL::VARCHAR AS latest_egfr_stage, NULL::FLOAT AS latest_acr_value,
+            NULL::TIMESTAMP_NTZ AS latest_acr_date, NULL::VARCHAR AS latest_acr_stage,
+            NULL::BOOLEAN AS has_confirmed_low_egfr, NULL::BOOLEAN AS has_confirmed_high_acr,
+            NULL::NUMBER AS person_id, NULL::VARCHAR AS latest_ckd_stage_inferred,
+            NULL::BOOLEAN AS latest_labs_meet_ckd_criteria, NULL::BOOLEAN AS has_confirmed_ckd_by_labs,
+            NULL::BOOLEAN AS has_confirmed_low_egfr_within_2_years_local WHERE FALSE
+- name: ckd_acr_any_historical_pair_boundaries
+  model: int_ckd_lab_classification
+  given:
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value, NULL::BOOLEAN AS is_valid_egfr, NULL::VARCHAR AS ckd_stage, NULL::TIMESTAMP_NTZ AS date_recorded, FALSE AS is_eligible_egfr WHERE FALSE
+  - input: ref('int_egfr_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value, NULL::VARCHAR AS ckd_stage WHERE FALSE
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::FLOAT AS acr_value
+      FROM VALUES
+          (-143891, '2021-01-01', 5),
+          (-143891, '2021-03-02', 5),
+          (-143891, '2021-05-01', 5),
+          (-143892, '2021-01-01', 5),
+          (-143892, '2021-03-31', 5),
+          (-143893, '2021-01-01', 5),
+          (-143893, '2021-04-01', 5),
+          (-143894, '2021-01-01', 5),
+          (-143894, '2023-01-01', 5),
+          (-143895, '2021-01-01', 5),
+          (-143895, '2023-01-02', 5),
+          (-143896, '2021-01-01', 5),
+          (-143896, '2021-01-31', 5),
+          (-143896, '2021-03-02', 5)
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::FLOAT AS acr_value, column4::VARCHAR AS acr_category
+      FROM VALUES
+          (-143891, '2021-05-01', 5, 'Mildly Increased (3-30)'),
+          (-143892, '2021-03-31', 5, 'Mildly Increased (3-30)'),
+          (-143893, '2021-04-01', 5, 'Mildly Increased (3-30)'),
+          (-143894, '2023-01-01', 5, 'Mildly Increased (3-30)'),
+          (-143895, '2023-01-02', 5, 'Mildly Increased (3-30)'),
+          (-143896, '2021-03-02', 5, 'Mildly Increased (3-30)')
+  expect:
+    rows:
+    - person_id: -143891
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: true
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143892
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143893
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: true
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143894
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: true
+      has_confirmed_ckd_by_labs: true
+    - person_id: -143895
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+    - person_id: -143896
+      latest_egfr_value: null
+      has_confirmed_low_egfr: false
+      has_confirmed_low_egfr_within_2_years_local: false
+      has_confirmed_high_acr: false
+      has_confirmed_ckd_by_labs: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: |-
+        SELECT NULL::FLOAT AS latest_egfr_value, NULL::TIMESTAMP_NTZ AS latest_egfr_date,
+            NULL::VARCHAR AS latest_egfr_stage, NULL::FLOAT AS latest_acr_value,
+            NULL::TIMESTAMP_NTZ AS latest_acr_date, NULL::VARCHAR AS latest_acr_stage,
+            NULL::BOOLEAN AS has_confirmed_low_egfr, NULL::BOOLEAN AS has_confirmed_high_acr,
+            NULL::NUMBER AS person_id, NULL::VARCHAR AS latest_ckd_stage_inferred,
+            NULL::BOOLEAN AS latest_labs_meet_ckd_criteria, NULL::BOOLEAN AS has_confirmed_ckd_by_labs,
+            NULL::BOOLEAN AS has_confirmed_low_egfr_within_2_years_local WHERE FALSE
