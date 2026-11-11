@@ -47,8 +47,9 @@ FROM {{ ref('stg_reference_lsoa21_ward25_lad25') }}
 --build table for last 3 financial years and rolling 12m flag
 ,base_table as (
 SELECT
---commissioning and primary care
+--COMMISSIONING DETAILS AND PRIMARY CARE
 u.sk_patient_id,
+u.visit_occurrence_id,
 u.commissioner_code_at_event as commissioner_code,
 IFF(u.commissioner_code_at_event IN ('07X','07M','08H','08D','07R','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','93C','93C00','Z9B2Z','QRV','QRV00','QMJ','QMJ00'),'WNL','Other') comm_group,
 --PRIMARY CARE substitute PDS registered code where missing,
@@ -102,7 +103,7 @@ WHEN u.organisation_id = 'RAP' THEN 'Royal Free London NHS Foundation Trust'
 ELSE COALESCE(wnl.provider_name,org2.organisation_name) END AS provider_name,
 u.site_id,
 CASE 
-WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'WMUH UTC'
+WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'WestMid UTC'
 WHEN u.site_name = 'Moorfields Eye Hospital (City Road Campus)' THEN 'Moorfields City Road'
 WHEN u.site_name LIKE '%Desmond%' THEN 'Richard Desmond Eye Centre' ELSE u.site_name END AS site_name,
 --DEPARTMENT
@@ -212,6 +213,11 @@ WHEN discharge_destination_group = 'Admitted' THEN TRUE ELSE FALSE END AS is_adm
 CASE WHEN g.lad25_nm IS NOT NULL AND g.residential_location = 'WNL' THEN TRUE ELSE FALSE END AS is_wnl_resident,
 g.lad25_nm as borough_resident,
 NVL(g.residential_location,'Unknown') as residence_group, 
+CASE 
+WHEN g.residential_location = 'WNL' THEN 1
+WHEN g.residential_location = 'Other London' THEN 2
+WHEN g.residential_location = 'Outside London' THEN 3
+ELSE 4 END as residence_sort,
 CASE
     WHEN u.age_at_event < 0 OR u.age_at_event IS NULL THEN 'Unknown'
     WHEN u.age_at_event < 5 THEN '0-4'
@@ -269,6 +275,7 @@ WHERE u.start_date >= DATEADD(
 ,base_clean as (
 select
 b.sk_patient_id,
+b.visit_occurrence_id,
 b.commissioner_code,
 b.comm_group,
 b.practice_status_code,
@@ -282,7 +289,8 @@ CASE
 WHEN b.icb_name = 'North West London' THEN 'West and North London' ELSE b.icb_name END AS icb_name,
 b.provider_code,
 b.provider_shorthand,
-COALESCE(b.provider_name,REGEXP_REPLACE(b.site_name,'\\bUtc\\b', 'UTC')) as provider_name,
+CASE WHEN b.provider_shorthand IS NOT NULL THEN b.provider_shorthand ELSE
+COALESCE(b.provider_name,REGEXP_REPLACE(b.site_name,'\\bUtc\\b', 'UTC')) END as provider_name,
 b.site_id,
 b.site_name,
 b.dept_type_desc,
@@ -319,6 +327,7 @@ b.is_admitted,
 b.is_wnl_resident,
 b.borough_resident,
 b.residence_group,
+b.residence_sort,
 b.age_band_nhs,
 b.age_sort,
 b.gender,
@@ -337,5 +346,5 @@ LEFT JOIN  {{ ref('practice_wnl_all') }} p using (practice_code)
 select *,
 health_borough IS NOT NULL AS is_wnl_registered,
 health_borough IS NULL AND icb_name = 'West and North London' AS is_wnl_non_practice_organisation,
-IFF(provider_shorthand IS NOT NULL, 'WNL', 'Other') AS provider_group
+IFF(provider_shorthand IS NOT NULL, 'WNL', 'Other Provider') AS provider_group
 from base_clean
