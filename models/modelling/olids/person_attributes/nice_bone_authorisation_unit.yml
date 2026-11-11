@@ -1,0 +1,20 @@
+unit_tests:
+- name: nice_bone_authorisations_never_supply_treatment
+  model: int_nice_bone_therapy_by_month
+  overrides:
+    macros:
+      nice_reference_population: SELECT -9991::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 75::NUMBER
+        AS age
+  given:
+  - input: ref('int_bone_sparing_medications_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS order_date WHERE FALSE
+  - input: ref('int_bone_sparing_hospital_therapy_all')
+    format: sql
+    rows: SELECT -9991::NUMBER AS person_id, '2026-09-01'::DATE AS therapy_date, NULL::NUMBER AS coverage_months,
+      TRUE AS is_authorisation_only
+  expect:
+    rows:
+    - person_id: -9991
+      latest_hospital_therapy_date: null
+      latest_current_hospital_therapy_date: null

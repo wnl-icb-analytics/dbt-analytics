@@ -17,4 +17,4 @@ person_id
 ,ILLICIT_DRUG_PATTERN
 ,ILLICIT_DRUG_CLASS
 FROM {{ ref('int_illicit_drug_use_all') }} a
-QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, id DESC) = 1

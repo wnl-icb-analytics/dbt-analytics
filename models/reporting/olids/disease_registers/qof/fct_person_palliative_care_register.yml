@@ -1,15 +1,17 @@
 models:
   - name: fct_person_palliative_care_register
-    description: >-
+    description: >
       Palliative care register (NICE IND258). One row per register member.
 
-
       Registration status is not filtered. Palliative care need recorded on or after 1 April
-      2008 qualifies. A later record that care is no longer needed removes membership; same-day
-      records retain it. NICE has no date floor or exclusions, so this flag supplies a narrower
-      population. Clinical evidence is dated by the build date. For NICE counts, select people
-      registered on the build date. Based on NICE NG142. Code lists: PALCARE_COD and
-      PALCARENI_COD (PCD).
+      2008 qualifies. A later record that care is no longer needed removes membership; same-day records retain it. NICE has no date floor or exclusions, so this flag supplies a
+      narrower population. Clinical evidence is dated by the build date. For NICE counts,
+      select people registered on the build date. Based on NICE NG142. Code lists: PALCARE_COD
+      and PALCARENI_COD (PCD).
+
+      Observation counts include each person, concept, clinical calendar date and recorded
+      value once, including value-free entries. Register membership and first/last dates use
+      the full evidence history. Missing clinical days keep separate observation ids.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id

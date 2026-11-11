@@ -1,11 +1,19 @@
 models:
   - name: int_smi_care_plan_latest
-    description: 'Mental Health /SMI care pan for SMI registry replacement/QOF indicator MH002. Latest value for Mental Health /SMI care pan observation using MHP_COD cluster with currency flag in last 12 months'
+    description: >-
+      Last recorded mental health care plan per person with MHP_COD evidence in OLIDS.
+      Includes inactive and deceased people, without an SMI-register restriction.
+      Future clinical dates are excluded. Clinical calendar date, latest save time
+      with nulls last, then highest observation ID determine the selected record.
+      The currency flag is true when the selected clinical date is within 365 days.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: MHP_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id]

@@ -1,73 +1,136 @@
-{{
-    config(
-        materialized='table',
-        cluster_by=['person_id', 'clinical_effective_date'])
-}}
+{{ config(materialized='table', cluster_by=['person_id', 'clinical_effective_date']) }}
 
-/*
-All waist circumference measurements from observations.
-*/
+WITH observations AS (
+    {{ get_observations("'WAIST_COD', 'HEIGHT'") }}
+),
 
-WITH base_observations AS (
-
+measurements AS (
     SELECT
         obs.id,
         obs.person_id,
         obs.clinical_effective_date,
-        CAST(obs.result_value AS NUMBER(10,2)) AS waist_circumference_value,
-        obs.result_unit_display,
+        obs.date_recorded,
+        obs.age_at_event,
+        obs.cluster_id AS source_cluster_id,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
-        obs.cluster_id AS source_cluster_id,
-        obs.result_value AS original_result_value
+        obs.result_value AS original_result_value,
+        COALESCE(NULLIF(TRIM(obs.result_unit_display), ''), units.display) AS original_result_unit_display,
+        LOWER(REPLACE(COALESCE(NULLIF(TRIM(obs.result_unit_code), ''),
+            original_result_unit_display), ' ', '')) AS unit_label,
+        -- Only explicit length units can supply a ratio; do not infer centimetres from magnitude.
+        TRY_TO_DECIMAL(obs.result_value::VARCHAR, 28, 9) * CASE
+            WHEN unit_label IN ('cm', 'centimetre', 'centimetres', 'centimeter', 'centimeters') THEN 1
+            WHEN unit_label IN ('m', 'metre', 'metres', 'meter', 'meters') THEN 100
+            WHEN unit_label IN ('mm', 'millimetre', 'millimetres', 'millimeter', 'millimeters') THEN 0.1
+            WHEN unit_label IN ('in', '[in_i]', 'inch', 'inches') THEN 2.54
+        END AS value_cm
+    FROM observations obs
+    LEFT JOIN {{ ref('stg_olids_concept') }} units
+        ON obs.result_units_source_concept_id = units.concept_id
+    WHERE obs.clinical_effective_date_raw IS NOT NULL
+        AND obs.clinical_effective_date::DATE <= CURRENT_DATE()
+        AND TRY_TO_DECIMAL(obs.result_value::VARCHAR, 28, 9) IS NOT NULL
+),
 
-    FROM ({{ get_observations("'WAIST_COD'") }}) obs
-    WHERE obs.clinical_effective_date IS NOT NULL
-      AND obs.result_value IS NOT NULL
-      AND REGEXP_LIKE(obs.result_value::VARCHAR, '^[+-]?([0-9]*[.])?[0-9]+$') -- Ensure numeric
+waist_people AS (
+    SELECT DISTINCT person_id
+    FROM measurements
+    WHERE source_cluster_id = 'WAIST_COD'
+),
+
+heights AS (
+    SELECT id, person_id, clinical_effective_date, date_recorded, value_cm AS height_cm
+    FROM measurements
+    WHERE source_cluster_id = 'HEIGHT'
+        AND person_id IN (SELECT person_id FROM waist_people)
+        AND age_at_event >= 18
+        AND value_cm BETWEEN 50 AND 250
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id, clinical_effective_date::DATE
+        ORDER BY date_recorded DESC NULLS LAST, id DESC
+    ) = 1
+),
+
+waist_with_height AS (
+    SELECT
+        waist.*,
+        height.height_cm,
+        height.clinical_effective_date AS height_measurement_date
+    FROM measurements waist
+    LEFT JOIN heights height
+        ON waist.person_id = height.person_id
+        AND waist.age_at_event >= 18
+        AND waist.value_cm BETWEEN 30 AND 250
+        -- Local adult pairing window, inclusive, in either direction.
+        AND height.clinical_effective_date::DATE BETWEEN
+            DATEADD(day, -365, waist.clinical_effective_date::DATE)
+            AND DATEADD(day, 365, waist.clinical_effective_date::DATE)
+    WHERE waist.source_cluster_id = 'WAIST_COD'
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY waist.id
+        ORDER BY ABS(DATEDIFF(day, waist.clinical_effective_date, height.clinical_effective_date)),
+            height.clinical_effective_date::DATE DESC,
+            height.date_recorded DESC NULLS LAST, height.id DESC
+    ) = 1
+),
+
+valid_bmi AS (
+    SELECT person_id, id, clinical_effective_date, date_recorded, bmi_value
+    FROM {{ ref('int_bmi_all') }}
+    WHERE is_valid_bmi
+        AND person_id IN (SELECT person_id FROM waist_people)
+        AND clinical_effective_date::DATE <= CURRENT_DATE()
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id, clinical_effective_date::DATE
+        ORDER BY IFF(bmi_source = 'recorded', 0, 1), date_recorded DESC NULLS LAST, id DESC
+    ) = 1
+),
+
+paired AS (
+    SELECT
+        waist.*,
+        bmi.bmi_value AS bmi_value_at_waist,
+        bmi.clinical_effective_date AS bmi_measurement_date,
+        waist.value_cm / NULLIF(waist.height_cm, 0) AS waist_to_height_ratio
+    FROM waist_with_height waist
+    LEFT JOIN valid_bmi bmi
+        ON waist.person_id = bmi.person_id
+        AND waist.age_at_event >= 18
+        AND bmi.clinical_effective_date::DATE BETWEEN
+            DATEADD(day, -90, waist.clinical_effective_date::DATE)
+            AND DATEADD(day, 90, waist.clinical_effective_date::DATE)
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY waist.id
+        ORDER BY ABS(DATEDIFF(day, waist.clinical_effective_date, bmi.clinical_effective_date)),
+            bmi.clinical_effective_date::DATE DESC,
+            bmi.date_recorded DESC NULLS LAST, bmi.id DESC
+    ) = 1
 )
 
 SELECT
     person_id,
-    ID,
+    id,
     clinical_effective_date,
-    waist_circumference_value,
-    result_unit_display,
+    date_recorded,
+    value_cm::NUMBER(10,2) AS waist_circumference_value,
+    IFF(value_cm IS NOT NULL, 'cm', original_result_unit_display) AS result_unit_display,
     concept_code,
     concept_display,
     source_cluster_id,
     original_result_value,
-
-    -- Data quality validation (waist circumference typically 50-200 cm)
-    CASE
-        WHEN waist_circumference_value BETWEEN 30 AND 250 THEN TRUE
-        ELSE FALSE
-    END AS is_valid_waist_circumference,
-
-    -- Clinical risk categorisation (cm) - general adult guidelines
-    CASE
-        WHEN waist_circumference_value NOT BETWEEN 30 AND 250 THEN 'Invalid'
-        WHEN waist_circumference_value < 80 THEN 'Low Risk'
-        WHEN waist_circumference_value < 88 THEN 'Moderate Risk (Female)'
-        WHEN waist_circumference_value < 94 THEN 'Moderate Risk'
-        WHEN waist_circumference_value < 102 THEN 'High Risk'
-        WHEN waist_circumference_value >= 102 THEN 'Very High Risk'
-        ELSE 'Unknown'
-    END AS waist_risk_category,
-
-    -- High risk indicator (≥88cm for women, ≥102cm for men - using higher threshold)
-    CASE
-        WHEN waist_circumference_value >= 88 AND waist_circumference_value <= 250 THEN TRUE
-        ELSE FALSE
-    END AS is_high_waist_risk,
-
-    -- Very high risk indicator (≥102cm)
-    CASE
-        WHEN waist_circumference_value >= 102 AND waist_circumference_value <= 250 THEN TRUE
-        ELSE FALSE
-    END AS is_very_high_waist_risk
-
-FROM base_observations
-
--- Sort for consistent output
-ORDER BY person_id, clinical_effective_date DESC
+    original_result_unit_display,
+    COALESCE(value_cm BETWEEN 30 AND 250, FALSE) AS is_valid_waist_circumference,
+    height_cm::FLOAT AS height_cm,
+    height_measurement_date,
+    bmi_value_at_waist,
+    bmi_measurement_date,
+    waist_to_height_ratio::FLOAT AS waist_to_height_ratio,
+    -- NG246 1.9.14 applies below BMI 35 and gives no healthy band below ratio 0.4.
+    CASE WHEN bmi_value_at_waist < 35 THEN CASE
+        -- Compare fixed-point lengths so equivalent units agree at exact thresholds.
+        WHEN value_cm >= paired.height_cm * 0.6 THEN 'High central adiposity'
+        WHEN value_cm >= paired.height_cm * 0.5 THEN 'Increased central adiposity'
+        WHEN value_cm >= paired.height_cm * 0.4 THEN 'Healthy central adiposity'
+    END END AS waist_to_height_ratio_category
+FROM paired

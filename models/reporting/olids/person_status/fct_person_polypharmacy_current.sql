@@ -14,8 +14,8 @@ Pure polypharmacy measures only - join to demographic tables for reporting.
 Includes current repeat medications selected by int_polypharmacy_medications_list.
 
 Polypharmacy thresholds:
-- Standard polypharmacy: 5+ medications
-- Severe/complex polypharmacy: 10+ medications
+- Local threshold: 5+ BNF chemicals
+- Medication review priority threshold: 10+ BNF chemicals
 
 Grain: One row per person in dim_person with current polypharmacy medications.
 */

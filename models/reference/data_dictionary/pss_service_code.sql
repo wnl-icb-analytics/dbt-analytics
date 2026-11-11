@@ -33,7 +33,8 @@ select
     ,CASE
     WHEN sc.service_code = 'CCGPS08S_EXC' OR sc.service_code LIKE '%99999%' THEN 'ICB-commissioned'
     WHEN d.icb_delegation_26_27 = 'GREEN' THEN 'Delegated'
-    WHEN d.icb_delegation_26_27 IN ('RED','BLUE','NOT APPLICABLE') THEN 'Retained'
+    WHEN d.icb_delegation_26_27 IN ('RED','NOT APPLICABLE') THEN 'Retained'
+    WHEN d.icb_delegation_26_27 = 'BLUE' THEN 'Agreed Locally'
     END AS current_funding_status
     , sc.source_snapshot_date
 from service_code as sc

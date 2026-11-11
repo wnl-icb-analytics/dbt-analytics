@@ -1,7 +1,9 @@
 models:
   - name: int_valproate_medications_6m_latest
-    description: 'Most recent valproate medication order per person from the last
-      6 months for pregnancy safety monitoring. The window includes orders dated
+    description: 'Latest valproate medication order per person within six months,
+      for pregnancy safety monitoring. Same-day orders prefer the latest recorded
+      timestamp (nulls last), then the greatest order ID. All orders have equal clinical priority.
+      The window includes orders dated
       exactly six months before today and today, unlike the exclusive lower
       boundary in medication_date_flags; this existing exception retains the published cohort.
 
@@ -15,7 +17,7 @@ models:
     columns:
       - name: person_id
         description: 'Patient identifier - primary key (one row per person)'
-        tests:
+        data_tests:
           - unique
           - not_null
 

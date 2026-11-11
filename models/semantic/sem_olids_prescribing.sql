@@ -89,7 +89,7 @@ TABLES(
 
     valproate AS {{ ref('int_valproate_medications_all') }}
         PRIMARY KEY (medication_order_id)
-        COMMENT = 'Valproate orders with product type (sodium valproate, valproic acid), indication (anti-epileptic, mood stabiliser), dose category, and teratogenic risk flag',
+        COMMENT = 'Valproate orders with product type (sodium valproate, valproic acid), dm+d formulation and teratogenic risk flag; indication and daily dose are not inferred',
 
     diabetes_meds AS {{ ref('int_diabetes_medications_all') }}
         PRIMARY KEY (medication_order_id)
@@ -240,13 +240,11 @@ DIMENSIONS(
     statins.is_statin AS is_statin COMMENT = 'Whether a BNF 2.12 order contains a statin. Only for BNF 2.12 orders.',
 
     -- Anticoagulant classification (only populated for anticoagulant orders)
-    anticoagulants.anticoagulant_type AS anticoagulant_type COMMENT = 'Anticoagulant type (DOAC, VKA, Other). Only for anticoagulant orders.',
-    anticoagulants.is_doac AS is_doac COMMENT = 'Direct oral anticoagulant. Only for anticoagulant orders.',
+    anticoagulants.anticoagulant_type AS anticoagulant_type COMMENT = 'DOAC or VKA, using national membership then the retained BNF chemical. Null outside anticoagulant orders.',
+    anticoagulants.is_doac AS is_doac COMMENT = 'DOAC class, using national membership then the retained BNF chemical. Null outside anticoagulant orders.',
 
     -- Valproate classification (only populated for valproate orders — clinical safety)
     valproate.valproate_product_type AS valproate_product_type COMMENT = 'Valproate type (SODIUM_VALPROATE, VALPROIC_ACID, EPILIM, DEPAKOTE). Only for valproate orders.',
-    valproate.clinical_indication AS clinical_indication COMMENT = 'Valproate indication (ANTI_EPILEPTIC, MOOD_STABILISER). Only for valproate orders.',
-    valproate.dose_category AS dose_category COMMENT = 'Valproate dose category (LOW, MODERATE, HIGH, UNKNOWN). Only for valproate orders.',
     valproate.formulation_type AS formulation_type COMMENT = 'Valproate formulation type. Only for valproate orders.',
 
     -- Antibacterial classification (only populated for antibacterial orders)

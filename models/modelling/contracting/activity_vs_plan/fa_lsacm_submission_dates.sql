@@ -5,39 +5,18 @@
 }}
 
 /* Generate monthly submission timetable for contract activity taking into account bank holidays 
-and moving dates to following working day if 22nd of the month falls on a Friday */
+and moving dates to following working day if 22nd of the month falls on a Friday 
+--10th November use existing bank holiday date table -- and fix this issue 'in weekend_adjusted + submission_dates: after moving a date because of a bank holiday, script does not recheck whether the resulting date is a weekend or another bank holiday.'*/
 WITH bank_holidays AS (
-    /*
-        England and Wales bank holidays that could affect
-        the generated submission dates.
-        Add future bank holidays here as the model expands.
-    */
-    SELECT column1::DATE AS bank_holiday
-    FROM VALUES
-        ('2026-05-04'),
-        ('2026-05-25'),
-        ('2026-08-31'),
-        ('2026-12-25'),
-        ('2026-12-28'),
-        ('2027-01-01'),
-        ('2027-03-26'),
-        ('2027-03-29'),
-        ('2027-05-03'),
-        ('2027-05-31'),
-        ('2027-08-30'),
-        ('2027-12-27'),
-        ('2027-12-28'),
-        ('2028-01-03'),
-        ('2028-04-14'),
-        ('2028-04-17'),
-        ('2028-05-01'),
-        ('2028-05-29'),
-        ('2028-08-28'),
-        ('2028-12-25'),
-        ('2028-12-26')
+    --England and Wales bank holidays dictionary used to determine valid submission dates.
+    SELECT
+        full_date::DATE AS bank_holiday
+    FROM {{ ref('stg_dictionary_dbo_datebankholiday') }}
+    --FROM DEV__STAGING.DICTIONARY.STG_DICTIONARY_DBO_DATEBANKHOLIDAY
+    WHERE in_england_and_wales = TRUE AND YEAR(full_date) BETWEEN 2026 AND 2030
 ),
 activity_months AS (
-        --Generates monthly rows from April 2026. ROWCOUNT => 24 covers: FY 2026/27 and FY 2027/28
+        --Generates monthly rows from April 2026. ROWCOUNT => 24 covers: FY 2026/27 and FY 2027/28 -- FOR NOW
     SELECT
         DATEADD(
             MONTH,
@@ -50,7 +29,7 @@ target_dates AS (
     SELECT
         activity_month,
         CASE
-                --November activity:  fixed at 21 December to remain before Christmas.
+            --November activity:  fixed at 21 December to remain before Christmas.
             WHEN MONTH(activity_month) = 11
                 THEN DATE_FROM_PARTS(
                     YEAR(activity_month),
@@ -66,58 +45,40 @@ target_dates AS (
         END AS target_date
     FROM activity_months
 ),
-weekend_adjusted AS (
+candidate_dates AS (
+    /*  Generate the target date plus the following 9 days.
+        This allows the submission date to move forward across
+        weekends and consecutive bank holidays. */
     SELECT
-        activity_month,
-        target_date,
-        CASE
-                --Friday rolls forward to Monday.
-            WHEN DAYOFWEEKISO(target_date) = 5
-                THEN DATEADD(DAY, 3, target_date)
-                --Saturday rolls forward to Monday.
-            WHEN DAYOFWEEKISO(target_date) = 6
-                THEN DATEADD(DAY, 2, target_date)
-                --Sunday rolls forward to Monday.
-            WHEN DAYOFWEEKISO(target_date) = 7
-                THEN DATEADD(DAY, 1, target_date)
-            --Monday to Thursday remain unchanged.
-            ELSE target_date
-        END AS provisional_submission_date
-    FROM target_dates
+        td.activity_month,
+        td.target_date,
+        DATEADD(DAY, g.day_offset, td.target_date) AS candidate_date
+    FROM target_dates td
+    CROSS JOIN (
+        SELECT SEQ4() AS day_offset
+        FROM TABLE(GENERATOR(ROWCOUNT => 10))
+    ) g
 ),
 submission_dates AS (
+    /*   Select the first valid submission date:
+        - Monday to Friday
+        - not an England and Wales bank holiday
+        - if the original target date is Friday, move forward  */
     SELECT
-        activity_month,
-        /*
-            If the provisional date is a bank holiday, move to the following day.
-            The second check supports consecutive holidays such as Christmas and Boxing Day substitute days.
-        */
-        CASE
-            WHEN bh1.bank_holiday IS NOT NULL
-                 AND bh2.bank_holiday IS NOT NULL
-                THEN DATEADD(
-                    DAY,
-                    2,
-                    provisional_submission_date
-                )
-            WHEN bh1.bank_holiday IS NOT NULL
-                THEN DATEADD(
-                    DAY,
-                    1,
-                    provisional_submission_date
-                )
-            ELSE provisional_submission_date
-        END AS submission_date
-    FROM weekend_adjusted wa
-    LEFT JOIN bank_holidays bh1
-        ON wa.provisional_submission_date = bh1.bank_holiday
-    LEFT JOIN bank_holidays bh2
-        ON DATEADD(
-            DAY,
-            1,
-            wa.provisional_submission_date
-        ) = bh2.bank_holiday
+        cd.activity_month,
+        MIN(cd.candidate_date) AS submission_date
+    FROM candidate_dates cd
+    LEFT JOIN bank_holidays bh
+        ON cd.candidate_date = bh.bank_holiday
+    WHERE DAYOFWEEKISO(cd.candidate_date) BETWEEN 1 AND 5
+      AND bh.bank_holiday IS NULL
+      AND NOT (
+          cd.candidate_date = cd.target_date
+          AND DAYOFWEEKISO(cd.target_date) = 5
+      )
+    GROUP BY cd.activity_month
 )
+
 SELECT
     CASE
     WHEN MONTH(activity_month) >= 4
@@ -134,6 +95,3 @@ END AS financial_year,
        submission_date,
 FROM submission_dates
 ORDER BY activity_month
-
-
-

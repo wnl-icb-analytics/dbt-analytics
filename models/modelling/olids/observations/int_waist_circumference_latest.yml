@@ -1,12 +1,12 @@
 models:
   - name: int_waist_circumference_latest
-    description: 'Most recent valid waist circumference measurement per person for
-      cardiovascular risk assessment and metabolic syndrome screening.
-
-      One row per person with their latest waist circumference including clinical
-      risk categorisation and high-risk threshold flags.
-      Validity is filtered before selecting the latest result. Observation ID descending
-      breaks ties on the clinical effective date.'
+    description: >-
+      Latest valid waist circumference per person, with adult waist-to-height ratio
+      and NG246 central adiposity band where assessable. Valid circumferences are
+      30 to 250 cm. Height pairs within 365 days and BMI within 90 days, in either
+      direction. Bands require BMI below 35; missing height gives null ratio and band.
+      The latest circumference is selected even when its ratio is missing. Same-day
+      ties use recorded timestamp, nulls last, then greatest ID.
     config:
       meta:
         owner:
@@ -14,6 +14,6 @@ models:
     columns:
       - name: person_id
         description: 'Patient identifier - primary key (one row per person)'
-        tests:
+        data_tests:
           - unique
           - not_null

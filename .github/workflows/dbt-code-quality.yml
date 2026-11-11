@@ -155,6 +155,8 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install pyyaml
+      - name: Test cluster checker
+        run: python3 -m unittest discover -s scripts/ci/tests -v
       - name: Get changed files
         id: changed
         env:
@@ -168,7 +170,7 @@ jobs:
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
           # Pass the list as a file: a large diff exceeds the 128 KB limit on one
           # env var or argument.
-          { git diff --name-only "$BASE"...HEAD | grep -E '\.(sql|yml|yaml)$' | grep -E '^models/' || true; } > "$RUNNER_TEMP/changed_files.txt"
+          { git diff --name-only "$BASE"...HEAD | grep -E '^models/.*\.(sql|yml|yaml)$|^macros/clinical/observation_evidence_cluster_ids\.sql$|^scripts/ci/check_cluster_tests\.py$' || true; } > "$RUNNER_TEMP/changed_files.txt"
           if [ -s "$RUNNER_TEMP/changed_files.txt" ]; then echo 'any=true' >> "$GITHUB_OUTPUT"; fi
       - name: Run check
         if: steps.changed.outputs.any == 'true'
