@@ -9,51 +9,74 @@
 
 with measurements as (
 
+    -- =====================================================
+    -- CSDS Referral
+    -- Governed CSDS referral fact
+    -- =====================================================
+
     select
         current_date() as measurement_date,
         current_timestamp() as measured_at,
         'CSDS_REFERRAL' as table_id,
         count(*) as row_count,
-        max(refresh_date) as refresh_date,
+        max(to_date(source_file_received_at)) as refresh_date,
         datediff(
             day,
-            max(refresh_date),
+            max(to_date(source_file_received_at)),
             current_date()
         ) as days_since_refresh,
         'MONTHLY' as frequency_type
-    from REPORTING.MAIN_DATA.CSDS_REFERRAL
+
+    from {{ ref('fct_csds_referral') }}
+
+    where referral_received_date >= '2021-04-01' --- earlier data is considered unreliable and is not used in reporting
+
 
     union all
+
+    -- =====================================================
+    -- CSDS Care Contact
+    -- Governed one-row-per-contact fact
+    -- =====================================================
 
     select
         current_date() as measurement_date,
         current_timestamp() as measured_at,
         'CSDS_CARE_CONTACT' as table_id,
         count(*) as row_count,
-        max(refresh_date) as refresh_date,
+        max(to_date(source_file_received_at)) as refresh_date,
         datediff(
             day,
-            max(refresh_date),
+            max(to_date(source_file_received_at)),
             current_date()
         ) as days_since_refresh,
         'MONTHLY' as frequency_type
-    from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT
+
+    from {{ ref('fct_csds_care_contact') }}
+
 
     union all
+
+    -- =====================================================
+    -- CSDS Care Activity
+    -- Governed one-row-per-activity fact
+    -- =====================================================
 
     select
         current_date() as measurement_date,
         current_timestamp() as measured_at,
         'CSDS_CARE_CONTACT_ACTIVITY' as table_id,
         count(*) as row_count,
-        max(created_date) as refresh_date,
+        max(to_date(source_file_received_at)) as refresh_date,
         datediff(
             day,
-            max(created_date),
+            max(to_date(source_file_received_at)),
             current_date()
         ) as days_since_refresh,
         'MONTHLY' as frequency_type
-    from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT_ACTIVITY
+
+    from {{ ref('fct_csds_care_activity') }}
+
 
     union all
 
@@ -155,54 +178,33 @@ with measurements as (
         current_timestamp() as measured_at,
         'SLAM_LSPLCM' as table_id,
         count(*) as row_count,
-
-        max(
-            case
+        max(case
                 when p.dv_dataset_created_at <= current_timestamp()
                 then to_date(p.dv_dataset_created_at)
-            end
-        ) as refresh_date,
-
-        datediff(
-            day,
-            max(
-                case
+            end) as refresh_date,
+        datediff(day,
+            max(case
                     when p.dv_dataset_created_at <= current_timestamp()
                     then to_date(p.dv_dataset_created_at)
-                end
-            ),
-            current_date()
-        ) as days_since_refresh,
-
+                ),current_date()) as days_since_refresh,
         'MONTHLY' as frequency_type
-
     from {{ ref('stg_lsplcm_latest') }} p
-
     inner join (
-
         select
             financial_year,
             fy_month_submitted
-
         from {{ ref('int_ls_contract_dataset_submissions') }}
-
         where dataset = 'LSPLCM'
           and financial_year is not null
           and fy_month_submitted is not null
-
         qualify row_number() over (
             order by
                 financial_year desc,
                 fy_month_submitted desc
         ) = 1
-
     ) latest_period
-        on try_to_number(
-            left(p.dv_financial_year, 4)
-        ) = latest_period.financial_year
-
-       and p.dv_financial_month
-            = latest_period.fy_month_submitted
+        on try_to_number(left(p.dv_financial_year, 4)) = latest_period.financial_year
+       and p.dv_financial_month = latest_period.fy_month_submitted
 
 )
 

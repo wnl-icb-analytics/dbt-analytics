@@ -24,26 +24,29 @@ with measurements as (
     -- =====================================================
 
     select
-        current_date()                      as measurement_date,
-        current_timestamp()                 as measured_at,
-        'CSDS_REFERRAL'                     as table_id,
-        provider_code,
-        provider_name,
-        count(*)                            as row_count,
-        max(refresh_date)                   as latest_refresh_date,
+        current_date() as measurement_date,
+        current_timestamp() as measured_at,
+        'CSDS_REFERRAL' as table_id,
+        provider_organisation_code as provider_code,
+        provider_organisation_name as provider_name,
+        count(*) as row_count,
+        max(to_date(source_file_received_at)) as latest_refresh_date,
 
-    -- SLAM-specific provider period fields (not used here in CSDS tables)
-    null::number                    as latest_actual_financial_year,
-    null::number                    as latest_actual_financial_month,
-    null::date                      as latest_update_date
+        -- SLAM-specific period fields
+        null::number as latest_actual_financial_year,
+        null::number as latest_actual_financial_month,
 
-    from REPORTING.MAIN_DATA.CSDS_REFERRAL
+        -- Latest CSDS source-file receipt for this provider
+        max(to_date(source_file_received_at)) as latest_update_date
 
-    where provider_code is not null
+    from {{ ref('fct_csds_referral') }}
+
+    where provider_organisation_code is not null
+      and referral_received_date >= '2021-04-01' -- earlier data is considered unreliable and is not used in reporting
 
     group by
-        provider_code,
-        provider_name
+        provider_organisation_code,
+        provider_organisation_name
 
 
     union all
@@ -54,55 +57,61 @@ with measurements as (
     -- =====================================================
 
     select
-    current_date()                  as measurement_date,
-    current_timestamp()             as measured_at,
-    'CSDS_CARE_CONTACT'             as table_id,
-    provider_code,
-    provider_name,
-    count(*)                        as row_count,
-    max(refresh_date)               as latest_refresh_date,
+        current_date() as measurement_date,
+        current_timestamp() as measured_at,
+        'CSDS_CARE_CONTACT' as table_id,
+        provider_organisation_code as provider_code,
+        provider_organisation_name as provider_name,
+        count(*) as row_count,
+        max(to_date(source_file_received_at)) as latest_refresh_date,
 
-    -- SLAM-specific provider period fields (not used here in CSDS tables)
-    null::number                    as latest_actual_financial_year,
-    null::number                    as latest_actual_financial_month,
-    null::date                      as latest_update_date
+        -- SLAM-specific period fields
+        null::number as latest_actual_financial_year,
+        null::number as latest_actual_financial_month,
 
-from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT
+        -- Latest CSDS source-file receipt for this provider
+        max(to_date(source_file_received_at)) as latest_update_date
 
-where provider_code is not null
+    from {{ ref('fct_csds_care_contact') }}
 
-group by
-    provider_code,
-    provider_name
+    where provider_organisation_code is not null
+
+    group by
+        provider_organisation_code,
+        provider_organisation_name
+
 
     union all
 
 
     -- =====================================================
-    -- CSDS Care Contact Activity
+    -- CSDS Care Activity
     -- =====================================================
 
     select
-        current_date()                      as measurement_date,
-        current_timestamp()                 as measured_at,
-        'CSDS_CARE_CONTACT_ACTIVITY'        as table_id,
-        provider_code,
-        provider_name,
-        count(*)                            as row_count,
-        max(created_date)                   as latest_refresh_date,
+        current_date() as measurement_date,
+        current_timestamp() as measured_at,
+        'CSDS_CARE_CONTACT_ACTIVITY' as table_id,
+        provider_organisation_code as provider_code,
+        provider_organisation_name as provider_name,
+        count(*) as row_count,
+        max(to_date(source_file_received_at)) as latest_refresh_date,
 
-   -- SLAM-specific provider period fields (not used here in CSDS tables)
-    null::number                    as latest_actual_financial_year,
-    null::number                    as latest_actual_financial_month,
-    null::date                      as latest_update_date
+        -- SLAM-specific period fields
+        null::number as latest_actual_financial_year,
+        null::number as latest_actual_financial_month,
 
-    from REPORTING.MAIN_DATA.CSDS_CARE_CONTACT_ACTIVITY
+        -- Latest CSDS source-file receipt for this provider
+        max(to_date(source_file_received_at)) as latest_update_date
 
-    where provider_code is not null
+    from {{ ref('fct_csds_care_activity') }}
+
+    where provider_organisation_code is not null
 
     group by
-        provider_code,
-        provider_name
+        provider_organisation_code,
+        provider_organisation_name
+
 
     union all
 
