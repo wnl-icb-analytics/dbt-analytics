@@ -112,35 +112,27 @@ with measurements as (
         provider_organisation_code,
         provider_organisation_name
 
-
     union all
 
     -- =====================================================
-    -- SUS Unified Inpatient
-    -- Daily operational feed
+    -- SUS Unified Inpatient / APC
+    -- Provider-level spell monitoring
     -- =====================================================
 
     select
-        current_date()              as measurement_date,
-        current_timestamp()         as measured_at,
-        'SUS_IP'                    as table_id,
-        provider_code,
-        provider_name,
-        count(*)                    as row_count,
-        max(refresh_date)           as latest_refresh_date,
-
-    -- SLAM-specific provider period fields (not used here in SUS Unified tables)
-    null::number                    as latest_actual_financial_year,
-    null::number                    as latest_actual_financial_month,
-    null::date                      as latest_update_date
-
-    from REPORTING.MAIN_DATA.IP
-
-    where provider_code is not null
-
-    group by
-        provider_code,
-        provider_name
+        current_date() as measurement_date,
+        current_timestamp() as measured_at,
+        'SUS_IP' as table_id,
+        spell_commissioning_service_agreement_provider as provider_code,
+        spell_commissioning_service_agreement_provider as provider_name,
+        count(*) as row_count,
+        max(to_date(source_received_at)) as latest_refresh_date,
+        null::number as latest_actual_financial_year,
+        null::number as latest_actual_financial_month,
+        max(to_date(source_received_at)) as latest_update_date
+    from {{ ref('stg_sus_apc_spell') }}
+    where spell_commissioning_service_agreement_provider is not null
+    group by spell_commissioning_service_agreement_provider
 
        union all
 

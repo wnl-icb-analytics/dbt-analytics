@@ -78,20 +78,28 @@ with measurements as (
     from {{ ref('fct_csds_care_activity') }}
 
 
-    union all
+        union all
+
+    -- =====================================================
+    -- SUS Unified Inpatient / APC
+    -- Governed one-row-per-spell staging model
+    -- =====================================================
 
     select
         current_date() as measurement_date,
         current_timestamp() as measured_at,
         'SUS_IP' as table_id,
         count(*) as row_count,
-        max(refresh_date) as refresh_date,
-        datediff(day,
-            max(refresh_date),
+        max(
+            to_date(source_received_at)
+        ) as refresh_date,
+        datediff(
+            day,
+            max(to_date(source_received_at)),
             current_date()
         ) as days_since_refresh,
         'DAILY' as frequency_type
-    from REPORTING.MAIN_DATA.IP
+    from {{ ref('stg_sus_apc_spell') }}
 
     union all
 
@@ -135,22 +143,17 @@ with measurements as (
     from {{ ref('stg_lsacm_latest') }} a
 
     inner join (
-
         select
             financial_year,
             fy_month_submitted
-
         from {{ ref('int_ls_contract_dataset_submissions') }}
-
         where dataset = 'LSACM'
           and financial_year is not null
           and fy_month_submitted is not null
-
         qualify row_number() over (
             order by
                 financial_year desc,
-                fy_month_submitted desc
-        ) = 1
+                fy_month_submitted desc) = 1
 
     ) latest_period
         on try_to_number(
@@ -186,7 +189,9 @@ with measurements as (
             max(case
                     when p.dv_dataset_created_at <= current_timestamp()
                     then to_date(p.dv_dataset_created_at)
-                ),current_date()) as days_since_refresh,
+                end),
+                current_date()
+            ) as days_since_refresh,
         'MONTHLY' as frequency_type
     from {{ ref('stg_lsplcm_latest') }} p
     inner join (
