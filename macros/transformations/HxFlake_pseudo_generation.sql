@@ -53,3 +53,10 @@ LEFT(
     10
 )
 {% endmacro %}
+
+{# Inverse of hxflake_pseudo_generation. Exact while sk_patient_id is below
+   16^8 (eight hex digits); the forward macro drops any higher digit. Returns
+   null for a malformed pseudonym. #}
+{% macro hxflake_to_sk_patient_id(hx_flake) %}
+    try_to_number(reverse(replace({{ hx_flake }}, '-', '')), 'XXXXXXXX')::varchar
+{% endmacro %}

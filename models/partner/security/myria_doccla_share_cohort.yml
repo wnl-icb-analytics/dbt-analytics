@@ -1,0 +1,35 @@
+models:
+  - name: myria_doccla_share_cohort
+    description: >-
+      BEVC (Project Myria) patients currently enrolled with Doccla, who may appear in the
+      DAR067 outbound share. One row per patient and OLIDS person.
+      Population: patients in Doccla's latest enrolled-patient file whose enrolled_date is
+      on or before the build date and who have no discharged_date. Patients missing from
+      the latest file are excluded. Interim: the file feed has no opt-out flag, so
+      withdrawn consent is not yet applied; the share must not go live until this model
+      reads Doccla's enrolment share and excludes opted-out patients.
+      Read by the secure views in PARTNER__MYRIA_RFL.SHARED, which Snowflake-Deployment
+      builds from ACCOUNT_ADMIN.OUTBOUND_SHARING.PATIENT_SHARE_OBJECTS.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [hx_id, person_id]
+    columns:
+      - name: hx_id
+        description: HxFlake pseudonym (XX-XXX-XXX) Doccla uses to identify the patient. Replaces person_id and sk_patient_id in every shared view.
+        data_tests:
+          - not_null
+      - name: sk_patient_id
+        description: Patient surrogate key recovered from hx_id with hxflake_to_sk_patient_id. Joins the share to SUS, CSDS and other commissioning models.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: OLIDS person with this sk_patient_id. Joins the share to OLIDS models. Null when the patient has no OLIDS record; several rows when more than one person shares the sk_patient_id.
+      - name: enrolled_date
+        description: Date Doccla enrolled the patient on BEVC.
+      - name: enrolment_file_date
+        description: Date of the Doccla file this population comes from. Shows how current the enrolled list is.
