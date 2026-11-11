@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: dq_monitoring_provider_config
+    description: >
+      Configuration defining providers that require individual
+      data quality monitoring within each dataset group.
+      Providers not present in this configuration are treated as
+      OTHER for routine monitoring purposes.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+          
+    columns:
+      - name: dataset_group
+        description: Dataset family to which the monitoring rule applies.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['SUS', 'SLAM']
+
+      - name: provider_code
+        description: Provider organisation code.
+        tests:
+          - not_null
+
+      - name: provider_name
+        description: Provider organisation name resolved from organisation_nhs_provider.
+        tests:
+          - not_null
+
+      - name: provider_scope
+        description: Operational monitoring classification applied to the provider.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['CORE', 'SIDELOAD', 'OTHER']
+
+      - name: monitor_individually
+        description: Indicates whether the provider receives individual DQ assessment.
+        tests:
+          - not_null
+
+      - name: alert_enabled
+        description: Indicates whether provider-level alerts may be generated.
+        tests:
+          - not_null

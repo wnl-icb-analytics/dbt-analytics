@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: dq_monitoring_provider_variance
+    description: >
+      Calculates provider-level row count movement between successive
+      monitoring measurements for each monitored dataset. Supports
+      provider-level volume monitoring and investigation of unexpected
+      changes in provider submissions.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: Date on which the provider measurement was collected.
+        tests:
+          - not_null
+
+      - name: measured_at
+        description: Timestamp at which the provider measurement was collected.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Identifier of the monitored dataset.
+        tests:
+          - not_null
+
+      - name: provider_code
+        description: Provider organisation code.
+        tests:
+          - not_null
+
+      - name: provider_name
+        description: Provider organisation name where available.
+
+      - name: row_count
+        description: Current provider-level row count.
+        tests:
+          - not_null
+
+      - name: previous_row_count
+        description: Provider row count from the preceding measurement.
+
+      - name: row_count_change
+        description: Absolute change in provider row count from the preceding measurement.
+
+      - name: row_count_change_pct
+        description: Percentage change in provider row count from the preceding measurement.
+
+      - name: latest_refresh_date
+        description: Latest valid source refresh date associated with the provider measurement.
+
+      - name: latest_actual_financial_year
+        description: Latest financial year containing actual provider activity where financial-period monitoring is applicable.
+
+      - name: latest_actual_financial_month
+        description: Latest financial month containing actual provider activity within the latest actual financial year.
+
+      - name: latest_update_date
+        description: Latest processing or update date observed for the provider.
