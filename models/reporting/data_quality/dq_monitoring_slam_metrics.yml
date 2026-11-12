@@ -1,0 +1,172 @@
+version: 2
+
+models:
+  - name: dq_monitoring_slam_metrics
+    description: >
+      Current enriched SLAM data-quality metrics for the ten configured
+      WNL ICB core hospital providers. The model covers both Aggregate
+      Contract Monitoring (LSACM) and Patient Level Contract Monitoring
+      (LSPLCM).
+
+      Each feed is restricted to the latest genuinely submitted financial
+      period identified by int_ls_contract_dataset_submissions. Provider
+      scope is controlled through dq_monitoring_provider_config.
+
+      The model measures submitted row volume, activity, financial value
+      and null completeness. It is intended to feed the historical,
+      variance, status and Streamlit presentation layers of the SLAM DQ
+      monitoring framework.
+
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: >
+          Calendar date on which the SLAM DQ measurement was produced.
+        data_tests:
+          - not_null
+
+      - name: measured_at
+        description: >
+          Timestamp at which the SLAM DQ measurement was produced.
+        data_tests:
+          - not_null
+
+      - name: table_id
+        description: >
+          SLAM feed identifier. Expected values are SLAM_LSACM and
+          SLAM_LSPLCM.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SLAM_LSACM
+                  - SLAM_LSPLCM
+
+      - name: provider_code
+        description: >
+          NHS organisation code for the configured WNL ICB core provider.
+        data_tests:
+          - not_null
+
+      - name: provider_name
+        description: >
+          NHS organisation name obtained from the shared provider
+          configuration model.
+        data_tests:
+          - not_null
+
+      - name: alert_enabled
+        description: >
+          Indicates whether the provider is eligible for future automated
+          SLAM DQ alerting.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+
+      - name: financial_year
+        description: >
+          Financial year represented by the latest genuinely submitted
+          period for the relevant SLAM feed.
+        data_tests:
+          - not_null
+
+      - name: financial_month
+        description: >
+          Financial month represented by the latest genuinely submitted
+          period for the relevant SLAM feed.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 5
+                  - 6
+                  - 7
+                  - 8
+                  - 9
+                  - 10
+                  - 11
+                  - 12
+                quote: false
+
+      - name: row_count
+        description: >
+          Number of SLAM records for the provider and selected financial
+          period.
+        data_tests:
+          - not_null
+
+      - name: activity_value
+        description: >
+          Total submitted activity for the provider and selected period.
+          For LSACM this is the sum of DV_ACTUAL_ACTIVITY. For LSPLCM this
+          is the sum of DV_ACTIVITY_COUNT. This field may be null where
+          every contributing source value is null.
+
+      - name: financial_value
+        description: >
+          Total submitted financial value for the provider and selected
+          period. For LSACM this is the sum of DV_ACTUAL_PRICE. For LSPLCM
+          this is the sum of DV_TOTAL_COST. This field may be null where
+          every contributing source value is null.
+
+      - name: null_activity_count
+        description: >
+          Number of records where the feed-specific activity measure is
+          null.
+        data_tests:
+          - not_null
+
+      - name: null_financial_count
+        description: >
+          Number of records where the feed-specific financial measure is
+          null.
+        data_tests:
+          - not_null
+
+      - name: null_activity_pct
+        description: >
+          Percentage of records where the feed-specific activity measure
+          is null.
+        data_tests:
+          - not_null
+
+      - name: null_financial_pct
+        description: >
+          Percentage of records where the feed-specific financial measure
+          is null.
+        data_tests:
+          - not_null
+
+      - name: latest_refresh_date
+        description: >
+          Latest non-future dataset-created date found within the provider
+          and selected SLAM financial period.
+
+      - name: latest_update_date
+        description: >
+          Latest submission-loaded date found within the provider and
+          selected SLAM financial period.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - table_id
+              - provider_code
+              - financial_year
+              - financial_month
