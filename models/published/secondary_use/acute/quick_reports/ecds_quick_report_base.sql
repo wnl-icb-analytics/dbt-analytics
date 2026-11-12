@@ -53,8 +53,8 @@ LEFT JOIN (select distinct provider_code,provider_shorthand from {{ ref('stg_ref
 select sk_organisation_id, 
 REPLACE(
     REPLACE(organisation_name, 'NHS ', ''),' Integrated Care Board','') AS icb_name
---FROM {{ ref('stg_dictionary_dbo_organisation')}}
-FROM STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION
+FROM {{ ref('stg_dictionary_dbo_organisation')}}
+--FROM STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION
 where organisation_name like '%Integrated Care Board'
 )
 --get accurate residential location.
