@@ -5,18 +5,48 @@
 }}
 /* Base table AE Encounters for rolling 12m view from OBT_ENCOUNTER_UEC reporting table.
 impute missing demographics from PDS Demographics
-keep to WNL COMM GROUP for now
-where comm_group <> 'WNL'2.3 million and where comm_group = 'WNL' 1.9 million
 */
-
-WITH WNL_NAMES AS (
-SELECT DISTINCT
-        provider_code,
-        provider_shorthand,
-        provider_name,
-FROM {{ ref('stg_reference_wnl_reporting_names') }}
---FROM STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES
-where provider_type = 'Acute'
+--WNL short names and tidied up site_names
+with wnl_prov_base as (
+select distinct 
+u.organisation_id as provider_code, 
+u.organisation_name as provider_name, 
+u.site_id as site_code, 
+CASE 
+    WHEN u.site_id = 'R1K12' THEN 'UCC Central Middlesex Hospital'
+    WHEN u.site_id = 'RP641' THEN 'Moorfields City Road'
+    WHEN u.site_id = 'RP601' THEN 'Richard Desmond Eye Centre'
+    WHEN u.site_id = 'RQM25' THEN 'UCC Chelsea & Westminster Hospital'
+    WHEN u.site_id = 'J4X8V' THEN 'UCC West Middlesex University Hospital'
+    WHEN u.site_id = 'RYX01' THEN 'UCC St Charles Hospital'
+    WHEN u.site_id = 'RAS02' THEN 'Mount Vernon Hospital'
+    WHEN u.site_id = 'R1K14' THEN 'UCC Ealing Hospital'
+    WHEN u.site_id = 'R1K11' THEN 'UCC Northwick Park'
+    ELSE u.site_name END AS site_name
+FROM {{ ref("obt_encounter_uec") }} u
+--FROM  REPORTING.ACUTE.OBT_ENCOUNTER_UEC u
+where u.organisation_id in ('RKE', 'RAL', 'R1K','RAS','RQM','RYJ','RYX','RP6','RRV','RAP') OR u.site_id = 'RAPNM'
+and u.start_date >= DATEADD(
+    'year', -2,
+    DATE_FROM_PARTS(YEAR(CURRENT_DATE) - IFF(MONTH(CURRENT_DATE) < 4, 1, 0),4,1 ) )
+)
+,WNL_NAMES AS (
+select
+b.provider_code,
+CASE
+WHEN b.provider_code = 'RAP' THEN 'Royal Free London NHS Foundation Trust'
+ELSE b.provider_name END AS provider_name,
+CASE 
+WHEN b.provider_code = 'RAP' THEN 'RFL' 
+WHEN b.provider_code = 'RP6' THEN 'MOOR'
+WHEN b.provider_code = 'R1K' THEN 'LNWHT'
+WHEN b.provider_code = 'RKE' THEN 'WHIT'
+ELSE w.provider_shorthand END AS provider_shorthand,
+b.site_code,
+b.site_name,
+FROM wnl_prov_base b
+LEFT JOIN (select distinct provider_code,provider_shorthand from {{ ref('stg_reference_wnl_reporting_names') }} WHERE provider_type <> 'Mental Health') w using (provider_code)
+--LEFT JOIN (select distinct provider_code,provider_shorthand from STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES WHERE provider_type <> 'Mental Health') w using (provider_code)
 )
 --for non wnl activity can find which ICB the patient is registered with
 ,lookup_icb as (
@@ -96,16 +126,9 @@ WHEN u.reg_practice_at_event in ('E84023','E84624','E84667') THEN 'West and Nort
 ELSE icb.icb_name END AS icb_name,
 --PROVIDER
 u.organisation_id as provider_code,
-CASE 
-WHEN u.organisation_id = 'RAP' THEN 'RFL' ELSE wnl.provider_shorthand END AS provider_shorthand,
-CASE 
-WHEN u.organisation_id = 'RAP' THEN 'Royal Free London NHS Foundation Trust'
-ELSE COALESCE(wnl.provider_name,org2.organisation_name) END AS provider_name,
-u.site_id,
-CASE 
-WHEN u.site_name = 'West Middlesex University Hospital Urgent Treatment Centre' THEN 'WestMid UTC'
-WHEN u.site_name = 'Moorfields Eye Hospital (City Road Campus)' THEN 'Moorfields City Road'
-WHEN u.site_name LIKE '%Desmond%' THEN 'Richard Desmond Eye Centre' ELSE u.site_name END AS site_name,
+COALESCE(u.organisation_name,org2.organisation_name) AS provider_name,
+u.site_id as site_code,
+REGEXP_REPLACE(u.site_name,'\\bUtc\\b', 'UTC') as site_name,
 --DEPARTMENT
 CASE 
 WHEN u.department_type = '01' THEN 'Major'
@@ -254,7 +277,6 @@ g.wd25_nm as ward_name,
 u.attendance_count
 FROM {{ ref("obt_encounter_uec") }} u
 --FROM REPORTING.ACUTE.OBT_ENCOUNTER_UEC u
-LEFT JOIN WNL_NAMES wnl on u.organisation_id = wnl.provider_code
 LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org2 on u.organisation_id = org2.organisation_code
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION org2 on u.organisation_id = org2.organisation_code
 LEFT JOIN {{ ref("int_person_pds_demographics") }} pds using (sk_patient_id)
@@ -275,7 +297,7 @@ WHERE u.start_date >= DATEADD(
 ,base_clean as (
 select
 b.sk_patient_id,
-b.visit_occurrence_id,
+--b.visit_occurrence_id,
 b.commissioner_code,
 b.comm_group,
 b.practice_status_code,
@@ -288,11 +310,10 @@ COALESCE(p.registered_borough_name,b.health_borough) as health_borough,
 CASE 
 WHEN b.icb_name = 'North West London' THEN 'West and North London' ELSE b.icb_name END AS icb_name,
 b.provider_code,
-b.provider_shorthand,
-CASE WHEN b.provider_shorthand IS NOT NULL THEN b.provider_shorthand ELSE
-COALESCE(b.provider_name,REGEXP_REPLACE(b.site_name,'\\bUtc\\b', 'UTC')) END as provider_name,
-b.site_id,
-b.site_name,
+wnl.provider_shorthand,
+COALESCE (wnl.provider_name, b.provider_name) as provider_name,
+b.site_code,
+COALESCE (wnl.site_name,b.site_name) as site_name,
 b.dept_type_desc,
 b.attendance_date,
 b.day_of_week,
@@ -341,6 +362,7 @@ b.attendance_count
 FROM base_table b
 LEFT JOIN  {{ ref('practice_wnl_all') }} p using (practice_code)
 --LEFT JOIN REFERENCE.PRIMARY_CARE.PRACTICE_WNL_ALL p using (practice_code)
+LEFT JOIN WNL_NAMES wnl on b.provider_code = wnl.provider_code and b.site_code = wnl.site_code
 )
 --add in is_registered flag and highlight on GP codes (PCN, WIC and other UEC sources that are not registered GP practices).
 select *,
