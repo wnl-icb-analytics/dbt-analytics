@@ -201,41 +201,64 @@ domain_sub_scores as (
     from encoding_features
 ),
 
-cohort_sub_scores as(
+cohort_scores as (
     select dss.*
-    , il.inclusion_rule
-    , il.is_applicable_rule
+        , il.inclusion_rule
+        , il.is_applicable_rule
+        {%- for domain in domain_weights %}
+        , {% if domain in log_domains %}ln(1 + dss.score_{{ domain }}){% else %}dss.score_{{ domain }}{% endif %} as transformed_score_{{ domain }}
+        {%- endfor %}
     from inclusion_list il
     inner join domain_sub_scores dss on il.sk_patient_id = dss.sk_patient_id
 ),
 
-transformed_scores as (
-    select *
+-- Means and standard deviations are grouped aggregates joined back to each row rather
+-- than chained window functions. The results are the same, but each statistic reaches
+-- the next step as a plain column. With chained windows Snowflake compiled the nested
+-- expressions for about 8 minutes before a 4-second run.
+
+-- each domain's neighbourhood and cohort mean
+neighbourhood_means as (
+    select neighbourhood_code
+        , inclusion_rule
         {%- for domain in domain_weights %}
-        , {% if domain in log_domains %}ln(1 + score_{{ domain }}){% else %}score_{{ domain }}{% endif %} as transformed_score_{{ domain }}
+        , avg(transformed_score_{{ domain }}) as mean_score_{{ domain }}
         {%- endfor %}
-    from cohort_sub_scores
+    from cohort_scores
+    group by neighbourhood_code, inclusion_rule
 ),
 
 -- centre each domain on its neighbourhood and cohort mean
 centred_scores as (
-    select *
+    select cs.*
         {%- for domain in domain_weights %}
-        , transformed_score_{{ domain }}
-            - avg(transformed_score_{{ domain }}) over (partition by neighbourhood_code, inclusion_rule) as centred_score_{{ domain }}
+        , cs.transformed_score_{{ domain }} - nm.mean_score_{{ domain }} as centred_score_{{ domain }}
         {%- endfor %}
-    from transformed_scores
+    from cohort_scores cs
+    inner join neighbourhood_means nm
+        on cs.neighbourhood_code = nm.neighbourhood_code
+        and cs.inclusion_rule = nm.inclusion_rule
 ),
 
--- divide by the pooled within-neighbourhood standard deviation for the cohort, so a small
+-- pooled within-neighbourhood standard deviation for the cohort, so a small
 -- neighbourhood does not get its own unstable scale. Null when the domain does not vary.
-scaled_scores as (
-    select *
+cohort_spreads as (
+    select inclusion_rule
         {%- for domain in domain_weights %}
-        , centred_score_{{ domain }}
-            / nullif(stddev(centred_score_{{ domain }}) over (partition by inclusion_rule), 0) as scaled_score_{{ domain }}
+        , nullif(stddev(centred_score_{{ domain }}), 0) as sd_score_{{ domain }}
         {%- endfor %}
     from centred_scores
+    group by inclusion_rule
+),
+
+scaled_scores as (
+    select cs.*
+        {%- for domain in domain_weights %}
+        , cs.centred_score_{{ domain }} / sp.sd_score_{{ domain }} as scaled_score_{{ domain }}
+        {%- endfor %}
+    from centred_scores cs
+    inner join cohort_spreads sp
+        on cs.inclusion_rule = sp.inclusion_rule
 ),
 
 -- soft-clip each z-score to (-3, 3) with 3 * tanh(z / 3): close to z near the mean and
@@ -264,35 +287,51 @@ combined_scores as (
     from bounded_scores
 ),
 
-centred_composite as (
-    select *
-        , raw_score_treatment
-            - avg(raw_score_treatment) over (partition by neighbourhood_code, inclusion_rule) as centred_score_treatment
+composite_means as (
+    select neighbourhood_code
+        , inclusion_rule
+        , avg(raw_score_treatment) as mean_raw_score_treatment
     from combined_scores
+    group by neighbourhood_code, inclusion_rule
+),
+
+centred_composite as (
+    select cs.*
+        , cs.raw_score_treatment - cm.mean_raw_score_treatment as centred_score_treatment
+    from combined_scores cs
+    inner join composite_means cm
+        on cs.neighbourhood_code = cm.neighbourhood_code
+        and cs.inclusion_rule = cm.inclusion_rule
 ),
 
 -- averaging several domains narrows the composite's spread, so re-standardise it the same
 -- way as each domain (pooled within-neighbourhood standard deviation for the cohort).
 -- No age adjustment is applied.
-composite_scores as (
-    select *
-        , zeroifnull(
-            centred_score_treatment
-            / nullif(stddev(centred_score_treatment) over (partition by inclusion_rule), 0)
-          ) as composite_z
-        -- map to 0-100 on a straight line, so the score keeps the composite's shape: 50 is an
-        -- average patient and each z unit is worth score_points_per_z. The hard cap only
-        -- keeps the few patients beyond the range within 0-100. Left unrounded: tiers and
-        -- the age adjustment use this value, and rounding is applied only in the final step.
-        , least(greatest(50 + {{ score_points_per_z }} * composite_z, 0), 100) as score_treatment_exact
+composite_spreads as (
+    select inclusion_rule
+        , nullif(stddev(centred_score_treatment), 0) as sd_score_treatment
     from centred_composite
+    group by inclusion_rule
+),
+
+composite_scores as (
+    select cc.*
+        , zeroifnull(cc.centred_score_treatment / sp.sd_score_treatment) as composite_z
+    from centred_composite cc
+    inner join composite_spreads sp
+        on cc.inclusion_rule = sp.inclusion_rule
 ),
 
 {% set tier_1_top_pct = ((1 - tier_1_percentile) * 100) | round | int %}
 {% set tier_2_top_pct = ((1 - tier_2_percentile) * 100) | round | int %}
 
+-- map to 0-100 on a straight line, so the score keeps the composite's shape: 50 is an
+-- average patient and each z unit is worth score_points_per_z. The hard cap only keeps the
+-- few patients beyond the range within 0-100. Left unrounded: tiers and the age adjustment
+-- use this value, and rounding is applied only in the final step.
 age_banded_scores as (
     select *
+        , least(greatest(50 + {{ score_points_per_z }} * composite_z, 0), 100) as score_treatment_exact
         , case
             when age is null then 'Unknown'
             when age < 40 then '18-39'
@@ -303,18 +342,26 @@ age_banded_scores as (
     from composite_scores
 ),
 
--- priority tiers for clinicians, by position within the neighbourhood, cohort and age band,
--- so each age band has its own top tiers
-tiered_scores as (
+-- position within the neighbourhood, cohort and age band, so each age band has its own
+-- top tiers
+ranked_scores as (
     select *
+        , percent_rank() over (
+            partition by neighbourhood_code, inclusion_rule, age_band
+            order by score_treatment_exact
+          ) as treatment_percent_rank
+    from age_banded_scores
+),
+
+-- priority tiers for clinicians
+tiered_scores as (
+    select * exclude (treatment_percent_rank)
         , case
-            when percent_rank() over (partition by neighbourhood_code, inclusion_rule, age_band order by score_treatment_exact)
-                >= {{ tier_1_percentile }} then 1
-            when percent_rank() over (partition by neighbourhood_code, inclusion_rule, age_band order by score_treatment_exact)
-                >= {{ tier_2_percentile }} then 2
+            when treatment_percent_rank >= {{ tier_1_percentile }} then 1
+            when treatment_percent_rank >= {{ tier_2_percentile }} then 2
             else 3
           end as treatment_priority_tier
-    from age_banded_scores
+    from ranked_scores
 ),
 
 labelled_scores as (
@@ -325,16 +372,12 @@ labelled_scores as (
             else 'Below top {{ tier_2_top_pct }}% in neighbourhood and age band'
           end as treatment_priority_tier_label
     from tiered_scores
-)
+),
 
--- last step: the age multiplier from cltcs_score_treatment, applied to the unrounded score in
--- a separate column so the unadjusted score and the tiers are unchanged. Both final scores
--- are rounded to whole points here and nowhere earlier, so the age adjustment never works
--- from a rounded number and small drift between builds does not move the published scores.
-select
-        * exclude (score_treatment_exact),
-        round(score_treatment_exact, 0) as score_treatment,
-        case
+-- the age multiplier from cltcs_score_treatment
+age_multiplied_scores as (
+    select *
+        , case
             when age is null then 1.0
             else (
                 1
@@ -343,6 +386,17 @@ select
                 -- linear penalty from age 60, capped at -15% from age 100 onward
                 - 0.15 * least(greatest(age - 60, 0), 40) / 40.0
             )
-        end as age_multiplier,
-        round(least(greatest(score_treatment_exact * age_multiplier, 0), 100), 0) as score_treatment_age_adjusted
+          end as age_multiplier
     from labelled_scores
+)
+
+-- last step: the age multiplier is applied to the unrounded score in a separate column so
+-- the unadjusted score and the tiers are unchanged. Both final scores are rounded to whole
+-- points here and nowhere earlier, so the age adjustment never works from a rounded number
+-- and small drift between builds does not move the published scores.
+select
+        * exclude (score_treatment_exact, age_multiplier),
+        round(score_treatment_exact, 0) as score_treatment,
+        age_multiplier,
+        round(least(greatest(score_treatment_exact * age_multiplier, 0), 100), 0) as score_treatment_age_adjusted
+    from age_multiplied_scores
