@@ -48,6 +48,15 @@ FROM wnl_prov_base b
 LEFT JOIN (select distinct provider_code,provider_shorthand from {{ ref('stg_reference_wnl_reporting_names') }} WHERE provider_type <> 'Mental Health') w using (provider_code)
 --LEFT JOIN (select distinct provider_code,provider_shorthand from STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES WHERE provider_type <> 'Mental Health') w using (provider_code)
 )
+--for non wnl activity can find which ICB the patient is registered with
+,lookup_icb as (
+select sk_organisation_id, 
+REPLACE(
+    REPLACE(organisation_name, 'NHS ', ''),' Integrated Care Board','') AS icb_name
+--FROM {{ ref('stg_dictionary_dbo_organisation')}}
+FROM STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION
+where organisation_name like '%Integrated Care Board'
+)
 --get accurate residential location.
 ,borough_res_category as (
     SELECT 
