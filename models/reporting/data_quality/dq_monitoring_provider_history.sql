@@ -33,8 +33,8 @@ with measurements as (
         max(to_date(source_file_received_at)) as latest_refresh_date,
 
         -- SLAM-specific period fields
-        null::number as latest_actual_financial_year,
-        null::number as latest_actual_financial_month,
+        null::integer as latest_actual_financial_year,
+        null::integer as latest_actual_financial_month,
 
         -- Latest CSDS source-file receipt for this provider
         max(to_date(source_file_received_at)) as latest_update_date
@@ -66,8 +66,8 @@ with measurements as (
         max(to_date(source_file_received_at)) as latest_refresh_date,
 
         -- SLAM-specific period fields
-        null::number as latest_actual_financial_year,
-        null::number as latest_actual_financial_month,
+        null::integer as latest_actual_financial_year,
+        null::integer as latest_actual_financial_month,
 
         -- Latest CSDS source-file receipt for this provider
         max(to_date(source_file_received_at)) as latest_update_date
@@ -98,8 +98,8 @@ with measurements as (
         max(to_date(source_file_received_at)) as latest_refresh_date,
 
         -- SLAM-specific period fields
-        null::number as latest_actual_financial_year,
-        null::number as latest_actual_financial_month,
+        null::integer as latest_actual_financial_year,
+        null::integer as latest_actual_financial_month,
 
         -- Latest CSDS source-file receipt for this provider
         max(to_date(source_file_received_at)) as latest_update_date
@@ -127,8 +127,8 @@ with measurements as (
         spell_commissioning_service_agreement_provider as provider_name,
         count(*) as row_count,
         max(to_date(source_received_at)) as latest_refresh_date,
-        null::number as latest_actual_financial_year,
-        null::number as latest_actual_financial_month,
+        null::integer as latest_actual_financial_year,
+        null::integer as latest_actual_financial_month,
         max(to_date(source_received_at)) as latest_update_date
     from {{ ref('stg_sus_apc_spell') }}
     where spell_commissioning_service_agreement_provider is not null
@@ -158,8 +158,8 @@ with measurements as (
             end
         )                                 as latest_refresh_date,
 
-        a.dv_financial_year               as latest_actual_financial_year,
-        a.dv_financial_month              as latest_actual_financial_month,
+        a.dv_financial_year::integer               as latest_actual_financial_year,
+        a.dv_financial_month::integer              as latest_actual_financial_month,
 
         max(
             to_date(a.submission_loaded_at)
@@ -225,8 +225,8 @@ with measurements as (
             end
         )                                 as latest_refresh_date,
 
-        p.dv_financial_year               as latest_actual_financial_year,
-        p.dv_financial_month              as latest_actual_financial_month,
+        p.dv_financial_year::integer               as latest_actual_financial_year,
+        p.dv_financial_month::integer              as latest_actual_financial_month,
 
         max(
             to_date(p.submission_loaded_at)

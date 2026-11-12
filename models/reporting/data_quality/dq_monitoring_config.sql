@@ -10,8 +10,8 @@ select
     -- Identity
     'CSDS_REFERRAL'            as table_id,
     'REPORTING'                as database_name,
-    'MAIN_DATA'                as schema_name,
-    'CSDS_REFERRAL'            as table_name,
+    'COMMUNITY'                as schema_name,
+    'FCT_CSDS_REFERRAL'        as table_name,
 
     -- Monitoring
     true                       as is_active,
@@ -31,7 +31,7 @@ select
     'MONTHLY_SNAPSHOT'         as object_type,
 
     -- Metadata
-    'Legacy monthly CSDS table' as notes
+    'Monthly CSDS table' as notes
 
 union all
 
@@ -45,8 +45,8 @@ select
     -- Identity
     'CSDS_CARE_CONTACT'        as table_id,
     'REPORTING'                as database_name,
-    'MAIN_DATA'                as schema_name,
-    'CSDS_CARE_CONTACT'        as table_name,
+    'COMMUNITY'                as schema_name,
+    'FCT_CSDS_CARE_CONTACT'    as table_name,
 
     -- Monitoring
     true                       as is_active,
@@ -66,7 +66,7 @@ select
     'MONTHLY_SNAPSHOT'         as object_type,
 
     -- Metadata
-    'Legacy monthly CSDS table' as notes
+    'Monthly CSDS table' as notes
 
 union all
 
@@ -80,8 +80,8 @@ select
     -- Identity
     'CSDS_CARE_CONTACT_ACTIVITY' as table_id,
     'REPORTING'                  as database_name,
-    'MAIN_DATA'                  as schema_name,
-    'CSDS_CARE_CONTACT_ACTIVITY' as table_name,
+    'COMMUNITY'                  as schema_name,
+    'FCT_CSDS_CARE_ACTIVITY'     as table_name,
 
     -- Monitoring
     true                       as is_active,
@@ -101,7 +101,7 @@ select
     'MONTHLY_SNAPSHOT'         as object_type,
 
     -- Metadata
-    'Legacy monthly CSDS table' as notes
+    'Monthly CSDS table' as notes
 
 union all
 
@@ -114,9 +114,9 @@ select
 
     -- Identity
     'SUS_IP'                   as table_id,
-    'REPORTING'                as database_name,
-    'MAIN_DATA'                as schema_name,
-    'IP'                       as table_name,
+    'STAGING'                  as database_name,
+    'SUS'                      as schema_name,
+    'STG_SUS_APC_SPELL'        as table_name,
 
     -- Monitoring
     true                       as is_active,
@@ -147,10 +147,9 @@ union all
 select
 
     'SLAM_LSACM'                       as table_id,
-    'DATA_LAKE'                        as database_name,
-    'SERVICES_DATA'                    as schema_name,
-    'LSACM_LocalStandardAggregateContractMonitoring'
-                                       as table_name,
+    'STAGING'                          as database_name,
+    'SLAM'                             as schema_name,
+    'STG_LSACM_LATEST'                 as table_name,
 
     true                               as is_active,
     'DV_DATEANDTIMEDATASETCREATED'     as refresh_column,
@@ -177,10 +176,9 @@ union all
 select
 
     'SLAM_LSPLCM'                       as table_id,
-    'DATA_LAKE'                        as database_name,
-    'SERVICES_DATA'                    as schema_name,
-    'LSPLCM_LocalStandardPatientLevelContractMonitoring'
-                                       as table_name,
+    'STAGING'                           as database_name,
+    'SLAM'                              as schema_name,
+    'STG_LSPLCM_LATEST'                 as table_name,
 
     true                               as is_active,
     'DV_DATEANDTIMEDATASETCREATED'     as refresh_column,
