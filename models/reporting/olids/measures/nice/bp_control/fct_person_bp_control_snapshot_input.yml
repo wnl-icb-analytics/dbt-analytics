@@ -5,7 +5,8 @@ models:
       pressure reading and an applicable target.
 
 
-      Records the latest blood pressure pair and whether it meets the applied target. Applied target values are not included. Age
+      Records the latest valid general BP reading and a control flag based on the latest
+      control-eligible evidence, which may be from a different date. Applied target values are not included. Age
       and time-since-reading fields are omitted so elapsed time alone does not create a new
       history version. Based on NICE NG136.
     config:
@@ -19,10 +20,10 @@ models:
           - unique
           - not_null
       - name: is_overall_bp_controlled
-        description: "Whether both latest blood pressure values are strictly below their applied targets."
+        description: "Whether both components of the latest control-eligible evidence are strictly below their context-specific patient targets. The evidence may be from a different date than latest_bp_date. NULL when control evidence is absent or invalid."
       - name: latest_systolic_value
-        description: "Systolic blood pressure of the selected complete pair, in mmHg; null when no pair is recorded."
+        description: "Systolic value of the latest valid general BP reading in mmHg."
       - name: latest_diastolic_value
-        description: "Diastolic blood pressure of the selected complete pair, in mmHg; null when no pair is recorded."
+        description: "Diastolic value of the latest valid general BP reading in mmHg."
       - name: latest_bp_date
-        description: "Date of the latest complete blood pressure pair through the reporting date; may precede the measurement window. Null when absent."
+        description: "Clinical date of the latest valid general BP reading, also used for monitoring and recording completion."

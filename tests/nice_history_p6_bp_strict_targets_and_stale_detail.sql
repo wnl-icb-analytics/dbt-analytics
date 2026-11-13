@@ -4,7 +4,7 @@
 {% set actual_249 = actual_249 | replace(nice_reference_population('by_month'), 'SELECT * FROM synthetic_population') %}
 {% set actual_249 = actual_249 | replace(nice_register('DM', 'by_month'), 'SELECT * FROM synthetic_dm') %}
 {% set actual_249 = actual_249 | replace(nice_register('FRAIL', 'by_month'), 'SELECT * FROM synthetic_frail') %}
-{% set actual_249 = actual_249 | replace(nice_ref('int_nice_blood_pressure_latest', 'by_month') | string, 'synthetic_bp') %}
+{% set actual_249 = actual_249 | replace(nice_ref('int_nice_blood_pressure_control_latest_by_context', 'by_month') | string, '(SELECT * FROM synthetic_bp_context)') %}
 
 WITH synthetic_keys AS (
     SELECT
@@ -70,6 +70,14 @@ synthetic_bp AS (
         (614, '2024-01-31', '2024-01-01', TRUE, 134, 85, TRUE, FALSE, 'HBPM_ABPM')
 ),
 
+synthetic_bp_context AS (
+    SELECT person_id, reporting_date AS reporting_date, latest_bp_date AS reading_date,
+        latest_systolic_value AS systolic_value, latest_diastolic_value AS diastolic_value,
+        is_valid_bp, is_home_bp_event, is_abpm_bp_event, applied_measurement_context,
+        IFF(is_home_bp_event, 'HOME', IFF(is_abpm_bp_event, 'ABPM', 'CLINIC')) AS bp_context_group,
+        NULL::TIMESTAMP_NTZ AS date_recorded, 'SYN' AS observation_id
+    FROM synthetic_bp
+),
 actual_249 AS ({{ actual_249 }})
 
 SELECT COUNT(*) AS failure_count
