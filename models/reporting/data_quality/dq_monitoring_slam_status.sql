@@ -123,14 +123,14 @@ overall_status as (
 
             when activity_completeness_status = 'AMBER'
                 then
-                    'Partial activity nulls detected'
+                    'Partial nulls detected'
 
             when financial_completeness_status = 'AMBER'
                 then
-                    'Partial financial nulls detected'
+                    'Partial nulls detected'
 
             else
-                'No activity or financial nulls detected'
+                'No nulls detected'
         end as status_reason
 
     from status_logic
