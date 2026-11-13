@@ -1,0 +1,277 @@
+version: 2
+
+models:
+  - name: dq_monitoring_slam_current
+    description: >
+      Current SLAM data-quality status for the ten configured WNL ICB
+      core hospital providers.
+
+      The model selects the latest available observation for each provider
+      and SLAM feed from dq_monitoring_slam_status.
+
+      It contains no additional DQ calculations or status rules. Its purpose
+      is to provide a compact current-state dataset for Streamlit and other
+      downstream reporting.
+
+      Expected output is up to twenty rows: one LSACM and one LSPLCM
+      observation for each of the ten configured core providers.
+
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: >
+          Measurement date of the latest SLAM DQ observation.
+        data_tests:
+          - not_null
+
+      - name: measured_at
+        description: >
+          Timestamp at which the latest observation was recorded.
+        data_tests:
+          - not_null
+
+      - name: table_id
+        description: >
+          SLAM feed identifier.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SLAM_LSACM
+                  - SLAM_LSPLCM
+
+      - name: provider_code
+        description: >
+          NHS organisation code for the monitored core provider.
+        data_tests:
+          - not_null
+
+      - name: provider_name
+        description: >
+          NHS organisation name for the monitored core provider.
+        data_tests:
+          - not_null
+
+      - name: alert_enabled
+        description: >
+          Indicates whether the provider is eligible for future automated
+          SLAM DQ alerting.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+
+      - name: financial_year
+        description: >
+          Financial year of the current genuinely submitted SLAM period.
+        data_tests:
+          - not_null
+
+      - name: financial_month
+        description: >
+          Financial month of the current genuinely submitted SLAM period.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 5
+                  - 6
+                  - 7
+                  - 8
+                  - 9
+                  - 10
+                  - 11
+                  - 12
+                quote: false
+
+      - name: previous_measurement_date
+        description: >
+          Measurement date of the preceding daily observation.
+
+      - name: previous_financial_year
+        description: >
+          Financial year recorded in the preceding observation.
+
+      - name: previous_financial_month
+        description: >
+          Financial month recorded in the preceding observation.
+
+      - name: reporting_period_changed
+        description: >
+          Indicates whether the genuine submitted financial period changed
+          between the current and preceding observations.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+
+      - name: row_count
+        description: >
+          Current row count for the provider and SLAM feed.
+        data_tests:
+          - not_null
+
+      - name: previous_row_count
+        description: >
+          Row count from the preceding observation.
+
+      - name: row_count_change
+        description: >
+          Absolute movement in row count compared with the preceding
+          observation.
+
+      - name: row_count_change_pct
+        description: >
+          Percentage movement in row count compared with the preceding
+          observation.
+
+      - name: activity_value
+        description: >
+          Current submitted activity total. LSACM uses DV_ACTUAL_ACTIVITY
+          and LSPLCM uses DV_ACTIVITY_COUNT.
+
+      - name: previous_activity_value
+        description: >
+          Submitted activity from the preceding observation.
+
+      - name: activity_change
+        description: >
+          Absolute movement in submitted activity.
+
+      - name: activity_change_pct
+        description: >
+          Percentage movement in submitted activity.
+
+      - name: financial_value
+        description: >
+          Current submitted financial value. LSACM uses DV_ACTUAL_PRICE
+          and LSPLCM uses DV_TOTAL_COST.
+
+      - name: previous_financial_value
+        description: >
+          Submitted financial value from the preceding observation.
+
+      - name: financial_change
+        description: >
+          Absolute movement in submitted financial value.
+
+      - name: financial_change_pct
+        description: >
+          Percentage movement in submitted financial value.
+
+      - name: null_activity_count
+        description: >
+          Number of current records containing a null activity measure.
+        data_tests:
+          - not_null
+
+      - name: null_activity_pct
+        description: >
+          Percentage of current records containing a null activity measure.
+        data_tests:
+          - not_null
+
+      - name: previous_null_activity_pct
+        description: >
+          Activity null percentage from the preceding observation.
+
+      - name: null_activity_pct_change
+        description: >
+          Percentage-point movement in the activity null rate.
+
+      - name: null_financial_count
+        description: >
+          Number of current records containing a null financial measure.
+        data_tests:
+          - not_null
+
+      - name: null_financial_pct
+        description: >
+          Percentage of current records containing a null financial measure.
+        data_tests:
+          - not_null
+
+      - name: previous_null_financial_pct
+        description: >
+          Financial null percentage from the preceding observation.
+
+      - name: null_financial_pct_change
+        description: >
+          Percentage-point movement in the financial null rate.
+
+      - name: latest_refresh_date
+        description: >
+          Latest non-future dataset-created date for the current
+          provider/feed observation.
+
+      - name: latest_update_date
+        description: >
+          Latest submission-loaded date for the current provider/feed
+          observation.
+
+      - name: activity_completeness_status
+        description: >
+          Current activity completeness status.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - GREEN
+                  - AMBER
+                  - RED
+
+      - name: financial_completeness_status
+        description: >
+          Current financial completeness status.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - GREEN
+                  - AMBER
+                  - RED
+
+      - name: dq_status
+        description: >
+          Current overall SLAM DQ status.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - GREEN
+                  - AMBER
+                  - RED
+
+      - name: status_reason
+        description: >
+          Human-readable explanation for the current SLAM DQ status.
+        data_tests:
+          - not_null
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - table_id
+              - provider_code
