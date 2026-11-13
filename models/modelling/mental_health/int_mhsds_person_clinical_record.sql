@@ -43,19 +43,12 @@ select
     s.source_file_received_at::timestamp_ntz as source_received_at,
     'MHSDS'::varchar as source_dataset,
     'fct_mhsds_clinical_record'::varchar as source_model_name,
-    case
-        when upper(s.coding_scheme_description) like 'SNOMED CT%' then 'SNOMED CT'
-        when upper(s.coding_scheme_description) in ('READ V2', 'READ CODED CLINICAL TERMS VERSION 2') then 'Read v2'
-        when upper(s.coding_scheme_description) in ('CTV3', 'READ CODED CLINICAL TERMS VERSION 3 (CTV3)') then 'CTV3'
-        else s.coding_scheme_description
-    end::varchar as source_coding_system,
-    coalesce(source_snomed.snomed_code, mapped_snomed.snomed_code, read_snomed.snomed_code) as mapped_code,
-    case
-        when source_snomed.snomed_code is not null then source_snomed.preferred_term
-        when mapped_snomed.snomed_code is not null then mapped_snomed.preferred_term
-        else read_snomed.preferred_term
-    end::varchar as mapped_code_name,
-    iff(mapped_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
+    s.clinical_code_system::varchar as source_coding_system,
+    s.snomed_code as mapped_code,
+    s.snomed_code_name as mapped_code_name,
+    iff(s.snomed_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
+    s.snomed_mapping_method,
+    s.is_snomed_mapping_assured,
     case
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false and s.is_care_activity_referral_consistent is distinct from false and s.is_care_activity_contact_consistent is distinct from false then s.care_activity_source_record_id::varchar
         when (s.person_id = pr.person_id) is distinct from false then s.referral_source_record_id::varchar
@@ -73,19 +66,5 @@ select
 from {{ ref('fct_mhsds_clinical_record') }} as s
 left join {{ ref('fct_mhsds_referral') }} as pr
     on s.referral_source_record_id = pr.source_record_id
-left join {{ ref('snomed_concept') }} as source_snomed
-    on trim(s.clinical_code) = source_snomed.snomed_code
-    and upper(s.coding_scheme_description) like 'SNOMED CT%'
-left join {{ ref('snomed_concept') }} as mapped_snomed
-    on s.standardised_snomed_code::varchar = mapped_snomed.snomed_code
-    and (upper(s.coding_scheme_description) in ('ICD-10', 'OPCS-4')) is distinct from true
-left join {{ ref('read_code') }} as read_mapping
-    on trim(s.clinical_code) = read_mapping.code
-    and read_mapping.coding_system = case
-        when upper(s.coding_scheme_description) in ('CTV3', 'READ CODED CLINICAL TERMS VERSION 3 (CTV3)') then 'ctv3'
-        when upper(s.coding_scheme_description) in ('READ V2', 'READ CODED CLINICAL TERMS VERSION 2') then 'read_v2'
-    end
-left join {{ ref('snomed_concept') }} as read_snomed
-    on read_mapping.snomed_ct_code = read_snomed.snomed_code
 where true
 {{ navigation_delivery_filter('s.source_file_received_at', 'clinical_record') }}

@@ -103,7 +103,7 @@ models:
 
       - name: clinical_label_status
         description: >
-          labelled, code_missing, coding_scheme_unrecognised, reference_not_available,
+          labelled, code_missing, coding_scheme_unrecognised, reference unavailable,
           code_or_expression_unmatched or defined_by_data_element for weight, height
           and length. Reference availability is distinct from clinical validity.
 
@@ -163,15 +163,15 @@ models:
 
       - name: clinical_value_parse_status
         description: >
-          value_missing, value_unknown (person_length 99.9, the ETOS unknown-length
-          value), numeric, numeric_rounded, numeric_format_unverified or
-          not_numeric_or_out_of_range. Non-numeric does not necessarily mean an
+          no value, unknown value (person_length 99.9, the ETOS unknown-length
+          value), numeric, numeric (rounded), numeric (format not checked) or
+          not numeric or out of range. Non-numeric does not necessarily mean an
           invalid assessment response.
 
       - name: assessment_response_status
         description: >
-          value_missing, known_non_score, enumerated_response, within_published_range,
-          response_unmatched or reference_not_available. Null outside assessments. This
+          no value, non-score response, listed response, within published range,
+          unmatched response or reference unavailable. Null outside assessments. This
           describes the latest available reference, not historic submission validity.
 
       - name: is_assessment_response_non_score
@@ -449,3 +449,15 @@ models:
         description: >
           ETOS v1.6.10 label for the supplied ASQ-3 band. Null when the band is absent
           or unmatched; the supplied code remains visible.
+      - name: snomed_code
+        description: >-
+          Selected SNOMED CT concept identifier. Recognised recorded SNOMED CT first, then the national preferred-term Read map, then the legacy Read dictionary. Inactive concepts are retained; unresolved codes remain null.
+      - name: snomed_code_name
+        description: >-
+          Latest retained preferred term belonging to snomed_code.
+      - name: snomed_mapping_method
+        description: >-
+          {{ doc('navigation_snomed_mapping_method') }}
+      - name: is_snomed_mapping_assured
+        description: >-
+          {{ doc('navigation_is_snomed_mapping_assured') }}

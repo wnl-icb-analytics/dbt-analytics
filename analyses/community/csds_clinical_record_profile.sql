@@ -54,7 +54,7 @@ group by reporting_year;
 
 select f.clinical_record_type,
     case
-        when f.clinical_value_numeric is null then 'not_numeric_or_out_of_range'
+        when f.clinical_value_numeric is null then 'not numeric or out of range'
         when s.numeric_range_count = 1 and f.clinical_value_numeric not between
             s.minimum_numeric_value and s.maximum_numeric_value then 'outside_published_range'
         when s.numeric_range_count = 1
@@ -66,7 +66,7 @@ select f.clinical_record_type,
     count(*) as record_count
 from {{ ref('fct_csds_clinical_record') }} as f
 left join {{ ref('csds_assessment_scale') }} as s on trim(f.clinical_code) = s.concept_code
-where f.assessment_response_status = 'response_unmatched'
+where f.assessment_response_status = 'unmatched response'
 group by f.clinical_record_type, unmatched_reason;
 
 -- Reconcile historical aliases without returning submitted codes or unit tokens.
