@@ -29,10 +29,15 @@ models:
 
       UEC residence filters use uec_residence_health_borough_name, the
       legacy CCG-based WNL or NCL health borough of residence at the
-      attendance. Null means outside WNL/NCL or no usable LSOA. UEC
-      commissioner filters use uec_commissioner_code,
-      uec_commissioner_name and uec_commissioner_source. CAM is preferred
-      over DSCRO; it starts in 2024, so earlier attendances use DSCRO.
+      attendance. Null means outside WNL/NCL or no usable LSOA.
+
+      Commissioner filters use apc_commissioner_code,
+      apc_commissioner_name and apc_commissioner_source, and the same
+      three names with uec_ and op_ prefixes. CAM is preferred when
+      supplied; otherwise the DSCRO service-agreement commissioner. The
+      name is the latest available organisation name for that code, not
+      the name at the activity date. For UEC, CAM starts in 2024, so
+      earlier attendances use DSCRO.
     config:
       materialized: semantic_view
       schema: SEMANTIC
