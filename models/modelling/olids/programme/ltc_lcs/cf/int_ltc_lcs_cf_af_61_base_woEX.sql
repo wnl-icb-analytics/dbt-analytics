@@ -12,9 +12,10 @@
 -- Courses have no course-start lookback. Issues have no current-course or repeat restriction.
 -- R5 put the oral anticoagulant and digoxin/flecainide/propafenone filters on one course
 -- criterion, which no course met; R6 splits them into A and E and adds D.
--- EMIS drug groups map to BNF sections: oral anticoagulant courses (A) use BNF 02.08.02
--- and glycosides (B) BNF 02.01.01. Oral anticoagulant issues (C) keep the national
--- OPENCODELISTS DOAC and vitamin K antagonist lists; protamine uses BNF 02.08.03.
+-- EMIS drug groups map to BNF sections. Oral anticoagulants (courses A, issues C) use BNF
+-- 02.08.02, with the national OPENCODELISTS DOAC and vitamin K antagonist lists filling
+-- products that carry no BNF code; protamine (C) uses BNF 02.08.03. Cardiac glycosides (B)
+-- record legacy section 2.1 but use 02.01.01, leaving out the other positive inotropes.
 -- The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
 -- including idarucizumab and andexanet, as in the XML.
 -- Exclude ever-recorded thrombosis/antiphospholipid, AF/flutter, Long COVID and
@@ -61,8 +62,9 @@ reversal_products as (
 anticoagulant_issues as (
     select mo.person_id, mo.clinical_effective_date as order_date, mo.mapped_concept_code, mo.bnf_code
     from {{ ref('stg_olids_medication_order') }} as mo
-    inner join national_oral_anticoagulant_codes as c
+    left join national_oral_anticoagulant_codes as c
         on mo.mapped_concept_code = c.code
+    where mo.bnf_code like '020802%' or c.code is not null
     union all
     -- Retain the protamine BNF route until a reviewed dm+d cluster is available.
     select person_id, order_date, mapped_concept_code, bnf_code
@@ -73,11 +75,13 @@ af_medication as (
     -- A and B: current repeat courses of oral anticoagulants or cardiac glycosides
     select ms.person_id
     from {{ ref('stg_olids_medication_statement') }} as ms
+    left join national_oral_anticoagulant_codes as c
+        on ms.mapped_concept_code = c.code
     where ms.is_active = true
         and ms.authorisation_type_source_code in (
             'Automatic', 'Repeat', 'Repeat Dispensing'
         )
-        and (ms.bnf_code like '020802%' or ms.bnf_code like '020101%')
+        and (ms.bnf_code like '020802%' or c.code is not null or ms.bnf_code like '020101%')
     union
     -- C: the issue arm is independent of course status and prescription type.
     select person_id
