@@ -1,8 +1,8 @@
 {{ config(materialized='table') }}
 
 -- AF_61 candidates before the final AF marker exclusion. One row per person at build date.
--- Currently registered, living patients outside ICS_METABOLIC_LTC, CF_NHSHC2Y and the
--- QOF HF register (proxy for EMIS library item 79888a16, which the R6 base still names).
+-- Currently registered, living patients outside ICS_METABOLIC_LTC and CF_NHSHC2Y. The QOF v51
+-- AF and HF registers in ICS_METABOLIC_LTC also cover the AF and HF library items the base names.
 -- Include any of these R6 routes (ICB_CF_AF_61_BASE rule 2, criteria A-E):
 --   A. current Automatic, Repeat or Repeat Dispensing oral anticoagulant course
 --   B. current Automatic, Repeat or Repeat Dispensing cardiac glycoside course
@@ -25,14 +25,6 @@ with base as (
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
         and had_nhs_health_check_24m = false
-),
-
--- ICS_METABOLIC_LTC uses the R6 inline LTC LCS HF register; the base also names the
--- older HF library item, taken as the QOF HF register.
-hf_library_register as (
-    select person_id
-    from {{ ref('fct_person_heart_failure_register') }}
-    where is_on_register = true
 ),
 
 national_oral_anticoagulant_codes as (
@@ -137,4 +129,3 @@ from base as b
 inner join af_medication as m
     on b.person_id = m.person_id
 where b.person_id not in (select person_id from woex_excluded)
-    and b.person_id not in (select person_id from hf_library_register)
