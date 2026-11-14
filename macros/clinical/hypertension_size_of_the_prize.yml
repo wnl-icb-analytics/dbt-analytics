@@ -1,0 +1,26 @@
+version: 2
+
+macros:
+  - name: hypertension_size_of_the_prize
+    description: >
+      Estimates heart attacks, strokes and deaths prevented, and costs avoided, when more
+      people with hypertension are treated to target, using the UCLPartners Size of the
+      Prize method: extra people × years ÷ treatment years ÷ people treated per event
+      prevented, with rates and costs from the hypertension_size_of_the_prize seed.
+      Returns four columns for a select list. Example:
+      select extra_people, hypertension_size_of_the_prize('extra_people') from ... (inside Jinja braces).
+      Counts the full trial benefit for every extra person, so treat results as an
+      order of magnitude.
+    arguments:
+      - name: people
+        type: string
+        description: SQL expression for the extra people treated to target.
+      - name: years
+        type: integer
+        description: Years the benefit is counted over. Defaults to 3, as UCLPartners does; use 1 for per year.
+      - name: cost
+        type: string
+        description: "'nhs_social_care' (default) for NHS and social care costs, or 'uclp' for UCLPartners' acute treatment costs."
+      - name: prefix
+        type: string
+        description: Text prepended to the output column names, for using the macro more than once in a query.
