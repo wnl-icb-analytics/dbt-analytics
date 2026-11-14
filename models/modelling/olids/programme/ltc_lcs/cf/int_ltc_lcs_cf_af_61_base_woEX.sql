@@ -12,8 +12,9 @@
 -- Courses have no course-start lookback. Issues have no current-course or repeat restriction.
 -- R5 put the oral anticoagulant and digoxin/flecainide/propafenone filters on one course
 -- criterion, which no course met; R6 splits them into A and E and adds D.
--- Oral anticoagulants use the national OPENCODELISTS DOAC and vitamin K antagonist lists.
--- Glycosides (BNF 02.01.01) and protamine (02.08.03) await reviewed dm+d clusters.
+-- EMIS drug groups map to BNF sections: oral anticoagulant courses (A) use BNF 02.08.02
+-- and glycosides (B) BNF 02.01.01. Oral anticoagulant issues (C) keep the national
+-- OPENCODELISTS DOAC and vitamin K antagonist lists; protamine uses BNF 02.08.03.
 -- The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
 -- including idarucizumab and andexanet, as in the XML.
 -- Exclude ever-recorded thrombosis/antiphospholipid, AF/flutter, Long COVID and
@@ -72,13 +73,11 @@ af_medication as (
     -- A and B: current repeat courses of oral anticoagulants or cardiac glycosides
     select ms.person_id
     from {{ ref('stg_olids_medication_statement') }} as ms
-    left join national_oral_anticoagulant_codes as oac
-        on ms.mapped_concept_code = oac.code
     where ms.is_active = true
         and ms.authorisation_type_source_code in (
             'Automatic', 'Repeat', 'Repeat Dispensing'
         )
-        and (oac.code is not null or ms.bnf_code like '020101%')
+        and (ms.bnf_code like '020802%' or ms.bnf_code like '020101%')
     union
     -- C: the issue arm is independent of course status and prescription type.
     select person_id
