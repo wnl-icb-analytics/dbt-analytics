@@ -6,8 +6,10 @@ models:
       LTC LCS outcome ICS_HTN_21: hypertension register members whose last blood pressure in the last 12 months is below the NICE target. One row per person in the denominator.
 
       Implements EMIS R6 search [ICS_HTN_21 v4_NICE] [*OC] % of people on HTN register with good
-      controlled, the 2026-27 PCN target. It does not implement the monitoring-only
-      [ICS_HTN_21 v3 L12M], which uses <= targets and a window starting today minus 12 months.
+      controlled, in folder 4) 2026-27 Outcome (PCN target). R5 called it [ICS_HTN_21 v3_NICE]
+      and filed it under monitoring; the logic is unchanged. It does not implement
+      [ICS_HTN_21 v3 L12M], now in 5) Additional Outcomes (monitoring only), which uses <=
+      targets and a window starting today minus 12 months.
 
       Denominator: people on the hypertension register, excluding people
       aged 90 or over, with an end of life care code or a lives in care home code (ever), or
@@ -17,8 +19,8 @@ models:
       item OR'd with end of life care is not in the export and is not applied. The EMIS
       search also requires current registration; filter on is_active downstream for that.
 
-      Numerator: the latest date-linked reading dated after today minus 12 months is below target on
-      both values:
+      Numerator: the latest date-linked reading dated after today minus 12 months is strictly below
+      target on both values, so a reading exactly on a target (e.g. 140/90) is not controlled:
         - under 80: clinic < 140/90, home/ABPM < 135/85
         - 80 and over: clinic < 150/90, home/ABPM < 145/85
       No ACR/CKD/diabetes target tightening. People with no reading in the window are
@@ -53,10 +55,16 @@ models:
             - "LTC_LCS_DASHBOARD"
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           arguments:
             column_name: person_id
+      # Exclusion lists the shared macro reads by friendly name; a catalogue reload can rename them.
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - htn_reg_without_outcome_exclusions_vs1
+              - htn_reg_without_outcome_exclusions_vs2
     columns:
       - name: person_id
         description: Unique person identifier (one row per person in the ICS_HTN_21 denominator)
