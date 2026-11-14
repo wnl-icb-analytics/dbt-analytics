@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: fct_practice_hypertension_cvdprevent_by_month
+    description: |
+      Hypertension prevalence and blood pressure treated to target on the CVDPREVENT definitions, one row per practice at each of the last 60 month-ends.
+
+      Counts adults (18+) registered at the month-end, adults on the hypertension register, those
+      with a BP reading in the 12 months to the month-end, and those treated to target: latest
+      complete reading at or below 140/90 mmHg in clinic or 135/85 at home or ambulatory, relaxed to
+      150/90 and 145/85 from age 80. No reading, or an invalid latest reading, counts as not
+      treated to target. This mirrors CVDPREVENT CVDP001HYP (prevalence) and CVDP007HYP (treated to
+      target, all ages), which use "at or below" thresholds; the NICE indicators IND239 and IND240
+      use "below". Counts only, so practices sum to PCN, borough or ICB: prevalence =
+      hypertension_register ÷ adults_registered, treated to target = treated_to_target ÷
+      hypertension_register. Combine with the hypertension_size_of_the_prize macro to estimate
+      what a change prevents. Practice is the registered practice at the month-end. Recalculated
+      each month with current rules, code lists and records.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - reporting_date
+    columns:
+      - name: reporting_date
+        description: Month-end the counts are evaluated at.
+      - name: practice_code
+        description: ODS code of the registered practice at the month-end.
+      - name: practice_name
+        description: Name of the registered practice at the month-end.
+      - name: adults_registered
+        description: People aged 18 or over registered with the practice at the month-end. Denominator for prevalence.
+      - name: hypertension_register
+        description: Adults on the hypertension register at the month-end. Numerator for prevalence and denominator for treated to target.
+      - name: bp_recorded_last_12m
+        description: Adults on the register whose latest BP reading is in the 12 months to the month-end.
+      - name: treated_to_target
+        description: Adults on the register whose latest valid BP reading in the 12 months is at or below the age- and setting-appropriate threshold.
