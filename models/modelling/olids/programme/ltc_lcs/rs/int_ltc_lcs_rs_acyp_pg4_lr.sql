@@ -37,7 +37,7 @@ cyp_asthma_only as (
             union
             select person_id from {{ ref('int_ltc_lcs_copd_register') }}
             union
-            select person_id from {{ ref('fct_person_heart_failure_register') }}
+            select person_id from {{ ref('int_ltc_lcs_hf_register') }}
             union
             select person_id from {{ ref('fct_person_pad_register') }}
             union

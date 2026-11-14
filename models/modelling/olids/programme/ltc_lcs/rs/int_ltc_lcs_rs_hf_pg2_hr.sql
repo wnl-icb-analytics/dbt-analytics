@@ -1,5 +1,5 @@
 -- LTC LCS: HF Register - Priority Group 2 (High Risk)
--- Parent population: HF register
+-- Parent population: LTC LCS HF register (int_ltc_lcs_hf_register)
 -- NB: there is no PG1 for HF.
 -- EMIS source: 'On HF Register- LTC LCS Priority Group 2 (HR)*'
 -- (docs/emis_specs/ltc_lcs_r5/risk_stratification/specs/conditions/hf/on_hf_register_ltc_lcs_priority_group_2_hr.md;
@@ -27,11 +27,10 @@
 --   Pass -> exclude; fail -> include.
 
 with
--- Parent population: Patients currently on HF register
+-- Parent population: LTC LCS HF register (R6 'LTC LCS: HF Register*')
 hf_register as (
-    select distinct person_id
-    from {{ ref('fct_person_heart_failure_register') }}
-    where is_on_register = true
+    select person_id
+    from {{ ref('int_ltc_lcs_hf_register') }}
 ),
 
 -- Rule 1: latest NYHA classification is Class III or IV.

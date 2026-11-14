@@ -34,7 +34,7 @@ with register_population as (
     from {{ ref('int_ltc_lcs_copd_register') }} r
     union all
     select r.person_id, 'hf' as condition
-    from {{ ref('fct_person_heart_failure_register') }} r
+    from {{ ref('int_ltc_lcs_hf_register') }} r
     union all
     select r.person_id, 'pad' as condition
     from {{ ref('fct_person_pad_register') }} r
