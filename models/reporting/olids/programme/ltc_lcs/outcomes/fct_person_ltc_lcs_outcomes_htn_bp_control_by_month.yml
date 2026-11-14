@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: fct_person_ltc_lcs_outcomes_htn_bp_control_by_month
+    description: |
+      LTC LCS outcome ICS_HTN_21 at each month-end: hypertension register members whose last blood pressure in the 12 months to the month-end is below the NICE target. One row per person in the denominator at each month-end.
+
+      Monthly history of fct_person_ltc_lcs_outcomes_htn_bp_control, using the same
+      get_ltc_lcs_htn_bp_control macro, exclusions, thresholds and BP selection, evaluated at
+      each of the last 60 completed month-ends.
+
+      Denominator: people registered at the month-end and on the hypertension register then,
+      excluding people aged 90 or over at the month-end, with an end of life care code or a
+      lives in care home code dated on or before the month-end (undated codes always exclude),
+      or whose latest mild/moderate/severe frailty record on or before the month-end is the
+      "Moderate frailty" or "Severe frailty" finding.
+
+      Numerator: the latest date-linked reading dated after the month-end minus 12 months, and
+      on or before the month-end, is below target on both values:
+        - under 80: clinic < 140/90, home/ABPM < 135/85
+        - 80 and over: clinic < 150/90, home/ABPM < 145/85
+      People with no reading in the window are uncontrolled.
+
+      Unlike the live model, the denominator includes only people registered at the month-end,
+      and practice is the registered practice then. Records count by clinical date, so readings
+      entered after a month-end but dated before it are included. Recalculated for each of the
+      last 60 month-ends with current rules, code lists and records, so later corrections can
+      change past months.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - reporting_date
+    columns:
+      - name: person_id
+        description: Person in the ICS_HTN_21 denominator at the month-end.
+      - name: reporting_date
+        description: Month-end at which the outcome is evaluated.
+      - name: practice_code
+        description: ODS code of the practice the person was registered with at the month-end.
+      - name: practice_name
+        description: Name of the practice the person was registered with at the month-end.
+      - name: age
+        description: Age in completed years at the month-end; sets the age band for the targets.
+      - name: latest_bp_date
+        description: Date of the latest date-linked BP reading in the 12 months to the month-end (null if none).
+      - name: latest_systolic_value
+        description: Systolic value (mmHg) of the latest date-linked reading in the window (null if none).
+      - name: latest_diastolic_value
+        description: Diastolic value (mmHg) of the latest date-linked reading in the window (null if none).
+      - name: is_home_bp_event
+        description: True if the selected chain is home BP rather than ABPM; home/ABPM targets apply.
+      - name: is_abpm_bp_event
+        description: True if the selected home-chain diastolic is in ABPM_COD; home/ABPM targets apply.
+      - name: systolic_threshold
+        description: Systolic value (mmHg) the reading must be below. Under 80 - clinic 140, home/ABPM 135; 80 and over - clinic 150, home/ABPM 145. Clinic targets apply when there is no reading.
+      - name: diastolic_threshold
+        description: Diastolic value (mmHg) the reading must be below. Clinic 90, home/ABPM 85. Clinic target applies when there is no reading.
+      - name: has_bp_in_window
+        description: True if the latest setting has a resolved date-linked chain in the 12 months to the month-end.
+      - name: is_bp_controlled
+        description: True if the last reading in the window is below both thresholds. False for people with no reading in the window.
