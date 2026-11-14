@@ -3,17 +3,19 @@ version: 2
 macros:
   - name: get_ltc_lcs_htn_bp_control
     description: >
-      Generates the LTC LCS ICS_HTN_21 hypertension BP control outcome for a supplied date
-      window. Returns one row per hypertension register member not
-      excluded for age 90+, end of life care, care home or latest moderate/severe frailty
-      finding, with their latest date-linked clinic/home BP reading in the window and a flag for being below the
+      Generates the LTC LCS ICS_HTN_21 hypertension BP control outcome (EMIS R6 [ICS_HTN_21
+      v4_NICE] and v4_NICE FYYTD) for a supplied date window. Returns one row per hypertension
+      register member not excluded for age 90+, end of life care, care home or a latest
+      moderate/severe frailty finding among frailty findings and Clinical Frailty Scale levels 1-8,
+      with their latest date-linked clinic/home BP reading in the window and a flag for being below the
       NICE target (under 80: clinic < 140/90, home/ABPM < 135/85; 80+: clinic < 150/90,
       home/ABPM < 145/85). BP components link by calendar date before ranking by raw clinical date,
       save time and ID. Only the home-setting wrapper ranks before linking. Frailty uses the same
       ordering. Clinic targets apply when no reading is in the window. The rolling variant reuses
       the current BP selector model; financial-year variants select as at their own end dates.
-      Values must be >=1; no plausibility fallback applies. Frailty excludes only the two finding
-      codes. Consumers filter is_active. Shared by rolling and financial-year variants.
+      Values must be >=1; no plausibility fallback applies. Frailty excludes only when the latest
+      record is one of the two finding codes. Consumers filter is_active. Shared by rolling and
+      financial-year variants.
     arguments:
       - name: window_start
         type: string
