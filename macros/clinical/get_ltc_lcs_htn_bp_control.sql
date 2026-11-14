@@ -17,8 +17,9 @@
 --     candidates are the mild/moderate/severe frailty findings and Clinical Frailty Scale
 --     levels 1-8 (rule 4, "Latest frailty diagnosis is severe"). A later CFS level or mild
 --     frailty record therefore stops an earlier severe finding from excluding.
--- EMIS library item ea06414e-6bec-4593-837f-5b854c54a8c7 (OR'd with end of life care) is not
--- in the XML export and is omitted pending EMIS verification.
+--   - on the QOF v51 palliative care register: EMIS library item ea06414e, OR'd with end of
+--     life care in rule 2. The item is not in the XML export; the case-finding bases use the
+--     same register for it.
 --
 -- Numerator: latest date-linked clinic/home components meet strict NICE targets.
 -- Components link by date before ranking by clinical date, save time and observation ID.
@@ -49,6 +50,12 @@ end_of_life_care as (
 care_home as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("htn_reg_without_outcome_exclusions_vs2") }})
+),
+
+palliative_care as (
+    select person_id
+    from {{ ref('fct_person_palliative_care_register') }}
+    where is_on_register = true
 ),
 
 -- Findings and CFS 4-8 come from the PCD frailty clusters; CFS 1-3 from int_rockwood_all.
@@ -86,6 +93,7 @@ denominator as (
     where hr.age < 90
         and hr.person_id not in (select person_id from end_of_life_care)
         and hr.person_id not in (select person_id from care_home)
+        and hr.person_id not in (select person_id from palliative_care)
         and not coalesce(lf.is_moderate_or_severe_finding, false)
 ),
 
