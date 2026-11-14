@@ -35,7 +35,7 @@ cyp_asthma_only as (
             inner join {{ ref('dim_person_age') }} a2 on r2.person_id = a2.person_id
             where a2.age >= 18
             union
-            select person_id from {{ ref('int_ltc_lcs_copd_register') }}
+            select person_id from {{ ref('fct_person_copd_register') }}
             union
             select person_id from {{ ref('fct_person_heart_failure_register') }}
             union

@@ -1,9 +1,9 @@
 -- LTC LCS case-finding exclusions, one row per person with an excluding condition.
 -- ICS_METABOLIC_LTC: nine LTC LCS registers OR any hyperlipidaemia record ever.
 -- ICS_RESP_LTC: LTC LCS COPD, adult asthma and CYP asthma registers.
--- Programme COPD and NAFLD register models implement the exported EMIS searches;
--- their aggregate counts differ from EMIS. Other conditions use QOF or clinical
--- register proxies for unexported library items. The QOF CKD register is known to
+-- Registers follow QOF v51 where QOF has one, even where the EMIS search defines its own.
+-- NAFLD, which QOF lacks, uses the programme register built from the EMIS search; its
+-- aggregate counts differ from EMIS. The QOF CKD register is known to
 -- differ materially from the EMIS LTC LCS CKD register. Adult asthma requires age >= 18;
 -- CYP asthma has its own register.
 
@@ -22,6 +22,7 @@ WITH ltc_summary_conditions AS (
         'STIA',
         'PAD',
         'HF',
+        'COPD',
         'AST',
         'CYP_AST'
     )
@@ -45,9 +46,6 @@ diabetes_all AS (
 ),
 
 programme_registers AS (
-    SELECT person_id, 'COPD' AS condition_code
-    FROM {{ ref('int_ltc_lcs_copd_register') }}
-    UNION ALL
     SELECT person_id, 'NAF' AS condition_code
     FROM {{ ref('int_ltc_lcs_nafld_register') }}
 ),
@@ -68,13 +66,6 @@ nafld_exceptions AS (
 ),
 
 programme_diagnosis_dates AS (
-    SELECT
-        person_id,
-        'COPD' AS condition_code,
-        MIN(clinical_effective_date) AS earliest_diagnosis_date
-    FROM ({{ get_observations("'COPD_COD'") }})
-    GROUP BY person_id, condition_code
-    UNION ALL
     SELECT obs.person_id, 'NAF' AS condition_code,
         MIN(obs.clinical_effective_date) AS earliest_diagnosis_date
     FROM ({{ get_ltc_lcs_observations("08654d02-552a-7784-076c-e7fcc941d284,f0bfa8e2-972c-1cba-326f-573ef42e6124") }}) AS obs
