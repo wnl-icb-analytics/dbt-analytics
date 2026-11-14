@@ -1,0 +1,29 @@
+version: 2
+models:
+  - name: int_ltc_lcs_hf_register
+    description: |
+      LTC LCS heart failure register per the EMIS R6 'LTC LCS: HF Register*' definition, one
+      row per currently registered person on the register, assessed on the build date.
+      A person is on the register when their latest heart failure diagnosis (HF_COD) or
+      resolved (HFRES_COD) record dated on or before today is a diagnosis. Records from Review
+      or Ended episodes are ignored. Same-day records order by save time, then observation ID.
+      Records without a clinical date do not qualify.
+
+      Differs from the QOF heart failure register, which uses every episode and lets a
+      diagnosis win a same-day tie with a resolved code. Parent for the HF risk
+      stratification models, the LTC LCS base population and the ICS_METABOLIC_LTC
+      case-finding exclusion. Case-finding bases that name the former EMIS HF library item
+      (AF_61, HF_61) still use the QOF register for it.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

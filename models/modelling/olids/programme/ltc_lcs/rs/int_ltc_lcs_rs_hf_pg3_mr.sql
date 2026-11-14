@@ -1,5 +1,5 @@
 -- LTC LCS: HF Register - Priority Group 3 (Medium Risk)
--- Parent population: HF register, excluding PG2 (HR)
+-- Parent population: LTC LCS HF register (int_ltc_lcs_hf_register), excluding PG2 (HR)
 -- EMIS source: 'On HF Register- LTC LCS Priority Group 3 (MR)*'
 -- (docs/emis_specs/ltc_lcs_r5/risk_stratification/specs/conditions/hf/on_hf_register_ltc_lcs_priority_group_3_mr.md;
 -- rule actions verified against the EMIS search screenshots in issue #400,
@@ -26,11 +26,10 @@
 --   Pass -> exclude; fail -> include.
 
 with
--- Parent population: Patients currently on HF register
+-- Parent population: LTC LCS HF register (R6 'LTC LCS: HF Register*')
 hf_register as (
-    select distinct person_id
-    from {{ ref('fct_person_heart_failure_register') }}
-    where is_on_register = true
+    select person_id
+    from {{ ref('int_ltc_lcs_hf_register') }}
 ),
 
 -- Rule 1: Exclude PG2 (HR)

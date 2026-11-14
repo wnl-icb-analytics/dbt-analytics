@@ -1,15 +1,22 @@
 {% macro get_ltc_lcs_htn_bp_control(window_start, window_end) %}
 -- LTC LCS Outcomes: hypertension good blood pressure control (window-parameterised).
--- EMIS source: [ICS_HTN_21 v3_NICE] [*OC] % of people on HTN register with good controlled (2),
--- with parent searches B/C/E/H/I and B/C/E/H/I_EXFr.
+-- EMIS source (R6, 11 Nov 2026), folder 4) 2026-27 Outcome (PCN target):
+--   [ICS_HTN_21 v4_NICE] [*OC] % of people on HTN register with good controlled
+--   [ICS_HTN_21 v4_NICE FYYTD] [*OC] %of people on HTN register with good controlled
+-- Parent: [B/C/E/H/I] HTN Register without Outcome exclusions+ Frailty.
+-- R5 names: [ICS_HTN_21 v3_NICE] ... controlled BP, [ICS_HTN_21 v3 FYYTD] ... Since Apr 25,
+-- and [B/C/E/H/I] HTN Register without Outcome exclusions.
 --
 -- Denominator: people on the hypertension register, excluding:
 --   - age >= 90
 --   - end of life care code, ever (htn_reg_without_outcome_exclusions_vs1)
 --   - lives in care home code, ever (htn_reg_without_outcome_exclusions_vs2)
---   - latest MILDFRAIL/MODFRAIL/SEVFRAIL record is the "Moderate frailty" or "Severe frailty"
---     finding. EMIS tests only these two codes, so a latest Clinical Frailty Scale code does
---     not exclude.
+--   The loaded catalogue keeps these R5 friendly names; a fresh R6 extraction would call
+--   them htn_reg_without_outcome_exclusions_frailty_vs1/vs2.
+--   - latest frailty record is the "Moderate frailty" or "Severe frailty" finding. The
+--     candidates are the mild/moderate/severe frailty findings and Clinical Frailty Scale
+--     levels 1-8 (rule 4, "Latest frailty diagnosis is severe"). A later CFS level or mild
+--     frailty record therefore stops an earlier severe finding from excluding.
 -- EMIS library item ea06414e-6bec-4593-837f-5b854c54a8c7 (OR'd with end of life care) is not
 -- in the XML export and is omitted pending EMIS verification.
 --
@@ -17,6 +24,8 @@
 -- Components link by date before ranking by clinical date, save time and observation ID.
 -- Only the home-setting wrapper ranks before linking; thresholds test the selected values.
 -- Under 80: clinic <140/90, home/ABPM <135/85. At 80+: clinic <150/90, home/ABPM <145/85.
+-- Every target is strict, as in both R6 searches: a reading exactly on a target (e.g. 140/90)
+-- is not controlled. R5 [ICS_HTN_21 v3 FYYTD] used <= and counted it as controlled.
 -- Both values must be >=1. An implausible latest reading never falls back to an older one.
 --
 -- The EMIS search also requires current registration. That is left to consumers, which
@@ -42,6 +51,16 @@ care_home as (
     from ({{ get_ltc_lcs_observations("htn_reg_without_outcome_exclusions_vs2") }})
 ),
 
+-- Findings and CFS 4-8 come from the PCD frailty clusters; CFS 1-3 from int_rockwood_all.
+frailty_records as (
+    select id, person_id, concept_code
+    from {{ ref('int_frailty_diagnoses_all') }}
+    union all
+    select id, person_id, concept_code
+    from {{ ref('int_rockwood_all') }}
+    where rockwood_score between 1 and 3
+),
+
 -- Use source clinical dates, without get_observations' date substitution or missing-date sentinel.
 latest_frailty as (
     select
@@ -50,7 +69,7 @@ latest_frailty as (
             '925831000000107', -- Moderate frailty
             '925861000000102'  -- Severe frailty
         ) as is_moderate_or_severe_finding
-    from {{ ref('int_frailty_diagnoses_all') }} as f
+    from frailty_records as f
     inner join {{ ref('stg_olids_observation') }} as o on f.id = o.id
     where o.clinical_effective_date::date <= current_date()
     qualify row_number() over (

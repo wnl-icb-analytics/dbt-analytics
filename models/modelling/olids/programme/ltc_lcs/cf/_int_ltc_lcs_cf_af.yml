@@ -4,12 +4,16 @@ models:
   - name: int_ltc_lcs_cf_af_61_base_woEX
     description: >
       One row per currently registered, living AF_61 medication candidate, assessed on the
-      build date, outside ICS_METABOLIC_LTC and the recent NHS health-check population
-      CF_NHSHC2Y. Includes current Automatic, Repeat or Repeat Dispensing cardiac
-      glycoside courses, with no course-start lookback.
-      A separate anticoagulant/protamine issue rule is strictly after
-      six months ago, with no upper date bound, current-course or repeat-only restriction.
-      Oral anticoagulant issues use the national OPENCODELISTS DOAC and
+      build date, outside ICS_METABOLIC_LTC, the recent NHS health-check population
+      CF_NHSHC2Y and the QOF HF register (proxy for the EMIS HF library item the base names).
+      Implements EMIS R6 ICB_CF_AF_61_BASE. Includes current Automatic, Repeat or Repeat
+      Dispensing courses of oral anticoagulants, cardiac glycosides or digoxin, flecainide
+      or propafenone, with no course-start lookback. Also includes anticoagulant/protamine
+      or digoxin, flecainide or propafenone issues strictly after six months ago, with no
+      upper date bound, current-course or repeat-only restriction. R5 required an oral
+      anticoagulant course that was also digoxin, flecainide or propafenone, which matched
+      nobody; R6 separates them.
+      Oral anticoagulants use the national OPENCODELISTS DOAC and
       vitamin K antagonist lists. Cardiac glycosides use BNF 02.01.01 and protamine
       issues use BNF 02.08.03 pending reviewed dm+d clusters; these remain approximations.
       The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
@@ -36,6 +40,7 @@ models:
               - 08ba16a7-dfb1-1282-f9a6-288f2641f431  # af_case_finding_eligible_population_on_af_medication_vs2
               - c7ea5a27-039f-d39d-bfbb-5a5c37240961  # af_case_finding_eligible_population_on_af_medication_vs3
               - 8463a4a4-8199-6956-5458-a3014aaa8f11  # af_case_finding_eligible_population_on_af_medication_vs4
+              - 98b8e1d3-7db0-0653-9412-2fdf795e6f61  # patients_on_digoxin_flecainide_propafenone_or_anticoag_vs2
     columns:
       - name: person_id
         data_tests: [not_null, unique]
@@ -43,9 +48,10 @@ models:
   - name: int_ltc_lcs_cf_af_61
     description: >
       One row per currently registered, living AF_61 candidate at build date. Includes
-      the eligible base_woEX population with a current Automatic, Repeat or Repeat
-      Dispensing cardiac glycoside course or an anticoagulant/protamine issue strictly
-      after six months ago. Excludes anyone with an
+      the eligible base_woEX population: a current Automatic, Repeat or Repeat Dispensing
+      course of an oral anticoagulant, cardiac glycoside, digoxin, flecainide or
+      propafenone, or an issue of an anticoagulant, protamine, digoxin, flecainide or
+      propafenone strictly after six months ago. Excludes anyone with an
       "AF excluded/confirmed" code recorded strictly after three years before the build
       date, with no upper date bound. EMIS-local markers use the shared equivalence rule.
       One row per included person.
@@ -66,8 +72,7 @@ models:
     description: >
       One row per currently registered, living AF_62 candidate aged >= 65 at build date,
       outside ICS_METABOLIC_LTC and CF_NHSHC2Y. Excludes the AF_61 base_woEX population
-      with a current Automatic, Repeat or Repeat Dispensing cardiac glycoside course or
-      an anticoagulant/protamine issue strictly after six months ago, before AF_61's
+      (people on AF-related medication, see int_ltc_lcs_cf_af_61_base_woEX), before AF_61's
       final marker exclusion.
       Requires no pulse check and no "AF excluded/confirmed" code in the last 3 years.
     config:
