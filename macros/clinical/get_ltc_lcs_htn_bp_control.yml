@@ -20,4 +20,11 @@ macros:
         description: SQL date expression for the inclusive start of the BP lookup window (e.g. "dateadd(month, -12, current_date())").
       - name: window_end
         type: string
-        description: SQL date expression for the inclusive end of the BP lookup window (e.g. "current_date()").
+        description: SQL date expression for the inclusive end of the BP lookup window (e.g. "current_date()"). Not used when reference is by_month.
+      - name: reference
+        type: string
+        description: >
+          'current' (default) or 'by_month'. by_month evaluates each of the last 60 completed
+          month-ends using the monthly register and reference population, so only people
+          registered at the month-end are included; exclusions use records dated on or before
+          the month-end, and window_start may reference d.reporting_date.
