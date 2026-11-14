@@ -7,16 +7,17 @@ models:
 
       Implements EMIS R6 search [ICS_HTN_21 v4_NICE] [*OC] % of people on HTN register with good
       controlled, in folder 4) 2026-27 Outcome (PCN target). R5 called it [ICS_HTN_21 v3_NICE]
-      and filed it under monitoring; the logic is unchanged. It does not implement
+      and filed it under monitoring; its own criteria are unchanged, but its parent's frailty
+      rule changed. It does not implement
       [ICS_HTN_21 v3 L12M], now in 5) Additional Outcomes (monitoring only), which uses <=
       targets and a window starting today minus 12 months.
 
       Denominator: people on the hypertension register, excluding people
-      aged 90 or over, with an end of life care code or a lives in care home code (ever), or
+      aged 90 or over, with an end of life care code or a lives in care home code (ever), on the
+      QOF palliative care register (the EMIS library item OR'd with end of life care), or
       whose latest frailty record (a mild, moderate or severe frailty finding, or a Clinical
       Frailty Scale level 1-8 code) is the "Moderate frailty" or "Severe frailty" finding. A
-      latest Clinical Frailty Scale code does not exclude, whatever its level. The EMIS library
-      item OR'd with end of life care is not in the export and is not applied. The EMIS
+      latest Clinical Frailty Scale code does not exclude, whatever its level. The EMIS
       search also requires current registration; filter on is_active downstream for that.
 
       Numerator: the latest date-linked reading dated after today minus 12 months is strictly below
@@ -43,7 +44,8 @@ models:
           description_short: "Hypertension register members with BP below NICE target (last reading, rolling 12 months)"
           description_long: >
             Percentage of people on the hypertension register, excluding those aged 90+, at end
-            of life, in a care home or with moderate/severe frailty, whose last blood pressure in
+            of life or on the palliative care register, in a care home or with moderate/severe
+            frailty, whose last blood pressure in
             the last 12 months is below the NICE target: clinic < 140/90 (< 150/90 aged 80+),
             home/ABPM < 135/85 (< 145/85 aged 80+). Links clinic/home components by date before ranking by raw clinical date,
             save time and ID. Only the home-setting wrapper ranks before linking. Values must be
