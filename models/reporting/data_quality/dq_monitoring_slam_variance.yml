@@ -71,14 +71,14 @@ models:
 
       - name: financial_year
         description: >
-          Financial year represented by the current genuinely submitted
+          Financial year represented by the current submitted
           SLAM period.
         data_tests:
           - not_null
 
       - name: financial_month
         description: >
-          Financial month represented by the current genuinely submitted
+          Financial month represented by the current submitted
           SLAM period.
         data_tests:
           - not_null
@@ -117,6 +117,21 @@ models:
           True when the current financial year or financial month differs
           from the immediately preceding observation. False for the first
           observation and for same-period daily observations.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+
+      - name: has_changed
+        description: >
+          Indicates whether this observation represents a new provider/feed
+          observation or a change from the preceding daily observation in
+          row count, submitted activity, submitted financial value, activity
+          null rate, financial null rate, or reporting period.
         data_tests:
           - not_null
           - accepted_values:

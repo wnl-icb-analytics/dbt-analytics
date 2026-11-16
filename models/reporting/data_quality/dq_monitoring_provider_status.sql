@@ -381,7 +381,7 @@ select
             then 'Provider present; daily row movement available for review'
 
         when dataset_group = 'SLAM'
-            then 'Provider has reached the latest genuinely submitted financial period'
+            then 'Provider has reached the latest submitted financial period'
 
         else 'Provider measurement available'
 

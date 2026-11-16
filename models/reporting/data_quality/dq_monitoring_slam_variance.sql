@@ -210,7 +210,52 @@ variance as (
                 then true
 
             else false
-        end as reporting_period_changed
+        end as reporting_period_changed,
+
+        -- ==========================================================================
+        -- Has Changed (a toggle for showing only changed rows in the variance view )
+        -- ==========================================================================
+        case
+            -- Always retain the first observation
+            when previous_measurement_date is null
+                then true
+
+            when coalesce(
+                row_count - previous_row_count,
+                0
+            ) <> 0
+                then true
+
+            when coalesce(
+                activity_value - previous_activity_value,
+                0
+            ) <> 0
+                then true
+
+            when coalesce(
+                financial_value - previous_financial_value,
+                0
+            ) <> 0
+                then true
+
+            when coalesce(
+                null_activity_pct - previous_null_activity_pct,
+                0
+            ) <> 0
+                then true
+
+            when coalesce(
+                null_financial_pct - previous_null_financial_pct,
+                0
+            ) <> 0
+                then true
+
+            when financial_year <> previous_financial_year
+              or financial_month <> previous_financial_month
+                then true
+
+            else false
+        end as has_changed
 
     from history_with_previous
 
@@ -234,6 +279,7 @@ select
     previous_financial_month,
 
     reporting_period_changed,
+    has_changed,
 
     row_count,
     previous_row_count,

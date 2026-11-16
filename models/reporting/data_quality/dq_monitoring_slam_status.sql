@@ -154,7 +154,8 @@ select
     previous_financial_year,
     previous_financial_month,
     reporting_period_changed,
-
+    has_changed,
+    
     row_count,
     previous_row_count,
     row_count_change,
