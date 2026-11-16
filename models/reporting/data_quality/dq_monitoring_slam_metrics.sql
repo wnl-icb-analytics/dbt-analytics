@@ -126,39 +126,13 @@ acm_metrics as (
         sum(a.dv_actual_activity)              as activity_value,
         sum(a.dv_actual_price)                 as financial_value,
 
-        count_if(
-            a.dv_actual_activity is null
-        )                                      as null_activity_count,
-
-        count_if(
-            a.dv_actual_price is null
-        )                                      as null_financial_count,
-
-        round(
-            100.0
-            * count_if(a.dv_actual_activity is null)
-            / nullif(count(*), 0),
-            2
-        )                                      as null_activity_pct,
-
-        round(
-            100.0
-            * count_if(a.dv_actual_price is null)
-            / nullif(count(*), 0),
-            2
-        )                                      as null_financial_pct,
-
-        max(
-            case
-                when a.dv_dataset_created_at
-                        <= current_timestamp()
-                then to_date(a.dv_dataset_created_at)
-            end
-        )                                      as latest_refresh_date,
-
-        max(
-            to_date(a.submission_loaded_at)
-        )                                      as latest_update_date
+ count_if(a.dv_actual_activity is null)        as null_activity_count,
+        count_if(a.dv_actual_price is null)    as null_financial_count,
+        round(100.0 * count_if(a.dv_actual_activity is null)
+         / nullif(count(*), 0), 2)             as null_activity_pct,
+        round(100.0 * count_if(a.dv_actual_price is null)
+         / nullif(count(*), 0), 2)             as null_financial_pct,
+        max(a.submission_loaded_at)            as latest_submission_loaded_at
 
     from {{ ref('stg_lsacm_latest') }} a
 
@@ -218,40 +192,12 @@ plcm_metrics as (
         sum(p.dv_activity_count)               as activity_value,
         sum(p.dv_total_cost)                   as financial_value,
 
-        count_if(
-            p.dv_activity_count is null
-        )                                      as null_activity_count,
-
-        count_if(
-            p.dv_total_cost is null
-        )                                      as null_financial_count,
-
-        round(
-            100.0
-            * count_if(p.dv_activity_count is null)
-            / nullif(count(*), 0),
-            2
-        )                                      as null_activity_pct,
-
-        round(
-            100.0
-            * count_if(p.dv_total_cost is null)
-            / nullif(count(*), 0),
-            2
-        )                                      as null_financial_pct,
-
-        max(
-            case
-                when p.dv_dataset_created_at
-                        <= current_timestamp()
-                then to_date(p.dv_dataset_created_at)
-            end
-        )                                      as latest_refresh_date,
-
-        max(
-            to_date(p.submission_loaded_at)
-        )                                      as latest_update_date
-
+ count_if(p.dv_activity_count is null)                                                  as null_activity_count,
+        count_if(p.dv_total_cost is null) as null_financial_count,
+        round(100.0 * count_if(p.dv_activity_count is null) / nullif(count(*), 0), 2)   as null_activity_pct,
+        round(100.0 * count_if(p.dv_total_cost is null) / nullif(count(*), 0), 2)       as null_financial_pct,
+        max(p.submission_loaded_at)                                                     as latest_submission_loaded_at
+    
     from {{ ref('stg_lsplcm_latest') }} p
 
     inner join slam_providers sp
@@ -307,8 +253,7 @@ select
     null_activity_count,
     null_financial_count,
     null_activity_pct,
-    null_financial_pct,
-    latest_refresh_date,
-    latest_update_date
+    null_financial_pct, 
+    latest_submission_loaded_at
 
 from combined

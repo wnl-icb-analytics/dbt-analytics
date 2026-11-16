@@ -6,12 +6,11 @@ select
     table_id,
     provider_code,
     provider_name,
-    row_count,
-    latest_refresh_date,
+    row_count,    
     latest_actual_financial_year,
     latest_actual_financial_month,
-    latest_update_date,
-
+    latest_submission_loaded_at,
+    
     lag(row_count) over (
         partition by
             table_id,

@@ -180,8 +180,7 @@ select
     previous_null_financial_pct,
     null_financial_pct_change,
 
-    latest_refresh_date,
-    latest_update_date,
+    latest_submission_loaded_at,
 
     activity_completeness_status,
     financial_completeness_status,

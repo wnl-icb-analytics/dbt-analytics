@@ -151,12 +151,7 @@ with measurements as (
         a.dv_provider_code                as provider_name,
         count(*)                          as row_count,
 
-        max(
-            case
-                when a.dv_dataset_created_at <= current_timestamp()
-                then to_date(a.dv_dataset_created_at)
-            end
-        )                                 as latest_refresh_date,
+        max(to_date(a.submission_loaded_at)) as latest_refresh_date,
 
         a.dv_financial_year::integer               as latest_actual_financial_year,
         a.dv_financial_month::integer              as latest_actual_financial_month,
@@ -218,12 +213,7 @@ with measurements as (
         p.dv_provider_code                as provider_name,
         count(*)                          as row_count,
 
-        max(
-            case
-                when p.dv_dataset_created_at <= current_timestamp()
-                then to_date(p.dv_dataset_created_at)
-            end
-        )                                 as latest_refresh_date,
+        max(to_date(p.submission_loaded_at)) as latest_refresh_date,
 
         p.dv_financial_year::integer               as latest_actual_financial_year,
         p.dv_financial_month::integer              as latest_actual_financial_month,

@@ -40,8 +40,7 @@ with history_with_previous as (
         null_activity_pct,
         null_financial_pct,
 
-        latest_refresh_date,
-        latest_update_date,
+        latest_submission_loaded_at,
 
         -- =================================================
         -- Previous observation
@@ -261,7 +260,6 @@ select
     previous_null_financial_pct,
     null_financial_pct_change,
 
-    latest_refresh_date,
-    latest_update_date
+    latest_submission_loaded_at
 
 from variance

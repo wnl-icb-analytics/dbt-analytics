@@ -39,8 +39,7 @@ with measurements as (
         null_financial_count,
         null_activity_pct,
         null_financial_pct,
-        latest_refresh_date,
-        latest_update_date
+        latest_submission_loaded_at
 
     from {{ ref('dq_monitoring_slam_metrics') }}
 
