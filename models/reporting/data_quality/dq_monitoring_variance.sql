@@ -8,6 +8,9 @@ select
     refresh_date,
     days_since_refresh,
     frequency_type,
+    latest_actual_financial_year,
+    latest_actual_financial_month,
+    latest_update_date,
 
     lag(row_count) over (
         partition by table_id

@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='incremental',
+        materialized='incremental',full_refresh=false,
         unique_key=[
             'measurement_date',
             'table_id',
