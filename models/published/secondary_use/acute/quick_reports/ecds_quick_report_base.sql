@@ -22,6 +22,7 @@ CASE
     WHEN u.site_id = 'RAS02' THEN 'Mount Vernon Hospital'
     WHEN u.site_id = 'R1K14' THEN 'UCC Ealing Hospital'
     WHEN u.site_id = 'R1K11' THEN 'UCC Northwick Park'
+    WHEN u.site_id = 'RYJ01' THEN REGEXP_REPLACE(site_name, ' \\(HQ\\)$', '')
     ELSE u.site_name END AS site_name
 FROM {{ ref("obt_encounter_uec") }} u
 --FROM  REPORTING.ACUTE.OBT_ENCOUNTER_UEC u
@@ -82,48 +83,18 @@ u.sk_patient_id,
 u.visit_occurrence_id,
 u.commissioner_code_at_event as commissioner_code,
 IFF(u.commissioner_code_at_event IN ('07X','07M','08H','08D','07R','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','93C','93C00','Z9B2Z','QRV','QRV00','QMJ','QMJ00'),'WNL','Other') comm_group,
---PRIMARY CARE substitute PDS registered code where missing,
-COALESCE(u.reg_practice_at_event,pds.practice_code) as practice_code,
-CASE
-    WHEN u.reg_practice_at_event in ('V81998','V81999') THEN 'Practice Code Unknown/NA'
-    WHEN u.reg_practice_at_event = 'V81997' THEN 'Not registered with GP'
-    WHEN u.reg_practice_at_event = 'E85062' THEN 'HYIOS'
-    --legacy Medicus practice codes
-    WHEN u.reg_practice_at_event in ('F85003','F85652','F85027','F85024','F85703','F85707','F85048','F85055','F85076','F85656','F85681','F85036','F85684') THEN 'Medicus Health Partners'
-    -- specific name correction
-    WHEN u.reg_practice_name_latest = 'HESA MEDICAL CENTRE - Y00352' THEN 'HESA Medical Centre'
-    ELSE
-        REGEXP_REPLACE(
-            REGEXP_REPLACE(
-                REGEXP_REPLACE(
-                    REGEXP_REPLACE(
-                        INITCAP(LOWER(
-                            COALESCE(
-                                u.reg_practice_name_latest,
-                                pds.practice_name
-                            )
-                        )),
-                        '\\bGp\\b', 'GP'
-                    ),
-                    '\\bPcn\\b', 'PCN'
-                ),
-                '\\bHmp\\b', 'HMP'
-            ),
-            '\\bWic\\b', 'WIC'
-        )
-END AS practice_name,
+--PRIMARY CARE substitute PDS registered code where missing or coded as missing in the ECDS.
 CASE 
-WHEN ods.status_code = 'D' THEN 'DORMANT'
-WHEN ods.status_code = 'A' THEN 'ACTIVE'
-WHEN ods.status_code = 'C' THEN 'INACTIVE'
-WHEN ods.status_code = 'P' THEN 'OTHER'
-ELSE ods.status_code END AS practice_status_code,
+WHEN u.reg_practice_at_event in ('Z11111','V88888','Unknow','X99999','999999','Z10000','Z12345','V99998','V81999','V81997','V81998','Y90001') 
+OR u.reg_practice_at_event IS NULL THEN UPPER(pds.practice_code)
+ELSE UPPER(u.reg_practice_at_event) END as practice_code,
+CASE 
+WHEN u.reg_practice_at_event in ('Z11111','V88888','Unknow','X99999','999999','Z10000','Z12345','V99998','V81999','V81997','V81998','Y90001') 
+ OR u.reg_practice_at_event IS NULL THEN UPPER(pds.practice_name)
+ELSE reg_practice_name_latest END AS practice_name,
 u.reg_practice_pcn_name_latest as pcn_name,
 u.reg_practice_health_borough_name_latest as health_borough,
 u.reg_practice_neighbourhood_name_latest as practice_neighbourhood,
-CASE 
-WHEN u.reg_practice_at_event in ('E84023','E84624','E84667') THEN 'West and North London'
-ELSE icb.icb_name END AS icb_name,
 --PROVIDER
 u.organisation_id as provider_code,
 COALESCE(u.organisation_name,org2.organisation_name) AS provider_name,
@@ -282,11 +253,6 @@ LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org2 on u.organisation_id 
 LEFT JOIN {{ ref("int_person_pds_demographics") }} pds using (sk_patient_id)
 --LEFT JOIN MODELLING.POPULATION.INT_PERSON_PDS_DEMOGRAPHICS pds using (sk_patient_id)
 LEFT JOIN borough_res_category g on COALESCE(u.lsoa_21_at_event,pds.lsoa_21) = g.lsoa21_cd
-LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org on u.reg_practice_at_event = org.organisation_code
---LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION org on u.reg_practice_at_event = org.organisation_code
-LEFT JOIN lookup_icb icb on icb.sk_organisation_id = org.sk_organisation_id_health_authority
-LEFT JOIN {{ ref('stg_ukhfd_all_gp_and_gdp_practices') }} ods on ods.organisation_code = COALESCE(u.reg_practice_at_event,pds.practice_code)
---LEFT JOIN STAGING.UKHFD.STG_UKHFD_ALL_GP_AND_GDP_PRACTICES ods on ods.organisation_code = COALESCE(u.reg_practice_at_event,pds.practice_code)
 WHERE u.start_date >= DATEADD(
     'year', -2,
     DATE_FROM_PARTS(
@@ -297,18 +263,24 @@ WHERE u.start_date >= DATEADD(
 ,base_clean as (
 select
 b.sk_patient_id,
---b.visit_occurrence_id,
+b.visit_occurrence_id,
 b.commissioner_code,
 b.comm_group,
-b.practice_status_code,
-b.practice_code,
-b.practice_name,
---add missing neighbourhood and borough information
-COALESCE(b.pcn_name,p.pcn_name) as pcn_name,
-COALESCE(b.practice_neighbourhood,p.neighbourhood_name) as practice_neighbourhood,
+--tidy practice_names
+CASE 
+WHEN practice_code in ('F85003','F85652','F85027','F85024','F85703','F85707','F85048','F85055','F85076','F85656','F85681','F85036','F85684') THEN 'F85002'
+ELSE b.practice_code END AS practice_code,
+CASE 
+WHEN practice_code in ('F85003','F85652','F85027','F85024','F85703','F85707','F85048','F85055','F85076','F85656','F85681','F85036','F85684') THEN 'MEDICUS HEALTH PARTNERS'
+WHEN practice_code = 'Y00352' THEN 'HESA MEDICAL CENTRE'
+ELSE b.practice_name END AS practice_name, 
+p.practice_status,
+COALESCE(p.pcn_name,b.pcn_name) as pcn_name,
+COALESCE(p.neighbourhood_name,b.practice_neighbourhood) as practice_neighbourhood,
 COALESCE(p.registered_borough_name,b.health_borough) as health_borough,
 CASE 
-WHEN b.icb_name = 'North West London' THEN 'West and North London' ELSE b.icb_name END AS icb_name,
+WHEN icb.icb_name = 'North West London' THEN 'West and North London' 
+WHEN icb.icb_name IS NULL AND p.registered_borough_name IS NOT NULL THEN 'West and North London' ELSE icb.icb_name END AS icb_name,
 b.provider_code,
 wnl.provider_shorthand,
 COALESCE (wnl.provider_name, b.provider_name) as provider_name,
@@ -321,13 +293,13 @@ b.day_of_week_sort,
 b.start_time,
 b.hour_of_arrival,
 b.is_last_12m,
-b.financial_year,
-b.financial_year_label,
-b.month_start_date,
-b.month_label,
-b.month_sort,
-b.week_start_date,
-b.week_label,
+-- b.financial_year,
+-- b.financial_year_label,
+-- b.month_start_date,
+-- b.month_label,
+-- b.month_sort,
+-- b.week_start_date,
+-- b.week_label,
 b.duration,
 b.is_4_hour_breach,
 b.is_12_hour_breach,
@@ -355,6 +327,20 @@ b.gender,
 b.ethnicity_code,
 b.ethnicity,
 b.imd_decile_25,
+CASE 
+WHEN b.imd_decile_25 in (1,2)  THEN 'Most Deprived' 
+WHEN b.imd_decile_25 in (3,4) THEN 'Second Most Deprived' 
+WHEN b.imd_decile_25 in (5,6) THEN 'Third Most Deprived' 
+WHEN b.imd_decile_25 in (7,8) THEN 'Second Least Deprived' 
+WHEN b.imd_decile_25 in (9,10) THEN 'Least Deprived'
+ELSE 'Unknown' END AS imd_quintile_25,
+CASE 
+WHEN b.imd_decile_25 in (1,2) THEN 1
+WHEN b.imd_decile_25 in (3,4) THEN 2
+WHEN b.imd_decile_25 in (5,6) THEN 3
+WHEN b.imd_decile_25 in (7,8) THEN 4
+WHEN b.imd_decile_25 in (9,10) THEN 5
+ELSE 6 END AS imdquintile_order,
 b.lsoa_21,
 b.ward_code,
 b.ward_name,
@@ -363,9 +349,77 @@ FROM base_table b
 LEFT JOIN  {{ ref('practice_wnl_all') }} p using (practice_code)
 --LEFT JOIN REFERENCE.PRIMARY_CARE.PRACTICE_WNL_ALL p using (practice_code)
 LEFT JOIN WNL_NAMES wnl on b.provider_code = wnl.provider_code and b.site_code = wnl.site_code
+LEFT JOIN {{ ref('stg_dictionary_dbo_organisation')}} org on b.practice_code = org.organisation_code
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION org on u.reg_practice_at_event = org.organisation_code
+LEFT JOIN lookup_icb icb on icb.sk_organisation_id = org.sk_organisation_id_health_authority
 )
 --add in is_registered flag and highlight on GP codes (PCN, WIC and other UEC sources that are not registered GP practices).
-select *,
+select 
+sk_patient_id,
+visit_occurrence_id,
+commissioner_code,
+comm_group,
+practice_code,
+CASE 
+WHEN practice_code IS NULL THEN 'GP Unknown' ELSE practice_name END AS practice_name,
+practice_status,
+CASE 
+WHEN practice_code in ('E86620','E86034') THEN 'Not in WNL PCN' 
+WHEN health_borough IS NOT NULL and practice_status = 'Closed' THEN 'Practice Closed'
+ELSE pcn_name END AS pcn_name,
+CASE 
+WHEN practice_neighbourhood IS NULL AND practice_code in ('F85002','F85003','F85652','F85027','F85024','F85703','F85707','F85048','F85055','F85076','F85656','F85681','F85036','F85684') THEN 'Enfield Southeast'
+WHEN practice_code in ('E86620','E86034') THEN 'Not in WNL Neighbourhood'
+WHEN health_borough IS NOT NULL and practice_status = 'Closed' THEN 'Practice Closed'
+ELSE practice_neighbourhood END AS practice_neighbourhood,
+CASE 
+WHEN health_borough IS NULL AND practice_code IS NULL THEN 'GP Unknown'
+WHEN health_borough IS NULL AND practice_code IS NOT NULL THEN 'Not WNL registered'
+ELSE health_borough END AS health_borough,
+NVL(icb_name,'Unknown') as icb_name,
+provider_code,
+provider_shorthand,
+provider_name,
+site_code,
+site_name,
+dept_type_desc,
+attendance_date,
+day_of_week,
+day_of_week_sort,
+start_time,
+hour_of_arrival,
+is_last_12m,
+duration,
+is_4_hour_breach,
+is_12_hour_breach,
+is_72_hour_breach,
+arrival_mode_short,
+arrival_by_ambulance,
+hrg_code,
+core_hrg_desc,
+chief_complaint_group,
+primary_diagnosis_group,
+primary_treatment_group,
+primary_investigation_group,
+is_mental_health_related_attendance,
+acuity_level,
+acuity_level_sort,
+admission_status,
+is_wnl_resident,
+borough_resident,
+residence_group,
+residence_sort,
+age_band_nhs,
+age_sort,
+gender,
+ethnicity,
+imd_decile_25,
+imd_quintile_25,
+imdquintile_order,
+lsoa_21,
+ward_code,
+ward_name,
+attendance_count,
 health_borough IS NOT NULL AS is_wnl_registered,
 health_borough IS NULL AND icb_name = 'West and North London' AS is_wnl_non_practice_organisation,
 IFF(provider_shorthand IS NOT NULL, 'WNL', 'Other Provider') AS provider_group
