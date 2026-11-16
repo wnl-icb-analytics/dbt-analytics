@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: dq_monitoring_summary
+    description: >
+      Summary of current monitoring status across all monitored
+      objects. Intended for Streamlit KPI cards, dashboards and
+      operational reporting.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: overall_status
+        description: Current traffic-light status category.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: table_count
+        description: Number of monitored objects currently in the status category.
+        tests:
+          - not_null
