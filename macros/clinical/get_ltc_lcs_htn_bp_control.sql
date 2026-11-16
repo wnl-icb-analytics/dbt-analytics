@@ -38,7 +38,8 @@
 -- reference='by_month' evaluates each of the last 60 completed month-ends instead. Register,
 -- age and practice come from the monthly register and reference population, so only people
 -- registered at the month-end are included. Exclusions use records dated on or before the
--- month-end. window_start may reference d.reporting_date; window_end is not used.
+-- month-end, and palliative care uses register membership at the month-end. window_start may
+-- reference d.reporting_date; window_end is not used.
 {% if reference not in ['current', 'by_month'] %}
     {{ exceptions.raise_compiler_error('Unsupported reference: ' ~ reference) }}
 {% endif %}
@@ -89,11 +90,19 @@ care_home as (
 ),
 {% endif %}
 
+{% if by_month %}
+-- QOF palliative care register membership at each month-end.
+palliative_care as (
+    select person_id, reporting_date
+    from ({{ nice_register('PC', 'by_month') }})
+),
+{% else %}
 palliative_care as (
     select person_id
     from {{ ref('fct_person_palliative_care_register') }}
     where is_on_register = true
 ),
+{% endif %}
 
 -- Findings and CFS 4-8 come from the PCD frailty clusters; CFS 1-3 from int_rockwood_all.
 frailty_records as (
@@ -117,7 +126,7 @@ frailty_days as (
             '925831000000107', -- Moderate frailty
             '925861000000102'  -- Severe frailty
         ) as is_moderate_or_severe_finding
-    from {{ ref('int_frailty_diagnoses_all') }} as f
+    from frailty_records as f
     inner join {{ ref('stg_olids_observation') }} as o on f.id = o.id
     where o.clinical_effective_date::date <= current_date()
     qualify row_number() over (
@@ -149,9 +158,13 @@ denominator as (
     left join care_home as ch
         on hr.person_id = ch.person_id
         and ch.first_date <= hr.reporting_date
+    left join palliative_care as pc
+        on hr.person_id = pc.person_id
+        and hr.reporting_date = pc.reporting_date
     where hr.age < 90
         and eol.person_id is null
         and ch.person_id is null
+        and pc.person_id is null
         and not coalesce(lf.is_moderate_or_severe_finding, false)
 ),
 {% else %}
