@@ -6,10 +6,11 @@ models:
       Hypertension prevalence and blood pressure treated to target on the CVDPREVENT definitions, one row per practice at each of the last 60 month-ends.
 
       Counts adults (18+) registered at the month-end, adults on the hypertension register, those
-      with a BP reading in the 12 months to the month-end, and those treated to target: latest
-      complete reading at or below 140/90 mmHg in clinic or 135/85 at home or ambulatory, relaxed to
-      150/90 and 145/85 from age 80. No reading, or an invalid latest reading, counts as not
-      treated to target. This mirrors CVDPREVENT CVDP001HYP (prevalence) and CVDP007HYP (treated to
+      with a BP reading in the 12 months to the month-end, and those treated to target: the
+      reading from the latest day with a complete reading is at or below 140/90 mmHg in clinic or
+      135/85 at home or ambulatory, relaxed to 150/90 and 145/85 from age 80. On that day a valid
+      reading is preferred over an invalid one, then the lowest pair. No reading, or a latest day
+      with only an invalid reading, counts as not treated to target. This mirrors CVDPREVENT CVDP001HYP (prevalence) and CVDP007HYP (treated to
       target, all ages), which use "at or below" thresholds; the NICE indicators IND239 and IND240
       use "below". Counts only, so practices sum to PCN, borough or ICB: prevalence =
       hypertension_register ÷ adults_registered, treated to target = treated_to_target ÷
@@ -40,4 +41,4 @@ models:
       - name: bp_recorded_last_12m
         description: Adults on the register whose latest BP reading is in the 12 months to the month-end.
       - name: treated_to_target
-        description: Adults on the register whose latest complete BP reading in the 12 months is valid and at or below the age- and setting-appropriate threshold. An invalid latest reading counts as not treated to target; there is no fallback to an older reading.
+        description: Adults on the register whose BP reading from the latest day with a complete reading, in the 12 months, is valid and at or below the age- and setting-appropriate threshold. On that day a valid reading is preferred over an invalid one, then the lowest systolic and diastolic pair; time of day is not used. A latest day with only an invalid reading counts as not treated to target, with no fallback to an earlier day.
