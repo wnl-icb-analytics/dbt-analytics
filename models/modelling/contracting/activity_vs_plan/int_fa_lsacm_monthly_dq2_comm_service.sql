@@ -15,7 +15,7 @@ SELECT
     fa.meta_file_id,
     l.financial_month as Latest_month,
     fa.spec_comm_flag,
-    --add flag for funding mismatch
+    --add flag for DQ Issues
     CASE 
     WHEN cscc_funding_status <> spec_comm_flag THEN TRUE 
     WHEN cscc_funding_status = spec_comm_flag AND cscc_dq <> 'Valid' THEN TRUE 
@@ -28,7 +28,7 @@ SELECT
     --commissioned_service_category
     CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as acm_commissioned_service,
     fa.cscc_funding_status as acm_funding_status,
-    fa.cscc_dq as cssc_code_dq,
+    fa.cscc_dq as cscc_code_dq,
     --service_code
     fa.service_code_funding_status,
     CONCAT(fa.icb_delegation_26_27, ' - ', fa.service_code_funding_status) as service_delegation2627,
