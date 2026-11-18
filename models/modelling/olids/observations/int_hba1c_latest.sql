@@ -9,6 +9,13 @@ Latest valid HbA1c measurement per person.
 Uses the comprehensive int_hba1c_all model and filters to most recent valid HbA1c.
 */
 
+WITH results AS (
+    SELECT
+        *,
+        MAX(clinical_effective_date) OVER (PARTITION BY person_id) AS most_recent_result_date
+    FROM {{ ref('int_hba1c_all') }}
+)
+
 SELECT
     person_id,
     ID,
@@ -26,9 +33,13 @@ SELECT
     hba1c_category,
     indicates_diabetes,
     meets_qof_target,
-    original_result_value
+    original_result_value,
+    original_result_unit_code,
+    is_unit_conflict,
+    most_recent_result_date,
+    most_recent_result_date > clinical_effective_date AS has_later_unassessable_result
 
-FROM {{ ref('int_hba1c_all') }}
+FROM results
 
 WHERE is_valid_hba1c = TRUE
 QUALIFY ROW_NUMBER() OVER (

@@ -1,0 +1,68 @@
+unit_tests:
+- name: nice_ind97_unsuitability_after_achievement
+  model: fct_person_smoking_ind97_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          '2026-09-30'::DATE AS reporting_date,
+          40 AS age,
+          '1986-01-01'::DATE AS birth_date_approx,
+          'Female' AS gender,
+          'SYNTHETIC' AS practice_code,
+          'Synthetic practice' AS practice_name
+      FROM VALUES (-97301), (-97302), (-97303), (-97304), (-97305), (-97306), (-97307)
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          '2026-09-30'::DATE AS reporting_date,
+          TRUE AS has_chd,
+          FALSE AS has_pad,
+          FALSE AS has_stroke_tia,
+          FALSE AS has_hypertension,
+          FALSE AS has_diabetes,
+          FALSE AS has_copd,
+          FALSE AS has_ckd,
+          FALSE AS has_asthma,
+          NULL::DATE AS earliest_smi_diagnosis_date,
+          '2020-01-01'::DATE AS earliest_smoking_smi_ltc_diagnosis_date,
+          40 AS age,
+          '1986-01-01'::DATE AS birth_date_approx,
+          'Female' AS gender,
+          'SYNTHETIC' AS practice_code,
+          'Synthetic practice' AS practice_name
+      FROM VALUES (-97301), (-97302), (-97303), (-97304), (-97305), (-97306), (-97307)
+  - input: ref('int_nice_smoking_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+          'Current Smoker' AS latest_smoking_status, column2::DATE AS latest_smoking_status_date,
+          NULL::DATE AS latest_never_smoked_date, NULL::DATE AS latest_smoking_intervention_date,
+          column3::DATE AS latest_smoking_unsuitable_date
+      FROM VALUES
+          (-97301, '2025-08-30', '2026-09-01'),
+          (-97302, '2026-09-01', '2026-09-01'),
+          (-97303, '2025-08-30', '2025-08-30'),
+          (-97304, '2025-08-30', '2025-09-30'),
+          (-97305, '2025-08-30', '2026-09-30'),
+          (-97306, '2025-08-30', '2026-10-01'),
+          (-97307, '2025-08-30', NULL)
+  expect:
+    rows:
+    - person_id: -97302
+      is_in_numerator: true
+    - person_id: -97303
+      is_in_numerator: false
+    - person_id: -97304
+      is_in_numerator: false
+    - person_id: -97306
+      is_in_numerator: false
+    - person_id: -97307
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-qof-fixes

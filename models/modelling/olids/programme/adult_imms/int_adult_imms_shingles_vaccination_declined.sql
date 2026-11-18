@@ -4,7 +4,7 @@
         tags=['adult_imms'],
         cluster_by=['person_id'])
 }}
---people aged 65+ who are eligible who have received Shingles vaccine. Two doses needed. Latest vaccination recorded
+--people eligible for Shingles vaccine who have declined it. Two doses needed. Latest declined record kept
 --people eligible either turned 65 after Sept 2023 (SHING_1 & SHING_2) or are currently 70-79 for the Catch Up programme (SHING_1B & SHING_2B)
 --as of September 2025 people aged 18+ who are immunosuppressed (SHING_1C & SHING_2C).
   --Shingles 1

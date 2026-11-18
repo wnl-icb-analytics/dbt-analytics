@@ -1,0 +1,21 @@
+models:
+- name: int_mra_medications_all
+  description: National mineralocorticoid receptor antagonist drug-refset orders for all people, one row per
+    dated order. Includes spironolactone combinations. No build-relative window is applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NHS_DRUG_REFSETS/MRADRUG_COD
+        source: OPENCODELISTS
+  columns:
+  - name: is_steroidal_mra
+    description: Spironolactone and eplerenone, including combinations, are steroidal. Finerenone is
+      non-steroidal; null when no dm+d therapeutic moiety is available.

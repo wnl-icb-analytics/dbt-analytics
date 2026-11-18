@@ -1,0 +1,49 @@
+{{ config(materialized='table', cluster_by=['person_id', 'event_date']) }}
+
+-- QOF v51 SMOK004 support: referral or pharmacotherapy, including PHARMDRUG observations and prescriptions.
+WITH pharmacotherapy_codes AS (
+    SELECT DISTINCT referenced_component_id::VARCHAR AS mapped_concept_code
+    FROM {{ ref('stg_nhsd_snomed_sct_refset_simple') }}
+    WHERE ref_set_id = 12465801000001106
+        AND active
+),
+
+support_events AS (
+    SELECT
+        'OBSERVATION' AS source_kind,
+        id::VARCHAR AS source_key,
+        person_id,
+        clinical_effective_date::DATE AS event_date
+    FROM ({{ get_observations("'REFERSSSA_COD', 'PHARM_COD'", source='PCD') }}) AS observation
+
+    UNION ALL
+
+    SELECT
+        'OBSERVATION' AS source_kind,
+        observation.id::VARCHAR AS source_key,
+        observation.person_id,
+        -- Shared observation date rule, including the undated sentinel.
+        COALESCE({{ observation_clinical_date('observation') }}, '1900-01-01')::DATE AS event_date
+    FROM {{ ref('stg_olids_observation') }} AS observation
+    INNER JOIN pharmacotherapy_codes AS codes
+        ON observation.mapped_concept_code = codes.mapped_concept_code
+
+    UNION ALL
+
+    SELECT
+        'MEDICATION_ORDER' AS source_kind,
+        medication.id::VARCHAR AS source_key,
+        medication.person_id,
+        medication.clinical_effective_date::DATE AS event_date
+    FROM {{ ref('stg_olids_medication_order') }} AS medication
+    INNER JOIN pharmacotherapy_codes AS codes
+        ON medication.mapped_concept_code = codes.mapped_concept_code
+)
+
+SELECT DISTINCT
+    source_kind,
+    source_key,
+    person_id,
+    event_date
+FROM support_events
+WHERE event_date <= CURRENT_DATE()

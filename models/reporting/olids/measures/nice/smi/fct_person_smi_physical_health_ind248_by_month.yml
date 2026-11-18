@@ -1,0 +1,90 @@
+models:
+- name: fct_person_smi_physical_health_ind248_by_month
+  description: >-
+    Six physical health checks in severe mental illness (NICE IND248). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end with active schizophrenia, bipolar disorder or other
+    psychosis; remission and lithium alone do not qualify. Achieved with all six checks in the
+    12 months before the month-end: valid paired blood pressure, BMI, alcohol, lipids, glucose
+    or HbA1c, and smoking status. Recorded BMI of 10 to 150 kg/m2 inclusive counts at any age;
+    valid calculated BMI counts for adults using the weight date. Later invalid BMI does not
+    cancel earlier valid evidence. Alcohol units, status or screening count. Lipids need numeric
+    total cholesterol, HDL, LDL, non-HDL, cholesterol to HDL ratio or triglycerides, or a
+    completed test code. Glucose and HbA1c need no numeric value. No personalised care
+    adjustments are applied. Recalculated for each of the last 60 month-ends with current rules,
+    code lists and records, so later corrections can change past months. Based on NICE CG178.
+    Code lists: MH_COD, MHREM_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD,
+    HOMEBP_COD, BMIVAL_COD (PCD); HEIGHT, WEIGHT, ALC_COD, ALCUSAGE_COD, FAST_COD, AUDITC_COD,
+    AUDIT_COD, CHOL2_COD, HDLCCHOL_COD, LDLCCHOL_COD, NONHDLCCHOL_COD, TCHOLHDL_COD,
+    TRIGLYC_COD, NONVALCHOL_COD, FASPLASGLUC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
+    SMOK_COD.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind248
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "12 months before the reporting date, included in each check window."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: latest_blood_pressure_date
+    description: >-
+      Latest valid paired blood pressure reading on or before the reporting date; null if absent. It
+      may be outside the achievement window.
+  - name: latest_bmi_date
+    description: >-
+      Latest valid recorded BMI, or calculated BMI for an adult, on or before the reporting date;
+      null if absent. It may be outside the achievement window.
+  - name: latest_alcohol_record_date
+    description: >-
+      Latest alcohol units, usage status or screening record on or before the reporting date; null
+      if absent. It may be outside the achievement window.
+  - name: latest_lipid_date
+    description: >-
+      Latest lipid result or completed lipid test counted by the indicator on or before the
+      reporting date; null if absent. It may be outside the achievement window.
+  - name: latest_glucose_or_hba1c_date
+    description: >-
+      Latest blood glucose or HbA1c test on or before the reporting date, with or without a numeric
+      value; null if absent. It may be outside the achievement window.
+  - name: latest_smoking_status_date
+    description: >-
+      Date of the latest smoking status on or before the reporting date; null if absent. It may be
+      outside the achievement window.
+  - name: checks_met_count
+    description: >-
+      Number of the six required health checks recorded in the 12 months before the reporting date,
+      including both boundaries. Values range from 0 to 6.
+  - name: latest_record_date
+    description: "Latest of the six required check dates when every check falls in the 12-month window; otherwise null."
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

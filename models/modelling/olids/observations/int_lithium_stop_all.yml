@@ -1,0 +1,29 @@
+models:
+- name: int_lithium_stop_all
+  description: Lithium stop observations from LITSTP_COD. One row per observation. Includes inactive and
+    deceased people. Dates use the source correction and undated sentinel from get_observations; future
+    clinical dates are excluded at build time.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: LITSTP_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation key.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: Person with the observation.
+  - name: clinical_effective_date
+    description: Corrected clinical timestamp; undated observations use the established 1900-01-01 sentinel.
+  - name: date_recorded
+    description: Source entry timestamp, nullable. Lithium selection also requires this date to be on
+      or before the reference date.
+  - name: source_cluster_id
+    description: Code cluster that supplied the observation.

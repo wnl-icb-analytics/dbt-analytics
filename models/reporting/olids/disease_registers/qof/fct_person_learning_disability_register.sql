@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_learning_disability_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- Clinical evidence is bounded by today. Its PIT pair is strict as-of
 -- and derives age at the reference date where age is used.
 
 {{
@@ -9,11 +9,11 @@
 }}
 
 /*
-Learning Disability Register - QOF v50
+Learning Disability Register - QOF v51
 
 Business Logic:
 - Has learning disability diagnosis (LD_COD)
-- NOT excluded: no exclusion code (LDREM_COD) after latest diagnosis
+- NOT excluded: no exclusion code (LDREM_COD) on or after latest diagnosis
 - No age restriction in QOF spec (includes all ages)
 
 QOF Context:
@@ -34,15 +34,15 @@ WITH learning_disability_diagnoses AS (
         MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
             AS latest_diagnosis_date,
 
-        -- QOF register logic: LD diagnosis without subsequent exclusion
+        -- QOF register logic: no LD exclusion on or after latest diagnosis
         COALESCE(
             -- Must have an LD diagnosis
             MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) IS NOT NULL
-            -- Must not have been excluded after latest diagnosis
+            -- Must not have been excluded on or after latest diagnosis
             AND (
                 MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END) IS NULL
-                OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
-                    > MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END)
+                OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)::DATE
+                    > MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END)::DATE
             ),
             FALSE
         ) AS has_active_ld_diagnosis,
@@ -56,6 +56,7 @@ WITH learning_disability_diagnoses AS (
         ) AS all_ld_concept_displays
 
     FROM {{ ref('int_learning_disability_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -75,7 +76,7 @@ register_logic AS (
         -- Age flag for downstream use (annual health checks typically 14+)
         COALESCE(age.age >= 14, FALSE) AS is_age_14_or_over,
 
-        -- QOF Register: Active LD diagnosis (no age restriction per QOF v50)
+        -- QOF Register: Active LD diagnosis (no age restriction per QOF v51)
         COALESCE(ld.has_active_ld_diagnosis, FALSE) AS is_on_register
 
     FROM learning_disability_diagnoses AS ld

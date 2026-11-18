@@ -1,17 +1,22 @@
 models:
   - name: int_covid_vaccination_declined
-    description: 'COVID vaccination decline tracking.
-
-      Grain: One row per person per campaign who declined vaccination
-
-      Identifies people: • Vaccination decline codes (COVDECL_COD) • Within campaign tracking period • All ages eligible
-
-      Used by: Mart models for uptake and status determination'
-    tests:
+    description: >-
+      Recorded COVID declines in OLIDS, one row per person and campaign with
+      COVDECL_COD evidence within its inclusive decline-tracking dates and no
+      vaccination recorded in that campaign. Uses the latest decline and the
+      campaign's UKHSA_COVID code version. A known approximate birth date is required,
+      without an age restriction.
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: COVDECL_COD
             source: UKHSA_COVID
+            versioned: true
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
     config:
       meta:
         indicator:
@@ -22,11 +27,10 @@ models:
           name_short: "COVID Vaccination Declined"
           description_short: "People who declined COVID vaccination"
           description_long: >
-            COVID vaccination decline tracking for people who refused vaccination
-            using COVDEC_COD
-            cluster codes within campaign tracking period. Used for monitoring vaccination
-            uptake and identifying populations requiring outreach. No age restrictions
-            as refusal can occur at any age. Tracks by campaign period for reporting.
+            COVID vaccination declines (COVDECL_COD) recorded within the campaign's
+            decline tracking period (from 1 August for an autumn campaign), for
+            people with no COVID vaccination in the same campaign. No age
+            restriction.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_20_VACCINATION_DECLINED"
@@ -64,4 +68,4 @@ models:
       - name: age_years_at_ref_date
         description: 'Age in years at campaign reference date'
       - name: created_at
-        description: 'Audit timestamp for record creation (campaign audit end date)'
+        description: 'Timestamp when the row was built; not the campaign audit end date'

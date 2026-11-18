@@ -1,0 +1,221 @@
+models:
+- name: int_ckd_profile_by_month
+  description: NICE CKD evidence, one row per person and month-end on the CKD stage 3-5 register. Membership
+    uses active registration and diagnoses known by that date under the existing register rules. People
+    who have since left or died remain in earlier months; test patients are excluded by consuming indicators.
+    Holds latest renal results, proteinuria, frailty, diabetes, hypertension, therapy, contraindications
+    and diagnosis-relative tests. An invalid latest eGFR remains null without fallback; ACR control selects
+    recorded ratio values, while process evidence also includes value-free tests. Pair and follow-up dates
+    stop at the month-end. Covers the last 60 completed month-ends using current code lists and retained
+    records. Non-register evidence uses corrected clinical/order dates through the month-end, rather than
+    a complete reconstruction of recorded-date knowledge.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - data_tests:
+    - not_null
+    description: Person on the CKD register.
+    name: person_id
+  - description: Earliest CKD stage 3 to 5 diagnosis date from the register.
+    name: ckd_diagnosis_date
+  - description: Date of the latest recorded eGFR result on or before the reporting date; null if none.
+    name: latest_egfr_date
+  - description: Latest eGFR in ml/min/1.73m2; null if none or the last result is invalid.
+    name: latest_egfr_value
+  - description: Date of the latest urine ACR ratio result on or before the reporting date; null if none.
+    name: latest_acr_date
+  - description: Latest urine ACR ratio in mg/mmol; a later record without a result is ignored; null if
+      none or the last result is invalid.
+    name: latest_acr_value
+  - description: Any proteinuria, CKD proteinuria or persistent proteinuria code recorded.
+    name: has_proteinuria
+  - description: Any microalbuminuria code recorded.
+    name: has_microalbuminuria
+  - description: Latest coded frailty severity; null if none.
+    name: latest_frailty_severity
+  - description: On the diabetes register.
+    name: has_diabetes
+  - description: Type 1, Type 2 or Unknown from the diabetes register; null when not on it.
+    name: diabetes_type
+  - description: On the hypertension register.
+    name: has_hypertension
+  - description: Date of the latest ACE inhibitor or ARB order; null if none.
+    name: latest_ras_order_date
+  - description: Date of the latest ACE inhibitor or ARB order on or before the latest SGLT2 inhibitor
+      order; null when no SGLT2 order or no earlier RAS order.
+    name: latest_ras_order_before_last_sglt2_date
+  - description: ACE_INHIBITOR or ARB for the latest order; null if none.
+    name: latest_ras_class
+  - description: Persisting ACE inhibitor contraindication at any time, or an expiring one in the preceding
+      12 months.
+    name: is_ace_inhibitor_contraindicated
+  - description: Persisting ARB contraindication at any time, or an expiring one in the preceding 12 months.
+    name: is_arb_contraindicated
+  - description: Date of the latest SGLT2 inhibitor order; null if none.
+    name: latest_sglt2_order_date
+  - description: Drug of the latest SGLT2 inhibitor order; null if none.
+    name: latest_sglt2_drug
+  - description: A valued eGFR within 90 days before the diagnosis date with the person's first valued
+      eGFR at least 90 days earlier.
+    name: has_egfr_pair_before_diagnosis
+  - description: Latest eGFR meeting the pair rule; null if none.
+    name: second_egfr_before_diagnosis_date
+  - description: A valued eGFR within 90 days before or after the diagnosis date.
+    name: has_egfr_within_90_days_of_diagnosis
+  - description: Latest valued eGFR within 90 days of the diagnosis date; null if none.
+    name: egfr_within_90_days_of_diagnosis_date
+  - description: A urine ACR ratio record within 90 days before or after the diagnosis date.
+    name: has_acr_within_90_days_of_diagnosis
+  - description: Latest urine ACR ratio within 90 days of the diagnosis date; null if none.
+    name: acr_within_90_days_of_diagnosis_date
+  - description: Reference date through which evidence is evaluated.
+    name: reporting_date
+unit_tests:
+- name: nice_history_ckd_latest_pair_expiry_and_sequence
+  model: int_ckd_profile_by_month
+  given:
+  - input: ref('fct_person_ckd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -9501::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, '2026-03-20'::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date, NULL::TIMESTAMP_NTZ AS latest_stage_1_2_date
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date, '2026-03-20'::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date, NULL::TIMESTAMP_NTZ AS latest_stage_1_2_date
+      UNION ALL
+      SELECT
+          -9507::NUMBER AS person_id,
+          '2026-03-31'::DATE AS month_end_date,
+          '2026-03-20'::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+          NULL::TIMESTAMP_NTZ AS latest_diagnosis_date,
+          NULL::TIMESTAMP_NTZ AS latest_resolved_date,
+          NULL::TIMESTAMP_NTZ AS latest_stage_1_2_date
+  - input: ref('fct_person_frailty_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS latest_frailty_severity WHERE FALSE
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ
+      AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, NULL::TIMESTAMP_NTZ AS earliest_type2_date,
+      NULL::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date WHERE FALSE
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT -9501::NUMBER AS person_id, 'E1'::VARCHAR AS id, '2025-12-01'::TIMESTAMP_NTZ AS clinical_effective_date, 50::FLOAT AS egfr_value, TRUE AS is_valid_egfr
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'E2'::VARCHAR AS id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, 40::FLOAT AS egfr_value, TRUE AS is_valid_egfr
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'E3'::VARCHAR AS id, '2026-03-15'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value, FALSE AS is_valid_egfr
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'E4'::VARCHAR AS id, '2026-04-01'::TIMESTAMP_NTZ AS clinical_effective_date, 35::FLOAT AS egfr_value, TRUE AS is_valid_egfr
+      UNION ALL
+      SELECT
+          -9507::NUMBER AS person_id,
+          'E89_FIRST'::VARCHAR AS id,
+          '2025-12-02'::TIMESTAMP_NTZ AS clinical_effective_date,
+          50::FLOAT AS egfr_value,
+          TRUE AS is_valid_egfr
+      UNION ALL
+      SELECT
+          -9507::NUMBER AS person_id,
+          'E89_SECOND'::VARCHAR AS id,
+          '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+          40::FLOAT AS egfr_value,
+          TRUE AS is_valid_egfr
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT -9501::NUMBER AS person_id, 'A1'::VARCHAR AS id, '2026-03-10'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS acr_value, TRUE AS is_acr_ratio, FALSE AS is_result_recorded
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'A2'::VARCHAR AS id, '2026-04-02'::TIMESTAMP_NTZ AS clinical_effective_date, 20::FLOAT AS acr_value, TRUE AS is_acr_ratio, TRUE AS is_result_recorded
+  - input: ref('int_proteinuria_all')
+    format: sql
+    rows: SELECT -9501::NUMBER AS person_id, 'P1'::VARCHAR AS id, '2026-05-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+      'PROTEINURIA'::VARCHAR AS record_type
+  - input: ref('int_ras_contraindication_all')
+    format: sql
+    rows: |-
+      SELECT -9501::NUMBER AS person_id, 'C1'::VARCHAR AS id, '2025-03-31'::TIMESTAMP_NTZ AS clinical_effective_date, 'ACE_INHIBITOR'::VARCHAR AS drug_class, FALSE AS is_persisting
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'C2'::VARCHAR AS id, '2026-05-01'::TIMESTAMP_NTZ AS clinical_effective_date, 'ARB'::VARCHAR AS drug_class, TRUE AS is_persisting
+  - input: ref('int_ace_inhibitor_medications_all')
+    format: sql
+    rows: |-
+      SELECT -9501::NUMBER AS person_id, 'R1'::VARCHAR AS medication_order_id, '2026-02-01'::DATE AS order_date
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'R2'::VARCHAR AS medication_order_id, '2026-03-15'::DATE AS order_date
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'R3'::VARCHAR AS medication_order_id, '2026-09-25'::DATE AS order_date
+  - input: ref('int_arb_medications_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date
+      WHERE FALSE
+  - input: ref('int_sglt2_medications_all')
+    format: sql
+    rows: |-
+      SELECT -9501::NUMBER AS person_id, 'S1'::VARCHAR AS medication_order_id, '2026-03-10'::DATE AS order_date, 'Synthetic SGLT2'::VARCHAR AS sglt2_drug
+      UNION ALL
+      SELECT -9501::NUMBER AS person_id, 'S2'::VARCHAR AS medication_order_id, '2026-09-20'::DATE AS order_date, 'Synthetic SGLT2'::VARCHAR AS sglt2_drug
+  expect:
+    rows:
+    - person_id: -9501
+      reporting_date: '2026-03-31'
+      latest_egfr_date: '2026-03-15'
+      latest_egfr_value: null
+      latest_acr_date: null
+      has_acr_within_90_days_of_diagnosis: true
+      acr_within_90_days_of_diagnosis_date: '2026-03-10'
+      has_egfr_pair_before_diagnosis: true
+      second_egfr_before_diagnosis_date: '2026-03-01'
+      egfr_within_90_days_of_diagnosis_date: '2026-03-01'
+      has_proteinuria: false
+      is_ace_inhibitor_contraindicated: true
+      is_arb_contraindicated: false
+      latest_ras_order_before_last_sglt2_date: '2026-02-01'
+      latest_ras_order_date: '2026-03-15'
+    - person_id: -9501
+      reporting_date: '2026-09-30'
+      latest_egfr_date: '2026-04-01'
+      latest_egfr_value: 35
+      latest_acr_date: '2026-04-02'
+      has_acr_within_90_days_of_diagnosis: true
+      acr_within_90_days_of_diagnosis_date: '2026-04-02'
+      has_egfr_pair_before_diagnosis: true
+      second_egfr_before_diagnosis_date: '2026-03-01'
+      egfr_within_90_days_of_diagnosis_date: '2026-04-01'
+      has_proteinuria: true
+      is_ace_inhibitor_contraindicated: false
+      is_arb_contraindicated: true
+      latest_ras_order_before_last_sglt2_date: '2026-03-15'
+      latest_ras_order_date: '2026-09-25'
+    - person_id: -9507
+      reporting_date: '2026-03-31'
+      latest_egfr_date: '2026-03-01'
+      latest_egfr_value: 40
+      latest_acr_date: null
+      has_acr_within_90_days_of_diagnosis: false
+      acr_within_90_days_of_diagnosis_date: null
+      has_egfr_pair_before_diagnosis: false
+      second_egfr_before_diagnosis_date: null
+      egfr_within_90_days_of_diagnosis_date: '2026-03-01'
+      has_proteinuria: false
+      is_ace_inhibitor_contraindicated: false
+      is_arb_contraindicated: false
+      latest_ras_order_before_last_sglt2_date: null
+      latest_ras_order_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history

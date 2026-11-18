@@ -5,7 +5,8 @@
 }}
 
 -- CYP Asthma Register (Clinical Register - NOT part of QOF)
--- Business Logic: Age <18 + Active asthma diagnosis (latest AST_COD > latest ASTRES_COD) + Recent asthma medication (last 12 months)
+-- Age <18, no resolution dated after the latest diagnosis, and treatment in the last 12 months.
+-- Treatment excludes the 12-month boundary and includes today.
 -- External Validation: Requires medication confirmation for children/young people with asthma
 
 WITH asthma_diagnoses AS (
@@ -37,12 +38,12 @@ WITH asthma_diagnoses AS (
                 CASE
                     WHEN is_diagnosis_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
             > MAX(
                 CASE
                     WHEN is_resolved_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
         ), FALSE) AS has_active_asthma_diagnosis,
 
         -- Traceability arrays
@@ -60,6 +61,7 @@ WITH asthma_diagnoses AS (
         ) AS all_resolved_concept_displays
 
     FROM {{ ref('int_asthma_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -72,7 +74,8 @@ asthma_medications AS (
         MAX(mapped_concept_display) AS latest_asthma_medication_concept_display,
         COUNT(*) AS recent_asthma_medication_count
     FROM {{ ref('int_asthma_medications_all') }}
-    WHERE order_date >= CURRENT_DATE() - INTERVAL '12 months'
+    WHERE order_date > DATEADD('month', -12, CURRENT_DATE())
+        AND order_date <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

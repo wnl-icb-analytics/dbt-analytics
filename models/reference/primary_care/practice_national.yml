@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: practice_national_all
+    description: >-
+      GP practices in England and Wales from the ODS epraccur file via UKHFD,
+      one row per practice in any status, with ODS sub-ICB, ICB, region and
+      PCN. Use practice_national_active for open practices only.
+
+      Includes organisations whose ODS role is GP practice (RO76, or setting 4
+      in records loaded before the ODS API switch); other prescribing cost
+      centres are excluded. Uses each practice's latest ODS record. PCN comes
+      from the latest daily ODS ePCN snapshot. is_wnl_practice marks practices
+      in the WNL curated reference. For WNL analysis use practice_wnl_all,
+      which carries curated names, boroughs and neighbourhoods.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: &practice_national_columns
+      - name: practice_code
+        description: GP practice ODS code.
+        data_tests:
+          - unique
+          - not_null
+      - name: practice_name
+        description: Practice name as published by ODS.
+      - name: practice_status
+        description: Active, Closed, Dormant or Proposed, from ODS. ODS INACTIVE is shown as Closed.
+      - name: sub_icb_code
+        description: >-
+          ODS commissioner (sub-ICB location). Closed practices keep the
+          commissioner at closure, often a former CCG code.
+      - name: icb_code
+        description: ICB from the ODS high level health geography. Null for Welsh practices.
+      - name: region_code
+        description: NHS England region from the ODS national grouping. Null for Welsh practices.
+      - name: pcn_code
+        description: >-
+          Current PCN from the latest ODS ePCN snapshot. Null for practices with
+          no open PCN membership, which includes all closed practices and Welsh
+          practices.
+      - name: is_wnl_practice
+        description: >-
+          True when the practice is in the WNL curated reference
+          (practice_wnl_all), in any status. Use it to compare ODS with the WNL
+          curated list rather than filtering on ICB code.
+      - name: details_valid_from
+        description: Date the current ODS version of the practice record took effect in UKHFD.
+
+  - name: practice_national_active
+    description: >-
+      Open GP practices in England and Wales from the ODS epraccur file via
+      UKHFD, one row per practice with practice_status Active. Same columns as
+      practice_national_all.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: *practice_national_columns

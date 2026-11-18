@@ -1,0 +1,129 @@
+unit_tests:
+- name: nice_ind112_boundaries_expiry_and_multiplicity
+  model: fct_person_blood_pressure_cvd_prevention_ind112_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-8, '2026-09-30', 40, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-8, '2026-10-31', 40, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7, '2026-09-30', 39, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7, '2026-10-31', 39, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-6, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-6, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-5, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-5, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-4, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-4, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-3, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-3, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-2, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-2, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-1, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-1, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
+    format: sql
+  - input: ref('int_nice_blood_pressure_all')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS reading_date,
+          column3::VARCHAR AS reading_id,
+          column4::FLOAT AS systolic_value,
+          column5::FLOAT AS diastolic_value,
+          column6::BOOLEAN AS is_valid_bp,
+          column7::BOOLEAN AS is_home_bp_event,
+          column8::BOOLEAN AS is_abpm_bp_event,
+          column9::VARCHAR AS applied_measurement_context
+      FROM VALUES
+          (-1, '2021-09-30', 'SYN_BP', 120, 80, TRUE, FALSE, FALSE, 'CLINIC'),
+          (-2, '2021-10-01', 'SYN_BP', 120, 80, TRUE, FALSE, FALSE, 'CLINIC'),
+          (-3, '2026-09-30', 'SYN_BP', 120, 80, TRUE, FALSE, FALSE, 'CLINIC'),
+          (-4, '2026-10-01', 'SYN_BP', 120, 80, TRUE, FALSE, FALSE, 'CLINIC'),
+          (-6, '2026-09-01', 'SYN_BP', 400, 80, FALSE, FALSE, FALSE, 'CLINIC'),
+          (-7, '2026-09-01', 'SYN_BP', 120, 80, TRUE, FALSE, FALSE, 'CLINIC'),
+          (-8, '2026-09-01', 'SYN_BP', 120, 80, TRUE, FALSE, FALSE, 'CLINIC')
+    format: sql
+  expect:
+    rows:
+    - person_id: -8
+      reporting_date: '2026-09-30'
+      latest_bp_date: '2026-09-01'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -8
+      reporting_date: '2026-10-31'
+      latest_bp_date: '2026-09-01'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -6
+      reporting_date: '2026-09-30'
+      latest_bp_date: '2026-09-01'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -6
+      reporting_date: '2026-10-31'
+      latest_bp_date: '2026-09-01'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -5
+      reporting_date: '2026-09-30'
+      latest_bp_date: null
+      is_in_numerator: false
+      indicator_status: NOT_RECORDED_IN_PERIOD
+    - person_id: -5
+      reporting_date: '2026-10-31'
+      latest_bp_date: null
+      is_in_numerator: false
+      indicator_status: NOT_RECORDED_IN_PERIOD
+    - person_id: -4
+      reporting_date: '2026-09-30'
+      latest_bp_date: null
+      is_in_numerator: false
+      indicator_status: NOT_RECORDED_IN_PERIOD
+    - person_id: -4
+      reporting_date: '2026-10-31'
+      latest_bp_date: '2026-10-01'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -3
+      reporting_date: '2026-09-30'
+      latest_bp_date: '2026-09-30'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -3
+      reporting_date: '2026-10-31'
+      latest_bp_date: '2026-09-30'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -2
+      reporting_date: '2026-09-30'
+      latest_bp_date: '2021-10-01'
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+    - person_id: -2
+      reporting_date: '2026-10-31'
+      latest_bp_date: '2021-10-01'
+      is_in_numerator: false
+      indicator_status: NOT_RECORDED_IN_PERIOD
+    - person_id: -1
+      reporting_date: '2026-09-30'
+      latest_bp_date: '2021-09-30'
+      is_in_numerator: false
+      indicator_status: NOT_RECORDED_IN_PERIOD
+    - person_id: -1
+      reporting_date: '2026-10-31'
+      latest_bp_date: '2021-09-30'
+      is_in_numerator: false
+      indicator_status: NOT_RECORDED_IN_PERIOD
+  config:
+    tags:
+    - monthly-full
+    - nice-history

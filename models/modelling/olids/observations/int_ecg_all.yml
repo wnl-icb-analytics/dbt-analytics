@@ -1,0 +1,37 @@
+models:
+- name: int_ecg_all
+  description: Resting ECG evidence. One row per observation and code list for all people, including inactive
+    and deceased people. Uses ECL_CACHE ECG_12LEAD_COD and ECG_GENERAL_COD. Resting ECG procedures and
+    interpretations with unspecified lead count count alongside explicit resting 12-lead procedures. Generic ECG
+    evidence includes ECG measurements such as QT, QRS, PR, QTc and axis. It also includes generic
+    electrocardiography, to which EMIS maps ECG monitoring; this evidence does not prove 12 leads. Referrals,
+    exercise, ambulatory and single-lead ECGs are excluded
+    by the lists. Clinical dates use the shared correction and missing-date sentinel; consumers apply
+    reporting windows.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ECG_12LEAD_COD, ECG_GENERAL_COD
+        source: ECL_CACHE
+  columns:
+  - name: id
+    description: Source observation identifier.
+  - name: person_id
+    description: Person with the record, regardless of current registration.
+  - name: clinical_effective_date
+    description: Corrected clinical timestamp; missing dates use 1 January 1900.
+  - name: cluster_id
+    description: ECL_CACHE evidence list; an observation may belong to more than one list.
+  - name: concept_code
+    description: Recorded SNOMED CT concept code.
+  - name: concept_display
+    description: Recorded SNOMED CT label.

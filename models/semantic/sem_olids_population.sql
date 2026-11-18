@@ -19,7 +19,7 @@
     Grain: One row per person (current state)
 
     Condition Registers:
-    Built to QOF Business Rules v50. QOF registers are marked below.
+    Built to QOF Business Rules v51. QOF registers are marked below.
     Conditions are grouped by clinical domain:
     - Cardiovascular (QOF): AF, CHD, HF, HTN, PAD
     - Respiratory (QOF): Asthma, COPD; (non-QOF): CYP Asthma
@@ -46,7 +46,7 @@ TABLES(
 
     conditions AS {{ ref('dim_person_conditions') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Boolean flags for all long-term conditions (QOF Business Rules v50) with summary counts and diabetes type classification',
+        COMMENT = 'Boolean flags for long-term conditions, with summary counts and diabetes type. QOF registers follow Business Rules v51. Non-QOF conditions are CYP asthma, anxiety, osteoarthritis, Parkinson''s, cerebral palsy, MND, MS, learning disability under 14, autism, ADHD, hypothyroidism, NAFLD, chronic liver disease, sickle cell disease, thalassaemia, familial hypercholesterolaemia, frailty and gestational diabetes.',
 
     status AS {{ ref('dim_person_status_summary') }}
         PRIMARY KEY (person_id)
@@ -76,7 +76,7 @@ FACTS(
     conditions.neurology_conditions AS neurology_conditions COMMENT = 'Count of neurology conditions (Epilepsy, Stroke/TIA, Parkinsons, Cerebral Palsy, MND, MS)',
     conditions.geriatric_conditions AS geriatric_conditions COMMENT = 'Count of geriatric conditions (Frailty)',
     ccms.cambridge_comorbidity_score AS cambridge_comorbidity_score WITH SYNONYMS = ('CCMS', 'comorbidity score', 'Cambridge score') COMMENT = 'Cambridge Comorbidity Score (2022 modified, 20-category weighted sum). Higher = greater comorbidity burden; can be negative. Continuous score per the CCMS literature — no external clinical cut-points exist. Only populated for persons aged 16+.',
-    status.medication_count AS medication_count COMMENT = 'Number of current medications',
+    status.medication_count AS medication_count COMMENT = 'Count of distinct current nine-character BNF chemicals in scope',
     status.behavioural_risk_count AS behavioural_risk_count COMMENT = 'Count of behavioural risk factors',
     demographics.esp_weight AS esp_weight COMMENT = 'ESP 2013 population weight for this persons age band (out of 100,000 total). Use with age_band_esp for age-standardised rate calculation.',
     demographics.esp_proportion AS esp_proportion COMMENT = 'ESP 2013 weight as proportion (esp_weight / 100,000). Multiply stratum-specific rate by this and SUM across bands to get the ASR.'
@@ -96,7 +96,7 @@ DIMENSIONS(
     demographics.age_life_stage AS age_life_stage COMMENT = 'Life stage (Infant, Toddler, Child, Adolescent, Young Adult, Adult, Older Adult, Elderly, Very Elderly, Unknown)',
 
     -- Ethnicity
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.ethnicity_subcategory AS ethnicity_subcategory COMMENT = 'Ethnicity subcategory (White: British, White: Irish, White: Roma, White: Traveller, White: Other White, Mixed: White and Black Caribbean, Mixed: White and Black African, Mixed: White and Asian, Mixed: Other Mixed, Asian: Indian, Asian: Pakistani, Asian: Bangladeshi, Asian: Chinese, Asian: Other Asian, Black: African, Black: Caribbean, Black: Other Black, Other: Arab, Other: Other, Unknown, Not Stated, Not Recorded, Recorded Not Known, Refused)',
     demographics.ethnicity_granular AS ethnicity_granular COMMENT = 'Detailed ethnicity classification (Unknown if not recorded)',
 
@@ -105,7 +105,7 @@ DIMENSIONS(
     demographics.interpreter_needed AS interpreter_needed COMMENT = 'Whether interpreter is required',
 
     -- Registration Status
-    demographics.is_active AS is_active COMMENT = 'Currently registered with NCL GP practice',
+    demographics.is_active AS is_active COMMENT = 'Currently registered with a GP practice',
     demographics.is_deceased AS is_deceased COMMENT = 'Deceased status',
 
     -- Practice/Organisation
@@ -125,19 +125,19 @@ DIMENSIONS(
     demographics.ward_name AS ward_name COMMENT = 'Electoral ward 2025 name',
     demographics.borough_resident AS borough_resident COMMENT = 'London borough of residence',
     demographics.is_london_resident AS is_london_resident COMMENT = 'Resides in Greater London',
-    demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'NCL neighbourhood based on residence',
+    demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'WNL neighbourhood based on residence',
 
     -- Deprivation
     demographics.imd_decile_19 AS imd_decile_19 COMMENT = 'IMD 2019 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
-    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least). Preferred over 2019.',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
 
     -- Diabetes Type
     conditions.diabetes_type AS diabetes_type COMMENT = 'Diabetes type classification (Type 1, Type 2, Unknown, Not Diabetic). Type 1 takes precedence if both coded on same date.',
 
     -- Cardiovascular Conditions (QOF)
-    conditions.has_hypertension AS has_hypertension WITH SYNONYMS = ('HTN', 'high blood pressure') COMMENT = 'On hypertension register (QOF, age >=18)',
+    conditions.has_hypertension AS has_hypertension WITH SYNONYMS = ('HTN', 'high blood pressure') COMMENT = 'On hypertension register (QOF v51 HYP_REG, all ages): unresolved diagnosis, where a resolution on the same day as the latest diagnosis does not remove the person',
     conditions.has_coronary_heart_disease AS has_coronary_heart_disease WITH SYNONYMS = ('CHD', 'IHD', 'ischaemic heart disease') COMMENT = 'On CHD register (QOF)',
     conditions.has_heart_failure AS has_heart_failure WITH SYNONYMS = ('HF') COMMENT = 'On heart failure register (QOF)',
     conditions.has_atrial_fibrillation AS has_atrial_fibrillation WITH SYNONYMS = ('AF', 'AFib') COMMENT = 'On AF register (QOF)',
@@ -154,7 +154,7 @@ DIMENSIONS(
 
     -- Respiratory Conditions
     conditions.has_copd AS has_copd WITH SYNONYMS = ('COPD', 'emphysema', 'chronic bronchitis') COMMENT = 'On COPD register (QOF)',
-    conditions.has_asthma AS has_asthma COMMENT = 'On asthma register (QOF, age >=6)',
+    conditions.has_asthma AS has_asthma COMMENT = 'On asthma register (QOF, age >=5)',
     conditions.has_cyp_asthma AS has_cyp_asthma WITH SYNONYMS = ('children asthma', 'paediatric asthma') COMMENT = 'Children and young people asthma (non-QOF, age 0-17)',
 
     -- Mental Health Conditions
@@ -212,13 +212,13 @@ DIMENSIONS(
     status.has_vulnerability_flag AS has_vulnerability_flag COMMENT = 'Has any vulnerability indicator (care home, homeless, housebound, or LAC)',
 
     -- Smoking & Alcohol
-    status.smoking_status AS smoking_status COMMENT = 'Smoking status (Never Smoked, Ex-Smoker, Current Smoker, Unknown)',
+    status.smoking_status AS smoking_status COMMENT = 'Smoking status (Never Smoked, Ex-Smoker, Current Smoker, Non-Smoker (History Unknown), Unknown); Unknown means no qualifying recorded status. For prevalence use active people aged 15+ as the denominator; about 98% of under-15s are Unknown.',
     status.alcohol_status AS alcohol_status COMMENT = 'Alcohol status (Non-Drinker, Lower Risk, Increasing Risk, Higher Risk, Dependent, Unknown)',
     status.alcohol_requires_intervention AS alcohol_requires_intervention COMMENT = 'Requires alcohol intervention (AUDIT score >=5)',
 
     -- Polypharmacy
-    status.is_polypharmacy_5plus AS is_polypharmacy_5plus COMMENT = 'Has 5+ current medications',
-    status.is_polypharmacy_10plus AS is_polypharmacy_10plus COMMENT = 'Has 10+ current medications (severe polypharmacy)',
+    status.is_polypharmacy_5plus AS is_polypharmacy_5plus COMMENT = 'Local flag for at least five current BNF chemicals',
+    status.is_polypharmacy_10plus AS is_polypharmacy_10plus COMMENT = 'Flag for at least ten current BNF chemicals, supporting medication review prioritisation',
     status.medication_count_band AS medication_count_band COMMENT = 'Medication count band (0, 1-4, 5-9, 10-14, 15+)',
 
     -- Pregnancy
@@ -304,7 +304,7 @@ METRICS(
     ccms.patients_with_ccms AS COUNT(DISTINCT ccms.person_id) COMMENT = 'Patients with a CCMS (aged 16+)',
 
     -- Smoking
-    status.current_smoker_count AS COUNT(DISTINCT CASE WHEN status.smoking_status = 'Current Smoker' THEN status.person_id END) COMMENT = 'Current smokers',
+    status.current_smoker_count AS COUNT(DISTINCT CASE WHEN status.smoking_status = 'Current Smoker' THEN status.person_id END) COMMENT = 'Current smokers. Prevalence denominator: active people aged 15+ (filter is_active = TRUE AND age >= 15).',
     status.ex_smoker_count AS COUNT(DISTINCT CASE WHEN status.smoking_status = 'Ex-Smoker' THEN status.person_id END) COMMENT = 'Ex-smokers',
 
     -- Vulnerability
@@ -315,11 +315,11 @@ METRICS(
     status.vulnerable_count AS COUNT(DISTINCT CASE WHEN status.has_vulnerability_flag THEN status.person_id END) COMMENT = 'Patients with any vulnerability',
 
     -- Polypharmacy
-    status.avg_medication_count AS AVG(status.medication_count) COMMENT = 'Average medications per patient',
-    status.polypharmacy_5plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_5plus THEN status.person_id END) COMMENT = 'Patients with 5+ medications',
-    status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'Patients with 10+ medications'
+    status.avg_medication_count AS AVG(status.medication_count) COMMENT = 'Average current BNF chemical count per person',
+    status.polypharmacy_5plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_5plus THEN status.person_id END) COMMENT = 'People with the local flag for at least five current BNF chemicals',
+    status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'People with at least ten current BNF chemicals, supporting medication review prioritisation'
 )
 
-COMMENT = 'OLIDS Population Health Semantic View - NCL registered population with demographics, all condition registers (QOF v50), diabetes type, vulnerability factors, and risk behaviours. Source: OLIDS (One London Integrated Data Set — primary care data from system suppliers, unified by the One London team). Grain: one row per person (current state). ESP 2013 weights available via age_band_esp for age-standardised rate calculation.'
+COMMENT = 'Current population health measures for OLIDS, one row per person in dim_person_demographics with linked conditions, statuses and Cambridge Comorbidity Scores. Includes inactive and deceased people; is_active identifies current registrants. Conditions use QOF v51 and project non-QOF definitions. Cambridge scores apply from age 16; ESP 2013 groups and weights support standardisation. person_id supports cohort linkage; final results must be aggregate-only.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person. Example: SELECT borough_resident, AGG(patient_count) FROM SEM_OLIDS_POPULATION WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce active diabetes people here and SGLT2 exposure in sem_olids_prescribing before joining. Use sk_patient_id, not person_id, for sem_sus_acute_activity, sem_cost_index and sem_resource_index. Use borough_registered for practice geography and borough_resident for residence. Prefer IMD 2025. Filter is_active = TRUE unless the user asks about inactive or deceased patients. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
 AI_QUESTION_CATEGORIZATION 'Use this view for questions about: condition prevalence (all 40 conditions), diabetes type (T1/T2), demographics, multimorbidity, Cambridge Comorbidity Score (CCMS), vulnerability, smoking, polypharmacy, and population counts. CCMS (cambridge_comorbidity_score) is a continuous weighted score (higher = greater comorbidity burden, can be negative) with NO published risk bands and is NULL for under-16s — report it as a number or average, do not invent thresholds. For clinical biomarkers (BP, HbA1c, BMI, cholesterol) use sem_olids_observations. For serial/over-time biomarker readings use sem_olids_observations_history. For trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. condition x medication, condition x biomarker control, condition x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

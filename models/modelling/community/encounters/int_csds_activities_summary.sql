@@ -25,13 +25,13 @@ WITH base_join AS (
         activity.unique_care_activity_identifier,
         activity.community_care_activity_type
 
-    FROM {{ ref('stg_csds_cyp201carecontact') }} AS contact
+    FROM {{ ref('stg_csds_care_contact') }} AS contact
 
     LEFT JOIN {{ ref('stg_csds_cyp202careactivity') }} AS activity
         ON  contact.unique_care_contact_identifier = activity.unique_care_contact_identifier
         AND contact.person_id = activity.person_id      
 
-    LEFT JOIN {{ ref('stg_csds_cyp101referral') }} AS referral
+    LEFT JOIN {{ ref('stg_csds_referral') }} AS referral
         ON  contact.unique_service_request_identifier = referral.unique_service_request_identifier
         AND contact.person_id = referral.person_id
 

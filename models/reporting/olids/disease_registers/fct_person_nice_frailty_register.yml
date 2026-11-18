@@ -1,0 +1,66 @@
+models:
+- name: fct_person_nice_frailty_register
+  description: >-
+    Moderate or severe frailty register (NICE IND206). One row per register member on the build
+    date.
+
+
+    People registered on the build date, aged 65 or over, qualify when their latest coded frailty
+    is Moderate or Severe. Mild frailty does not qualify. Only clinical and recorded dates on
+    or before the build date count; missing recorded dates use the clinical date. Latest clinical
+    timestamps determine severity; equal timestamps prefer greater severity, then the higher
+    observation ID. Calculated electronic frailty index scores do not determine membership.
+    Based on NICE NG56, recommendation 1.4. Code lists: MILDFRAIL_COD, MODFRAIL_COD, SEVFRAIL_COD
+    (PCD). Deceased people and test records are excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND206
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Geriatric
+        name_short: Moderate or severe frailty register
+        description_short: >-
+          People aged 65 or over whose latest coded frailty is moderate or severe.
+        description_long: >-
+          People registered on the build date, aged 65 or over, qualify when their latest coded
+          frailty is Moderate or Severe. Mild frailty does not qualify. Only clinical and recorded
+          dates on or before the build date count; missing recorded dates use the clinical date.
+          Latest clinical timestamps determine severity; equal timestamps prefer greater severity,
+          then the higher observation ID. Calculated electronic frailty index scores do not
+          determine membership. Based on NICE NG56, recommendation 1.4. Code lists: MILDFRAIL_COD,
+          MODFRAIL_COD, SEVFRAIL_COD (PCD).
+        source_column: is_on_register
+        is_qof: false
+        qof_indicator: null
+        usage_contexts:
+        - NICE_GUIDANCE
+  columns:
+  - name: person_id
+    description: >-
+      Person identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: reporting_date
+    description: >-
+      Build date used to assess register membership.
+  - name: age
+    description: >-
+      Age in years from the approximate birth month on the build date; null when birth date
+      is missing.
+  - name: practice_code
+    description: >-
+      Current practice attributed to the registered person on the build date.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included.
+  - name: latest_frailty_severity
+    description: >-
+      Latest coded frailty severity known by the build date, Moderate or Severe. Equal clinical
+      timestamps prefer greater severity, then the higher observation ID.
+  - name: latest_diagnosis_date
+    description: >-
+      Clinical timestamp of the latest coded frailty finding known by the build date.

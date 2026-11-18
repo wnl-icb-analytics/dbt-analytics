@@ -1,15 +1,15 @@
 models:
   - name: int_olids_regular_registrations_at_point_in_time
     description: |
-      OLIDS patients with Regular registration episodes active at fixed point in time.
+      One row per practice: people with an open Regular registration on the EMIS
+      list size extract date, for comparison with the EMIS extract. A person
+      registered at two practices counts at both, as each practice's EMIS list
+      would. People who had died by that date are excluded.
 
-      Filters to Regular episode type only (excludes Temporary, Emergency, Private, etc.)
-      Used for EMIS list size comparison validation.
-
-      Snapshot Date: Dynamic (matches EMIS extract_date from seed file)
-      Episode Type: Regular only
-      Patient Counting: Deduplicated by person_id (handles patient ID mergers)
-      Deceased Handling: Excludes patients deceased on or before snapshot date
+      When int_patient_registrations_current_snapshot covers the extract date, the
+      count is the registered list as OLIDS recorded it that day. Otherwise it is
+      rebuilt from int_patient_registrations, which runs low for older extracts
+      because EMIS later rewrites some registration dates.
 
     config:
       meta:
@@ -30,6 +30,13 @@ models:
         description: Count of distinct persons with Regular registration episodes active on snapshot date
         tests:
           - not_null
+
+      - name: olids_count_basis
+        description: As recorded (from the daily registration snapshot) or Rebuilt (from current registration history).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['As recorded', 'Rebuilt']
 
       - name: snapshot_date
         description: Reference date for point-in-time calculation (from EMIS extract_date)

@@ -15,6 +15,7 @@ select
     , current_practice_code
     , latest_risk_score
     , latest_risk_assessment_date
+    , latest_bp_date
     , is_in_numerator
     , indicator_status
 from {{ ref('fct_person_cvd_risk_assessment_nice_indicators') }}

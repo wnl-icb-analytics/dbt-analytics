@@ -1,0 +1,40 @@
+models:
+- name: int_nice_weight_management_events_all
+  description: >-
+    Weight management referrals, attendance, programme ends, offers and declines. One row per
+    observation, source and code-list group, including inactive and deceased people, through the
+    build date. Referrals exclude diabetes prevention and total diet replacement programmes.
+    Attendance includes total diet replacement commencement; programme ends exclude programmes
+    never started. Offers and declines are separate from referrals.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: WEIGHT_MGMT_REFERRAL_COD, WEIGHT_MGMT_ATTENDING_COD, WEIGHT_MGMT_ENDED_COD, WEIGHT_MGMT_OFFERED
+        source: ECL_CACHE
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: WTMGREFDEC_COD
+        source: PCD
+  columns:
+  - name: event_date
+    description: Corrected clinical date.
+  - name: is_referral
+    description: Referral to a named weight management programme or service.
+  - name: is_offer
+    description: Offer of a weight management referral.
+  - name: is_decline
+    description: Declined referral, which demonstrates an offer.
+  - name: is_attendance
+    description: Started or attended a programme.
+  - name: is_end
+    description: Programme ended, completed or not completed.

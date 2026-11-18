@@ -13,11 +13,20 @@ models:
       - 2-5% Variance: Between 2-5% variance
       - 5-20% Variance: Between 5-20% variance
       - 20%+ Variance: 20% or greater variance
-      - Missing Data: No EMIS or OLIDS data available
+      - Missing Data: EMIS list size absent or zero (e.g. practice only in OLIDS). A practice with EMIS but no OLIDS registrations has an OLIDS count of 0 and falls in a variance category
 
       Data Sources:
       - EMIS: Static extract (date from seed file)
-      - OLIDS: Regular episode types only, active as of EMIS extract date
+      - OLIDS: Regular registrations open on the EMIS extract date (see olids_count_basis)
+
+      OLIDS registrations come from EMIS, so this is the authoritative check. EMIS
+      rewrites some registration dates after the event: a patient removed in list
+      cleaning and then re-registered gets a new start date, and leaving dates can
+      be backdated. A count rebuilt later from current history therefore drifts down
+      as the extract ages. When the daily registration snapshot covers the extract
+      date, OLIDS is counted as recorded on that date instead. The June 2026 extract
+      predates the snapshot; rebuilt from a mid-July 2026 copy of the feed, it matched
+      within about 0.1%.
 
     config:
       meta:
@@ -45,6 +54,12 @@ models:
         description: Number of patients with Regular registration episodes in 
           OLIDS
 
+      - name: olids_count_basis
+        description: As recorded when the OLIDS count comes from the daily
+          registration snapshot for the extract date; Rebuilt when the extract
+          predates the snapshot and the count is rebuilt from current history.
+          NULL for practices with no OLIDS registrations.
+
       - name: difference
         description: Difference between OLIDS and EMIS (signed, can be negative)
 
@@ -66,7 +81,7 @@ models:
 
       - name: variance_category
         description: Categorisation of variance (Meets Criteria, 2-5% Variance, 
-          5-20% Variance, 20%+ Variance, Missing Data)
+          5-20% Variance, 20%+ Variance, Missing Data). Missing Data means EMIS list size is absent or zero.
 
       - name: validation_methodology
         description: Description of the validation test applied (EMIS Regular 

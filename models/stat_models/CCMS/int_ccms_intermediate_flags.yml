@@ -1,0 +1,133 @@
+models:
+  - name: int_ccms_intermediate_flags
+    description: |
+      CCMS raw flags per person — 28 SNOMED-driven condition flags, 8
+      medication-driven flags, and an eGFR flag. Computed from
+      stg_olids_observation, int_ccms_medication_orders, and the AIC
+      reference codelists, with the Cambridge 2022 modified date / threshold
+      rules applied. One row per person in int_patient_person_unique whose
+      minimum possible age is at least 16 in dim_person_age.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier.
+        tests:
+          - unique
+          - not_null
+      - name: alcoholintoxication
+        description: Alcohol intoxication observation (any-time).
+        tests: &flag_test
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+      - name: harmfuluseofalcohol
+        description: Harmful use of alcohol observation (any-time).
+        tests: *flag_test
+      - name: disordercausedbyalcohol
+        description: Disorder caused by alcohol observation (any-time).
+        tests: *flag_test
+      - name: depressivedisorder
+        description: Depressive disorder observation (last 12 months).
+        tests: *flag_test
+      - name: anxietydisorder
+        description: Anxiety disorder observation (last 12 months).
+        tests: *flag_test
+      - name: neurosis
+        description: Neurosis observation (last 12 months).
+        tests: *flag_test
+      - name: atrialfibrillation
+        description: Atrial fibrillation observation (any-time).
+        tests: *flag_test
+      - name: malignantneoplasticdiseaseexceptskin
+        description: Malignant neoplastic disease excluding skin (last 5 years).
+        tests: *flag_test
+      - name: malignantmelanoma
+        description: Malignant melanoma (last 5 years).
+        tests: *flag_test
+      - name: viralhepatitisrpt
+        description: Viral hepatitis observation (any-time).
+        tests: *flag_test
+      - name: chronicliverdisease
+        description: Chronic liver disease observation (any-time).
+        tests: *flag_test
+      - name: copd
+        description: COPD observation (any-time).
+        tests: *flag_test
+      - name: dementia
+        description: Dementia observation (any-time).
+        tests: *flag_test
+      - name: diabetest1
+        description: Type 1 diabetes observation (any-time).
+        tests: *flag_test
+      - name: diabetest2
+        description: Type 2 diabetes observation (any-time).
+        tests: *flag_test
+      - name: disorderofprostate
+        description: Disorder of prostate observation (any-time).
+        tests: *flag_test
+      - name: epilepsy
+        description: Epilepsy observation (any-time).
+        tests: *flag_test
+      - name: congestivecardiacfailure
+        description: Congestive cardiac failure observation (any-time).
+        tests: *flag_test
+      - name: irritablebowelsyndrome
+        description: Irritable bowel syndrome observation (any-time).
+        tests: *flag_test
+      - name: developmentalacademicdisorder
+        description: Developmental academic disorder observation (any-time).
+        tests: *flag_test
+      - name: intellectualdisability
+        description: Intellectual disability observation (any-time).
+        tests: *flag_test
+      - name: completetrisomy21syndrome
+        description: Complete trisomy 21 syndrome observation (any-time).
+        tests: *flag_test
+      - name: multiplesclerosis
+        description: Multiple sclerosis observation (any-time).
+        tests: *flag_test
+      - name: parkinsonism
+        description: Parkinsonism observation (any-time).
+        tests: *flag_test
+      - name: periphvascdiseaseleg
+        description: Peripheral vascular disease of leg observation (any-time).
+        tests: *flag_test
+      - name: substancemisuse
+        description: Substance misuse observation (any-time).
+        tests: *flag_test
+      - name: schizophreniadisorder
+        description: Schizophrenia observation (any-time).
+        tests: *flag_test
+      - name: bipolardisorder
+        description: Bipolar disorder observation (any-time).
+        tests: *flag_test
+      - name: antidepressantmedication
+        description: 4+ antidepressant issues in the last 12 months.
+        tests: *flag_test
+      - name: anxiolytics
+        description: 4+ anxiolytic issues in the last 12 months.
+        tests: *flag_test
+      - name: laxatives
+        description: 4+ laxative issues in the last 12 months.
+        tests: *flag_test
+      - name: antiepilepticmedication
+        description: 1+ antiepileptic issue in the last 12 months.
+        tests: *flag_test
+      - name: antispasmedicmedication
+        description: 4+ antispasmodic issues in the last 12 months.
+        tests: *flag_test
+      - name: analgesicsoropiodsnotmigrainemedication
+        description: 4+ non-migraine analgesic / opioid issues in the last 12 months.
+        tests: *flag_test
+      - name: antiepilepticmedicationexceptbenzodiazepines
+        description: 4+ antiepileptic (excluding benzodiazepines) issues in the last 12 months.
+        tests: *flag_test
+      - name: lithium
+        description: Any lithium prescription ever recorded.
+        tests: *flag_test
+      - name: egfr
+        description: Both of the two most recent eGFR results are below 60.
+        tests: *flag_test

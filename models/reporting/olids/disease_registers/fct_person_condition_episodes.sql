@@ -394,8 +394,8 @@ WITH all_condition_events AS (
         'SMI' as condition_code,
         'Mental Health' as clinical_domain,
         CASE 
-            WHEN is_diagnosis_code THEN 'onset'
             WHEN is_resolved_code THEN 'resolved'
+            WHEN is_diagnosis_code THEN 'onset'
         END as event_type,
         concept_code,
         concept_display

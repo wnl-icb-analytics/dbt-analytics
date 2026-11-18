@@ -1,5 +1,5 @@
 -- LTC LCS: Asthma CYP Register - Priority Group 2 (High Risk)
--- Parent population: CYP asthma register ONLY (not on any other LTC LCS register)
+-- Parent population: full CYP asthma register
 -- EMIS source: 'On Asthma(CYP) Register- LTC LCS Priority Group 2 (HR)* V2 Oct 2025'
 -- (docs/emis_specs/ltc_lcs_r5/risk_stratification/specs/conditions/asthma_cyp/on_asthma_cyp_register_ltc_lcs_priority_group_2_hr_v2_oct_2025.md)
 -- Latest spec variant implemented (supersedes V1 and V2).
@@ -22,38 +22,10 @@
 -- (issue #396), consistent with the adult asthma models.
 
 with
--- Parent population: CYP asthma register, excluding patients on any other
--- LTC LCS register ('LTC LCS: Asthma CYP Register ONLY')
-cyp_asthma_only as (
-    select distinct r.person_id
-    from {{ ref('fct_person_cyp_asthma_register') }} r
-    where r.is_on_register = true
-        and r.person_id not in (
-            select person_id from {{ ref('fct_person_atrial_fibrillation_register') }}
-            union
-            select person_id from {{ ref('fct_person_ckd_register') }}
-            union
-            select person_id from {{ ref('fct_person_chd_register') }}
-            union
-            select person_id from {{ ref('fct_person_diabetes_register') }}
-            union
-            select person_id from {{ ref('fct_person_hypertension_register') }}
-            union
-            select person_id from {{ ref('int_ltc_lcs_nafld_register') }}
-            union
-            select r2.person_id
-            from {{ ref('fct_person_asthma_register') }} r2
-            inner join {{ ref('dim_person_age') }} a2 on r2.person_id = a2.person_id
-            where a2.age >= 18
-            union
-            select person_id from {{ ref('int_ltc_lcs_copd_register') }}
-            union
-            select person_id from {{ ref('fct_person_heart_failure_register') }}
-            union
-            select person_id from {{ ref('fct_person_pad_register') }}
-            union
-            select person_id from {{ ref('fct_person_stroke_tia_register') }}
-        )
+cyp_asthma_register as (
+    select person_id
+    from {{ ref('fct_person_cyp_asthma_register') }}
+    where is_on_register
 ),
 
 -- Rule 1: latest child protection status is 'on protection register', or
@@ -132,7 +104,7 @@ ics_12m as (
     where order_date >= dateadd(month, -12, current_date())
 ),
 
--- Combine rule results for all CYP-only asthma register patients
+-- Combine rule results for all CYP asthma register patients
 patient_rules as (
     select
         cr.person_id,
@@ -156,7 +128,7 @@ patient_rules as (
                 then 'Included'
             else 'Excluded'
         end as final_status
-    from cyp_asthma_only cr
+    from cyp_asthma_register cr
     left join rule_1_safeguarding r1 on cr.person_id = r1.person_id
     left join rule_2_emergency_admission r2 on cr.person_id = r2.person_id
     left join rule_3_exacerbation r3 on cr.person_id = r3.person_id

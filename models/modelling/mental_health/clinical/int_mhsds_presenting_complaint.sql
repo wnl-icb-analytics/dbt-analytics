@@ -18,8 +18,8 @@ select
         when '02' then legacy.term when '03' then legacy.term
     end as complaint_description
 from keyed as a
-left join {{ ref('mhsds_care_activity_code_lookup') }} as scheme
-    on a.find_scheme_in_use = scheme.code and scheme.code_set_name = 'finding_scheme'
+left join {{ ref('nhs_dd_finding_scheme') }} as scheme
+    on a.find_scheme_in_use = scheme.code
 left join {{ ref('icd10_code') }} as icd
     on replace({{ clean_icd10_code('upper(trim(a.pres_comp))') }}, '.', '') = icd.code and a.find_scheme_in_use = '01'
 left join {{ ref('snomed_concept') }} as snomed on trim(a.pres_comp) = snomed.snomed_code and a.find_scheme_in_use = '04'

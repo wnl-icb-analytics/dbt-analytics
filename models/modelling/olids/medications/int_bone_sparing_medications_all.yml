@@ -1,0 +1,34 @@
+models:
+- name: int_bone_sparing_medications_all
+  description: All NHS_DRUG_REFSETS/BSADRUG_COD bone-sparing medication orders, one row per medication
+    order. Retains inactive and deceased people and all dated orders. No build-relative treatment flags.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NHS_DRUG_REFSETS/BSADRUG_COD
+        source: OPENCODELISTS
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: medication_order_id
+    description: Source medication order identifier.
+  - name: order_date
+    description: Clinical order date.
+  - name: date_recorded
+    description: Source recorded date.
+  - name: mapped_concept_code
+    description: SNOMED CT concept code.
+  - name: mapped_concept_display
+    description: Authoritative concept display.
+  - name: bnf_code
+    description: BNF classification code.
+  - name: bnf_name
+    description: BNF classification label.

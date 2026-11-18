@@ -26,8 +26,8 @@ from {{ ref('stg_mhsds_referral_to_treatment') }} as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as measure_label
-    on upper(trim(s.wait_time_measure_type::varchar)) = measure_label.code and measure_label.code_set_name = 'waiting_time_measurement_type'
+left join {{ ref('nhs_dd_waiting_time_measurement_type') }} as measure_label
+    on upper(trim(s.wait_time_measure_type::varchar)) = measure_label.code
 left join {{ ref('stg_dictionary_dbo_rttperiodstatus') }} as status on s.refer_to_treat_period_status = status.rtt_period_status_code
 left join {{ ref('int_mhsds_organisation') }} as issuer
     on upper(s.org_id_pat_path_id_issuer) = upper(issuer.organisation_code)

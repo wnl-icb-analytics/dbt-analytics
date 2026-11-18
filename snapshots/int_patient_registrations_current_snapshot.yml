@@ -1,0 +1,33 @@
+snapshots:
+  - name: int_patient_registrations_current_snapshot
+    relation: ref('int_patient_registrations_current_snapshot_input')
+    description: >-
+      Daily record of open Regular registrations as OLIDS showed them at the
+      time. One row is one observed version of one registration episode; rows
+      valid on a date give each practice's registered list as recorded that
+      day. EMIS later rewrites some registration dates, so this differs from a
+      list rebuilt from current history. dbt_valid_from and dbt_valid_to record
+      when the pipeline observed the registration and do not cover dates before
+      the first snapshot run. Rows leaving the source are closed. Used to
+      compare EMIS list size extracts with OLIDS as recorded on the extract date.
+    config:
+      strategy: check
+      unique_key: [registration_record_id]
+      check_cols: all
+      hard_deletes: invalidate
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [registration_record_id, dbt_valid_from]
+    columns:
+      - name: registration_record_id
+        description: "Episode of care identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When the pipeline first observed this version of the registration."
+        data_tests:
+          - not_null

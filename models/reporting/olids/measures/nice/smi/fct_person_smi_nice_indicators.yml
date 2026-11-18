@@ -1,21 +1,23 @@
 models:
   - name: fct_person_smi_physical_health_ind248
-    description: |
-      NICE IND248: SMI six health checks. One row per currently registered, living,
-      non-test person with schizophrenia, bipolar affective disorder or another
-      psychosis on the SMI register, including remission, assessed on the build date.
+    description: >-
+      Six physical health checks in severe mental illness (NICE IND248). One row per person in
+      the denominator on the build date.
 
-      Achievement requires all six checks in the preceding 12 months: blood pressure,
-      BMI, alcohol consumption, lipid profile, blood glucose or HbA1c, and smoking
-      status. Alcohol units, usage status or a screening tool qualify. Lipid evidence is
-      a total cholesterol or cholesterol to HDL ratio result. Laboratory checks require
-      a recorded value. checks_met_count ranges from 0 to 6.
 
-      Lithium therapy without an SMI diagnosis does not qualify. NICE treats remission
-      as a personalised care adjustment for IND248, so remitted people remain in this
-      denominator.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or other
+      psychosis; remission and lithium alone do not qualify. Achieved with all six checks in the
+      12 months before the build date: valid paired blood pressure, BMI, alcohol, lipids,
+      glucose or HbA1c, and smoking status. Recorded BMI of 10 to 150 kg/m2 inclusive counts at
+      any age; valid calculated BMI counts for adults using the weight date. Later invalid BMI
+      does not cancel earlier valid evidence. Alcohol units, status or screening count. Lipids
+      need numeric total cholesterol, HDL, LDL, non-HDL, cholesterol to HDL ratio or
+      triglycerides, or a completed test code. Glucose and HbA1c need no numeric value. No
+      personalised care adjustments are applied. Based on NICE CG178. Code lists: MH_COD,
+      MHREM_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD, HOMEBP_COD, BMIVAL_COD
+      (PCD); HEIGHT, WEIGHT, ALC_COD, ALCUSAGE_COD, FAST_COD, AUDITC_COD, AUDIT_COD, CHOL2_COD,
+      HDLCCHOL_COD, LDLCCHOL_COD, NONHDLCCHOL_COD, TCHOLHDL_COD, TRIGLYC_COD, NONVALCHOL_COD,
+      FASPLASGLUC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SMOK_COD.
     config:
       meta:
         owner:
@@ -26,25 +28,23 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI six health checks"
-          description_short: "All six SMI physical health checks recorded in the preceding 12 months"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, including
-            remission.
-
-            Achievement requires all six checks in the preceding 12 months: blood
-            pressure, BMI, alcohol consumption, lipid profile, blood glucose or HbA1c,
-            and smoking status. Alcohol units, usage status or a screening tool qualify.
-            Lipid evidence is a total cholesterol or cholesterol to HDL ratio result.
-            Laboratory checks require a recorded value. checks_met_count ranges from 0
-            to 6.
-
-            Lithium therapy without an SMI diagnosis does not qualify. NICE treats
-            remission as a personalised care adjustment for IND248, so remitted people
-            remain in this denominator.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness six health checks"
+          description_short: "Six physical health checks in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder or
+            other psychosis; remission and lithium alone do not qualify. Achieved with all six
+            checks in the 12 months before the build date: valid paired blood pressure, BMI,
+            alcohol, lipids, glucose or HbA1c, and smoking status. Recorded BMI of 10 to 150
+            kg/m2 inclusive counts at any age; valid calculated BMI counts for adults using the
+            weight date. Later invalid BMI does not cancel earlier valid evidence. Alcohol
+            units, status or screening count. Lipids need numeric total cholesterol, HDL, LDL,
+            non-HDL, cholesterol to HDL ratio or triglycerides, or a completed test code.
+            Glucose and HbA1c need no numeric value. No personalised care adjustments are
+            applied. Based on NICE CG178. Code lists: MH_COD, MHREM_COD, BP_COD, SYSBP_COD,
+            DIASBP_COD, HOMEAMBBP_COD, ABPM_COD, HOMEBP_COD, BMIVAL_COD (PCD); HEIGHT, WEIGHT,
+            ALC_COD, ALCUSAGE_COD, FAST_COD, AUDITC_COD, AUDIT_COD, CHOL2_COD, HDLCCHOL_COD,
+            LDLCCHOL_COD, NONHDLCCHOL_COD, TCHOLHDL_COD, TRIGLYC_COD, NONVALCHOL_COD,
+            FASPLASGLUC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SMOK_COD.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -52,48 +52,64 @@ models:
           sort_order: "NICE_IND248"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "12 months before the reporting date, included in each check window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_blood_pressure_date
-        description: Date of the latest blood pressure reading; null when none
+        description: >-
+          Latest valid paired blood pressure reading on or before the reporting date; null if
+          absent. It may be outside the achievement window.
       - name: latest_bmi_date
-        description: Date of the latest BMI with a value; null when none
+        description: >-
+          Latest valid recorded BMI, or calculated BMI for an adult, on or before the reporting
+          date; null if absent. It may be outside the achievement window.
       - name: latest_alcohol_record_date
-        description: Date of the latest alcohol consumption record (units, usage status or screening tool); null when none
+        description: >-
+          Latest alcohol units, usage status or screening record on or before the reporting date;
+          null if absent. It may be outside the achievement window.
       - name: latest_lipid_date
-        description: Date of the latest lipid record counted by the indicator; null when none
+        description: >-
+          Latest lipid result or completed lipid test counted by the indicator on or before the
+          reporting date; null if absent. It may be outside the achievement window.
       - name: latest_glucose_or_hba1c_date
-        description: Date of the latest HbA1c or blood glucose; null when none
+        description: >-
+          Latest blood glucose or HbA1c test on or before the reporting date, with or without a
+          numeric value; null if absent. It may be outside the achievement window.
       - name: latest_smoking_status_date
-        description: Date of the latest smoking status record; null when none
+        description: >-
+          Date of the latest smoking status on or before the reporting date; null if absent. It may
+          be outside the achievement window.
       - name: checks_met_count
-        description: Number of the six physical health checks recorded in the preceding 12 months, 0 to 6
+        description: >-
+          Number of the six required health checks recorded in the 12 months before the reporting
+          date, including both boundaries. Values range from 0 to 6.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Latest of the six required check dates when every check falls in the 12-month window; otherwise null."
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -101,17 +117,17 @@ models:
 
 
   - name: fct_person_smi_alcohol_ind82
-    description: |
-      NICE IND82: SMI alcohol record. One row per currently registered, living, non-test
-      person with schizophrenia, bipolar affective disorder or another psychosis on the
-      SMI register, excluding remission and lithium therapy without an SMI diagnosis,
-      assessed on the build date.
+    description: >-
+      Alcohol consumption recording in severe mental illness (NICE IND82). One row per
+      person in the denominator on the build date.
 
-      Achievement requires an alcohol consumption record in the preceding 15 months.
-      Units per week, alcohol usage status and FAST, AUDIT-C or AUDIT screening records
-      qualify.
 
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or
+      other psychosis; remission and lithium alone do not qualify. Achieved with alcohol
+      units, usage status or FAST, AUDIT-C or AUDIT screening in the 15 months before the
+      build date. NICE excludes remission. No personalised care adjustments are applied.
+      Based on NICE CG185. Code lists: MH_COD, MHREM_COD, ALC_COD, ALCUSAGE_COD, FAST_COD,
+      AUDITC_COD, AUDIT_COD (PCD).
     config:
       meta:
         owner:
@@ -122,18 +138,15 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI alcohol record"
-          description_short: "Alcohol consumption recorded in the preceding 15 months for people with SMI"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, excluding
-            remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires an alcohol consumption record in the preceding 15
-            months. Units per week, alcohol usage status and FAST, AUDIT-C or AUDIT
-            screening records qualify.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness alcohol recording"
+          description_short: "Alcohol consumption recording in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder
+            or other psychosis; remission and lithium alone do not qualify. Achieved with
+            alcohol units, usage status or FAST, AUDIT-C or AUDIT screening in the 15 months
+            before the build date. NICE excludes remission. No personalised care adjustments
+            are applied. Based on NICE CG185. Code lists: MH_COD, MHREM_COD, ALC_COD,
+            ALCUSAGE_COD, FAST_COD, AUDITC_COD, AUDIT_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -141,36 +154,42 @@ models:
           sort_order: "NICE_IND82"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "15 months before the reporting date, included in the recording window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_alcohol_record_date
-        description: Date of the latest alcohol consumption record (units, usage status or screening tool); null when none
+        description: >-
+          Latest alcohol units, usage status or screening record on or before the reporting date;
+          null if absent. It may be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest alcohol units, usage status or screening record in the 15-month window; null
+          if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -178,15 +197,18 @@ models:
 
 
   - name: fct_person_smi_bmi_ind83
-    description: |
-      NICE IND83: SMI BMI record. One row per currently registered, living, non-test
-      person with schizophrenia, bipolar affective disorder or another psychosis on the
-      SMI register, excluding remission and lithium therapy without an SMI diagnosis,
-      assessed on the build date.
+    description: >-
+      BMI recording in severe mental illness (NICE IND83). One row per person in the
+      denominator on the build date.
 
-      Achievement requires a BMI record with a numeric value in the preceding 15 months.
 
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or
+      other psychosis; remission and lithium alone do not qualify. Achieved with valid BMI
+      in the 15 months before the build date. Recorded BMI of 10 to 150 kg/m2 inclusive
+      counts at any age; valid calculated BMI counts for adults using the weight date. Later
+      invalid records do not cancel earlier valid evidence. NICE excludes remission. No
+      personalised care adjustments are applied. Based on NICE CG178. Code lists: MH_COD,
+      MHREM_COD, BMIVAL_COD (PCD); HEIGHT, WEIGHT.
     config:
       meta:
         owner:
@@ -197,17 +219,16 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI BMI record"
-          description_short: "BMI recorded in the preceding 15 months for people with SMI"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, excluding
-            remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a BMI record with a numeric value in the preceding 15
-            months.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness BMI recording"
+          description_short: "BMI recording in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder
+            or other psychosis; remission and lithium alone do not qualify. Achieved with
+            valid BMI in the 15 months before the build date. Recorded BMI of 10 to 150
+            kg/m2 inclusive counts at any age; valid calculated BMI counts for adults using
+            the weight date. Later invalid records do not cancel earlier valid evidence.
+            NICE excludes remission. No personalised care adjustments are applied. Based on
+            NICE CG178. Code lists: MH_COD, MHREM_COD, BMIVAL_COD (PCD); HEIGHT, WEIGHT.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -215,36 +236,42 @@ models:
           sort_order: "NICE_IND83"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "15 months before the reporting date, included in the BMI window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_bmi_date
-        description: Date of the latest BMI with a value; null when none
+        description: >-
+          Latest valid recorded BMI, or calculated BMI for an adult, on or before the reporting
+          date; null if absent. It may be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest valid recorded BMI or adult calculated BMI in the 15-month window; null if
+          absent. Earlier valid evidence survives a later invalid record.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -252,15 +279,17 @@ models:
 
 
   - name: fct_person_smi_blood_pressure_ind84
-    description: |
-      NICE IND84: SMI blood pressure record. One row per currently registered, living,
-      non-test person with schizophrenia, bipolar affective disorder or another
-      psychosis on the SMI register, excluding remission and lithium therapy without an
-      SMI diagnosis, assessed on the build date.
+    description: >-
+      Blood pressure recording in severe mental illness (NICE IND84). One row per person in
+      the denominator on the build date.
 
-      Achievement requires a blood pressure reading in the preceding 15 months.
 
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or
+      other psychosis; remission and lithium alone do not qualify. Achieved with paired
+      systolic and diastolic blood pressure of 40 to 350 and 20 to 200 mmHg respectively,
+      inclusive, in the 15 months before the build date. NICE excludes remission. No
+      personalised care adjustments are applied. Based on NICE CG178. Code lists: MH_COD,
+      MHREM_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD, HOMEBP_COD (PCD).
     config:
       meta:
         owner:
@@ -271,16 +300,17 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI blood pressure record"
-          description_short: "Blood pressure recorded in the preceding 15 months for people with SMI"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, excluding
-            remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a blood pressure reading in the preceding 15 months.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness blood pressure recording"
+          description_short: "Blood pressure recording in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder
+            or other psychosis; remission and lithium alone do not qualify. Achieved with
+            paired systolic and diastolic blood pressure of 40 to 350 and 20 to 200 mmHg
+            respectively, inclusive, in the 15 months before the build date. NICE excludes
+            remission. No personalised care adjustments are applied. Based on NICE CG178.
+            Code
+            lists: MH_COD, MHREM_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD,
+            HOMEBP_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -288,36 +318,41 @@ models:
           sort_order: "NICE_IND84"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "15 months before the reporting date, included in the reading window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_blood_pressure_date
-        description: Date of the latest blood pressure reading; null when none
+        description: >-
+          Latest valid paired blood pressure reading on or before the reporting date; null if
+          absent. It may be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest valid paired blood pressure reading in the 15-month window; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -325,19 +360,19 @@ models:
 
 
   - name: fct_person_smi_cholesterol_ind158
-    description: |
-      NICE IND158: SMI cholesterol ratio. One row per currently registered, living,
-      non-test person aged 18 and over with schizophrenia, bipolar affective disorder or
-      another psychosis on the SMI register, excluding remission and lithium therapy
-      without an SMI diagnosis, assessed on the build date.
+    description: >-
+      Cholesterol to HDL ratio recording in severe mental illness (NICE IND158). One row per
+      person in the denominator on the build date.
 
-      Achievement requires a total cholesterol to HDL ratio with a numeric value in the
-      preceding 12 months.
 
-      People with coronary heart disease, stroke, TIA or peripheral arterial disease
-      first diagnosed more than 12 months before the reporting date are excluded.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 18 or over with active schizophrenia, bipolar
+      disorder or other psychosis. Remission excludes them, as does coronary heart disease,
+      stroke, transient ischaemic attack or peripheral arterial disease first diagnosed more
+      than 12 months earlier. Achieved with a numeric total cholesterol to HDL ratio in the
+      12 months before the build date. The longstanding disease exclusion follows NICE;
+      remission is also excluded, as in QOF. No personalised care adjustments are applied.
+      Based on NICE CG178. Code lists: MH_COD, MHREM_COD, TCHOLHDL_COD, CHD_COD, STRK_COD,
+      TIA_COD, PAD_COD (PCD).
     config:
       meta:
         owner:
@@ -348,21 +383,18 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI cholesterol ratio"
-          description_short: "Total cholesterol to HDL ratio recorded in the preceding 12 months for adults with SMI"
-          description_long: |
-            Currently registered, living, non-test people aged 18 and over with
-            schizophrenia, bipolar affective disorder or another psychosis on the SMI
-            register, excluding remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a total cholesterol to HDL ratio with a numeric value
-            in the preceding 12 months.
-
-            People with coronary heart disease, stroke, TIA or peripheral arterial
-            disease first diagnosed more than 12 months before the reporting date are
-            excluded.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness cholesterol ratio"
+          description_short: "Cholesterol to HDL ratio recording in severe mental illness."
+          description_long: >-
+            People registered on the build date aged 18 or over with active schizophrenia,
+            bipolar disorder or other psychosis. Remission excludes them, as does coronary
+            heart disease, stroke, transient ischaemic attack or peripheral arterial disease
+            first diagnosed more than 12 months earlier. Achieved with a numeric total
+            cholesterol to HDL ratio in the 12 months before the build date. The
+            longstanding disease exclusion follows NICE; remission is also excluded, as in
+            QOF. No personalised care adjustments are applied. Based on NICE CG178. Code
+            lists: MH_COD, MHREM_COD, TCHOLHDL_COD, CHD_COD, STRK_COD, TIA_COD, PAD_COD
+            (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -370,36 +402,42 @@ models:
           sort_order: "NICE_IND158"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "12 months before the reporting date, included in the ratio window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_cholesterol_hdl_ratio_date
-        description: Date of the latest total cholesterol to HDL ratio with a value; null when none
+        description: >-
+          Latest total cholesterol to HDL ratio with a numeric value on or before the reporting
+          date; null if absent. It may be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest numeric total cholesterol to HDL ratio in the 12-month window; null if
+          absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -407,19 +445,18 @@ models:
 
 
   - name: fct_person_smi_glucose_ind159
-    description: |
-      NICE IND159: SMI glucose or HbA1c. One row per currently registered, living,
-      non-test person aged 18 and over with schizophrenia, bipolar affective disorder or
-      another psychosis on the SMI register, excluding remission and lithium therapy
-      without an SMI diagnosis, assessed on the build date.
+    description: >-
+      Glucose or HbA1c testing in severe mental illness (NICE IND159). One row per person in
+      the denominator on the build date.
 
-      Achievement requires a blood glucose or HbA1c result with a numeric value in the
-      preceding 12 months.
 
-      People with diabetes first diagnosed more than 12 months before the reporting date
-      are excluded.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 18 or over with active schizophrenia, bipolar
+      disorder or other psychosis. Remission or diabetes first diagnosed more than 12 months
+      earlier excludes them. Achieved with a glucose or HbA1c test in the 12 months before
+      the build date, with or without a numeric value. The longstanding disease exclusion
+      follows NICE; remission is also excluded, as in QOF. No personalised care adjustments
+      are applied. Based on NICE CG178. Code lists: MH_COD, MHREM_COD, DM_COD, DMTYPE1_COD,
+      DMTYPE2_COD, DMRES_COD, FASPLASGLUC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
     config:
       meta:
         owner:
@@ -430,20 +467,17 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI glucose or HbA1c"
-          description_short: "Blood glucose or HbA1c recorded in the preceding 12 months for adults with SMI"
-          description_long: |
-            Currently registered, living, non-test people aged 18 and over with
-            schizophrenia, bipolar affective disorder or another psychosis on the SMI
-            register, excluding remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a blood glucose or HbA1c result with a numeric value in
-            the preceding 12 months.
-
-            People with diabetes first diagnosed more than 12 months before the
-            reporting date are excluded.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness glucose or HbA1c"
+          description_short: "Glucose or HbA1c testing in severe mental illness."
+          description_long: >-
+            People registered on the build date aged 18 or over with active schizophrenia,
+            bipolar disorder or other psychosis. Remission or diabetes first diagnosed more
+            than 12 months earlier excludes them. Achieved with a glucose or HbA1c test in
+            the 12 months before the build date, with or without a numeric value. The
+            longstanding disease exclusion follows NICE; remission is also excluded, as in
+            QOF. No personalised care adjustments are applied. Based on NICE CG178. Code
+            lists: MH_COD, MHREM_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+            FASPLASGLUC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -451,36 +485,42 @@ models:
           sort_order: "NICE_IND159"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "12 months before the reporting date, included in the test window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_glucose_or_hba1c_date
-        description: Date of the latest HbA1c or blood glucose; null when none
+        description: >-
+          Latest blood glucose or HbA1c test on or before the reporting date, with or without a
+          numeric value; null if absent. It may be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest glucose or HbA1c test in the 12-month window, with or without a numeric
+          result; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -488,23 +528,19 @@ models:
 
 
   - name: fct_person_smi_smoking_ind154
-    description: |
-      NICE IND154: SMI smoking status. One row per currently registered, living,
-      non-test person with schizophrenia, bipolar affective disorder or another
-      psychosis on the SMI register, excluding remission and lithium therapy without an
-      SMI diagnosis, assessed on the build date.
+    description: >-
+      Smoking status recording in severe mental illness (NICE IND154). One row per person in
+      the denominator on the build date.
 
-      Achievement requires a smoking status record in the preceding 12 months. A person
-      whose latest status is never smoked also qualifies without a recent record if they
-      reach 26 by the current financial year end. Their never-smoked record must be
-      after their 25th birthday and after their earliest qualifying diagnosis. The
-      optional three-year ex-smoker exception is not applied.
 
-      The qualifying diagnosis for the never-smoker exception is the earliest SMI
-      diagnosis. The active-diagnosis population follows the existing QOF mental health
-      interpretation; NICE does not explicitly exclude remission here.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or
+      other psychosis; remission and lithium alone do not qualify. Achieved with smoking
+      status in the 12 months before the build date, or latest never-smoked status recorded
+      after the 25th birthday and first mental illness diagnosis if age reaches 26 by
+      financial year-end. The ex-smoker allowance counts latest ex-smoker status recorded in
+      three consecutive financial years with no smoker record since the first qualifying
+      record. NICE does not explicitly exclude remission. No personalised care adjustments
+      are applied. Based on NICE CG178. Code lists: MH_COD, MHREM_COD, SMOK_COD (PCD).
     config:
       meta:
         owner:
@@ -515,25 +551,18 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI smoking status"
-          description_short: "Smoking status recorded in the preceding 12 months for people with SMI"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, excluding
-            remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a smoking status record in the preceding 12 months. A
-            person whose latest status is never smoked also qualifies without a recent
-            record if they reach 26 by the current financial year end. Their
-            never-smoked record must be after their 25th birthday and after their
-            earliest qualifying diagnosis. The optional three-year ex-smoker exception
-            is not applied.
-
-            The qualifying diagnosis for the never-smoker exception is the earliest SMI
-            diagnosis. The active-diagnosis population follows the existing QOF mental
-            health interpretation; NICE does not explicitly exclude remission here.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness smoking status"
+          description_short: "Smoking status recording in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder
+            or other psychosis; remission and lithium alone do not qualify. Achieved with
+            smoking status in the 12 months before the build date, or latest never-smoked
+            status recorded after the 25th birthday and first mental illness diagnosis if
+            age reaches 26 by financial year-end. The ex-smoker allowance counts latest
+            ex-smoker status recorded in three consecutive financial years with no smoker
+            record since the first qualifying record. NICE does not explicitly exclude
+            remission. No personalised care adjustments are applied. Based on NICE CG178.
+            Code lists: MH_COD, MHREM_COD, SMOK_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -541,38 +570,46 @@ models:
           sort_order: "NICE_IND154"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: >-
+          12 months before the reporting date, included in the recording window. The never-smoker
+          rule may use older evidence.
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_smoking_status
-        description: Latest recorded smoking status; null when none
+        description: "Latest recorded smoking status on or before the reporting date; null if absent."
       - name: latest_smoking_status_date
-        description: Date of the latest smoking status record; null when none
+        description: >-
+          Date of the latest smoking status on or before the reporting date; null if absent. It may
+          be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest smoking status record in the 12-month window; null if absent. Achievement under the
+          older never-smoker rule or the three-year ex-smoker allowance can have a null date.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -580,22 +617,18 @@ models:
 
 
   - name: fct_person_smi_smoking_support_ind155
-    description: |
-      NICE IND155: SMI smokers offered support. One row per currently registered,
-      living, non-test person with schizophrenia, bipolar affective disorder or another
-      psychosis on the SMI register, excluding remission and lithium therapy without an
-      SMI diagnosis, whose latest smoking status is current smoker, assessed on the
-      build date.
+    description: >-
+      Stop-smoking support in severe mental illness (NICE IND155). One row per person in the
+      denominator on the build date.
 
-      Achievement requires a stop-smoking referral, a pharmacotherapy record or a
-      pharmacotherapy prescription in the preceding 12 months. QOF v51 SMOK004 defines
-      this evidence through REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD. Generic advice
-      and declined-care codes alone do not qualify.
 
-      The active-diagnosis population follows the existing QOF mental health
-      interpretation; NICE does not explicitly exclude remission here.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or other
+      psychosis whose latest smoking status is current smoker. Remission excludes them. Achieved
+      with a stop-smoking referral, pharmacotherapy record or prescription in the 12 months
+      before the build date. Advice or declined care alone does not count. NICE does not
+      explicitly exclude remission. No personalised care adjustments are applied. Based on NICE
+      CG178. Code lists: MH_COD, MHREM_COD, SMOK_COD, REFERSSSA_COD, PHARM_COD (PCD);
+      PHARMDRUG_COD (NHS drug refset).
     config:
       meta:
         owner:
@@ -606,23 +639,16 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI smokers offered support"
-          description_short: "Smoking cessation support offered in the preceding 12 months to current smokers with SMI"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, excluding
-            remission and lithium therapy without an SMI diagnosis, whose latest smoking
-            status is current smoker.
-
-            Achievement requires a stop-smoking referral, a pharmacotherapy record or a
-            pharmacotherapy prescription in the preceding 12 months. QOF v51 SMOK004
-            defines this evidence through REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD.
-            Generic advice and declined-care codes alone do not qualify.
-
-            The active-diagnosis population follows the existing QOF mental health
-            interpretation; NICE does not explicitly exclude remission here.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness stop-smoking support"
+          description_short: "Stop-smoking support in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder or
+            other psychosis whose latest smoking status is current smoker. Remission excludes
+            them. Achieved with a stop-smoking referral, pharmacotherapy record or prescription
+            in the 12 months before the build date. Advice or declined care alone does not
+            count. NICE does not explicitly exclude remission. No personalised care adjustments
+            are applied. Based on NICE CG178. Code lists: MH_COD, MHREM_COD, SMOK_COD,
+            REFERSSSA_COD, PHARM_COD (PCD); PHARMDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -630,38 +656,44 @@ models:
           sort_order: "NICE_IND155"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "12 months before the reporting date, included in the support window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_smoking_status
-        description: Latest recorded smoking status; null when none
+        description: "Latest recorded smoking status on or before the reporting date; null if absent."
       - name: latest_smoking_status_date
-        description: Date of the latest smoking status record; null when none
+        description: >-
+          Date of the latest smoking status on or before the reporting date; null if absent. It may
+          be outside the achievement window.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest stop-smoking referral, pharmacotherapy record or prescription in the 12-month
+          window; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -669,18 +701,18 @@ models:
 
 
   - name: fct_person_smi_care_plan_ind143
-    description: |
-      NICE IND143: SMI care plan. One row per currently registered, living, non-test
-      person with schizophrenia, bipolar affective disorder or another psychosis on the
-      SMI register, excluding remission and lithium therapy without an SMI diagnosis,
-      assessed on the build date.
+    description: >-
+      Care planning in severe mental illness (NICE IND143). One row per person in the
+      denominator on the build date.
 
-      Achievement requires a mental health care plan in the preceding 12 months. Where a
-      remission code exists, the plan must be on or after the latest diagnosis;
-      otherwise it must be on or after the first diagnosis. This implements the relapse
-      rule using QOF v51 MH002.
 
-      Personalised care adjustments are not applied.
+      People registered on the build date with active schizophrenia, bipolar disorder or other
+      psychosis; remission and lithium alone do not qualify. Achieved with a mental health care
+      plan in the 12 months before the build date, on or after first diagnosis. If any remission
+      is recorded, the plan must instead be on or after the latest diagnosis. Codes do not prove
+      the plan's scope or agreement with the person, family or carers. NICE does not explicitly
+      exclude remission. No personalised care adjustments are applied. Based on NICE CG178. Code
+      lists: MH_COD, MHREM_COD, MHP_COD (PCD).
     config:
       meta:
         owner:
@@ -691,19 +723,17 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI care plan"
-          description_short: "Mental health care plan recorded in the preceding 12 months for people with SMI"
-          description_long: |
-            Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, excluding
-            remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a mental health care plan in the preceding 12 months.
-            Where a remission code exists, the plan must be on or after the latest
-            diagnosis; otherwise it must be on or after the first diagnosis. This
-            implements the relapse rule using QOF v51 MH002.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness care planning"
+          description_short: "Care planning in severe mental illness."
+          description_long: >-
+            People registered on the build date with active schizophrenia, bipolar disorder or
+            other psychosis; remission and lithium alone do not qualify. Achieved with a mental
+            health care plan in the 12 months before the build date, on or after first
+            diagnosis. If any remission is recorded, the plan must instead be on or after the
+            latest diagnosis. Codes do not prove the plan's scope or agreement with the person,
+            family or carers. NICE does not explicitly exclude remission. No personalised care
+            adjustments are applied. Based on NICE CG178. Code lists: MH_COD, MHREM_COD, MHP_COD
+            (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -711,36 +741,42 @@ models:
           sort_order: "NICE_IND143"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "12 months before the reporting date, included in the care plan window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: plan_anchor_date
-        description: Date a qualifying plan must be on or after; the latest diagnosis after any remission, otherwise the first diagnosis
+        description: >-
+          Earliest acceptable care plan date: the latest diagnosis if any remission is recorded,
+          otherwise the first diagnosis.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest care plan in the 12-month window, even if it precedes the required diagnosis date;
+          null if absent from that window.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -748,20 +784,21 @@ models:
 
 
   - name: fct_person_smi_cvd_risk_assessment_ind150
-    description: |
-      NICE IND150: SMI CVD risk assessment. One row per currently registered, living,
-      non-test person aged 25 to 84 with schizophrenia, bipolar affective disorder or
-      another psychosis on the SMI register, excluding remission and lithium therapy
-      without an SMI diagnosis, assessed on the build date.
+    description: >-
+      Cardiovascular risk assessment in severe mental illness (NICE IND150). One row per person
+      in the denominator on the build date.
 
-      Achievement requires a formal cardiovascular risk assessment or QRISK score in the
-      preceding 12 months. NICE permits assessment tools beyond QRISK3.
 
-      Existing cardiovascular disease, chronic kidney disease, familial
-      hypercholesterolaemia and type 1 diabetes exclude the person. The active-SMI
-      restriction follows the existing QOF mental health interpretation.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 25 to 84 with active schizophrenia, bipolar
+      disorder or other psychosis. Excludes remission, coronary heart disease, stroke or
+      transient ischaemic attack, peripheral arterial disease, stage 3 to 5 chronic kidney
+      disease, familial hypercholesterolaemia and type 1 diabetes on the respective registers.
+      Achieved with a formal cardiovascular risk assessment or QRISK score in the 12 months
+      before the build date; QRISK3 and a numeric score are not required. NICE does not
+      explicitly exclude remission. No personalised care adjustments are applied. Based on NICE
+      NG238. Code lists: MH_COD, MHREM_COD, CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD,
+      CHD_COD, STRK_COD, TIA_COD, PAD_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, FHYP_COD, DM_COD,
+      DMTYPE1_COD, DMTYPE2_COD, DMRES_COD (PCD).
     config:
       meta:
         owner:
@@ -772,21 +809,20 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI CVD risk assessment"
-          description_short: "CVD risk assessment in the preceding 12 months for people aged 25 to 84 with SMI"
-          description_long: |
-            Currently registered, living, non-test people aged 25 to 84 with
-            schizophrenia, bipolar affective disorder or another psychosis on the SMI
-            register, excluding remission and lithium therapy without an SMI diagnosis.
-
-            Achievement requires a formal cardiovascular risk assessment or QRISK score
-            in the preceding 12 months. NICE permits assessment tools beyond QRISK3.
-
-            Existing cardiovascular disease, chronic kidney disease, familial
-            hypercholesterolaemia and type 1 diabetes exclude the person. The active-SMI
-            restriction follows the existing QOF mental health interpretation.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness cardiovascular risk"
+          description_short: "Cardiovascular risk assessment in severe mental illness."
+          description_long: >-
+            People registered on the build date aged 25 to 84 with active schizophrenia, bipolar
+            disorder or other psychosis. Excludes remission, coronary heart disease, stroke or
+            transient ischaemic attack, peripheral arterial disease, stage 3 to 5 chronic kidney
+            disease, familial hypercholesterolaemia and type 1 diabetes on the respective
+            registers. Achieved with a formal cardiovascular risk assessment or QRISK score in
+            the 12 months before the build date; QRISK3 and a numeric score are not required.
+            NICE does not explicitly exclude remission. No personalised care adjustments are
+            applied. Based on NICE NG238. Code lists: MH_COD, MHREM_COD, CVDRISKASS_COD,
+            CVDASS2_COD, QRISKSCORE_COD, CHD_COD, STRK_COD, TIA_COD, PAD_COD, CKD_COD,
+            CKD1AND2_COD, CKDRES_COD, FHYP_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD
+            (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -794,34 +830,38 @@ models:
           sort_order: "NICE_IND150"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "12 months before the reporting date, included in the assessment window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest formal cardiovascular risk assessment or QRISK record in the 12-month window,
+          with or without a numeric score; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -829,21 +869,17 @@ models:
 
 
   - name: fct_person_smi_cervical_screening_ind85
-    description: |
-      NICE IND85: SMI cervical screening 25 to 64. One row per currently registered,
-      living, non-test person recorded as female, aged 25 to 64, with schizophrenia,
-      bipolar affective disorder or another psychosis on the SMI register, excluding
-      remission and lithium therapy without an SMI diagnosis, assessed on the build
-      date.
+    description: >-
+      Cervical screening in severe mental illness, ages 25 to 64 (NICE IND85). One row per
+      person in the denominator on the build date.
 
-      Achievement requires completed cervical screening in the preceding 5 years.
 
-      NICE lists no cervical screening exclusions for this indicator. Unsuitable-care
-      and non-response records do not remove women from the denominator. The active-SMI
-      restriction follows the existing QOF mental health interpretation; NICE does not
-      explicitly exclude remission here.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date who are women aged 25 to 64 with active schizophrenia,
+      bipolar disorder or other psychosis. Remission excludes them, although NICE does not
+      explicitly exclude it. Achieved with completed cervical screening in the 5 years before
+      the build date. Unsuitable care and non-response do not exclude women. No personalised
+      care adjustments are applied. Based on NICE CG178. Code lists: MH_COD, MHREM_COD,
+      SMEAR_COD (PCD).
     config:
       meta:
         owner:
@@ -854,22 +890,15 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI cervical screening 25 to 64"
-          description_short: "Cervical screening completed in the preceding 5 years for women aged 25 to 64 with SMI"
-          description_long: |
-            Currently registered, living, non-test people recorded as female, aged 25 to
-            64, with schizophrenia, bipolar affective disorder or another psychosis on
-            the SMI register, excluding remission and lithium therapy without an SMI
-            diagnosis.
-
-            Achievement requires completed cervical screening in the preceding 5 years.
-
-            NICE lists no cervical screening exclusions for this indicator.
-            Unsuitable-care and non-response records do not remove women from the
-            denominator. The active-SMI restriction follows the existing QOF mental
-            health interpretation; NICE does not explicitly exclude remission here.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness cervical screen 25-64"
+          description_short: "Cervical screening in severe mental illness, ages 25 to 64."
+          description_long: >-
+            People registered on the build date who are women aged 25 to 64 with active
+            schizophrenia, bipolar disorder or other psychosis. Remission excludes them,
+            although NICE does not explicitly exclude it. Achieved with completed cervical
+            screening in the 5 years before the build date. Unsuitable care and non-response do
+            not exclude women. No personalised care adjustments are applied. Based on NICE
+            CG178. Code lists: MH_COD, MHREM_COD, SMEAR_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -877,34 +906,37 @@ models:
           sort_order: "NICE_IND85"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "60 months before the reporting date, included in the screening window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest completed cervical screening in the 5-year window; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -912,21 +944,17 @@ models:
 
 
   - name: fct_person_smi_cervical_screening_ind213
-    description: |
-      NICE IND213: SMI cervical screening 25 to 49. One row per currently registered,
-      living, non-test person recorded as female, aged 25 to 49, with schizophrenia,
-      bipolar affective disorder or another psychosis on the SMI register, excluding
-      remission and lithium therapy without an SMI diagnosis, assessed on the build
-      date.
+    description: >-
+      Cervical screening in severe mental illness, ages 25 to 49 (NICE IND213). One row per
+      person in the denominator on the build date.
 
-      Achievement requires completed cervical screening in the preceding 3 years and 6
-      months.
 
-      NICE lists no cervical screening exclusions for this indicator. The active-SMI
-      restriction follows the existing QOF mental health interpretation; NICE does not
-      explicitly exclude remission here.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date who are women aged 25 to 49 with active schizophrenia,
+      bipolar disorder or other psychosis. Remission excludes them, although NICE does not
+      explicitly exclude it. Achieved with completed cervical screening in the 3 years and 6
+      months before the build date. Unsuitable care and non-response do not exclude women. No
+      personalised care adjustments are applied. Based on NICE CG178. Code lists: MH_COD,
+      MHREM_COD, SMEAR_COD (PCD).
     config:
       meta:
         owner:
@@ -937,22 +965,15 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI cervical screening 25 to 49"
-          description_short: "Cervical screening completed in the preceding 3.5 years for women aged 25 to 49 with SMI"
-          description_long: |
-            Currently registered, living, non-test people recorded as female, aged 25 to
-            49, with schizophrenia, bipolar affective disorder or another psychosis on
-            the SMI register, excluding remission and lithium therapy without an SMI
-            diagnosis.
-
-            Achievement requires completed cervical screening in the preceding 3 years
-            and 6 months.
-
-            NICE lists no cervical screening exclusions for this indicator. The
-            active-SMI restriction follows the existing QOF mental health
-            interpretation; NICE does not explicitly exclude remission here.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness cervical screen 25-49"
+          description_short: "Cervical screening in severe mental illness, ages 25 to 49."
+          description_long: >-
+            People registered on the build date who are women aged 25 to 49 with active
+            schizophrenia, bipolar disorder or other psychosis. Remission excludes them,
+            although NICE does not explicitly exclude it. Achieved with completed cervical
+            screening in the 3 years and 6 months before the build date. Unsuitable care and
+            non-response do not exclude women. No personalised care adjustments are applied.
+            Based on NICE CG178. Code lists: MH_COD, MHREM_COD, SMEAR_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -960,34 +981,37 @@ models:
           sort_order: "NICE_IND213"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "42 months before the reporting date, included in the screening window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest completed cervical screening in the 42-month window; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -995,21 +1019,17 @@ models:
 
 
   - name: fct_person_smi_cervical_screening_ind214
-    description: |
-      NICE IND214: SMI cervical screening 50 to 64. One row per currently registered,
-      living, non-test person recorded as female, aged 50 to 64, with schizophrenia,
-      bipolar affective disorder or another psychosis on the SMI register, excluding
-      remission and lithium therapy without an SMI diagnosis, assessed on the build
-      date.
+    description: >-
+      Cervical screening in severe mental illness, ages 50 to 64 (NICE IND214). One row per
+      person in the denominator on the build date.
 
-      Achievement requires completed cervical screening in the preceding 5 years and 6
-      months.
 
-      NICE lists no cervical screening exclusions for this indicator. The active-SMI
-      restriction follows the existing QOF mental health interpretation; NICE does not
-      explicitly exclude remission here.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date who are women aged 50 to 64 with active schizophrenia,
+      bipolar disorder or other psychosis. Remission excludes them, although NICE does not
+      explicitly exclude it. Achieved with completed cervical screening in the 5 years and 6
+      months before the build date. Unsuitable care and non-response do not exclude women. No
+      personalised care adjustments are applied. Based on NICE CG178. Code lists: MH_COD,
+      MHREM_COD, SMEAR_COD (PCD).
     config:
       meta:
         owner:
@@ -1020,22 +1040,15 @@ models:
           type: "MEASURE"
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
-          name_short: "SMI cervical screening 50 to 64"
-          description_short: "Cervical screening completed in the preceding 5.5 years for women aged 50 to 64 with SMI"
-          description_long: |
-            Currently registered, living, non-test people recorded as female, aged 50 to
-            64, with schizophrenia, bipolar affective disorder or another psychosis on
-            the SMI register, excluding remission and lithium therapy without an SMI
-            diagnosis.
-
-            Achievement requires completed cervical screening in the preceding 5 years
-            and 6 months.
-
-            NICE lists no cervical screening exclusions for this indicator. The
-            active-SMI restriction follows the existing QOF mental health
-            interpretation; NICE does not explicitly exclude remission here.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Mental illness cervical screen 50-64"
+          description_short: "Cervical screening in severe mental illness, ages 50 to 64."
+          description_long: >-
+            People registered on the build date who are women aged 50 to 64 with active
+            schizophrenia, bipolar disorder or other psychosis. Remission excludes them,
+            although NICE does not explicitly exclude it. Achieved with completed cervical
+            screening in the 5 years and 6 months before the build date. Unsuitable care and
+            non-response do not exclude women. No personalised care adjustments are applied.
+            Based on NICE CG178. Code lists: MH_COD, MHREM_COD, SMEAR_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -1043,34 +1056,37 @@ models:
           sort_order: "NICE_IND214"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "66 months before the reporting date, included in the screening window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest completed cervical screening in the 66-month window; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
@@ -1078,22 +1094,20 @@ models:
 
 
   - name: fct_person_lithium_monitoring_ind87
-    description: |
-      NICE IND87: Lithium level in range. One row per currently registered, living,
-      non-test person on lithium therapy according to the SMI register, based on
-      prescriptions in the preceding 6 months and lithium-stopped records, assessed on
-      the build date.
+    description: >-
+      Serum lithium within the therapeutic range (NICE IND87). One row per person in the
+      denominator on the build date.
 
-      Achievement requires the latest serum lithium record in the preceding 4 months to
-      have a value between 0.4 and 1.0 mmol/L inclusive. A latest record without a
-      numeric value is NOT_ASSESSABLE; a value outside the range is OUT_OF_RANGE.
 
-      The numerical range and use of the latest result are existing local
-      interpretations. NICE IND87 does not define a numerical range or clearly settle
-      latest versus any qualifying result. The retired QOF MH010 rule is absent from
-      v51, so v51 cannot resolve these choices.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date prescribed lithium in the 6 months before the
+      build date, without a later stop; a same-day stop does not exclude them. Prescriptions
+      and stops must be known by that date. Mental illness diagnosis is not required.
+      Achieved when the latest serum lithium result in the preceding 4 months is 0.4 to 1.0
+      mmol/L inclusive. The NICE indicator keeps its 4-month window; current guidance allows
+      6-monthly levels for stable patients. Missing values are unassessable; other values
+      are out of range. NICE defines neither this local range nor latest-result selection.
+      No personalised care adjustments are applied. Based on NICE CG185. Code lists:
+      LIT_COD; LITSTP_COD (PCD); PINCER/LITH_LEV (OpenCodelists).
     config:
       meta:
         owner:
@@ -1105,23 +1119,18 @@ models:
           category: "MENTAL_HEALTH"
           clinical_domain: "Mental health"
           name_short: "Lithium level in range"
-          description_short: "Latest serum lithium in the preceding 4 months in the 0.4 to 1.0 mmol/L range"
-          description_long: |
-            Currently registered, living, non-test people on lithium therapy according
-            to the SMI register, based on prescriptions in the preceding 6 months and
-            lithium-stopped records.
-
-            Achievement requires the latest serum lithium record in the preceding 4
-            months to have a value between 0.4 and 1.0 mmol/L inclusive. A latest record
-            without a numeric value is NOT_ASSESSABLE; a value outside the range is
-            OUT_OF_RANGE.
-
-            The numerical range and use of the latest result are existing local
-            interpretations. NICE IND87 does not define a numerical range or clearly
-            settle latest versus any qualifying result. The retired QOF MH010 rule is
-            absent from v51, so v51 cannot resolve these choices.
-
-            Assessed on the reporting date before personalised care adjustments.
+          description_short: "Serum lithium within the therapeutic range."
+          description_long: >-
+            People registered on the build date prescribed lithium in the 6 months before
+            the build date, without a later stop; a same-day stop does not exclude them.
+            Prescriptions and stops must be known by that date. Mental illness diagnosis is
+            not required. Achieved when the latest serum lithium result in the preceding 4
+            months is 0.4 to 1.0 mmol/L inclusive. The NICE indicator keeps its 4-month
+            window; current guidance allows 6-monthly levels for stable patients. Missing
+            values are unassessable; other values are out of range. NICE defines neither
+            this local range nor latest-result selection. No personalised care adjustments
+            are applied. Based on NICE CG185. Code lists: LIT_COD; LITSTP_COD (PCD);
+            PINCER/LITH_LEV (OpenCodelists).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -1129,38 +1138,48 @@ models:
           sort_order: "NICE_IND87"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "4 months before the reporting date, included in the result window."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_lithium_level_date
-        description: Date of the latest serum lithium record of any value; null when none
+        description: >-
+          Latest serum lithium record on or before the reporting date, regardless of its value; null
+          if absent. It may be outside the achievement window.
       - name: latest_lithium_level
-        description: Latest serum lithium in mmol/L; null when the latest record has no value
+        description: >-
+          Serum lithium value in mmol/L from the latest record on or before the reporting date; null
+          if the record is absent or has no numeric value.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Latest serum lithium record in the 4 months before the reporting date, inclusive,
+          regardless of its value; null if absent.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED; NOT_RECORDED_IN_PERIOD when no serum lithium in the period; NOT_ASSESSABLE when the latest record has no value; OUT_OF_RANGE otherwise
+        description: >-
+          ACHIEVED for an in-range latest lithium result; NOT_RECORDED_IN_PERIOD if absent from the
+          4-month window; NOT_ASSESSABLE if its value is missing; OUT_OF_RANGE otherwise.
         data_tests:
           - accepted_values:
               arguments:
@@ -1168,19 +1187,16 @@ models:
 
 
   - name: fct_person_smi_nice_indicators
-    description: |
-      Severe mental illness NICE indicator results. One row per eligible person and
-      indicator on the build date. Covers IND82, IND83, IND84, IND85, IND87, IND143,
-      IND150, IND154, IND155, IND158, IND159, IND213, IND214, IND248.
+    description: >-
+      Severe mental illness and lithium monitoring indicator results (IND82, IND83, IND84,
+      IND85, IND86, IND87, IND143, IND150, IND154, IND155, IND158, IND159, IND213, IND214,
+      IND248). One row per eligible person and indicator on the build date.
 
-      Each indicator retains its own population, evidence window and exclusions. The
-      individual indicator models define these rules. Results feed the combined NICE
-      indicator table and family history.
 
-      IND248 includes SMI remission before personalised care adjustments. IND87 covers
-      lithium therapy. The other indicators use diagnosed SMI outside remission.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date in each indicator's denominator. Eligibility,
+      exclusions and achievement follow the individual measures. Supporting fields are null
+      where an indicator does not provide them. Lithium measures include users without a mental
+      illness diagnosis; other measures exclude remission.
     config:
       meta:
         owner:
@@ -1193,72 +1209,124 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
         data_tests:
           - accepted_values:
               arguments:
-                values: ['IND82', 'IND83', 'IND84', 'IND85', 'IND87', 'IND143', 'IND150', 'IND154', 'IND155', 'IND158', 'IND159', 'IND213', 'IND214', 'IND248']
+                values: ['IND82', 'IND83', 'IND84', 'IND85', 'IND86', 'IND87', 'IND143', 'IND150', 'IND154', 'IND155', 'IND158', 'IND159', 'IND213', 'IND214', 'IND248']
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: >-
+          Start of the diagnosis, prescription or evidence period for the indicator. Boundary
+          inclusion is defined in the individual measure.
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years at the reporting date, based on the approximate birth date."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice at the reporting date."
       - name: latest_blood_pressure_date
-        description: Date of the latest blood pressure reading; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest valid paired blood pressure reading on or before the reporting date; null if
+          absent. It may be outside the achievement window. Null when this field does not apply to
+          the indicator.
       - name: latest_bmi_date
-        description: Date of the latest BMI with a value; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest valid recorded BMI, or calculated BMI for an adult, on or before the reporting
+          date; null if absent. It may be outside the achievement window. Null when this field does
+          not apply to the indicator.
       - name: latest_alcohol_record_date
-        description: Date of the latest alcohol consumption record (units, usage status or screening tool); null when none; typed null for branches that do not emit it
+        description: >-
+          Latest alcohol units, usage status or screening record on or before the reporting date;
+          null if absent. It may be outside the achievement window. Null when this field does not
+          apply to the indicator.
       - name: latest_lipid_date
-        description: Date of the latest lipid record counted by the indicator; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest lipid result or completed lipid test counted by the indicator on or before the
+          reporting date; null if absent. It may be outside the achievement window. Null when this
+          field does not apply to the indicator.
       - name: latest_cholesterol_hdl_ratio_date
-        description: Date of the latest total cholesterol to HDL ratio with a value; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest total cholesterol to HDL ratio with a numeric value on or before the reporting
+          date; null if absent. It may be outside the achievement window. Null when this field does
+          not apply to the indicator.
       - name: latest_glucose_or_hba1c_date
-        description: Date of the latest HbA1c or blood glucose; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest blood glucose or HbA1c test on or before the reporting date, with or without a
+          numeric value; null if absent. It may be outside the achievement window. Null when this
+          field does not apply to the indicator.
       - name: latest_smoking_status_date
-        description: Date of the latest smoking status record; null when none; typed null for branches that do not emit it
+        description: >-
+          Date of the latest smoking status on or before the reporting date; null if absent. It may
+          be outside the achievement window. Null when this field does not apply to the indicator.
       - name: checks_met_count
-        description: Number of the six physical health checks recorded in the preceding 12 months, 0 to 6; typed null for branches that do not emit it
+        description: >-
+          Number of the six required health checks recorded in the 12 months before the reporting
+          date, including both boundaries. Values range from 0 to 6. Null when this field does not
+          apply to the indicator.
       - name: latest_smoking_status
-        description: Latest recorded smoking status; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest recorded smoking status on or before the reporting date; null if absent. Null when
+          this field does not apply to the indicator.
       - name: latest_lithium_level_date
-        description: Date of the latest serum lithium record of any value; null when none; typed null for branches that do not emit it
+        description: >-
+          Latest serum lithium record on or before the reporting date, regardless of its value; null
+          if absent. It may be outside the achievement window. Null when this field does not apply
+          to the indicator.
       - name: latest_lithium_level
-        description: Latest serum lithium in mmol/L; null when the latest record has no value; typed null for branches that do not emit it
+        description: >-
+          Serum lithium value in mmol/L from the latest record on or before the reporting date; null
+          if the record is absent or has no numeric value. Null when this field does not apply to
+          the indicator.
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Supporting evidence date for the indicator. Its meaning follows the individual measure; a
+          date alone does not prove achievement.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Each row is an eligible member of the denominator."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD; IND87 also uses NOT_ASSESSABLE and OUT_OF_RANGE
+        description: >-
+          ACHIEVED or NOT_RECORDED_IN_PERIOD. IND87 also uses NOT_ASSESSABLE for a missing latest
+          value and OUT_OF_RANGE for a value outside the limits.
         data_tests:
           - accepted_values:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'NOT_ASSESSABLE', 'OUT_OF_RANGE']
 
-  - name: fct_person_smi_nice_indicators_snapshot_input
-    description: |
-      Current smi NICE indicator evidence for change history. One row per person and
-      indicator. Records the current practice, qualifying evidence and outcome.
+      - name: latest_creatinine_date
+        description: >-
+          Latest creatinine test record on or before the reporting date; null if absent. It may be
+          outside the achievement window. Null when this field does not apply to the indicator.
 
-      Reporting dates are omitted so a daily build alone does not create a new
-      historical version. Changes to recorded evidence, practice or achievement can
-      create a version in the family snapshot.
+      - name: latest_thyroid_function_test_date
+        description: >-
+          Latest thyroid function test on or before the reporting date; null if absent. It may be
+          outside the achievement window. Null when this field does not apply to the indicator.
+
+  - name: fct_person_smi_nice_indicators_snapshot_input
+    description: >-
+      Severe mental illness and lithium monitoring evidence for change history (IND82, IND83, IND84,
+      IND85, IND86, IND87, IND143, IND150, IND154, IND155, IND158, IND159, IND213, IND214, IND248).
+      One row per eligible person and indicator.
+
+
+      Records practice, supporting evidence and achievement from the build date. Reporting date and
+      measurement period start are omitted, so the passing of a day alone does not create a new
+      version. Eligibility and achievement follow the individual measures.
+      Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
         owner:
@@ -1271,16 +1339,20 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for a member of the indicator denominator."
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice at the reporting date."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: >-
+          Supporting evidence date for the indicator. Its meaning follows the individual measure; a
+          date alone does not prove achievement.
       - name: is_in_numerator
-        description: Whether the person meets the indicator
+        description: "Whether the person meets the documented achievement rule."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: >-
+          ACHIEVED or NOT_RECORDED_IN_PERIOD. IND87 also uses NOT_ASSESSABLE for a missing latest
+          value and OUT_OF_RANGE for a value outside the limits.

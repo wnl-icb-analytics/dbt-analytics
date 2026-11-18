@@ -51,21 +51,3 @@ Dates live in flu_campaign_config() only. This file holds no dates.
 
 {% macro flu_current_config() %}{{ flu_campaign_config(flu_current_campaign()) }}{% endmacro %}
 {% macro flu_previous_config() %}{{ flu_campaign_config(flu_previous_campaign()) }}{% endmacro %}
-
-{# ===== Campaigns a build recomputes ===== #}
-
-{#- Closed seasons are recomputed monthly, not daily. The cohort intermediates are
-    incremental (delete+insert on campaign_id) and take their all_campaigns CTE from
-    this macro: a routine incremental run rebuilds only the season in flight, so a
-    closed season keeps its rows until a run with --full-refresh, or with
-    --vars '{covid_flu_rebuild_closed: true}', restates every campaign against the
-    current source data and its pinned terminology version. -#}
-
-{% macro flu_build_campaigns() %}
-    {%- if is_incremental() and not var('covid_flu_rebuild_closed', false) -%}
-    SELECT * FROM ({{ flu_reported_campaigns() }})
-    WHERE campaign_id = '{{ flu_current_campaign() }}'
-    {%- else -%}
-    {{ flu_reported_campaigns() }}
-    {%- endif -%}
-{% endmacro %}

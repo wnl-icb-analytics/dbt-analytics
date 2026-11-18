@@ -37,5 +37,5 @@ from selected as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as reason_label
-    on upper(trim(s.mh_abs_wo_leave_end_reason::varchar)) = reason_label.code and reason_label.code_set_name = 'absence_without_leave_end_reason'
+left join {{ ref('mhsds_absence_without_leave_end_reason') }} as reason_label
+    on upper(trim(s.mh_abs_wo_leave_end_reason::varchar)) = reason_label.code

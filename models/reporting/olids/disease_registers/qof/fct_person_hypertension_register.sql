@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_hypertension_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Clinical evidence is bounded by today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -8,8 +8,10 @@
 }}
 
 -- Hypertension Register (QOF Pattern 6: Complex Clinical Logic)
--- Business Logic: Age ≥18 + Active HTN diagnosis + Clinical staging based on latest BP with context-specific NICE thresholds
--- Complex Logic: BP staging varies by measurement context (Home/ABPM vs Clinic readings)
+-- Register: unresolved HTN diagnosis (QOF v51 HYP_REG, no age restriction).
+-- latest_bp_htn_stage classifies the latest paired reading by context (Home/ABPM vs clinic).
+-- Local thresholds, not a QOF rule and not NG136. Home/ABPM stage 2 here is 155/95;
+-- NG136 stage 2 ABPM/HBPM confirmation is 150/95, on a confirmed average.
 
 WITH hypertension_person_aggregates AS (
     SELECT
@@ -62,6 +64,7 @@ WITH hypertension_person_aggregates AS (
         ) AS all_resolved_concept_displays
 
     FROM {{ ref('int_hypertension_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -83,57 +86,54 @@ latest_bp_events AS (
         END AS bp_measurement_context
     FROM {{ ref('int_blood_pressure_latest') }}
     WHERE systolic_value IS NOT NULL AND diastolic_value IS NOT NULL
+        AND CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 register_logic AS (
     SELECT
         diag.person_id,
 
-        -- Age restriction: ≥18 years for HTN register
         diag.earliest_diagnosis_date,
-
-        -- QOF register logic: active hypertension diagnosis required
         diag.latest_diagnosis_date,
-
-        -- Final register inclusion: Age + Active diagnosis required
         diag.latest_resolved_date,
 
-        -- Clinical dates
+        -- Latest BP reading
         bp.latest_bp_date,
         bp.latest_bp_systolic_value,
         bp.latest_bp_diastolic_value,
-
-        -- Latest BP data from event-based structure
         bp.bp_measurement_context,
         bp.is_home_bp_event,
         bp.is_abpm_bp_event,
+
+        -- Traceability
         diag.all_hypertension_concept_codes,
         diag.all_hypertension_concept_displays,
         diag.all_resolved_concept_codes,
-
-        -- NICE Guidelines: Context-specific BP staging with different thresholds
         diag.all_resolved_concept_displays,
 
-        -- Traceability
         age.age,
+        -- Informational only: the register has no age restriction
         COALESCE(age.age >= 18, FALSE) AS meets_age_criteria,
+        -- Stricter than is_on_register: FALSE when the latest resolution is on
+        -- the same day as the latest diagnosis, although the person stays on the register
         CASE
             WHEN diag.latest_resolved_date IS NULL THEN TRUE -- Never resolved
             WHEN diag.latest_diagnosis_date > diag.latest_resolved_date THEN TRUE -- Re-diagnosed after resolution
             ELSE FALSE -- Currently resolved
         END AS has_active_htn_diagnosis,
-        -- QOF v50 HYP_REG: unresolved hypertension diagnosis, no age restriction.
+        -- QOF v51 HYP_REG: unresolved hypertension diagnosis, no age restriction.
         -- Use >= : a resolution on/before the latest diagnosis does not resolve the register
         -- (HYPRES_DAT is the latest resolution STRICTLY after the latest diagnosis).
         COALESCE(
             diag.earliest_diagnosis_date IS NOT NULL -- Has HTN diagnosis
             AND (
                 diag.latest_resolved_date IS NULL -- Never resolved
-                OR diag.latest_diagnosis_date >= diag.latest_resolved_date -- not resolved after latest diagnosis
+                OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE -- No resolution on a later date
             ), FALSE
         ) AS is_on_register,
 
-        -- Person demographics
+        -- Local staging of the latest paired BP (not a QOF rule, not NG136).
+        -- Home/ABPM stage 2 is >=155/95; NG136 ABPM/HBPM stage 2 confirmation is 150/95.
         CASE
             WHEN
                 bp.latest_bp_systolic_value IS NULL

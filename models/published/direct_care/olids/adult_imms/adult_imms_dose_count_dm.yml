@@ -1,6 +1,18 @@
 models:
   - name: adult_imms_dose_count_dm
-    description: Final view holding historical imms population (in the last 48 mths) aged 60+ and any vaccinations associated with them.
+    description: >
+      Monthly counts of people given PPV, shingles and RSV doses, for the adult immunisation
+      dashboard. Each person counts once per dose, in the month of their retained dose. One
+      row per dose, fiscal year, month, practice and combination of age band, 65+ and 75+
+      flags, care home, immunosuppression, PPV and RSV risk groups, pregnancy, turned-65
+      flag, ethnicity and IMD quintile. Doses are PPV dose 1, shingles doses 1 and 2 and
+      RSV dose 1, selected by int_adult_imms_dose_count. Shingles dates need not be the
+      latest administrations. Counts use the person's current or last registered practice.
+      The population is everyone in dim_person_demographics aged 18+, including people no
+      longer registered. Retains doses whose fiscal-year start is at least the current
+      fiscal-year start minus 4. This covers the current and four preceding fiscal years,
+      rather than a rolling 48 months. No age 60+ restriction applies.
+      Deceased people are included; their demographic age is age at death when known.
     config:
       meta:
         owner:

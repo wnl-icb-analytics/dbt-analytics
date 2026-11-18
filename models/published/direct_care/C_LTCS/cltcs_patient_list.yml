@@ -3,21 +3,30 @@ version: 2
 models:
   - name: cltcs_patient_list
     description: >
-      Full patient list for C-LTCS combining registrants and shortlisted patients from the status log. One row per
-      patient; where a patient appears in both sources with different area_code,
-      the area_code from the shortlist is prioritised (via qualify). Registrants are filtered to meet inclusion criteria or be present on the shortlist/accepted already.
+      Full patient list for C-LTCS, one row per patient, combining current registrants and
+      patients with an open case in the status log. Registrants are living adults at an
+      in-scope practice (cltcs_organisations_in_scope) who meet the original criteria or the
+      Adults with Complexity criteria in cltcs_adult_population. Patients with an open case
+      (cltcs_status_log_open_cases: most recent action not Case closed, Removed from shortlist
+      or Reject) stay on the list until the case is closed, even if they are no longer
+      eligible, have moved practice or have left the adult population. While a case is open
+      the patient is listed under the area on their most recent status log entry, so a move
+      does not change their area.
     config:
       meta:
         owner:
           name: Emily Baldwin
-    tests:
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
     columns:
       - name: olids_id
         data_type: varchar
-        description: "Unique patient identifier from OLIDS data [person_id]"
+        description: >
+          OLIDS person identifier [person_id], from cltcs_adult_population. For open cases no
+          longer in that population, the lowest person_id mapped to the patient in
+          dim_person_pseudo. Null when no mapping exists.
 
       - name: patient_id
         data_type: number
@@ -25,6 +34,36 @@ models:
         data_tests:
           - unique
           - not_null
+
       - name: area_code
         data_type: varchar
-        description: "Area code (PCN in this context); when a patient appears from both inclusion and shortlist with different area_code, the shortlist value is used"
+        description: >
+          Area the patient is listed under. For open cases, the area on the most recent status
+          log entry; otherwise the patient's current C-LTCS neighbourhood code.
+
+      - name: source
+        data_type: varchar
+        description: "'shortlist' when the patient has an open case, otherwise 'registrant'."
+
+      - name: meets_original_criteria
+        data_type: boolean
+        description: >
+          Whether the patient currently meets the original C-LTCS inclusion criteria in
+          cltcs_adult_population, regardless of practice. Null when the patient is no longer in
+          cltcs_adult_population (only possible for open cases); null means not assessed, not false.
+
+      - name: meets_adults_with_complexity
+        data_type: boolean
+        description: >
+          Whether the patient is currently in the Adults with Complexity cohort
+          (fct_person_complex_adults) in cltcs_adult_population. Null when the patient is no
+          longer in cltcs_adult_population (only possible for open cases); null means not
+          assessed, not false.
+
+      - name: shortlist_flag
+        data_type: number
+        description: "1 when the patient has an open case in the status log, otherwise 0."
+
+      - name: reg_flag
+        data_type: number
+        description: "1 when the patient currently qualifies as a registrant, otherwise 0. shortlist_flag = 1 with reg_flag = 0 means the patient is listed only because their case is open."

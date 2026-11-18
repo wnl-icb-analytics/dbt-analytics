@@ -42,7 +42,7 @@
 -- Financial year here is a bare 4-digit year (e.g. 2019 = FY2019/20).
 
 with {{ community_pld_registry('REF') }},
-{{ community_pld_provider_codes('raw_sdl_wnl_ref') }},
+{{ community_pld_provider_codes() }},
 
 prep as (
     select
@@ -132,7 +132,7 @@ prep as (
         -- 19: Service reporting line
         service_reporting_line                  as service_reporting_line,
         -- 20: Provider (cleaned ODS code)
-        provider_codes.cleaned_provider_code    as provider_code,
+        {{ community_pld_provider_code() }}     as provider_code,
 
         -- Reporting month parsed from the submission file name (last-resort
         -- period source when neither stated nor referral date is available)
@@ -146,7 +146,7 @@ prep as (
     from {{ ref('raw_sdl_wnl_ref') }}
     left join provider_codes
         on equal_null(
-            upper(trim(coalesce(organisation_identifier_code_of_provider, provider_code, meta_provider_code))),
+            {{ community_pld_provider_input() }},
             provider_codes.source_provider_code
         )
     left join registry

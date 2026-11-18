@@ -1,0 +1,47 @@
+unit_tests:
+- name: nice_ind220_completed_follow_up_windows
+  model: fct_person_weight_management_offer_obesity_ind220_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9702::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9703::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9704::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9705::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9706::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+    format: sql
+  - input: ref('int_nice_weight_management_referral_evidence_by_month')
+    rows: |-
+      SELECT NULL::DATE AS timely_offer_date, NULL::DATE AS timely_decline_date, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date, -9701::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2026-08-30'::DATE AS latest_bmi_date, '2026-08-30'::DATE AS earliest_qualifying_bmi_date, 35::NUMBER AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, NULL::DATE AS timely_referral_date, FALSE::BOOLEAN AS has_previous_referral, FALSE::BOOLEAN AS is_currently_attending
+      UNION ALL
+      SELECT NULL::DATE AS timely_offer_date, NULL::DATE AS timely_decline_date, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date, -9702::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2026-08-30'::DATE AS latest_bmi_date, '2026-08-30'::DATE AS earliest_qualifying_bmi_date, 35::NUMBER AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, '2026-08-30'::DATE AS timely_referral_date, FALSE::BOOLEAN AS has_previous_referral, FALSE::BOOLEAN AS is_currently_attending
+      UNION ALL
+      SELECT NULL::DATE AS timely_offer_date, NULL::DATE AS timely_decline_date, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date, -9703::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2026-06-02'::DATE AS latest_bmi_date, '2026-06-02'::DATE AS earliest_qualifying_bmi_date, 35::NUMBER AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, NULL::DATE AS timely_referral_date, FALSE::BOOLEAN AS has_previous_referral, FALSE::BOOLEAN AS is_currently_attending
+      UNION ALL
+      SELECT NULL::DATE AS timely_offer_date, NULL::DATE AS timely_decline_date, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date, -9704::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2026-07-02'::DATE AS latest_bmi_date, '2026-07-02'::DATE AS earliest_qualifying_bmi_date, 35::NUMBER AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, NULL::DATE AS timely_referral_date, FALSE::BOOLEAN AS has_previous_referral, FALSE::BOOLEAN AS is_currently_attending
+      UNION ALL
+      SELECT NULL::DATE AS timely_offer_date, NULL::DATE AS timely_decline_date, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date, -9705::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2026-06-02'::DATE AS latest_bmi_date, '2026-06-02'::DATE AS earliest_qualifying_bmi_date, 35::NUMBER AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, '2026-06-02'::DATE AS timely_referral_date, FALSE::BOOLEAN AS has_previous_referral, FALSE::BOOLEAN AS is_currently_attending
+      UNION ALL
+      SELECT NULL::DATE AS timely_offer_date, NULL::DATE AS timely_decline_date, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date, -9706::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2026-07-03'::DATE AS latest_bmi_date, '2026-07-03'::DATE AS earliest_qualifying_bmi_date, 35::NUMBER AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE::BOOLEAN AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, NULL::DATE AS timely_referral_date, FALSE::BOOLEAN AS has_previous_referral, FALSE::BOOLEAN AS is_currently_attending
+    format: sql
+  expect:
+    rows:
+    - person_id: -9703
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9704
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9705
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history

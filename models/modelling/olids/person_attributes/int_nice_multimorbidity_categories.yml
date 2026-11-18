@@ -1,0 +1,41 @@
+models:
+  - name: int_nice_multimorbidity_categories
+    description: >-
+      NICE multimorbidity category membership. One row per person, category and build
+      date, without an age, registration or survival restriction. Categories combine
+      condition registers with additional diagnoses and treatment evidence; indicators
+      count categories rather than diagnoses. Diverticular disease is absent. Clinical and
+      recorded dates limit diagnosis evidence to information available by the build date.
+      The adult register with at least four categories for NICE IND205 is in
+      fct_person_nice_multimorbidity_register.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind207
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, reporting_date, category_code]
+    columns:
+      - name: person_id
+        description: Person with evidence in this category.
+        data_tests:
+          - not_null
+      - name: category_code
+        description: NICE IND207 category; each category contributes at most once per person.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [CANCER, CHRONIC_PAIN, CIRCULATORY, DIABETES, DIGESTIVE, LEARNING_DISABILITY, MENTAL_HEALTH, MUSCULOSKELETAL, NEUROLOGICAL, RENAL, RESPIRATORY]
+      - name: has_existing_evidence
+        description: >-
+          Whether condition register membership or alcohol-disorder evidence supports the
+          category.
+      - name: has_additional_evidence
+        description: Whether the category is supported by the supplemental IND207 diagnosis or prescribing rules.
+      - name: reporting_date
+        description: >-
+          Build date on which population and evidence are assessed.
+        data_tests: [not_null]

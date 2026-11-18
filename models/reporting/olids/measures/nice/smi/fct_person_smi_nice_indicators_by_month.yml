@@ -1,0 +1,119 @@
+models:
+- name: fct_person_smi_nice_indicators_by_month
+  description: >-
+    Severe mental illness and lithium monitoring indicator results (IND82, IND83, IND84, IND85,
+    IND86, IND87, IND143, IND150, IND154, IND155, IND158, IND159, IND213, IND214, IND248). One
+    row per eligible person, indicator and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility, exclusions
+    and achievement follow the individual measures. Supporting fields are null where an
+    indicator does not provide them. Lithium measures include users without a mental illness
+    diagnosis; other measures exclude remission. Recalculated for each of the last 60 month-ends
+    with current rules, code lists and records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: >-
+      Start of the diagnosis, prescription or evidence period for the indicator. Boundary inclusion
+      is defined in the individual measure.
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: latest_blood_pressure_date
+    description: >-
+      Latest valid paired blood pressure reading on or before the reporting date; null if absent. It
+      may be outside the achievement window. Null when this field does not apply to the indicator.
+  - name: latest_bmi_date
+    description: >-
+      Latest valid recorded BMI, or calculated BMI for an adult, on or before the reporting date;
+      null if absent. It may be outside the achievement window. Null when this field does not apply
+      to the indicator.
+  - name: latest_alcohol_record_date
+    description: >-
+      Latest alcohol units, usage status or screening record on or before the reporting date; null
+      if absent. It may be outside the achievement window. Null when this field does not apply to
+      the indicator.
+  - name: latest_lipid_date
+    description: >-
+      Latest lipid result or completed lipid test counted by the indicator on or before the
+      reporting date; null if absent. It may be outside the achievement window. Null when this field
+      does not apply to the indicator.
+  - name: latest_cholesterol_hdl_ratio_date
+    description: >-
+      Latest total cholesterol to HDL ratio with a numeric value on or before the reporting date;
+      null if absent. It may be outside the achievement window. Null when this field does not apply
+      to the indicator.
+  - name: latest_glucose_or_hba1c_date
+    description: >-
+      Latest blood glucose or HbA1c test on or before the reporting date, with or without a numeric
+      value; null if absent. It may be outside the achievement window. Null when this field does not
+      apply to the indicator.
+  - name: latest_smoking_status_date
+    description: >-
+      Date of the latest smoking status on or before the reporting date; null if absent. It may be
+      outside the achievement window. Null when this field does not apply to the indicator.
+  - name: checks_met_count
+    description: >-
+      Number of the six required health checks recorded in the 12 months before the reporting date,
+      including both boundaries. Values range from 0 to 6. Null when this field does not apply to
+      the indicator.
+  - name: latest_smoking_status
+    description: >-
+      Latest recorded smoking status on or before the reporting date; null if absent. Null when this
+      field does not apply to the indicator.
+  - name: latest_lithium_level_date
+    description: >-
+      Latest serum lithium record on or before the reporting date, regardless of its value; null if
+      absent. It may be outside the achievement window. Null when this field does not apply to the
+      indicator.
+  - name: latest_lithium_level
+    description: >-
+      Serum lithium value in mmol/L from the latest record on or before the reporting date; null if
+      the record is absent or has no numeric value. Null when this field does not apply to the
+      indicator.
+  - name: latest_record_date
+    description: >-
+      Supporting evidence date for the indicator. Its meaning follows the individual measure; a date
+      alone does not prove achievement.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: >-
+      ACHIEVED or NOT_RECORDED_IN_PERIOD. IND87 also uses NOT_ASSESSABLE for a missing latest value
+      and OUT_OF_RANGE for a value outside the limits.
+  - name: latest_creatinine_date
+    description: >-
+      Latest creatinine test record on or before the reporting date; null if absent. It may be
+      outside the achievement window. Null when this field does not apply to the indicator.
+  - name: latest_thyroid_function_test_date
+    description: >-
+      Latest thyroid function test on or before the reporting date; null if absent. It may be
+      outside the achievement window. Null when this field does not apply to the indicator.

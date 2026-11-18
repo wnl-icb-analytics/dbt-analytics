@@ -1,7 +1,11 @@
 
 models:
   - name: obt_encounter_uec
-    description: "Reporting layer for urgent and emergency care encounters from SUS data."
+    description: >-
+      Urgent and emergency care encounters from SUS data. One row represents
+      one ECDS attendance. Current PCN, neighbourhood and health borough fields
+      describe the latest maintained mapping for the practice submitted on the
+      attendance, not its membership at the attendance date.
     config:
       meta:
         owner:
@@ -224,11 +228,30 @@ models:
 
       - name: lsoa_11_at_event
         data_type: varchar
-        description: "Patient LSOA 2011 at time of event"
+        description: >-
+          Patient LSOA 2011 of residence at the time of the attendance. Populated
+          across the full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2021 of residence at the time of the attendance. Reliable
+          for attendances from 1 April 2024 (about 97% populated); mostly null
+          for earlier attendances, so use lsoa_11_at_event for trends that span that
+          date.
 
       - name: lad_at_event
         data_type: varchar
         description: "Patient local authority district at time of event"
+
+      - name: residence_health_borough_name_at_event
+        data_type: varchar
+        description: >-
+          Legacy CCG-based WNL or NCL health borough containing the patient's residence at the
+          attendance. Uses the supplied LSOA 2021 when present. Otherwise it
+          uses the LSOA 2011 only where every mapped 2021 successor belongs to
+          the same health borough. Null means the residence is outside WNL/NCL
+          or no usable LSOA is available.
 
       - name: imd_at_event
         data_type: varchar
@@ -238,10 +261,12 @@ models:
         data_type: number
         description: >-
           Numeric deprivation decile for reporting, where 1 is most deprived
-          and 10 is least deprived. Uses IMD 2025 where every 2021 successor
-          of the attendance LSOA 2011 has the same decile, then falls back to a
-          valid decile supplied on the ECDS attendance. A fallback value is not
-          necessarily from IMD 2025.
+          and 10 is least deprived. Uses the IMD 2025 decile of
+          lsoa_21_at_event when that code is an England LSOA 2021 (populated
+          from April 2024). Otherwise uses IMD 2025 where every 2021 successor
+          of the attendance LSOA 2011 has the same decile, then falls back to
+          a valid decile supplied on the ECDS attendance. A fallback value is
+          not necessarily from IMD 2025.
 
       - name: reg_practice_at_event
         data_type: varchar
@@ -250,6 +275,121 @@ models:
       - name: reg_practice_name_latest
         data_type: varchar
         description: "Latest national UKHFD name for reg_practice_at_event. The name is not effective-dated to the attendance."
+
+      - name: reg_practice_pcn_name_latest
+        data_type: varchar
+        description: Latest maintained PCN name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        data_type: varchar
+        description: Latest maintained integrated neighbourhood name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        data_type: varchar
+        description: Latest maintained WNL health borough for reg_practice_at_event; not historical membership.
+
+      - name: is_mental_health_referral
+        data_type: boolean
+        description: >-
+          True when any referred-to-service record for the attendance has the
+          ECDS group Psychiatric. This records referral evidence; it is not the
+          proposed local mental-health classification, whose first-referral or
+          any-referral rule has not yet been agreed.
+
+      - name: is_cyp_mental_health
+        data_type: boolean
+        description: >-
+          True when the person was under 18 at arrival and the attendance meets
+          the NHS England mental-health-related attendance definition in the
+          Supplementary ECDS Analysis Technical Specification v3.3.
+
+      - name: is_mental_health_related_attendance
+        data_type: boolean
+        description: >-
+          True when the attendance has a chief complaint, injury intent or
+          diagnosis code in the NHS England mental-health-related attendance
+          definition in the Supplementary ECDS Analysis Technical Specification
+          v3.3. This all-age flag includes suspected and confirmed diagnoses.
+
+      - name: has_suspected_mental_health_diagnosis_only
+        data_type: boolean
+        description: >-
+          True when the attendance has a diagnosis in the NHS England
+          mental-health-related diagnosis list and none of those diagnoses is
+          recorded as confirmed present. False also covers attendances without
+          a diagnosis from that list.
+
+      - name: discharge_destination_ecds_group1
+        data_type: varchar
+        description: ECDS group for the submitted discharge destination code.
+
+      - name: discharge_destination_group
+        data_type: varchar
+        description: >-
+          NHS England 2025 discharge destination group: Admitted, Non-admitted,
+          Other or Unknown. Other includes mortuary, short stay, SDEC, hospital
+          at home, transfer and hospice. Unknown covers missing and unmapped codes.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Admitted', 'Non-admitted', 'Other', 'Unknown']
+
+      - name: is_unplanned_attendance
+        data_type: boolean
+        description: >-
+          True for the NHS England unplanned-attendance population: ECDS activity
+          type 01, 02, 03 or 04, excluding planned follow-ups and people recorded
+          as dead on arrival. Department type supplies the activity type when the
+          submitted activity type is missing, including for historical records.
+          Missing attendance category or discharge status does not itself exclude
+          a row.
+
+      - name: attendance_count
+        data_type: number
+        description: >-
+          Additive attendance measure. Usually 1; 0 for the agreed historical
+          Totally streaming records that were also counted at a co-located ED.
+
+      - name: is_four_hour_breach
+        data_type: boolean
+        description: >-
+          True when the submitted time from arrival to departure is more than
+          240 minutes; exactly 240 minutes is within the four-hour standard.
+          Null when duration is missing. This follows NHS England's A&E
+          Attendances and Emergency Admissions definitions v5.0, page 7:
+          https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2020/08/AE-Attendances-Emergency-Definitions-v5.0-final-August-2020.pdf.
+          This field does not select an attendance population; apply the
+          population required by the report before aggregating it.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: over_12_hours_count
+        data_type: number
+        description: >-
+          NHS England additive numerator for unplanned attendances with valid
+          departure date and time and submitted duration greater than 720 minutes.
+          Use is_unplanned_attendance with valid departure date and time as the
+          denominator.
+
+      - name: over_72_hours_count
+        data_type: number
+        description: >-
+          Local additive measure. Counts an attendance when submitted duration is
+          greater than 4,320 minutes; missing duration counts as 0.
+
+      - name: assessed_within_15_minutes_count
+        data_type: number
+        description: >-
+          Local additive measure. Counts an attendance when submitted initial
+          assessment time is at or below 15 minutes; missing time counts as 0.
+
+      - name: not_assessed_within_15_minutes_count
+        data_type: number
+        description: >-
+          Local additive measure. Counts an attendance when submitted initial
+          assessment time is above 15 minutes; missing time counts as 0.
 
       - name: visit_occurrence_type
         data_type: varchar
@@ -323,7 +463,10 @@ models:
         description: "Time at which the injury occurred, as recorded for the attendance."
       - name: disease_notification_code
         data_type: varchar
-        description: "ECDS disease-notification code recorded for the attendance."
+        description: >-
+          SNOMED CT notifiable disease code. Uses the newer SUS code field first,
+          then a trimmed 6-18 digit legacy code. Legacy descriptions are excluded;
+          null when neither field supplies a code.
       - name: attendance_category_code
         data_type: varchar
         description: "ECDS attendance category: 1 unplanned first; 2 unplanned follow-up at this service; 3 unplanned follow-up at another service; 4 planned follow-up at this service; X dead on arrival."
@@ -393,12 +536,28 @@ models:
       - name: residence_area_name_at_event
         data_type: varchar
         description: "Human-readable name of the residence geography."
-      - name: assigned_commissioner_code_at_event
+      - name: commissioner_code_at_event
         data_type: varchar
-        description: "Service-agreement commissioner code submitted for the attendance. This is not the ECDS Commissioner Assignment Method field."
-      - name: assigned_commissioner_name_at_event
+        description: >-
+          Commissioner Assignment Method (CAM) commissioner when supplied;
+          otherwise the service-agreement/DSCRO commissioner. CAM starts in
+          2024, is populated for about three quarters of 2024 records and over
+          95% from 2025, so earlier records use DSCRO.
+      - name: commissioner_name_at_event
         data_type: varchar
-        description: "Latest dictionary name for the submitted service-agreement commissioner code."
+        description: >-
+          Latest available organisation name for commissioner_code_at_event,
+          not the name at the activity date.
+      - name: commissioner_source_at_event
+        data_type: varchar
+        description: >-
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO when the service-agreement commissioner
+          was used. Null when neither source supplied a commissioner.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CAM, DSCRO]
       - name: patient_type_code_at_event
         data_type: varchar
         description: "Source ECDS patient-type code, such as ADU or CHI."

@@ -7,7 +7,7 @@
 /*
 Geographic Code to Name Mappings
 Provides a single source of truth for all geography code-to-name mappings.
-Includes ICBs, local authorities, LSOAs, MSOAs and their hierarchies.
+Includes primary care organisations, local authorities, 2011 and 2021 LSOAs and LSOA to neighbourhood mappings.
 */
 
 WITH postcode_geography AS (
@@ -79,14 +79,12 @@ lsoa_2011_names AS (
 ),
 
 neighbourhood_mappings AS (
-    -- NCL Neighbourhood mappings
-    SELECT DISTINCT
+    -- WNL neighbourhood per 2021 LSOA
+    SELECT
         lsoa_2021_code AS geography_code,
         neighbourhood_name AS mapped_value,
         'LSOA_TO_NEIGHBOURHOOD' AS mapping_type
-    FROM {{ ref('stg_reference_ncl_neighbourhood_lsoa_2021') }}
-    WHERE lsoa_2021_code IS NOT NULL
-        AND neighbourhood_name IS NOT NULL
+    FROM {{ ref('stg_reference_geo_neighbourhood_lsoa') }}
 ),
 
 all_organisations AS (

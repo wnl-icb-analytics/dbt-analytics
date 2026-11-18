@@ -1,0 +1,30 @@
+models:
+- name: int_nice_reproductive_advice_topics_all
+  description: >-
+    Recorded contraception, conception and pregnancy advice topics. One row per observation,
+    source and code-list group, including inactive and deceased people, through the build date.
+    A record may cover both topics. Referrals, declines, uncompleted forms, isotretinoin risk
+    forms and generic programme status do not count. Codes do not establish advice tailored to
+    the individual.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: CONTRACEPTION_ADVICE_TOPIC_COD, PREGNANCY_ADVICE_TOPIC_COD
+        source: ECL_CACHE
+  columns:
+  - name: event_date
+    description: Corrected clinical date.
+  - name: is_contraception_topic
+    description: Record supplies contraception information or counselling.
+  - name: is_pregnancy_topic
+    description: Record supplies conception or pregnancy information or counselling.

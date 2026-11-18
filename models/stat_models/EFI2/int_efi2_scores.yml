@@ -1,0 +1,42 @@
+models:
+  - name: int_efi2_scores
+    description: >-
+      Current eFI2 score and frailty category, one row per living OLIDS person whose
+      65th birthday could have occurred by scoring. Eligibility uses the first day of
+      the approximate birth month, with no GP-registration restriction. Scores sum
+      published deficit weights, including missing-BMI and missing-alcohol defaults.
+      This replaces the retired AIC import; age coverage, BMI selection, default
+      weights and source timing differ, so legacy comparisons require validation.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    columns:
+      - name: person_id
+        description: Person identifier; one row per person.
+        tests:
+          - unique
+          - not_null
+      - name: end_date
+        description: As-at date for the scoring run (current_date()).
+      - name: efi_score
+        description: >-
+          Electronic Frailty Index 2 score, the sum of applicable published weights,
+          defaulting to 0 if unavailable. Missing BMI and alcohol carry defaults across the
+          whole scoring population. Polypharmacy counts distinct six-character BNF prefixes in
+          the preceding 90 days, without int_polypharmacy_* chapter exclusions. Legacy AIC
+          included younger adults, chose earliest BMI and applied some defaults only to people
+          with eFI2 codes. Anaemia now uses latest valid OLIDS haemoglobin in g/L at
+          equivalent male/female thresholds of 130/120. Observation coverage, unit
+          standardisation and refresh timing can differ from AIC.
+      - name: category
+        description: >-
+          Frailty bands: ROBUST below 0.0857; MILD FRAILTY from 0.0857 to below 0.1624;
+          MODERATE FRAILTY from 0.1624 to 0.2391 inclusive; SEVERE FRAILTY above 0.2391. The
+          legacy gap above 0.1623 and below 0.1624 is classified as mild frailty.
+      - name: age_at_end
+        description: Patient age at the end date (null for persons with no eFI2-coded observation).
+      - name: gender
+        description: Normalised gender (FEMALE / MALE / OTHER-UNKNOWN).
+      - name: date_of_death
+        description: Approximate date of death where present.

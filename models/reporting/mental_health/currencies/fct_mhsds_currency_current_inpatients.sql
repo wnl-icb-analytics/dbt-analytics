@@ -45,7 +45,7 @@ left join {{ ref('int_mhsds_organisation') }} as source_derived_icb
     on c.dm_icb_commissioner = source_derived_icb.organisation_code
 left join {{ ref('int_mhsds_organisation') }} as currency_commissioner
     on c.commissioner_icb_code = currency_commissioner.organisation_code
-left join {{ ref('mental_health_admitted_patient_classification_type') }} as patient_class
+left join {{ ref('nhs_dd_mental_health_admitted_patient_classification_type') }} as patient_class
     on upper(trim(c.mh_admitted_patient_class)) = patient_class.code
 left join {{ ref('stg_dictionary_dbo_diagnosis') }} as icd
     on upper(trim(c.icd10_3)) = icd.code

@@ -4,7 +4,9 @@ models:
     description: >
       One row per latest SUS outpatient appointment. Includes attended and
       non-attended activity, appointments without a submitted appointment
-      identifier, and appointments without a linked patient key.
+      identifier, and appointments without a linked patient key. Current PCN,
+      neighbourhood and health borough fields use the latest maintained mapping
+      for the practice recorded on the appointment, not historical membership.
     config:
       meta:
         owner:
@@ -62,6 +64,21 @@ models:
       - name: expected_duration
         data_type: varchar
         description: "Expected Duration of Appointment"
+
+      - name: consultation_medium_used_code
+        data_type: varchar
+        description: Submitted NHS DD Consultation Medium Used code, labelled by `nhs_dd_consultation_medium_used`.
+          It is not a Consultation Mechanism code.
+          Null when not recorded.
+
+      - name: consultation_medium_used_name
+        data_type: varchar
+        description: Latest retained UKHFD label from `nhs_dd_consultation_medium_used`.
+          Null when no supported label exists.
+
+      - name: referral_organisation_name
+        data_type: varchar
+        description: Retained organisation dictionary name for referral_organisation_id. Null when no dictionary match exists.
 
       - name: appointment_outcome
         data_type: varchar
@@ -161,9 +178,21 @@ models:
         data_type: varchar
         description: "Specialised Commission Flag"
 
-      - name: spec_comm
+      - name: spec_comm_code
         data_type: varchar
         description: "Specialised Commission Code"
+
+      - name: spec_comm_desc
+        data_type: varchar
+        description: "Specialised Commission description from the latest retained UKHFD lookup. Null indicates there is no corresponding code or the code did not match in the lookup."
+
+      - name: pss_service_line_code
+        data_type: varchar
+        description: "Prescribed Specialised Services service line code"
+
+      - name: pss_service_line_desc
+        data_type: varchar
+        description: "Prescribed Specialised Services service line description from the latest retained UKHFD lookup. Null indicates there is no corresponding code or the code did not match in the lookup."
 
       - name: core_hrg_code
         data_type: varchar
@@ -211,7 +240,18 @@ models:
 
       - name: lsoa_11_at_event
         data_type: varchar
-        description: "Patient LSOA 2011 at time of event"
+        description: >-
+          Patient LSOA 2011 of residence at the time of the appointment. Populated
+          across the full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2021 of residence at the time of the appointment.
+          Populated for appointments from 1 April 2024 (about 98%); mostly
+          null for earlier appointments, so use lsoa_11_at_event for trends
+          that span that date. About 2% of values from April 2024 lie in a
+          different local authority from lsoa_11_at_event.
 
       - name: lad_at_event
         data_type: varchar
@@ -224,6 +264,18 @@ models:
       - name: reg_practice_at_event
         data_type: varchar
         description: "Patient registered GP practice at time of event"
+
+      - name: reg_practice_pcn_name_latest
+        data_type: varchar
+        description: Latest maintained PCN name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        data_type: varchar
+        description: Latest maintained integrated neighbourhood name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        data_type: varchar
+        description: Latest maintained WNL health borough for reg_practice_at_event; not historical membership.
 
       - name: visit_occurrence_type
         data_type: varchar

@@ -1,15 +1,14 @@
 models:
   - name: int_covid_flu_historic_dashboard
-    description: 'Dashboard-ready COVID and flu vaccination data with demographics. SNAPSHOT of population from 2025-09-30 for QA purposes only. Multiple lines 
-      per person
-      Grain: One row per person per campaign per risk group they qualify for
-      Contains:
-      • Complete demographics and practice registration
-      • Eligibility status and reasons for each programme
-      • Vaccination status (vaccinated, declined, no record)
-      • Programme identifier (COVID/FLU) for filtering
-      • Campaign details and timing metrics
-      Purpose: Single source of truth for COVID and Flu Dashboard consumption with full demographic breakdowns for equity analysis.' 
+    description: >
+      Historical COVID and flu uptake with demographics for the legacy dashboard, rebuilt
+      each run rather than a fixed snapshot. One row per person, programme, campaign, risk
+      group and subcohort from fct_covid_flu_uptake. Keeps campaigns with a reference date
+      on or before 30 June 2026: Flu 2024-25 and 2025-26, and COVID Autumn 2024 to Spring
+      2026. COVID campaign IDs get a CV prefix. Demographics, practice, school stage and
+      housebound status come from the person's current record, including people no longer
+      registered. Rows with no match in dim_person_demographics are dropped. Adds
+      per-campaign clinical risk group flags from int_covid_flu_risk_group_flags.
     config:
       meta:
         owner:

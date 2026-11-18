@@ -21,11 +21,12 @@ Uses the practice neighbourhood lookup as the master list of expected practices.
 */
 
 SELECT
-    l.gp_practice_code as practice_code,
+    l.practice_code,
     l.practice_name,
-    l.borough as local_authority,
+    l.registered_borough_name as local_authority,
     l.neighbourhood_name as practice_neighbourhood
-FROM {{ ref('stg_reference_lookup_ncl_gp_practice') }} l
+FROM {{ ref('practice_wnl_active') }} l
 LEFT JOIN {{ ref('dim_person_demographics') }} d
-    ON d.practice_code = l.gp_practice_code
+    ON d.practice_code = l.practice_code
 WHERE d.practice_code IS NULL
+    AND l.sub_icb_code = {{ ncl_sub_icb() }}

@@ -1,0 +1,35 @@
+models:
+  - name: fct_person_cyp_asthma_register_by_month
+    description: >
+      CYP asthma register at each completed month-end, on the rules of
+      fct_person_cyp_asthma_register: aged under 18, with an asthma diagnosis later than
+      any resolution and an asthma medication order in the preceding 12 months.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest cyp asthma diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest cyp asthma diagnosis known by the month-end.
+      - name: latest_resolved_date
+        description: Latest cyp asthma resolved code known by the month-end; earlier than the latest diagnosis.
+      - name: latest_medication_date
+        description: Latest asthma medication order in the preceding 12 months known by the month-end.

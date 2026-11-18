@@ -15,16 +15,14 @@ Simplified rule - focuses on flu season timing rather than complex pregnancy sta
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every flu campaign the models report on
     -- (campaign list: macros/config/flu_campaign_selection.sql)
-    {{ flu_build_campaigns() }}
+    {{ flu_reported_campaigns() }}
 ),
 
 -- Step 1: Scenario B - Became pregnant during campaign period (for all campaigns)

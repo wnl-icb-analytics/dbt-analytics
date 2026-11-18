@@ -21,7 +21,7 @@ No resolution codes - diagnosis-only register. No age restrictions applied.
 
 Includes ALL persons (active, inactive, deceased) following intermediate
 layer principles. This is OBSERVATION-LEVEL data - one row per coded
-diagnosis. Use this model as input for int_qadmissions_features.sql,
+diagnosis. Use this model as input for qadmissions_input_features.sql,
 where the wide feature row aggregates to the person grain.
 */
 
@@ -29,6 +29,7 @@ SELECT
     obs.id,
     obs.person_id,
     obs.clinical_effective_date,
+    obs.date_recorded,
     obs.mapped_concept_code    AS concept_code,
     obs.mapped_concept_display AS concept_display,
     obs.cluster_id             AS source_cluster_id,

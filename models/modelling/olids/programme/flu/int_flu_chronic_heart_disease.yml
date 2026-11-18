@@ -1,20 +1,10 @@
 models:
   - name: int_flu_chronic_heart_disease
-    description: 'Flu vaccination eligibility for people with chronic heart disease conditions.
-
-      Key Features:
-
-      • Single diagnosis pathway using CHD_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Includes coronary heart disease, heart failure, and stroke
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people eligible for flu vaccination due to chronic cardiovascular conditions.'
+    description: >-
+      Flu chronic heart disease group in OLIDS, one row per person and campaign.
+      Requires a CHD_COD record through the audit end, using the campaign's UKHSA_FLU
+      code version, and age at least 6 months at its run date. There is no upper age
+      limit; inactive and deceased people remain included.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

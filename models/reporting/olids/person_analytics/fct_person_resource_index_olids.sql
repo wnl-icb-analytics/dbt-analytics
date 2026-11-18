@@ -3,19 +3,17 @@
 -- count, frailty, GP appointment cost and the EPD prescribing breakout.
 -- One row per patient, same grain as the base fact.
 --
--- Cost columns: actual_cost_12m is SLAM acute only (EPD is held out of the
--- resource index while stale). Whole-person cost adds the two primary-care
--- streams the deep-dive can price:
---   total_cost_whole_person_12m = actual (SLAM) + OLIDS prescribing estimate
---                                 + GP appointment cost (PSSRU).
---   total_cost_incl_gp_appointments_12m = actual + GP appointments only.
+-- Cost columns: actual_cost_12m already includes EPD prescribing, so
+-- whole-person cost adds only GP appointment cost (PSSRU), which OLIDS can
+-- price for NCL but the WNL base fact cannot. The OLIDS prescribing estimate
+-- is kept as a cross-check against EPD and is not added to any total.
 {{ config(materialized = 'table') }}
 
 with bounds as (
     select
         max(activity_month)                      as window_end_month,
         dateadd(month, -11, max(activity_month)) as window_start_month
-    from {{ ref('int_cost_index_slam_activity_monthly') }}
+    from {{ ref('int_person_cost_index_actual_monthly') }}
 ),
 
 activity_12m as (
@@ -43,9 +41,6 @@ select
     coalesce(a.olids_prescribing_cost_12m_modelled, 0) as olids_prescribing_cost_12m_modelled,
     coalesce(a.olids_prescription_orders_12m, 0)  as olids_prescription_orders_12m,
     f.actual_cost_12m
-        + coalesce(a.gp_appointment_cost_12m, 0)  as total_cost_incl_gp_appointments_12m,
-    f.actual_cost_12m
-        + coalesce(a.olids_prescribing_cost_12m_modelled, 0)
         + coalesce(a.gp_appointment_cost_12m, 0)  as total_cost_whole_person_12m
 from {{ ref('fct_person_resource_index') }} as f
 left join {{ ref('int_resource_index_olids_profile') }} as p

@@ -1,0 +1,382 @@
+# Longitudinal activity
+
+`fct_person_healthcare_event` contains one source milestone per row.
+`fct_person_clinical_record` contains one source clinical item per row.
+Both retain unlinked and undated records. Neither assigns a journey or merges
+similar occurrences from different feeds. The business owner is Eddie Davison.
+
+The two facts and `dq_person_activity_coverage` are in `REPORTING.CROSS_SYSTEM`
+(`DEV__REPORTING.CROSS_SYSTEM` for development). These are shared cross-system
+models; Intelligent Navigation is one consumer.
+
+## Storage and loading
+
+The shared outputs are views over prepared source branches. MHSDS, CSDS, acute
+and e-RS branches are incremental tables in dbt-analytics. OLIDS uses the
+existing materialised `healthcare_event` and `clinical_record` tables in
+dbt-OLIDS. The shared views do not create another copy of OLIDS clinical data.
+
+Daily increments select source receipt, import or extraction timestamps at or
+after the last stored delivery for each source record type. Equal timestamps
+are replayed. Missing delivery timestamps are replayed on every run. Clinical
+event dates never decide which records load: a newly delivered historical event
+can therefore enter the next increment.
+
+For a changed source record, dbt-analytics replaces all its milestones. Removing
+a discharge date removes its former discharge milestone. A subsequent narrow
+key comparison removes records no longer in the current source population.
+OLIDS merges stable event or clinical IDs and also removes withdrawn keys.
+
+The monthly full refresh reconciles deliveries behind the watermark, changed
+reference labels and other upstream changes without a new delivery timestamp.
+This includes OLIDS statement-only and encounter-only context changes on existing records.
+An increment is not a complete change-data-capture history. A failed build must
+be rerun before treating its output as current.
+
+The existing dbt-analytics monthly schedule includes these models through
+their staging dependencies. dbt-OLIDS refreshes its two stable outputs on the
+first day of each month, after its normal upstream build. Pseudonymisation
+indexes are excluded from the full refresh so their identifiers are preserved.
+
+Runtime hooks use `WH_WNL_OLIDS_L` for initial builds and full refreshes when
+`target.role` is `DBT_ADMIN`, then restore the profile warehouse. Other roles
+keep their configured warehouse. Normal increments keep the profile warehouse.
+The hooks evaluate at execution, avoiding cached full-refresh flags in model
+configuration. No project-wide warehouse configuration changes are needed.
+
+Initial deployment of the upstream text key and clustering needs a full refresh
+of the two stable outputs or a rewrite of their existing prepared snapshots.
+An incremental merge alone does not change the stored key type. Development
+builds in dbt-analytics use the established `dev` target and shared `DEV__` layers.
+
+## Deploying the additional CSDS and MHSDS clinical sections
+
+The agreed deployment folds these sections into #1165 and builds both clinical
+adapters from scratch. The one-off refresh below is needed only if #1165
+deploys without these sections.
+
+Existing `int_csds_person_clinical_record` and
+`int_mhsds_person_clinical_record` tables need a one-off full refresh when these
+sections are deployed. Each adapter uses one `clinical_record` delivery
+watermark across all clinical types. An ordinary increment skips newly included
+records with receipt timestamps older than that watermark. Without this
+backfill, the longitudinal clinical fact stays incomplete until the monthly
+full refresh. The refresh also applies corrected CSDS contact times and Read
+scheme labels to older records.
+
+First build the new and changed staging, reference and clinical models through
+the normal deployment selection, including `fct_csds_clinical_record` and
+`fct_mhsds_clinical_record`. Once both source facts are current, refresh only
+the two clinical adapters. Rehearse in the established shared `dev` target:
+
+```powershell
+dbt ls --target dev -s int_csds_person_clinical_record+ int_mhsds_person_clinical_record+
+dbt build --target dev --full-refresh -s int_csds_person_clinical_record int_mhsds_person_clinical_record
+dbt build --target dev -s fct_person_clinical_record+ dq_person_activity_coverage
+```
+
+Repeat the adapter refresh and downstream build in the deployment target after
+its source facts are current. Do not apply `--full-refresh` to the whole project
+for this backfill.
+
+Before and after the refresh, reconcile row counts by source dataset and
+`clinical_record_type` between each source fact, its adapter and the CSDS/MHSDS
+branches of `fct_person_clinical_record`. Include undated records and records
+without a linked patient key. Use the union of types present in any of the
+three layers so an entirely missing type is detected. After the refresh, each
+type must have equal counts in all three layers and the model grain tests must
+pass. Keep validation output to non-identifying aggregates; investigate any
+difference in a human-controlled Snowflake session before marking deployment
+complete.
+
+## Time and clustering
+
+Materialised branches cluster by the cross-system person key `sk_patient_id`, then
+`coalesce(event_at, event_date::timestamp_ntz)`. Clinical branches use the
+equivalent clinical fields. OLIDS stores the lookup key as text so analytics
+does not convert a numeric key for every lookup. Where no source clinical clock exists,
+the second clustering field is the clinical date.
+
+The shared timestamp fields also provide a sorting anchor. A known day without
+a clock time uses midnight; a partial month or year uses the start of that period.
+The original date and precision remain explicit. Clustering helps pruning and retrieval, but SQL
+still requires `ORDER BY` to guarantee output order. A stable ID can break display
+ties; it does not establish which same-day event happened first.
+
+Both shared views are unordered so aggregate queries do not pay for a timeline
+sort. Timeline queries should use a top-level
+`ORDER BY sk_patient_id NULLS LAST, event_at NULLS LAST, event_id` for events,
+or `ORDER BY sk_patient_id NULLS LAST, clinical_record_at NULLS LAST, clinical_record_id`
+for clinical items. Midnight anchors precede timed records on the same day;
+undated records come last. These are presentation rules, not additional clinical
+precision.
+
+Interpret dates with their precision:
+
+| Precision | Meaning |
+|---|---|
+| `timestamp` | A recorded clock time accompanies the date. |
+| `date` | The day is known; within-day order is unknown. |
+| `month`, `year` | A partial OLIDS clinical date. Do not interpret its stored day as exact. |
+| `unknown` | No established precision. A retained source date can provide a sorting anchor; an absent date remains null. |
+
+MHSDS diagnosis and referral-assessment timestamps can lack their original
+submitted precision and offset. The shared clinical output retains the source
+date, marks precision `date` and uses a midnight sorting anchor. The source fact
+retains the stored timestamp, separately supplied date and inconsistency flags.
+See the [MHSDS clinical evidence](mhsds-clinical-records.md).
+
+Clock values remain as supplied in `timestamp_ntz`; the adapters do not convert
+them to UTC. Source offsets are not consistently available. A shared clock value
+therefore does not prove exact cross-system chronology, particularly around
+daylight-saving transitions.
+
+`parent_start_date` and `parent_end_date` describe the recorded care context.
+They do not replace a missing clinical date or establish diagnosis onset.
+APC context dates require positive agreement between the spell and episode person
+keys. OLIDS encounter context is prepared in dbt-OLIDS and requires a non-deleted
+encounter with the same person. Its precision remains in `parent_start_date_precision`.
+Known conflicting APC and OLIDS links are not promoted as parents, nor are MHSDS and
+CSDS referral links whose referral names a different person; original source
+keys remain in the detailed models. `recorded_at` retains the OLIDS recording timestamp
+separately.
+
+APC clinical items with conflicting spell and episode person keys remain in the
+output with a null `sk_patient_id`. Neither identity is treated as authoritative
+pending a decision from Eddie Davison, the business owner. Missing episode keys
+do not establish a conflict and retain the existing spell attribution.
+
+Deploy this attribution correction with a full refresh of
+`int_sus_person_clinical_record`, then rebuild `dq_person_activity_coverage`.
+The delivery watermark would otherwise leave older stored attributions unchanged:
+
+```shell
+dbt build --target dev --full-refresh -s int_sus_person_clinical_record
+dbt build --target dev -s int_sus_person_clinical_record+
+```
+
+Use `code`, `code_name` and `coding_system` together for routine clinical analysis.
+They select the mapped triplet when available, otherwise the source triplet.
+Both original triplets remain available. Use `assessment_score_numeric` for
+assessment scoring; `result_value_numeric` also contains numeric non-score responses.
+
+SUS procedures use their supplied procedure dates. Undated diagnoses remain
+undated; admission or appointment dates are not substituted. ECDS coded findings
+use the supplied time the finding was recorded, with `recorded_at` as the time
+basis. MHSDS and CSDS
+clinical dates can use the previously validated recorded activity/contact links.
+Their source facts retain the derivation and consistency evidence.
+
+## Included milestones
+
+| Source | Milestones |
+|---|---|
+| OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
+| MHSDS | Referral received, rejected and discharged; care contact; onward referral (the fact also retains the SNOMED CT procedure expression); hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end (the fact also retains start/end reasons, expiry date/time, supplied classification and mental category); community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
+| CSDS | Referral received and discharged; care contact; onward referral. |
+| SUS APC | Spell admission and discharge, with their recorded method codes and labels; optional `inpatient_decision_to_admit` (Inpatient decision to admit) and `discharge_ready` (Ready for discharge) on recorded spell dates, with null event codes. |
+| SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
+| ECDS | Arrival, initial assessment, seen for treatment, decision to admit, clinically ready to proceed and departure; onward referral to a service and that service's assessment. |
+| e-RS | Selected recorded actions and scheduled appointment slots. `ers_healthcare_event_type` defines the action selection. |
+
+Primary milestones retain source records with missing dates. Optional milestones
+require a recorded date. A booking or scheduled slot never proves attendance.
+Status and outcome fields describe their source meanings and can be extract-current.
+
+CSDS referral milestones carry the single distinct non-null team type across
+`fct_csds_referral_service`, ignoring services recorded for a different person.
+Several teams with the same type still supply that type; several distinct types
+or no recorded type leave it null.
+Interpret `priority_code` within `source_dataset`. e-RS supplies its own priority
+codes (765 two week wait, 766 urgent, 767 routine). CSDS referral milestones and
+SUS OP slots supply NHS DD Priority Type (1 routine, 2 urgent, 3 two week wait).
+Codes are not mapped across lists. `priority_name` supplies the readable source
+or reference label; labels can differ between sources.
+MHSDS clinical response priority uses a different list and remains separate.
+
+OLIDS slots retain original source status in `status_code` and `status_name`,
+and the mapped national attendance category in `attendance_status_code` and
+`attendance_status_name`. Arrived, Start Call and completed source states can
+share a mapped code. A mapped DNA category can also include incomplete written
+work or an unanswered call; it does not prove literal non-attendance. Booking
+and referral milestones retain null status where none is supplied.
+
+SUS OP slots retain their submitted consultation medium, referral priority and
+referring organisation. The shared consultation fields use the NHS DD
+[Consultation Medium Used](https://archive.datadictionary.nhs.uk/DD%20Release%20June%202026/attributes/consultation_medium_used.html)
+list for SUS OP, with labels from `nhs_dd_consultation_medium_used` in UKHFD-backed
+`REFERENCE.DATA_DICTIONARY`. MHSDS/CSDS Consultation Mechanism is a separate list;
+equal code values must not be combined across these sources without a mapping.
+
+APC `inpatient_decision_to_admit` and `discharge_ready` milestones occur once per
+spell when their submitted dates exist. Their precision is `date`; no clock is
+supplied. The inpatient decision includes elective waiting-list decisions,
+which can precede admission. It is separate from the ECDS `decision_to_admit`,
+which records the emergency department decision. Ready for discharge does not
+mean the patient was discharged.
+
+If PR #1165 deploys without PR #1283, apply the APC event-type change with a
+full refresh of `int_sus_healthcare_event`. Its `event_id` includes the milestone type, so older
+deliveries behind the watermark otherwise retain the former type and ID.
+
+e-RS assessment actions 1426 and 1428 retain assessment outcome in the shared
+outcome fields. Other action milestones and slots retain the action reason.
+
+APC admission and discharge carry their recorded methods in `event_code` and
+`event_code_name`. Their `event_coding_system` values are `Admission method` and
+`Discharge method`, the NHS DD list names. Decision-to-admit and discharge-ready
+milestones have null event codes.
+
+APC discharge and ECDS departure carry their recorded discharge destination in
+`outcome_code` and `outcome_name`; arrival and admission do not carry that outcome.
+ECDS arrival carries the recorded attendance source organisation or site and its
+name in the referring organisation fields. This is the recorded organisation
+the patient came from, with no inferred referral link.
+
+e-RS reminders, printing, letter edits and unconfirmed cancellation requests are
+not independent care milestones. e-RS action labels distinguish recorded and
+updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
+
+Start and end milestones of the same period share a source record. Each start is
+primary; each end is optional. MHSDS legal-status periods have no recorded
+parent; community treatment orders and recalls link to their legal-status
+period; leave links to its ward stay; restrictive interventions and discharge
+readiness link to their hospital spell. `event_code` carries the record's legal
+status or reason, with `event_coding_system` naming the NHS Data Dictionary item.
+Order and leave end milestones carry their end reason instead.
+The legal-status fact retains the supplied classification separately from the
+NHSD-derived classification used by the milestones and detention rules.
+Its start/end reasons and Mental Health Act 2007 mental category have UKHFD
+labels from `nhs_dd_legal_status_start_reason`, `nhs_dd_legal_status_end_reason`
+and `nhs_dd_mental_category` where matched. Expiry time is retained for analysis;
+the current-detention rule still assesses expiry by date. Legal-status start milestones carry the
+start reason in `outcome_code` and `outcome_name`; end milestones carry the end
+reason. Other MHSDS milestones have null outcomes. The supplied classification,
+mental category and expiry remain on the detailed fact.
+
+An onward referral records the request, not acceptance by the receiving
+organisation or later care. MHSDS and CSDS onward referrals carry their reason
+and `receiving_organisation_code`, and link to the referral they were made from.
+Both facts use `nhs_dd_onward_referral_reason` for the national reason labels.
+These per-list lookups retain the newest definition for each code, including
+retired codes. Their `_history` models retain every UKHFD revision.
+Pre-2021 MHSDS reason codes often fall outside the national list and keep a null
+label. UKHFD's available onward-referral list, including its historical SCD rows,
+does not define these legacy codes. CSDS supplies no onward referral time.
+The MHSDS onward referral fact also retains the submitted SNOMED CT procedure
+expression and labels simple concept identifiers. The procedure stays on the
+fact and does not create a clinical-record milestone.
+
+ECDS onward referrals use the date and time the referred-to service received the
+request, a separate ECDS data item from attendance conclusion or departure. The
+optional assessment milestone is that service's recorded assessment. Both carry
+the referred-to service SNOMED code and link to the attendance. Clinically ready
+to proceed is supplied with a UTC offset matching UK local time; the adapter
+keeps its local clock time and drops the offset.
+
+Clinical items include OLIDS expanded observations and statement-enriched
+medication orders; MHSDS and CSDS prepared clinical records, including MHSDS
+social circumstances and CSDS childhood immunisations, diagnoses, child health
+screening, breastfeeding status and growth measurements; SUS diagnoses and procedures; and ECDS diagnoses,
+treatments, investigations, comorbidities, coded findings, observations, scored
+assessments, chief complaints, acuity, notifiable diseases, injury mechanism,
+intent and place, alcohol or drug involvement, and Mental Health Act legal status.
+Single-valued ECDS attendance fields emit one row per recorded code, keyed by the
+attendance. Injury details take the recorded injury date; chief complaint, acuity
+and notifiable disease have no supported clinical date. Notifiable disease uses the
+newer SUS code field first, then a trimmed 6-18 digit code from the legacy field.
+Legacy descriptions are excluded. Legal status takes its
+assignment start, which older ECDS deliveries supply as separate date and time
+fields. Only recorded legal statuses enter the clinical record: codes 98 (not
+applicable) and 99 (not known), about 98% of source rows, are placeholders and
+remain in `int_sus_uec_mental_health_legal_status` for drill-down. There are no standalone medication statements. Acute code
+positions are preserved, including repeated codes in distinct supplied positions.
+ECDS observations and scored assessments keep separate source-sequence rows,
+values, reported units and clinical timestamps. Submitted scores populate the
+result fields but remain `not_validated` for assessment interpretation, with
+`assessment_score_numeric` null. Unit labels do not establish measurement-unit
+compatibility. See the [ECDS measurement review](ecds-measurement-review.md).
+
+## Keys and source detail
+
+`sk_patient_id` is the established pseudonymised NHS-number key. A practice
+patient ID must not replace it. `source_person_id` is scoped by `source_dataset`.
+Missing cross-system linkage does not remove the source record.
+
+Global IDs encode a dataset namespace. OLIDS UUIDs already encode their source
+and record identity, so both outputs retain those upstream UUIDs without a text
+prefix. Changes to dates preserve milestone IDs
+when the underlying source key stays the same. e-RS slot identity itself includes
+the supplied slot timestamp, so a new slot is a different source record.
+SUS and ECDS IDs derive from the supplied `PRIMARYKEY_ID`. They are stable while
+the supplier keeps that key; a resubmission that reissues it produces new IDs.
+
+Use `source_model_name`, `source_record_type` and `source_record_id` for detail.
+Existing source key names remain available:
+
+| Detail model | Key represented by `source_record_id` |
+|---|---|
+| MHSDS and CSDS facts | `source_record_id`; MHSDS legal-status, order, recall, leave, restrictive-intervention and discharge-readiness facts use their entity ID, such as `mental_health_act_period_id` |
+| `fct_gp_appointment` | `appointment_id` |
+| `fct_gp_referral_request` | `source_record_id` |
+| `fct_gp_clinical_record` | `source_record_id` together with `source_record_type` |
+| `fct_ers_referral_action` | `action_id` |
+| `fct_ers_appointment` | `appointment_id` |
+| `obt_encounter_apc`, `int_sus_op_appointment`, `obt_encounter_uec` | `visit_occurrence_id` |
+| `int_sus_uec_referred_to_service` | `referral_id` |
+| SUS diagnosis staging | `diagnosis_id` |
+| SUS procedure staging | `procedure_id` |
+| ECDS clinical staging | `diagnosis_id` for diagnoses; `source_record_id` for other staged items |
+| `fct_sus_uec_observation` | `observation_id` |
+| `fct_sus_uec_scored_assessment` | `assessment_id` |
+| `int_sus_uec_injury_alcohol_drug` | `involvement_id` |
+| `int_sus_uec_mental_health_legal_status` | `legal_status_id` |
+
+Recorded parents follow `parent_model_name`. MHSDS/CSDS parents use
+`source_record_id`, except MHSDS legal-status periods, which use
+`mental_health_act_period_id`; e-RS referrals use `ubrn_id`; acute encounters use
+`visit_occurrence_id`; APC episodes use `source_record_id`; OLIDS encounters
+use `id`. A parent link is source evidence, not a completed journey. Additional
+links and their consistency flags remain in the detailed models.
+
+Code labels come from existing references and source descriptions. Historical
+codes retain the latest supported definition. No query calls a terminology
+server. Null labels mean no supported label was found; they do not invalidate
+the source code. Provider authorities distinguish ODS from local identifiers.
+
+`mapped_code` retains a recognised source SNOMED code, including an inactive
+historical concept. MHSDS, CSDS and ECDS validate codes against
+`snomed_concept`, which exposes the NHS Digital reporting model with its latest
+retained preferred terms. Supported Read mappings can supply a SNOMED target.
+The checks run when adapters load; monthly full refreshes apply reference
+changes to older deliveries. OLIDS retains its upstream EMIS mappings, some of
+which are not recognised in this reference.
+
+ICD-10 and OPCS-4 source codes remain available with their source coding system.
+Their mapped fields stay empty because the available TRUD reverse tables are
+local inversions of forward classification maps. The
+[NHS implementation guide](https://digital.nhs.uk/binaries/content/assets/website-assets/isce/scci0034/0034352016guidance-v2.pdf)
+states that published forward maps cannot be used in reverse. An individual
+SNOMED equivalent is not inferred from an ICD-10 or OPCS-4 code.
+
+## Population and observation windows
+
+OLIDS currently contains the filtered NCL spine. Other feeds retain their
+available WNL populations and have different submission windows. For secondary
+use, apply `dim_person_secondary_use_allowed` to the OLIDS branch through
+`source_person_id = person_id`. Do not inner-join the entire cross-source output
+to an OLIDS-only population. Apply each source's relevant governance.
+
+`dq_person_activity_coverage` reports counts, missing patient keys, absent or
+partial dates, date extremes and latest delivery by output and source record
+type. A latest receipt does not prove every provider has supplied a complete
+period. MHSDS and CSDS reporting periods and source submission coverage remain
+available for choosing observation windows. e-RS future slots are planned
+activity; they do not extend the observation window for delivered care.
+
+The coverage model aggregates the prepared source branches directly, retaining
+source counts without the shared facts' display fields.
+
+Define the index event, source populations, completed-care criteria and period
+before calculating a time-to-care measure. Treat undated or partially dated
+records separately. No observed attendance is not evidence of non-attendance.

@@ -1,0 +1,105 @@
+unit_tests:
+- name: nice_contraception_advice_excludes_referral_only
+  model: int_nice_contraception_advice_all
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT 'SYN_REFERRAL'::VARCHAR AS id, -8901::NUMBER AS person_id,
+          'SYN_REFERRAL'::VARCHAR AS mapped_concept_code,
+          '2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date,
+          '2026-09-30'::TIMESTAMP_NTZ AS date_recorded,
+          NULL::NUMBER AS patient_id,
+          NULL::FLOAT AS result_value,
+          NULL::VARCHAR AS result_units_source_concept_id,
+          NULL::VARCHAR AS result_unit_code,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::VARCHAR AS result_text,
+          NULL::VARCHAR AS allergy_medication_name,
+          NULL::BOOLEAN AS is_problem,
+          NULL::BOOLEAN AS is_review,
+          NULL::TIMESTAMP_NTZ AS problem_end_date,
+          NULL::VARCHAR AS mapped_concept_id,
+          NULL::VARCHAR AS mapped_concept_display,
+          NULL::VARCHAR AS episodicity_source_concept_id,
+          NULL::NUMBER AS age_at_event,
+          NULL::TIMESTAMP_NTZ AS lds_transform_datetime
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT 'SYN_REFERRAL'::VARCHAR AS code,
+          'SEXHEALTHINT_COD'::VARCHAR AS cluster_id,
+          'PCD'::VARCHAR AS source,
+          'Synthetic sexual health event'::VARCHAR AS cluster_description,
+          'Synthetic referral'::VARCHAR AS code_description
+  - input: ref('int_nice_epilepsy_pregnancy_advice_all')
+    format: sql
+    rows: |-
+      SELECT NULL::VARCHAR AS id,
+          NULL::NUMBER AS person_id,
+          NULL::DATE AS event_date,
+          NULL::VARCHAR AS source_cluster_id WHERE FALSE
+  expect:
+    rows: []
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+  overrides:
+    macros:
+      # Fusion cannot infer UUID types from the unmocked schema probe.
+      get_empty_subquery_sql: |-
+        SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::DATE AS event_date,
+            NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS source WHERE FALSE
+- name: nice_contraception_advice_excludes_decline_only
+  model: int_nice_contraception_advice_all
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT 'SYN_DECLINE'::VARCHAR AS id, -8901::NUMBER AS person_id,
+          'SYN_DECLINE'::VARCHAR AS mapped_concept_code,
+          '2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date,
+          '2026-09-30'::TIMESTAMP_NTZ AS date_recorded,
+          NULL::NUMBER AS patient_id,
+          NULL::FLOAT AS result_value,
+          NULL::VARCHAR AS result_units_source_concept_id,
+          NULL::VARCHAR AS result_unit_code,
+          NULL::VARCHAR AS result_unit_display,
+          NULL::VARCHAR AS result_text,
+          NULL::VARCHAR AS allergy_medication_name,
+          NULL::BOOLEAN AS is_problem,
+          NULL::BOOLEAN AS is_review,
+          NULL::TIMESTAMP_NTZ AS problem_end_date,
+          NULL::VARCHAR AS mapped_concept_id,
+          NULL::VARCHAR AS mapped_concept_display,
+          NULL::VARCHAR AS episodicity_source_concept_id,
+          NULL::NUMBER AS age_at_event,
+          NULL::TIMESTAMP_NTZ AS lds_transform_datetime
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT 'SYN_DECLINE'::VARCHAR AS code,
+          'SEXHEALTHINT_COD'::VARCHAR AS cluster_id,
+          'PCD'::VARCHAR AS source,
+          'Synthetic sexual health event'::VARCHAR AS cluster_description,
+          'Synthetic decline'::VARCHAR AS code_description
+  - input: ref('int_nice_epilepsy_pregnancy_advice_all')
+    format: sql
+    rows: |-
+      SELECT NULL::VARCHAR AS id,
+          NULL::NUMBER AS person_id,
+          NULL::DATE AS event_date,
+          NULL::VARCHAR AS source_cluster_id WHERE FALSE
+  expect:
+    rows: []
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+  overrides:
+    macros:
+      # Fusion cannot infer UUID types from the unmocked schema probe.
+      get_empty_subquery_sql: |-
+        SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::DATE AS event_date,
+            NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS source WHERE FALSE

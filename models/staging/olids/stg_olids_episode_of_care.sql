@@ -18,7 +18,7 @@ select
     episode_status_source_display,
     episode_of_care_start_date,
     episode_of_care_end_date,
-    usual_gp_practitioner_in_role_id as care_manager_practitioner_in_role_id, -- REVIEW: renamed upstream
+    usual_gp_practitioner_in_role_id as care_manager_practitioner_in_role_id,
     managing_organisation_id as care_manager_organisation_id, -- REVIEW: renamed upstream
     managing_organisation_code as care_manager_organisation_code, -- REVIEW: renamed upstream
     publisher_organisation_code,

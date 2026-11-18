@@ -1,0 +1,94 @@
+models:
+- name: fct_person_dementia_baseline_tests_ind80_by_month
+  description: >-
+    Baseline blood tests around a new dementia diagnosis (NICE IND80). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end on the dementia register first diagnosed 6 to 18
+    months before the month-end. This rolling cohort replaces NICE's financial-year cohort
+    and completes every follow-up period. Achieved with all eight tests within 6 months
+    before or after diagnosis: full blood count, calcium, glucose, renal function, liver
+    function, thyroid function, vitamin B12 and folate. Haemoglobin alone counts as full
+    blood count; HbA1c counts as glucose. No numeric results are needed. No personalised
+    care adjustments are applied. Based on NICE NG97. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Code lists: DEM_COD, FBC_COD, HB_COD, CALC_COD, GLUC_COD, IFCCHBAM_COD,
+    DCCTHBA1C_COD, UE_COD, CRE_COD, EGFR_COD, LFT_COD, TFT_COD (PCD); ARDENS/B12_LEVEL,
+    ARDENS/FOLATE_LEVEL (OpenCodelists).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind80
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "18 months before the reporting date. Diagnoses on this boundary are excluded."
+  - name: latest_record_date
+    description: >-
+      Latest of the eight test dates in the diagnosis-based period; null if all are absent. A date
+      does not prove all eight tests are present.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "True when the person meets the achievement rules in the model description."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: diagnosis_date
+    description: "First dementia diagnosis with clinical and recorded dates known by the reporting date."
+  - name: fbc_date
+    description: >-
+      Latest full blood count or haemoglobin test in the diagnosis-based period described above;
+      null if absent. A numeric result is not required.
+  - name: calcium_date
+    description: >-
+      Latest calcium test in the diagnosis-based period described above; null if absent. A numeric
+      result is not required.
+  - name: glucose_date
+    description: >-
+      Latest glucose or HbA1c test in the diagnosis-based period described above; null if absent. A
+      numeric result is not required.
+  - name: renal_date
+    description: >-
+      Latest renal function test in the diagnosis-based period described above; null if absent. A
+      numeric result is not required.
+  - name: liver_date
+    description: >-
+      Latest liver function test in the diagnosis-based period described above; null if absent. A
+      numeric result is not required.
+  - name: thyroid_date
+    description: >-
+      Latest thyroid function test in the diagnosis-based period described above; null if absent. A
+      numeric result is not required.
+  - name: b12_date
+    description: >-
+      Latest vitamin B12 test in the diagnosis-based period described above; null if absent. A
+      numeric result is not required.
+  - name: folate_date
+    description: >-
+      Latest folate test in the diagnosis-based period described above; null if absent. A numeric
+      result is not required.
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."

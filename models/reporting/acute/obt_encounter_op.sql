@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='view'
+        materialized='table'
     )
 }}
 
@@ -15,6 +15,7 @@ select
     , site_name
     , start_date
     , start_time
+    , financial_year
     , expected_duration
     , appointment_outcome
     , outcome_desc
@@ -28,6 +29,7 @@ select
     , primary_procedure_code
     , primary_procedure_category
     , primary_procedure_name
+    , consultant_code
     , main_specialty_code
     , main_specialty_name
     , main_specialty_category
@@ -39,8 +41,14 @@ select
     , referral_source_op_desc
     , referral_acuity
     , referral_acuity_desc
+    , commissioner_code_at_event
+    , commissioner_name_at_event
+    , commissioner_source_at_event
     , spec_comm_flag
-    , spec_comm
+    , spec_comm_code
+    , spec_comm_desc
+    , pss_service_line_code
+    , pss_service_line_desc
     , core_hrg_code
     , core_hrg_desc
     , core_hrg_chapter
@@ -53,8 +61,14 @@ select
     , ethnicity_desc_at_event
     , postcode_district_at_event
     , lsoa_11_at_event
+    , lsoa_21_at_event
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event
+    , practice.pcn_name as reg_practice_pcn_name_latest
+    , practice.neighbourhood_name as reg_practice_neighbourhood_name_latest
+    , practice.health_borough_name as reg_practice_health_borough_name_latest
     , visit_occurrence_type
-from {{ ref('int_sus_op_encounter') }}
+from {{ ref('int_sus_op_encounter') }} as encounter
+left join {{ ref('practice_wnl_all') }} as practice
+    on encounter.reg_practice_at_event = practice.practice_code

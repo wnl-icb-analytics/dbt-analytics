@@ -1,10 +1,14 @@
 models:
   - name: fct_person_atrial_fibrillation_register
-    description: 'QOF atrial fibrillation register for patients with active AF diagnosis.
+    description: >-
+      Unresolved atrial fibrillation QOF register. One row per register member.
 
-      One row per person with latest AFIB_COD > latest AFIBRES_COD or no resolution
-      recorded.'
 
+      Registration status is not filtered. An atrial fibrillation diagnosis qualifies at
+      any age. A resolved code on or after the latest diagnosis removes membership.
+      Clinical evidence is dated by the build date. Code lists: AFIB_COD and AFIBRES_COD
+      (PCD). The NICE IND185 population, including resolved AF, is in
+      fct_person_nice_atrial_fibrillation_register.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -12,20 +16,22 @@ models:
     config:
       meta:
         indicator:
-          id: "AF006"
+          id: "AF001"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Cardiovascular"
           name_short: "Atrial Fibrillation"
-          description_short: "QOF atrial fibrillation register"
+          description_short: "QOF 2025/26 atrial fibrillation register"
           description_long: >
-            Atrial fibrillation diagnosed using QOF criteria: Active AF diagnosis
-            where  latest atrial fibrillation code is more recent than any resolution
-            code, or  no resolution recorded. No age restrictions apply. Maps to QOF
-            indicator  AF006 (Atrial Fibrillation Register). Uses AFIB_COD for diagnosis
-            codes and  AFIBRES_COD for resolution codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Atrial fibrillation diagnosed
+            using QOF criteria: Active AF diagnosis with no resolution on or after the latest
+            AFIB_COD diagnosis date. Evidence is dated on or before today; a same-date resolution
+            removes membership. No age restrictions apply. QOF 2025/26 correspondence:  AF001
+            (Atrial Fibrillation Register). Uses AFIB_COD for diagnosis codes and  AFIBRES_COD for
+            resolution codes.
           is_qof: true
-          qof_indicator: "AF006"
+          qof_indicator: "AF001"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -46,7 +52,9 @@ models:
           - not_null
 
       - name: age
-        description: 'Current age of the patient'
+        description: >-
+          Age in years from the approximate birth month, at the build date or at death for
+          deceased people; null when birth date is missing.
 
       - name: is_on_register
         description: 'Flag indicating patient is on the AF QOF register'

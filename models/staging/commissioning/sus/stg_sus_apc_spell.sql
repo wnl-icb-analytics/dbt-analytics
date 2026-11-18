@@ -14,9 +14,21 @@ with core_data as(
             , system_interchange_received_time desc nulls last
             , rownumber_id desc
         ) = 1
+),
+
+-- Data lake enrichment of each spell record; unique on primarykey_id and import.
+derived as (
+    select primarykey_id
+        , dmic_import_log_id
+        , dmic_lsoa2021
+    from {{ ref('raw_sus_apc_spell_derived') }}
 )
 
 select core.primarykey_id
+    , greatest_ignore_nulls(
+        try_to_timestamp_ntz(core.system_interchange_received_date::varchar),
+        try_to_timestamp_ntz(core.system_interchange_latest_episode_received_date::varchar)
+    ) as source_received_at
     , {{ consistent_sk_patient_id_format('core.spell_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id
     , spell_patient_identity_local_patient_identifier_value as local_patient_identifier
 
@@ -28,11 +40,24 @@ select core.primarykey_id
     , {{ clean_organisation_id('SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER') }} as SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER
     , core.spell_care_location_site_code_of_treatment
 
+    /* commissioner details */
+    , nullif(upper(trim(core.spell_commissioning_service_agreement_commissioner)), '')
+        as spell_commissioning_service_agreement_commissioner
+    , core.spell_commissioning_service_agreement_is_commissioner_recognised
+    , nullif(upper(trim(core.spell_commissioning_service_agreement_commissioner_derived)), '')
+        as spell_commissioning_service_agreement_commissioner_derived
+    , nullif(upper(trim(core.spell_commissioning_commissioner_assignment_commissioner)), '')
+        as spell_commissioning_commissioner_assignment_commissioner
+    , nullif(trim(core.spell_commissioning_commissioner_assignment_flowchart_reference), '')
+        as spell_commissioning_commissioner_assignment_flowchart_reference
+
      /* Time and date */
     , core.spell_admission_date::date as spell_admission_date 
     , core.spell_admission_time::time as spell_admission_time
     , core.spell_discharge_date::date as spell_discharge_date
     , core.spell_discharge_time::time as spell_discharge_time
+    , core.spell_referral_decided_to_admit_date::date as spell_referral_decided_to_admit_date
+    , core.spell_discharge_ready_date::date as spell_discharge_ready_date
     , core.spell_open_spell_indicator
     , core.spell_discharge_length_of_hospital_stay
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
@@ -42,6 +67,7 @@ select core.primarykey_id
     , core.spell_discharge_method
 
     /* Admission information */
+    , core.spell_admission_administrative_category
     , core.spell_admission_method
     , core.spell_admission_admission_type
     , core.spell_admission_admission_sub_type
@@ -58,10 +84,14 @@ select core.primarykey_id
     , core.spell_commissioning_grouping_core_hrg
     , core.spell_commissioning_tariff_calculation_final_price
     , core.spell_commissioning_pss_grouping_national_programme_code -- spec comm
+    , core.spell_commissioning_pss_grouping_prescribed_service_line_code
 
     /* patient info at time of event  */
     , core.spell_patient_residence_derived_postcode_district
     , core.spell_patient_residence_derived_lsoa_11
+    -- SUS+ LSOA 2021 from April 2026 activity; DMIC fills April 2024 to March 2026.
+    , coalesce(core.spell_patient_residence_derived_lsoa_21, derived.dmic_lsoa2021)
+        as spell_patient_residence_derived_lsoa_21
     , core.spell_patient_residence_residence_ccg
     , core.spell_patient_residence_derived_local_authority_district
     , core.spell_patient_residence_derived_index_of_multiple_deprivation_decile
@@ -75,5 +105,9 @@ select core.primarykey_id
     , core.spell_patient_identity_birth_month
 
 from core_data as core
+-- Match on import so the derived row belongs to the retained record version.
+left join derived
+    on core.primarykey_id = derived.primarykey_id
+    and core.dmic_import_log_id = derived.dmic_import_log_id
 
 

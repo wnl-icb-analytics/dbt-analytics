@@ -1,0 +1,540 @@
+unit_tests:
+- name: nice_port_cvd_keeps_narrow_and_all_stroke_flags_separate
+  model: int_cvd_risk_profile_by_month
+  overrides:
+    macros:
+      nice_reference_dates: |-
+        SELECT '2024-09-30'::DATE AS reporting_date
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-98060, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, NULL::TIMESTAMP_NTZ AS earliest_type2_date, NULL::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date WHERE FALSE
+  - input: ref('fct_person_smi_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_remission_date WHERE FALSE
+  - input: ref('fct_person_familial_hypercholesterolaemia_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_ckd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date, NULL::TIMESTAMP_NTZ AS latest_stage_1_2_date WHERE FALSE
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_frailty_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS latest_frailty_severity WHERE FALSE
+  - input: ref('fct_person_obesity_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_qrisk_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS qrisk_score, NULL::VARCHAR AS qrisk_type, NULL::BOOLEAN AS is_valid_qrisk WHERE FALSE
+  - input: ref('int_cvd_risk_assessment_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS original_result_value, NULL::FLOAT AS risk_score_value, NULL::BOOLEAN AS is_cvd_risk_score_code WHERE FALSE
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::BOOLEAN AS is_valid_cholesterol WHERE FALSE
+  - input: ref('int_smoking_status_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS smoking_status, NULL::VARCHAR AS source_cluster_id WHERE FALSE
+  - input: ref('int_cvd_secondary_prevention_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::BOOLEAN AS has_chd, column4::BOOLEAN AS has_pad, column5::BOOLEAN AS has_stroke_tia, column6::BOOLEAN AS has_haemorrhagic_stroke
+      FROM VALUES
+          (-98060, '2024-09-30', FALSE, FALSE, TRUE, TRUE)
+  - input: ref('int_nice_therapy_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date, NULL::DATE AS latest_lipid_lowering_order_date, NULL::DATE AS latest_statin_order_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -98060
+      has_cvd: false
+      has_cvd_including_haemorrhagic_stroke: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_port_ckd_invalid_latest_acr_does_not_fall_back
+  model: int_ckd_profile_by_month
+  given:
+  - input: ref('fct_person_ckd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::TIMESTAMP_NTZ AS earliest_diagnosis_date, column4::TIMESTAMP_NTZ AS latest_diagnosis_date, column5::TIMESTAMP_NTZ AS latest_resolved_date, column6::TIMESTAMP_NTZ AS latest_stage_1_2_date
+      FROM VALUES
+          (-98061, '2024-09-30', '2024-09-01', NULL, NULL, NULL)
+  - input: ref('fct_person_frailty_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS latest_frailty_severity WHERE FALSE
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, NULL::TIMESTAMP_NTZ AS earliest_type2_date, NULL::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date WHERE FALSE
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS egfr_value, NULL::BOOLEAN AS is_valid_egfr WHERE FALSE
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS acr_value, column5::BOOLEAN AS is_acr_ratio, column6::BOOLEAN AS is_result_recorded
+      FROM VALUES
+          (-98061, 'SYN_OLD', '2024-08-01', 69.9, TRUE, TRUE),
+          (-98061, 'SYN_INVALID', '2024-09-01', NULL, TRUE, TRUE),
+          (-98061, 'SYN_FUTURE', '2024-10-01', 10, TRUE, TRUE)
+  - input: ref('int_proteinuria_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS record_type WHERE FALSE
+  - input: ref('int_ras_contraindication_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS drug_class, NULL::BOOLEAN AS is_persisting WHERE FALSE
+  - input: ref('int_ace_inhibitor_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date WHERE FALSE
+  - input: ref('int_arb_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date WHERE FALSE
+  - input: ref('int_sglt2_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS sglt2_drug WHERE FALSE
+  expect:
+    rows:
+    - person_id: -98061
+      latest_acr_date: '2024-09-01'
+      latest_acr_value: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_port_ckd_future_only_renal_tests_do_not_establish_follow_up
+  model: int_ckd_profile_by_month
+  given:
+  - input: ref('fct_person_ckd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::TIMESTAMP_NTZ AS earliest_diagnosis_date, column4::TIMESTAMP_NTZ AS latest_diagnosis_date, column5::TIMESTAMP_NTZ AS latest_resolved_date, column6::TIMESTAMP_NTZ AS latest_stage_1_2_date
+      FROM VALUES
+          (-98061, '2024-09-30', '2024-09-01', NULL, NULL, NULL)
+  - input: ref('fct_person_frailty_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS latest_frailty_severity WHERE FALSE
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, NULL::TIMESTAMP_NTZ AS earliest_type2_date, NULL::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date WHERE FALSE
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_egfr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS egfr_value, column5::BOOLEAN AS is_valid_egfr
+      FROM VALUES
+          (-98061, 'SYN_FUTURE', '2024-10-01', 50, TRUE)
+  - input: ref('int_urine_acr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS acr_value, column5::BOOLEAN AS is_acr_ratio, column6::BOOLEAN AS is_result_recorded
+      FROM VALUES
+          (-98061, 'SYN_FUTURE', '2024-10-01', 10, TRUE, TRUE)
+  - input: ref('int_proteinuria_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS record_type WHERE FALSE
+  - input: ref('int_ras_contraindication_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS drug_class, NULL::BOOLEAN AS is_persisting WHERE FALSE
+  - input: ref('int_ace_inhibitor_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date WHERE FALSE
+  - input: ref('int_arb_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date WHERE FALSE
+  - input: ref('int_sglt2_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS sglt2_drug WHERE FALSE
+  expect:
+    rows:
+    - person_id: -98061
+      latest_acr_value: null
+      latest_egfr_value: null
+      has_acr_within_90_days_of_diagnosis: false
+      has_egfr_within_90_days_of_diagnosis: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_port_depression_age_episode_resolution_and_earliest_anchor
+  model: int_nice_ltc_population_by_month
+  overrides:
+    macros:
+      nice_reference_dates: |-
+        SELECT '2024-09-30'::DATE AS reporting_date
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-98070, '2024-09-30', 9, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98071, '2024-09-30', 10, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98072, '2024-09-30', 17, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98073, '2024-09-30', 18, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98074, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98075, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98076, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98077, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98078, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98079, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98080, '2024-09-30', 15, NULL, NULL, 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('fct_person_ltc_summary_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::VARCHAR AS condition_code, column4::TIMESTAMP_NTZ AS earliest_diagnosis_date, column5::TIMESTAMP_NTZ AS latest_diagnosis_date
+      FROM VALUES
+          (-98073, '2024-09-30', 'DEP', '2024-08-01', '2024-08-01'),
+          (-98079, '2024-09-30', 'ANX', '2024-06-01', '2024-06-01'),
+          (-98080, '2024-09-30', 'ANX', '2024-08-01', '2024-08-01')
+  - input: ref('int_depression_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::TIMESTAMP_NTZ AS date_recorded, column4::BOOLEAN AS is_diagnosis_code, column5::BOOLEAN AS is_first_or_new_episode, column6::BOOLEAN AS is_resolved_code
+      FROM VALUES
+          (-98070, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98071, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98072, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98073, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98074, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98075, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98078, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98079, '2024-08-01', '2024-08-01', TRUE, TRUE, FALSE),
+          (-98074, '2024-08-02', '2024-08-02', FALSE, FALSE, TRUE),
+          (-98075, '2024-08-01', '2024-08-01', FALSE, FALSE, TRUE),
+          (-98076, '2024-08-01', '2024-08-01', TRUE, FALSE, FALSE),
+          (-98077, '2024-10-01', '2024-10-01', TRUE, TRUE, FALSE),
+          (-98078, '2020-08-01', '2020-08-01', TRUE, TRUE, FALSE),
+          (-98078, '2021-08-01', '2021-08-01', FALSE, FALSE, TRUE)
+  - input: ref('fct_person_smi_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_remission_date WHERE FALSE
+  - input: ref('fct_person_frailty_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS latest_frailty_severity WHERE FALSE
+  - input: ref('int_lithium_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS order_date, NULL::TIMESTAMP_NTZ AS date_recorded WHERE FALSE
+  - input: ref('int_lithium_stop_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded WHERE FALSE
+  - input: ref('int_cvd_secondary_prevention_population_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date, NULL::DATE AS earliest_cvd_diagnosis_date WHERE FALSE
+  - input: ref('int_alcohol_misuse_disorders')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_nice_alcohol_misuse_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_dyslipidaemia_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_obstructive_sleep_apnoea_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -98070
+      earliest_depression_anxiety_date: null
+    - person_id: -98071
+      earliest_depression_anxiety_date: '2024-08-01'
+    - person_id: -98072
+      earliest_depression_anxiety_date: '2024-08-01'
+    - person_id: -98073
+      earliest_depression_anxiety_date: '2024-08-01'
+    - person_id: -98074
+      earliest_depression_anxiety_date: null
+    - person_id: -98075
+      earliest_depression_anxiety_date: null
+    - person_id: -98078
+      earliest_depression_anxiety_date: '2020-08-01'
+    - person_id: -98079
+      earliest_depression_anxiety_date: '2024-06-01'
+    - person_id: -98080
+      earliest_depression_anxiety_date: '2024-08-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_port_positive_alcohol_screen_excludes_audit_and_keeps_earlier_fast
+  model: int_nice_alcohol_evidence_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-98095, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98094, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98093, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98092, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98091, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice'),
+          (-98090, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_depression_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::BOOLEAN AS is_diagnosis_code, NULL::BOOLEAN AS is_first_or_new_episode, NULL::BOOLEAN AS is_resolved_code WHERE FALSE
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS alcohol_advice_services WHERE FALSE
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::TIMESTAMP_NTZ AS earliest_diagnosis_date, column4::TIMESTAMP_NTZ AS latest_diagnosis_date
+      FROM VALUES
+          (-98095, '2024-09-30', '2020-01-01', '2020-01-01'),
+          (-98094, '2024-09-30', '2020-01-01', '2020-01-01'),
+          (-98093, '2024-09-30', '2020-01-01', '2020-01-01'),
+          (-98092, '2024-09-30', '2020-01-01', '2020-01-01'),
+          (-98091, '2024-09-30', '2020-01-01', '2020-01-01'),
+          (-98090, '2024-09-30', '2020-01-01', '2020-01-01')
+  - input: ref('fct_person_depression_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_anxiety_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_smi_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_remission_date WHERE FALSE
+  - input: ref('fct_person_chd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_atrial_fibrillation_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_heart_failure_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, FALSE AS is_on_hfref_register WHERE FALSE
+  - input: ref('int_heart_failure_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, FALSE AS is_diagnosis_code, FALSE AS is_resolved_code WHERE FALSE
+  - input: ref('fct_person_stroke_tia_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, NULL::TIMESTAMP_NTZ AS earliest_type2_date, NULL::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date, NULL::VARCHAR AS diabetes_type WHERE FALSE
+  - input: ref('fct_person_dementia_register_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_alcohol_screening_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::VARCHAR AS source_cluster_id, column3::NUMBER AS person_id, column4::TIMESTAMP_NTZ AS clinical_effective_date, column5::VARCHAR AS screening_tool, column6::FLOAT AS score_value, column7::BOOLEAN AS is_positive_screen
+      FROM VALUES
+          ('SYN_0', 'SYNTHETIC', -98090, '2024-09-01', 'AUDIT', 8, TRUE),
+          ('SYN_1', 'SYNTHETIC', -98091, '2024-08-01', 'FAST', 3, TRUE),
+          ('SYN_2', 'SYNTHETIC', -98092, '2024-08-01', 'AUDIT-C', 5, TRUE),
+          ('SYN_3', 'SYNTHETIC', -98093, '2024-09-01', 'FAST', 2, FALSE),
+          ('SYN_4', 'SYNTHETIC', -98094, '2024-09-01', 'AUDIT-C', 4, FALSE),
+          ('SYN_5', 'SYNTHETIC', -98095, '2024-07-01', 'FAST', 3, TRUE),
+          ('SYN_6', 'SYNTHETIC', -98095, '2024-09-01', 'AUDIT', 8, TRUE)
+  expect:
+    rows:
+    - person_id: -98090
+      latest_positive_alcohol_screen_date: null
+    - person_id: -98091
+      latest_positive_alcohol_screen_date: '2024-08-01'
+    - person_id: -98092
+      latest_positive_alcohol_screen_date: '2024-08-01'
+    - person_id: -98093
+      latest_positive_alcohol_screen_date: null
+    - person_id: -98094
+      latest_positive_alcohol_screen_date: null
+    - person_id: -98095
+      latest_positive_alcohol_screen_date: '2024-07-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_port_asthma_later_incomplete_review_keeps_earlier_completion
+  model: int_nice_review_evidence_by_month
+  overrides:
+    macros:
+      nice_reference_dates: |-
+        SELECT '2024-09-30'::DATE AS reporting_date
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-98100, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS latest_cancer_diagnosis_date, column4::BOOLEAN AS has_copd, column5::BOOLEAN AS has_heart_failure, column6::BOOLEAN AS has_rheumatoid_arthritis, column7::BOOLEAN AS has_hypothyroidism, column8::BOOLEAN AS has_learning_disability, column9::BOOLEAN AS has_dementia, column10::BOOLEAN AS has_smi, column11::BOOLEAN AS has_cancer, column12::DATE AS latest_new_depression_diagnosis_date, column13::VARCHAR AS latest_frailty_severity
+      FROM VALUES
+          (-98100, '2024-09-30', NULL, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, NULL, NULL)
+  - input: ref('int_nice_multimorbidity_categories_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date, NULL::VARCHAR AS category_code WHERE FALSE
+  - input: ref('int_asthma_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::BOOLEAN AS is_diagnosis_code, NULL::BOOLEAN AS is_resolved_code WHERE FALSE
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS review_type WHERE FALSE
+  - input: ref('int_nice_asthma_review_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS review_date, column3::BOOLEAN AS has_review, column4::BOOLEAN AS is_complete_review
+      FROM VALUES
+          (-98100, '2024-06-01', TRUE, TRUE),
+          (-98100, '2024-09-01', TRUE, FALSE)
+  - input: ref('int_structured_medication_review_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_falls_discussion_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_mrc_dyspnoea_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_nyha_classification_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_thyroid_function_test_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  - input: ref('int_smi_care_plan_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -98100
+      latest_asthma_review_date: '2024-09-01'
+      latest_complete_asthma_review_date: '2024-06-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_port_anticoagulant_prescription_dates_require_medication_orders
+  model: int_nice_therapy_evidence_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-98101, '2024-09-30', 50, NULL, NULL, 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('fct_person_ltc_summary_by_month')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::VARCHAR AS condition_code, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_lipid_lowering_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS bnf_name, NULL::VARCHAR AS lipid_lowering_class, NULL::BOOLEAN AS is_statin, NULL::VARCHAR AS statin_intensity WHERE FALSE
+  - input: ref('int_sglt2_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS bnf_name, NULL::VARCHAR AS sglt2_drug WHERE FALSE
+  - input: ref('int_anticoagulant_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS bnf_name, NULL::VARCHAR AS anticoagulant_type, NULL::BOOLEAN AS is_doac, NULL::BOOLEAN AS is_vka WHERE FALSE
+  - input: ref('int_ace_inhibitor_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS bnf_name WHERE FALSE
+  - input: ref('int_arb_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS bnf_name WHERE FALSE
+  - input: ref('int_antiplatelet_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS medication_order_id, NULL::DATE AS order_date, NULL::VARCHAR AS bnf_name WHERE FALSE
+  expect:
+    rows:
+    - person_id: -98101
+      latest_anticoagulant_order_date: null
+      latest_doac_order_date: null
+      latest_vka_order_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+  overrides:
+    macros:
+      # Fusion 2.0.6 probes unmocked SQL and cannot parse UUID columns.
+      # Supply types for the empty schema probe; actual SQL still uses mocked inputs.
+      get_empty_subquery_sql: |-
+        SELECT NULL::NUMBER AS person_id, NULL::DATE AS latest_anticoagulant_order_date, NULL::DATE AS latest_doac_order_date, NULL::DATE AS latest_vka_order_date WHERE FALSE

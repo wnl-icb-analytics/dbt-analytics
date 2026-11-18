@@ -71,6 +71,8 @@ WITH foot_observations AS (
 foot_observations_tagged AS (
     SELECT
         *,
+        -- NICE NG19 severity order
+        CASE risk_level WHEN 'Low' THEN 1 WHEN 'Moderate' THEN 2 WHEN 'High' THEN 3 WHEN 'Ulcerated' THEN 4 END AS risk_rank,
         (is_examination_code
          AND NOT has_left
          AND NOT has_right
@@ -85,7 +87,12 @@ foot_status AS (
         MAX(CASE WHEN source_cluster_id = 'CONABL_COD' THEN TRUE ELSE FALSE END) AS left_foot_absent,
         MAX(CASE WHEN source_cluster_id = 'CONABR_COD' THEN TRUE ELSE FALSE END) AS right_foot_absent,
         MAX(CASE WHEN source_cluster_id = 'AMPL_COD' THEN TRUE ELSE FALSE END) AS left_foot_amputated,
-        MAX(CASE WHEN source_cluster_id = 'AMPR_COD' THEN TRUE ELSE FALSE END) AS right_foot_amputated
+        MAX(CASE WHEN source_cluster_id = 'AMPR_COD' THEN TRUE ELSE FALSE END) AS right_foot_amputated,
+        -- History compares these first clinical dates with its reference date.
+        MIN(IFF(source_cluster_id = 'CONABL_COD', clinical_effective_date::DATE, NULL)) AS first_left_foot_absent_date,
+        MIN(IFF(source_cluster_id = 'CONABR_COD', clinical_effective_date::DATE, NULL)) AS first_right_foot_absent_date,
+        MIN(IFF(source_cluster_id = 'AMPL_COD', clinical_effective_date::DATE, NULL)) AS first_left_foot_amputated_date,
+        MIN(IFF(source_cluster_id = 'AMPR_COD', clinical_effective_date::DATE, NULL)) AS first_right_foot_amputated_date
     FROM foot_observations_tagged
     GROUP BY person_id
 ),
@@ -123,14 +130,14 @@ check_details_raw AS (
 
         -- Risk level by foot (only populated where the code carries an explicit risk descriptor)
         MAX(CASE
-            WHEN is_examination_code AND (has_left OR is_townson) THEN risk_level
+            WHEN is_examination_code AND (has_left OR is_townson) THEN risk_rank
             ELSE NULL
-        END) AS left_foot_risk_level,
+        END) AS left_foot_risk_rank,
 
         MAX(CASE
-            WHEN is_examination_code AND (has_right OR is_townson) THEN risk_level
+            WHEN is_examination_code AND (has_right OR is_townson) THEN risk_rank
             ELSE NULL
-        END) AS right_foot_risk_level,
+        END) AS right_foot_risk_rank,
 
         -- Get Townson scale level if used
         MAX(CASE
@@ -164,8 +171,8 @@ check_details AS (
         left_foot_checked,
         right_foot_checked,
         (both_feet_checked_row_level OR (left_foot_checked AND right_foot_checked)) AS both_feet_checked,
-        left_foot_risk_level,
-        right_foot_risk_level,
+        CASE left_foot_risk_rank WHEN 1 THEN 'Low' WHEN 2 THEN 'Moderate' WHEN 3 THEN 'High' WHEN 4 THEN 'Ulcerated' END AS left_foot_risk_level,
+        CASE right_foot_risk_rank WHEN 1 THEN 'Low' WHEN 2 THEN 'Moderate' WHEN 3 THEN 'High' WHEN 4 THEN 'Ulcerated' END AS right_foot_risk_level,
         townson_scale_level,
         has_screening_referral,
         has_risk_classification,
@@ -220,7 +227,11 @@ SELECT
         WHEN cd.left_foot_risk_level = 'Low' OR cd.right_foot_risk_level = 'Low' THEN 'Low Risk'
         WHEN cd.left_foot_checked OR cd.right_foot_checked THEN 'Risk Not Specified'
         ELSE 'No Valid Examination'
-    END AS diabetes_foot_risk_category
+    END AS diabetes_foot_risk_category,
+    fs.first_left_foot_absent_date,
+    fs.first_right_foot_absent_date,
+    fs.first_left_foot_amputated_date,
+    fs.first_right_foot_amputated_date
 
 FROM check_details cd
 LEFT JOIN foot_status fs ON cd.person_id = fs.person_id

@@ -1,0 +1,243 @@
+unit_tests:
+- name: nice_asthma_risk_window_expiry_and_distinct_courses
+  model: int_nice_asthma_risk_by_month
+  overrides:
+    macros:
+      nice_asthma_diagnosis_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER
+        AS age, '1990-01-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+        'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-9601, '2026-08-31', 30), (-9601, '2026-09-30',
+        30), (-9602, '2026-08-31', 30), (-9602, '2026-09-30', 30), (-9603, '2026-08-31', 30), (-9603, '2026-09-30',
+        30), (-9604, '2026-08-31', 30), (-9604, '2026-09-30', 30) UNION ALL SELECT -9605, column1::DATE, 30, '1990-01-01'::DATE,
+        'Female', 'SYNTHETIC', 'Synthetic practice' FROM VALUES ('2026-08-31'),('2026-09-30')
+  given:
+  - input: ref('int_nice_asthma_risk_medications_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS order_date, column3::NUMBER AS saba_inhaler_count,
+      column4::BOOLEAN AS is_prednisolone FROM VALUES (-9601,'2024-09-01',6,FALSE), (-9602,'2024-09-30',6,FALSE),
+      (-9602,'2025-09-30',6,FALSE), (-9603,'2025-06-01',0,TRUE), (-9603,'2025-06-01',0,TRUE), (-9603,'2025-07-01',0,TRUE),
+      (-9604,'2025-10-01',6,FALSE), (-9605,'2024-09-01',0,TRUE), (-9605,'2024-09-02',0,TRUE)
+  - input: ref('int_nice_asthma_admissions_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date FROM VALUES (-9604,'2024-09-01'), (-9604,'2025-10-01')
+  expect:
+    rows:
+    - person_id: -9601
+      reporting_date: '2026-08-31'
+      saba_inhaler_count: 6
+      oral_steroid_course_count: 0
+      has_asthma_admission: false
+      is_higher_risk: true
+    - person_id: -9601
+      reporting_date: '2026-09-30'
+      saba_inhaler_count: 0
+      oral_steroid_course_count: 0
+      has_asthma_admission: false
+      is_higher_risk: false
+    - person_id: -9602
+      reporting_date: '2026-08-31'
+      saba_inhaler_count: 6
+      oral_steroid_course_count: 0
+      has_asthma_admission: false
+      is_higher_risk: true
+    - person_id: -9602
+      reporting_date: '2026-09-30'
+      saba_inhaler_count: 6
+      oral_steroid_course_count: 0
+      has_asthma_admission: false
+      is_higher_risk: true
+    - person_id: -9603
+      reporting_date: '2026-08-31'
+      saba_inhaler_count: 0
+      oral_steroid_course_count: 2
+      has_asthma_admission: false
+      is_higher_risk: true
+    - person_id: -9603
+      reporting_date: '2026-09-30'
+      saba_inhaler_count: 0
+      oral_steroid_course_count: 2
+      has_asthma_admission: false
+      is_higher_risk: true
+    - person_id: -9604
+      reporting_date: '2026-08-31'
+      saba_inhaler_count: 0
+      oral_steroid_course_count: 0
+      has_asthma_admission: true
+      is_higher_risk: true
+    - person_id: -9604
+      reporting_date: '2026-09-30'
+      saba_inhaler_count: 0
+      oral_steroid_course_count: 0
+      has_asthma_admission: false
+      is_higher_risk: false
+    - person_id: -9605
+      reporting_date: '2026-08-31'
+      oral_steroid_course_count: 2
+      is_higher_risk: true
+      saba_inhaler_count: 0
+      has_asthma_admission: false
+    - person_id: -9605
+      reporting_date: '2026-09-30'
+      oral_steroid_course_count: 0
+      is_higher_risk: false
+      saba_inhaler_count: 0
+      has_asthma_admission: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_asthma_smoking_window_age_and_expiry
+  model: fct_person_asthma_smoking_status_ind189_by_month
+  overrides:
+    macros:
+      nice_asthma_diagnosis_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER
+        AS age, '1990-01-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+        'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-9611, '2026-08-31', 5), (-9611, '2026-09-30',
+        5), (-9612, '2026-08-31', 19), (-9612, '2026-09-30', 19), (-9613, '2026-08-31', 20), (-9613, '2026-09-30',
+        20), (-9614, '2026-08-31', 4), (-9614, '2026-09-30', 4)
+  given:
+  - input: ref('int_nice_smoking_recording_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date FROM VALUES (-9611,'2025-09-30'), (-9612,'2026-09-30'),
+      (-9612,'2026-10-01')
+  - input: ref('int_smoke_exposure_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date FROM VALUES
+      (-9612,'2025-09-30'), (-9612,'2026-10-01')
+  expect:
+    rows:
+    - person_id: -9611
+      reporting_date: '2026-08-31'
+      latest_record_date: '2025-09-30'
+      is_in_numerator: true
+    - person_id: -9611
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -9612
+      reporting_date: '2026-08-31'
+      latest_record_date: '2025-09-30'
+      is_in_numerator: true
+    - person_id: -9612
+      reporting_date: '2026-09-30'
+      latest_record_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_asthma_objective_known_date_cohort_and_test_boundaries
+  model: fct_person_asthma_objective_tests_ind272_by_month
+  overrides:
+    macros:
+      nice_asthma_diagnosis_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER
+        AS age, '1990-01-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+        'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-9621, '2026-08-31', 30), (-9621, '2026-09-30',
+        30), (-9622, '2026-08-31', 30), (-9622, '2026-09-30', 30), (-9623, '2026-08-31', 16), (-9623, '2026-09-30',
+        16), (-9624, '2026-08-31', 17), (-9624, '2026-09-30', 17), (-9625, '2026-08-31', 30), (-9625, '2026-09-30',
+        30), (-9626, '2026-08-31', 30), (-9626, '2026-09-30', 30) UNION ALL SELECT -9627, column1::DATE, 30, '1990-01-01'::DATE,
+        'Female', 'SYNTHETIC', 'Synthetic practice' FROM VALUES ('2026-08-31'),('2026-09-30')
+  given:
+  - input: ref('int_asthma_diagnoses_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::DATE
+      AS date_recorded, column4::BOOLEAN AS is_diagnosis_code, column5::BOOLEAN AS is_resolved_code FROM VALUES
+      (-9621,'2025-09-01','2025-09-01',TRUE,FALSE), (-9622,'2026-06-30','2026-06-30',TRUE,FALSE), (-9623,'2026-05-01','2026-05-01',TRUE,FALSE),
+      (-9624,'2026-05-01','2026-05-01',TRUE,FALSE), (-9625,'2026-05-01','2026-09-01',TRUE,FALSE), (-9626,'2020-01-01','2020-01-01',TRUE,FALSE),
+      (-9626,'2026-01-01','2026-01-01',FALSE,TRUE), (-9626,'2026-05-01','2026-05-01',TRUE,FALSE), (-9626,'2024-01-01','2026-09-01',TRUE,FALSE),
+      (-9627,'2025-06-30','2025-06-30',TRUE,FALSE)
+  - input: ref('int_nice_asthma_objective_tests_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date, column3::VARCHAR AS test_type FROM VALUES
+      (-9621,'2025-06-01','PEFRVAR_COD'), (-9622,'2026-03-30','PEFRVAR_COD'), (-9622,'2026-10-01','FENO_COD'), (-9623,'2026-08-01','IGE_COD'),
+      (-9623,'2026-02-01','EOS_COUNT'), (-9624,'2026-08-02','FENO_COD'), (-9624,'2026-01-31','FENO_COD'), (-9625,'2026-06-01','FENO_COD'),
+      (-9626,'2026-05-02','ASTSPIR_COD'), (-9627,'2025-06-30','FENO_COD')
+  expect:
+    rows:
+    - person_id: -9621
+      reporting_date: '2026-08-31'
+      diagnosis_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -9621
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -9622
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-06-30'
+      is_in_numerator: true
+    - person_id: -9623
+      reporting_date: '2026-08-31'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: true
+    - person_id: -9623
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: true
+    - person_id: -9624
+      reporting_date: '2026-08-31'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: false
+    - person_id: -9624
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: false
+    - person_id: -9625
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: true
+    - person_id: -9626
+      reporting_date: '2026-08-31'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: true
+    - person_id: -9626
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-05-01'
+      is_in_numerator: true
+    - person_id: -9627
+      reporting_date: '2026-08-31'
+      diagnosis_date: '2025-06-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_asthma_higher_risk_review_window_and_date_join
+  model: fct_person_asthma_higher_risk_review_ind315_by_month
+  overrides:
+    macros:
+      nice_asthma_diagnosis_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER
+        AS age, '1990-01-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+        'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-9631, '2026-08-31', 30), (-9631, '2026-09-30',
+        30), (-9632, '2026-08-31', 30), (-9632, '2026-09-30', 30), (-9633, '2026-08-31', 5), (-9633, '2026-09-30',
+        5)
+  given:
+  - input: ref('int_nice_asthma_risk_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::BOOLEAN AS is_higher_risk,
+      '2024-09-01'::DATE AS risk_period_start, '2025-09-01'::DATE AS risk_period_end, 6::NUMBER AS saba_inhaler_count,
+      0::NUMBER AS oral_steroid_course_count, NULL::DATE AS latest_asthma_admission_date, TRUE AS has_high_saba_use,
+      FALSE AS has_repeated_oral_steroids, FALSE AS has_asthma_admission FROM VALUES (-9631,'2026-08-31',TRUE),
+      (-9631,'2026-09-30',TRUE), (-9632,'2026-08-31',FALSE), (-9632,'2026-09-30',TRUE), (-9633,'2026-09-30',TRUE)
+  - input: ref('int_nice_asthma_review_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS review_date, column3::BOOLEAN AS has_review, column4::BOOLEAN
+      AS is_complete_review FROM VALUES (-9631,'2025-08-31',TRUE,TRUE), (-9631,'2026-08-01',TRUE,FALSE), (-9632,'2026-09-30',TRUE,TRUE),
+      (-9632,'2026-10-01',TRUE,TRUE)
+  expect:
+    rows:
+    - person_id: -9631
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      latest_record_date: '2025-08-31'
+    - person_id: -9631
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_record_date: null
+    - person_id: -9632
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      latest_record_date: '2026-09-30'
+  config:
+    tags:
+    - monthly-full
+    - nice-history

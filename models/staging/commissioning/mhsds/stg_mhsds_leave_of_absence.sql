@@ -1,7 +1,7 @@
 {{ config(materialized='view', tags=['mhsds']) }}
 
 with accepted as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs510leaveofabsence')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs510leaveofabsence'), 'mhs510_uniq_id') }}
 )
 select
     mhs510_uniq_id

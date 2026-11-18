@@ -14,12 +14,16 @@ Sub-ICB level geographies without hardcoding values or performing a join.
     '{{ var("ncl_sub_icb", "93C") }}'
 {% endmacro %}
 
+{% macro ncl_sub_icb_incl_ccg() %}
+    {{ to_sql_list(var("ncl_sub_icb_incl_ccg", ['93C', '07M', '07R', '07X', '08D', '08H'])) }}
+{% endmacro %}
+
 {% macro ncl_trust_codes_acute() %}
-    {{ to_sql_list(var('ncl_trust_codes_acute', ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE'])) }}
+    {{ to_sql_list(var('ncl_trust_codes_acute', ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE', 'RAP'])) }}
 {% endmacro %}
 
 {% macro ncl_trust_codes_full() %}
-    {{ to_sql_list(var('ncl_trust_codes_full', ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE', 'G6V2S', 'RNK'])) }}
+    {{ to_sql_list(var('ncl_trust_codes_full', ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE', 'G6V2S', 'RNK', 'RAP', 'RRP', 'TAF'])) }}
 {% endmacro %}
 
 {% macro ncl_borough_names() %}
@@ -30,8 +34,16 @@ Sub-ICB level geographies without hardcoding values or performing a join.
     {{ to_sql_list(var('ncl_borough_codes', ['E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019'])) }}
 {% endmacro %}
 
+{% macro ncl_sk_parent_codes() %}
+    {{ to_sql_list(var('ncl_sk_parent_codes', ['427608', '305562', '305574', '305584', '305602', '305607'])) }}
+{% endmacro %}
+
 {% macro nwl_sub_icb() %}
     '{{ var("nwl_sub_icb", "W2U3Z") }}'
+{% endmacro %}
+
+{% macro nwl_sub_icb_incl_ccg() %}
+    {{ to_sql_list(var("nwl_sub_icb_incl_ccg", ['W2U3Z', '07P', '07W', '08C', '08E', '08G', '07Y', '08Y', '09A']))}}
 {% endmacro %}
 
 {% macro nwl_trust_codes_acute() %}

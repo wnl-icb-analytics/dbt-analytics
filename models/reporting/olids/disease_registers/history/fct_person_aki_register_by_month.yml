@@ -1,0 +1,52 @@
+models:
+- name: fct_person_aki_register_by_month
+  description: >-
+    Acute kidney injury register (NICE IND174). One row per register member per completed month-end.
+
+
+    People registered at the month-end, aged 18 or over, qualify with a coded acute kidney
+    injury episode or history known by the month-end, without expiry. Includes acute-on-chronic
+    injury, acute renal cortical necrosis and acute tubular necrosis. Warning-stage results
+    without a diagnosis code, risk or education alone do not qualify. Hospital episodes need GP
+    coding. Birth and death dates are approximate. Recalculated for each of the last 60 month-ends with current rules, code lists and records, so later corrections can change past
+    months. Based on NICE NG148. Code lists: AKI_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - month_end_date
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: month_end_date
+    description: >-
+      Month-end used to assess register membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: >-
+      Age in completed years at the month-end, derived from approximate birth date.
+  - name: practice_code
+    description: >-
+      Practice attributed from the monthly registration records at the month-end.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included. Registration and
+      approximate death dates are assessed at the month-end; current test flags apply to all
+      months.
+  - name: earliest_diagnosis_date
+    description: >-
+      Earliest qualifying diagnosis clinical date known by the month-end. Includes history
+      codes, so this is a coded evidence date rather than a confirmed acute kidney injury
+      episode date.
+  - name: latest_diagnosis_date
+    description: >-
+      Latest qualifying diagnosis clinical date known by the month-end. Includes history codes,
+      so this is a coded evidence date rather than a confirmed acute kidney injury episode date.

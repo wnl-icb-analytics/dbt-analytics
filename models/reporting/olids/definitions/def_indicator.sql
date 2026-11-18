@@ -19,10 +19,9 @@ WITH indicators AS (
         SELECT
             '{{ ind.indicator_id }}' AS indicator_id,
             '{{ ind.indicator_type }}' AS indicator_type,
-            '{{ ind.category | default("") }}' AS category,
-            '{{ ind.clinical_domain | default("") }}' AS clinical_domain,
-            '{{ ind.name_short }}' AS name_short,
-            '{{ ind.description_short }}' AS description_short,
+            '{{ ind.category | default("") | replace("'", "''") }}' AS category,
+            '{{ ind.name_short | replace("'", "''") }}' AS name_short,
+            '{{ ind.description_short | replace("'", "''") }}' AS description_short,
             '{{ ind.description_long | replace("'", "''") }}' AS description_long,
             '{{ ind.source_model }}' AS source_model,
             '{{ ind.source_column }}' AS source_column,
@@ -36,7 +35,7 @@ WITH indicators AS (
             {% else %}
                 NULL AS qof_indicator,
             {% endif %}
-            '{{ ind.sort_order }}' AS sort_order,
+            '{{ ind.sort_order | replace("'", "''") }}' AS sort_order,
             CURRENT_TIMESTAMP() AS metadata_extracted_at
         {% if not loop.last %}UNION ALL{% endif %}
         {% endfor %}
@@ -45,7 +44,6 @@ WITH indicators AS (
             NULL AS indicator_id,
             NULL AS indicator_type,
             NULL AS category,
-            NULL AS clinical_domain,
             NULL AS name_short,
             NULL AS description_short,
             NULL AS description_long,
@@ -59,5 +57,23 @@ WITH indicators AS (
     {% endif %}
 )
 
-SELECT * FROM indicators
-ORDER BY sort_order, indicator_id
+SELECT
+    i.indicator_id,
+    i.indicator_type,
+    c.programme,
+    COALESCE(ltc.clinical_domain, c.clinical_domain) AS clinical_domain,
+    COALESCE(ltc.condition_name, c.clinical_subdomain) AS clinical_subdomain,
+    i.category,
+    i.name_short,
+    i.description_short,
+    i.description_long,
+    i.source_model,
+    i.source_column,
+    i.is_qof,
+    i.qof_indicator,
+    i.sort_order,
+    i.metadata_extracted_at
+FROM indicators i
+LEFT JOIN {{ ref('indicator_classification') }} c ON i.indicator_id = c.indicator_id
+LEFT JOIN {{ ref('ltc_register_denominator_rules') }} ltc ON c.condition_code = ltc.condition_code
+ORDER BY i.sort_order, i.indicator_id

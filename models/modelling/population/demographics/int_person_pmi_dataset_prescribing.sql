@@ -8,8 +8,10 @@
 -- int_person_pmi_combined. PDS is ~100% complete on LSOA/practice for WNL, so
 -- prescribing adds negligible spine coverage; its value is the cost models
 -- (prescribing spend) and as a future recency fallback.
+-- EPD is one row per prescription item; the rankings only need distinct
+-- attribute values per patient and month. Ties on date take the highest value.
 with base as (
-    select
+    select distinct
         sk_patient_id,
         processing_period_date::date as event_date,
         patient_gender,
@@ -35,7 +37,8 @@ gender_event as (
             partition by sk_patient_id
             order by
                 case when upper(trim(patient_gender)) in ('1','2','M','F','MALE','FEMALE') then 1 else 2 end,
-                event_date desc
+                event_date desc,
+                patient_gender desc
         ) as gender_field_rank
     from base
     qualify gender_field_rank = 1
@@ -51,7 +54,8 @@ age_event as (
             partition by sk_patient_id
             order by
                 case when patient_age is not null then 1 else 2 end,
-                event_date desc
+                event_date desc,
+                patient_age desc
         ) as age_field_rank
     from base
     where patient_age is null or patient_age between 0 and 120
@@ -69,7 +73,8 @@ lsoa_event as (
             partition by b.sk_patient_id
             order by
                 case when map_lsoa.lsoa21_cd is not null then 1 else 2 end,
-                b.event_date desc
+                b.event_date desc,
+                map_lsoa.lsoa21_cd desc
         ) as lsoa_field_rank
     from base b
     left join {{ ref('stg_reference_lsoa2011_lsoa2021') }} map_lsoa
@@ -86,7 +91,8 @@ registered_event as (
             partition by sk_patient_id
             order by
                 case when registered_practice_code is not null then 1 else 2 end,
-                event_date desc
+                event_date desc,
+                registered_practice_code desc
         ) as registered_field_rank
     from base
     qualify registered_field_rank = 1

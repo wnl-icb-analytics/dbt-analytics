@@ -1,0 +1,401 @@
+unit_tests:
+- name: nice_p13_ind216_cohort_dates_and_requirements
+  model: fct_person_childhood_immunisation_ind216_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          1::NUMBER AS age, DATEADD(month, -18, '2026-08-28'::DATE)::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-13001, '2026-07-31'), (-13001, '2026-08-28'), (-13001, '2026-09-30'),
+          (-13001, '2027-08-28'), (-13002, '2026-09-30'), (-13003, '2026-09-30'), (-13004, '2026-09-30')
+  - input: ref('int_nice_childhood_immunisation_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          DATEADD(month, -18, '2026-08-28'::DATE)::DATE AS birth_date_approx,
+          column3::NUMBER(18,0) AS mmr_doses_12_to_18_months,
+          (column1 = -13002)::BOOLEAN AS has_mmr_contraindication
+      FROM VALUES (-13001, '2026-07-31', 0), (-13001, '2026-08-28', 0),
+          (-13001, '2026-09-30', 1), (-13001, '2027-08-28', 1),
+          (-13002, '2026-09-30', 1), (-13003, '2026-09-30', 1),
+          (-13004, '2026-09-30', 0)
+  expect:
+    rows:
+    - person_id: -13001
+      reporting_date: '2026-08-28'
+      doses_in_window: 0
+      is_in_numerator: false
+    - person_id: -13001
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: true
+    - person_id: -13003
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: true
+    - person_id: -13004
+      reporting_date: '2026-09-30'
+      doses_in_window: 0
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_ind217_cohort_dates_and_requirements
+  model: fct_person_childhood_immunisation_ind217_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          1::NUMBER AS age, DATEADD(year, -5, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-13001, '2026-07-31'), (-13001, '2026-08-31'), (-13001, '2026-09-30'),
+          (-13001, '2027-08-31'), (-13002, '2026-09-30'), (-13003, '2026-09-30'), (-13004, '2026-09-30')
+  - input: ref('int_nice_childhood_immunisation_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          DATEADD(year, -5, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          column3::NUMBER(18,0) AS mmr_doses_1_to_5_years,
+          (column1 = -13002)::BOOLEAN AS has_mmr_contraindication,
+          (column1 = -13002)::BOOLEAN AS has_dtap_contraindication,
+          (column1 <> -13003)::BOOLEAN AS has_dtap_booster_1_to_5_years
+      FROM VALUES (-13001, '2026-07-31', 0), (-13001, '2026-08-31', 0),
+          (-13001, '2026-09-30', 2), (-13001, '2027-08-31', 2),
+          (-13002, '2026-09-30', 2), (-13003, '2026-09-30', 2),
+          (-13004, '2026-09-30', 1)
+  expect:
+    rows:
+    - person_id: -13001
+      reporting_date: '2026-08-31'
+      doses_in_window: 0
+      is_in_numerator: false
+    - person_id: -13001
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: true
+    - person_id: -13003
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: false
+    - person_id: -13004
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_ind218_cohort_dates_and_requirements
+  model: fct_person_childhood_immunisation_ind218_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          1::NUMBER AS age, DATEADD(year, -5, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-13001, '2026-07-31'), (-13001, '2026-08-31'), (-13001, '2026-09-30'),
+          (-13001, '2027-08-31'), (-13002, '2026-09-30'), (-13003, '2026-09-30'), (-13004, '2026-09-30')
+  - input: ref('int_nice_childhood_immunisation_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          DATEADD(year, -5, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          column3::NUMBER(18,0) AS mmr_doses_1_to_5_years,
+          (column1 = -13002)::BOOLEAN AS has_mmr_contraindication
+      FROM VALUES (-13001, '2026-07-31', 0), (-13001, '2026-08-31', 0),
+          (-13001, '2026-09-30', 1), (-13001, '2027-08-31', 1),
+          (-13002, '2026-09-30', 1), (-13003, '2026-09-30', 1),
+          (-13004, '2026-09-30', 0)
+  expect:
+    rows:
+    - person_id: -13001
+      reporting_date: '2026-08-31'
+      doses_in_window: 0
+      is_in_numerator: false
+    - person_id: -13001
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: true
+    - person_id: -13003
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: true
+    - person_id: -13004
+      reporting_date: '2026-09-30'
+      doses_in_window: 0
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_ind224_cohort_dates_and_requirements
+  model: fct_person_childhood_immunisation_ind224_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          1::NUMBER AS age, DATEADD(week, -24, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-13001, '2026-07-31'), (-13001, '2026-08-31'), (-13001, '2026-09-30'),
+          (-13001, '2027-08-31'), (-13002, '2026-09-30'), (-13003, '2026-09-30'), (-13004, '2026-09-30')
+  - input: ref('int_nice_childhood_immunisation_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          DATEADD(week, -24, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          column3::NUMBER(18,0) AS rotavirus_doses_by_24_weeks,
+          (column1 = -13002)::BOOLEAN AS has_rotavirus_contraindication
+      FROM VALUES (-13001, '2026-07-31', 0), (-13001, '2026-08-31', 0),
+          (-13001, '2026-09-30', 2), (-13001, '2027-08-31', 2),
+          (-13002, '2026-09-30', 2), (-13003, '2026-09-30', 2),
+          (-13004, '2026-09-30', 1)
+  expect:
+    rows:
+    - person_id: -13001
+      reporting_date: '2026-08-31'
+      doses_in_window: 0
+      is_in_numerator: false
+    - person_id: -13001
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: true
+    - person_id: -13003
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: true
+    - person_id: -13004
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_ind225_cohort_dates_and_requirements
+  model: fct_person_childhood_immunisation_ind225_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          1::NUMBER AS age, DATEADD(month, -8, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-13001, '2026-07-31'), (-13001, '2026-08-31'), (-13001, '2026-09-30'),
+          (-13001, '2027-08-31'), (-13002, '2026-09-30'), (-13003, '2026-09-30'), (-13004, '2026-09-30')
+  - input: ref('int_nice_childhood_immunisation_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          DATEADD(month, -8, '2026-08-31'::DATE)::DATE AS birth_date_approx,
+          column3::NUMBER(18,0) AS menb_doses_by_8_months,
+          (column1 = -13002)::BOOLEAN AS has_menb_contraindication
+      FROM VALUES (-13001, '2026-07-31', 0), (-13001, '2026-08-31', 0),
+          (-13001, '2026-09-30', 2), (-13001, '2027-08-31', 2),
+          (-13002, '2026-09-30', 2), (-13003, '2026-09-30', 2),
+          (-13004, '2026-09-30', 1)
+  expect:
+    rows:
+    - person_id: -13001
+      reporting_date: '2026-08-31'
+      doses_in_window: 0
+      is_in_numerator: false
+    - person_id: -13001
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: true
+    - person_id: -13003
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: true
+    - person_id: -13004
+      reporting_date: '2026-09-30'
+      doses_in_window: 1
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_ind226_cohort_dates_and_requirements
+  model: fct_person_childhood_immunisation_ind226_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          1::NUMBER AS age, DATEADD(month, -18, '2026-08-28'::DATE)::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-13001, '2026-07-31'), (-13001, '2026-08-28'), (-13001, '2026-09-30'),
+          (-13001, '2027-08-28'), (-13002, '2026-09-30'), (-13003, '2026-09-30'), (-13004, '2026-09-30')
+  - input: ref('int_nice_childhood_immunisation_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+          DATEADD(month, -18, '2026-08-28'::DATE)::DATE AS birth_date_approx,
+          column3::NUMBER(18,0) AS menb_doses_by_18_months,
+          (column1 = -13002)::BOOLEAN AS has_menb_contraindication,
+          IFF(column3 = 0, 0, IFF(column1 = -13003, 1, 2))::NUMBER(18,0) AS menb_primary_doses_by_12_months,
+          IFF(column3 = 0, 0, 1)::NUMBER(18,0) AS menb_booster_doses_12_to_18_months
+      FROM VALUES (-13001, '2026-07-31', 0), (-13001, '2026-08-28', 0),
+          (-13001, '2026-09-30', 3), (-13001, '2027-08-28', 3),
+          (-13002, '2026-09-30', 3), (-13003, '2026-09-30', 3),
+          (-13004, '2026-09-30', 2)
+  expect:
+    rows:
+    - person_id: -13001
+      reporting_date: '2026-08-28'
+      doses_in_window: 0
+      is_in_numerator: false
+    - person_id: -13001
+      reporting_date: '2026-09-30'
+      doses_in_window: 3
+      is_in_numerator: true
+    - person_id: -13003
+      reporting_date: '2026-09-30'
+      doses_in_window: 3
+      is_in_numerator: false
+    - person_id: -13004
+      reporting_date: '2026-09-30'
+      doses_in_window: 2
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_vaccine_windows_source_age_and_contraindication_dates
+  model: int_nice_childhood_immunisation_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -13010::NUMBER AS person_id, column1::DATE AS reporting_date, 1::NUMBER AS age,
+          '2025-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES ('2026-09-30'), ('2026-10-31')
+  - input: ref('int_nice_childhood_immunisation_all')
+    format: sql
+    rows: |-
+      SELECT -13010::NUMBER AS person_id, column1::DATE AS event_date, column2::NUMBER AS age_at_event,
+          column3::VARCHAR AS vaccine_group, column4::VARCHAR AS event_type
+      FROM VALUES
+          ('2025-04-01', 0, 'ROTAVIRUS', 'Administration'),
+          ('2025-04-01', 0, 'ROTAVIRUS', 'Administration_drug'),
+          ('2025-08-29', 0, 'ROTAVIRUS', 'Administration'),
+          ('2025-08-30', 0, 'ROTAVIRUS', 'Administration'),
+          ('2025-04-01', 0, 'MENB', 'Administration'),
+          ('2025-06-01', 0, 'MENB', 'Administration'),
+          ('2025-11-15', 0, 'MENB', 'Administration'),
+          ('2026-03-10', 1, 'MENB', 'Administration'),
+          ('2026-03-10', 1, 'MENB', 'Administration_drug'),
+          ('2026-09-15', 1, 'MENB', 'Administration'),
+          ('2026-03-10', 1, 'MMR', 'Administration'),
+          ('2026-09-15', 1, 'MMR', 'Administration'),
+          ('2026-10-01', 1, 'MMR', 'Contraindicated'),
+          ('2026-10-01', 1, 'MENB', 'Contraindicated')
+  expect:
+    rows:
+    - person_id: -13010
+      reporting_date: '2026-09-30'
+      rotavirus_doses_by_24_weeks: 2
+      menb_doses_by_8_months: 2
+      menb_primary_doses_by_12_months: 3
+      menb_booster_doses_12_to_18_months: 1
+      mmr_doses_12_to_18_months: 1
+      has_mmr_contraindication: false
+      has_menb_contraindication: false
+    - person_id: -13010
+      reporting_date: '2026-10-31'
+      rotavirus_doses_by_24_weeks: 2
+      menb_doses_by_8_months: 2
+      menb_primary_doses_by_12_months: 3
+      menb_booster_doses_12_to_18_months: 1
+      mmr_doses_12_to_18_months: 1
+      has_mmr_contraindication: true
+      has_menb_contraindication: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_preschool_source_age_fifth_birthday_and_future_dose
+  model: int_nice_childhood_immunisation_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -13011::NUMBER AS person_id, column1::DATE AS reporting_date,
+      5::NUMBER AS age, '2021-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+      'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES ('2026-03-31'), ('2026-04-30')
+  - input: ref('int_nice_childhood_immunisation_all')
+    format: sql
+    rows: |-
+      SELECT -13011::NUMBER AS person_id, column1::DATE AS event_date,
+      column2::NUMBER AS age_at_event, column3::VARCHAR AS vaccine_group,
+      'Administration'::VARCHAR AS event_type
+      FROM VALUES
+          ('2022-03-10', 1, 'MMR'),
+          ('2026-03-10', 5, 'MMR'),
+          ('2026-03-10', 5, 'DTAP_BOOSTER'),
+          ('2026-03-15', NULL, 'MMR'),
+          ('2026-03-15', NULL, 'DTAP_BOOSTER'),
+          ('2026-04-10', 4, 'MMR'),
+          ('2026-04-10', 5, 'MMR'),
+          ('2026-04-10', 4, 'DTAP_BOOSTER'),
+          ('2026-04-10', 5, 'DTAP_BOOSTER')
+  expect:
+    rows:
+    - person_id: -13011
+      reporting_date: '2026-03-31'
+      mmr_doses_1_to_5_years: 1
+      has_dtap_booster_1_to_5_years: false
+    - person_id: -13011
+      reporting_date: '2026-04-30'
+      mmr_doses_1_to_5_years: 2
+      has_dtap_booster_1_to_5_years: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_p13_current_ind226_previous_day_profile
+  model: fct_person_childhood_immunisation_ind226
+  given:
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT -13012::NUMBER AS person_id, 'SYNTHETIC'::VARCHAR AS current_practice_code, 'Synthetic
+      practice'::VARCHAR AS current_practice_name
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT -13012::NUMBER AS person_id, 1::NUMBER AS age, DATEADD(month,-18,CURRENT_DATE())::DATE
+      AS birth_date_approx
+  - input: ref('dim_person_demographics')
+    format: sql
+    rows: SELECT -13012::NUMBER AS person_id, 'Female'::VARCHAR AS gender
+  - input: ref('int_nice_childhood_immunisation_profile')
+    format: sql
+    rows: |-
+      SELECT -13012::NUMBER AS person_id, DATEADD(day,-1,CURRENT_DATE())::DATE AS reporting_date,
+      DATEADD(month,-18,CURRENT_DATE())::DATE AS birth_date_approx, 3::NUMBER(18,0) AS menb_doses_by_18_months,
+      2::NUMBER(18,0) AS menb_primary_doses_by_12_months,
+      1::NUMBER(18,0) AS menb_booster_doses_12_to_18_months, FALSE AS has_menb_contraindication
+  expect:
+    rows:
+    - person_id: -13012
+      doses_in_window: 3
+      primary_doses_by_12_months: 2
+      booster_doses_12_to_18_months: 1
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history

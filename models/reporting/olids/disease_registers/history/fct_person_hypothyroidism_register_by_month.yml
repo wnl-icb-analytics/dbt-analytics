@@ -1,0 +1,31 @@
+models:
+  - name: fct_person_hypothyroidism_register_by_month
+    description: >
+      Hypothyroidism register at each completed month-end, on the rules of
+      fct_person_hypothyroidism_register: a HYPOTHY_COD or THY_COD diagnosis known by that date.
+      No age restriction or resolution codes.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest hypothyroidism diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest hypothyroidism diagnosis known by the month-end.

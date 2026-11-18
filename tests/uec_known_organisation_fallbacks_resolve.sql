@@ -28,7 +28,7 @@ where organisation_id in ('AD9', 'NLO')
 
 union all
 
-select visit_occurrence_id, 'assigned_commissioner' as field_name
+select visit_occurrence_id, 'commissioner' as field_name
 from {{ ref('int_sus_uec_encounter') }}
-where assigned_commissioner_code_at_event in ('93C00', '06N00', '14Y00')
-  and assigned_commissioner_name_at_event is null
+where commissioner_code_at_event in ('93C00', '06N00', '14Y00')
+  and commissioner_name_at_event is null

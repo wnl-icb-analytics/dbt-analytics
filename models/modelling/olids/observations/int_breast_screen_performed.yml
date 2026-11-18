@@ -1,11 +1,17 @@
 models:
   - name: int_breast_screen_performed
-    description: 'SMI Longer Lives Enhanced Health Check Breast Cancer Screen Performed Latest value per Mental Health /SMI observation using BRCANSCR_COD'
+    description: >-
+      Recorded breast screening in OLIDS GP records from BRCANSCR_COD, one row per
+      observation up to the build date. Includes inactive and deceased people without
+      screening-age, sex or SMI-register restrictions.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: BRCANSCR_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id]

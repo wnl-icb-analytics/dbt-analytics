@@ -1,0 +1,33 @@
+version: 2
+models:
+  - name: stg_ukhfd_pcn_core_partner_details
+    description: >-
+      ODS ePCN core partner details via UKHFD - the member practices of each
+      Primary Care Network in England. One row per practice, PCN and
+      relationship start per daily snapshot and file version. Some early
+      snapshots hold more than one file version.
+
+      Source: UKHFD.ODS_DSE.dim_Epcn_CorePartnerDetails
+      (source ukhfd_ods_dse in models/sources/manual_ukhfd.yml).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - pcn_code
+              - relationship_start_date
+              - snapshot_date
+              - snapshot_file_version
+    columns:
+      - name: practice_code
+        description: Member practice ODS code, trimmed and upper case.
+      - name: relationship_end_date
+        description: End of the practice's PCN membership. Null or future while the membership is open.
+      - name: snapshot_date
+        description: Date of the ODS file snapshot.
+      - name: snapshot_file_version
+        description: File version within the snapshot date; the highest is the latest delivery.

@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_cvd_register.sql.
--- This live fact includes future-dated component membership; its PIT pair is
--- strict as-of.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -10,8 +9,7 @@
 
 /*
 QOF v51 cardiovascular disease register (CD_REG), one row per qualifying person.
-This live model includes future-dated records through its component register models.
-Its strict as-of sibling is calculate_cvd_register.sql.
+Component diagnoses must be on or before today.
 */
 
 WITH component_memberships AS (
@@ -21,6 +19,7 @@ WITH component_memberships AS (
         NULL::DATE AS earliest_stroke_tia_diagnosis_date
     FROM {{ ref('fct_person_chd_register') }}
     WHERE is_on_register = TRUE
+        AND CAST(earliest_diagnosis_date AS DATE) <= CURRENT_DATE()
 
     UNION ALL
 
@@ -30,6 +29,7 @@ WITH component_memberships AS (
         earliest_diagnosis_date AS earliest_stroke_tia_diagnosis_date
     FROM {{ ref('fct_person_stroke_tia_register') }}
     WHERE is_on_register = TRUE
+        AND CAST(earliest_diagnosis_date AS DATE) <= CURRENT_DATE()
 ),
 
 person_membership AS (

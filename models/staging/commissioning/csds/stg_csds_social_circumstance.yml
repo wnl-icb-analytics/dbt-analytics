@@ -1,0 +1,176 @@
+version: 2
+models:
+- name: stg_csds_social_circumstance_history
+  description: One CYP006 social and personal circumstance row from an accepted CSDS submission.
+    Providers can restate the same circumstance across reporting periods. ETOS v1.6.10 limits the
+    submitted group to religious or other belief affiliation and stated sexual orientation.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: cyp006_unique_id
+    description: Source table row identifier, unique across accepted submissions.
+    data_tests: [not_null, unique]
+  - name: social_circumstance_code
+    description: Submitted SNOMED CT concept for the social or personal circumstance. Unmatched codes remain present.
+  - name: recorded_date
+    description: Submitted date the circumstance was recorded, not its onset. Null dates remain present.
+  - name: organisation_code_provider
+    description: Submitted provider organisation identifier. CYP006 has no separate legacy provider-code field.
+  - name: unique_submission_id
+    description: Accepted submission supplying this occurrence.
+- name: stg_csds_social_circumstance
+  description: Latest accepted CYP006 social and personal circumstance per person, provider, SNOMED CT
+    concept and recorded date, the ETOS Complex Derivations key. A missing date is part of the key. Rows missing
+    person, provider or SNOMED code keep each source occurrence. Latest means reporting period, then file receipt,
+    submission and source row.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: ETOS record key, with a source-row fallback when person, provider or SNOMED code is missing.
+    data_tests: [not_null, unique]
+  - name: cyp006_unique_id
+    description: Source row of the selected accepted occurrence.
+  - name: social_circumstance_code
+    description: Submitted SNOMED CT concept for the social or personal circumstance.
+  - name: recorded_date
+    description: Date the circumstance was recorded. A missing date is part of the key, so undated restatements merge.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting period containing this key.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting period containing this key.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the selected occurrence.
+
+unit_tests:
+- name: csds_social_circumstance_merges_undated_restatements
+  model: stg_csds_social_circumstance
+  given:
+  - input: ref('stg_csds_social_circumstance_history')
+    rows:
+    - cyp006_unique_id: -91000
+      person_id: -91001
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: SYN_CODE
+      recorded_date: null
+      reporting_period_end_date: '2026-01-31'
+      effective_from: '2026-01-31'
+      unique_submission_id: -92000
+    - cyp006_unique_id: -90999
+      person_id: -91001
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: SYN_CODE
+      recorded_date: null
+      reporting_period_end_date: '2026-02-28'
+      effective_from: '2026-02-28'
+      unique_submission_id: -91999
+    - cyp006_unique_id: -90990
+      person_id: -91001
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: SYN_CODE
+      recorded_date: '2026-01-01'
+      reporting_period_end_date: '2026-01-31'
+      effective_from: '2026-01-31'
+      unique_submission_id: -92000
+    - cyp006_unique_id: -90989
+      person_id: -91001
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: SYN_CODE
+      recorded_date: '2026-01-01'
+      reporting_period_end_date: '2026-02-28'
+      effective_from: '2026-02-28'
+      unique_submission_id: -91999
+    - cyp006_unique_id: -90980
+      person_id: null
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: SYN_CODE
+      recorded_date: null
+      reporting_period_end_date: '2026-01-31'
+      effective_from: '2026-01-31'
+      unique_submission_id: -92000
+    - cyp006_unique_id: -90979
+      person_id: null
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: SYN_CODE
+      recorded_date: null
+      reporting_period_end_date: '2026-02-28'
+      effective_from: '2026-02-28'
+      unique_submission_id: -91999
+    - cyp006_unique_id: -90970
+      person_id: -91001
+      organisation_code_provider: null
+      social_circumstance_code: SYN_CODE
+      recorded_date: null
+      reporting_period_end_date: '2026-01-31'
+      effective_from: '2026-01-31'
+      unique_submission_id: -92000
+    - cyp006_unique_id: -90969
+      person_id: -91001
+      organisation_code_provider: null
+      social_circumstance_code: SYN_CODE
+      recorded_date: null
+      reporting_period_end_date: '2026-02-28'
+      effective_from: '2026-02-28'
+      unique_submission_id: -91999
+    - cyp006_unique_id: -90960
+      person_id: -91001
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: null
+      recorded_date: null
+      reporting_period_end_date: '2026-01-31'
+      effective_from: '2026-01-31'
+      unique_submission_id: -92000
+    - cyp006_unique_id: -90959
+      person_id: -91001
+      organisation_code_provider: SYN_PROVIDER
+      social_circumstance_code: null
+      recorded_date: null
+      reporting_period_end_date: '2026-02-28'
+      effective_from: '2026-02-28'
+      unique_submission_id: -91999
+  expect:
+    rows:
+    - cyp006_unique_id: -90999
+      recorded_date: null
+      first_reported_period_end_date: '2026-01-31'
+      last_reported_period_end_date: '2026-02-28'
+      accepted_source_record_count: 2
+    - cyp006_unique_id: -90989
+      recorded_date: '2026-01-01'
+      first_reported_period_end_date: '2026-01-31'
+      last_reported_period_end_date: '2026-02-28'
+      accepted_source_record_count: 2
+    - cyp006_unique_id: -90980
+      recorded_date: null
+      first_reported_period_end_date: '2026-01-31'
+      last_reported_period_end_date: '2026-01-31'
+      accepted_source_record_count: 1
+    - cyp006_unique_id: -90979
+      recorded_date: null
+      first_reported_period_end_date: '2026-02-28'
+      last_reported_period_end_date: '2026-02-28'
+      accepted_source_record_count: 1
+    - cyp006_unique_id: -90970
+      recorded_date: null
+      first_reported_period_end_date: '2026-01-31'
+      last_reported_period_end_date: '2026-01-31'
+      accepted_source_record_count: 1
+    - cyp006_unique_id: -90969
+      recorded_date: null
+      first_reported_period_end_date: '2026-02-28'
+      last_reported_period_end_date: '2026-02-28'
+      accepted_source_record_count: 1
+    - cyp006_unique_id: -90960
+      recorded_date: null
+      first_reported_period_end_date: '2026-01-31'
+      last_reported_period_end_date: '2026-01-31'
+      accepted_source_record_count: 1
+    - cyp006_unique_id: -90959
+      recorded_date: null
+      first_reported_period_end_date: '2026-02-28'
+      last_reported_period_end_date: '2026-02-28'
+      accepted_source_record_count: 1

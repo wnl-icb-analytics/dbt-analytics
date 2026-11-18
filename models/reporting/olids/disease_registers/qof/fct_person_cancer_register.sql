@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_cancer_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -42,8 +42,8 @@ WITH cancer_diagnoses AS (
         ) IS NOT NULL
         AND MAX(
             CASE WHEN is_diagnosis_code AND is_first_or_new_episode THEN clinical_effective_date END
-        )
-        >= '2003-04-01', FALSE) AS has_active_cancer_diagnosis,
+        )::DATE
+        >= '2003-04-01'::DATE, FALSE) AS has_active_cancer_diagnosis,
 
         -- Count of cancer episodes
         COUNT(
@@ -61,6 +61,7 @@ WITH cancer_diagnoses AS (
         ) AS all_cancer_concept_displays
 
     FROM {{ ref('int_cancer_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

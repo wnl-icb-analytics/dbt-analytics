@@ -3,7 +3,7 @@
 -- pivot silently returns NULL, the value > / < threshold comparisons become
 -- NULL, and the outer COALESCE(..., FALSE) flips the feature flag to FALSE
 -- for every person. The covered pivots are:
---   int_qadmissions_features.lab_thresholds: (haemoglobin, low), (platelets, high)
+--   qadmissions_input_features.lab_thresholds: (haemoglobin, low), (platelets, high)
 --   int_lft_latest.thresholds:               (alt, high), (ggt, high), (bilirubin, high)
 --
 -- The test fails when the SELECT returns rows. It returns one row per

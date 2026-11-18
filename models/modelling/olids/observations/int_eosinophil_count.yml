@@ -2,16 +2,18 @@ version: 2
 models:
   - name: int_eosinophil_count
     description: >
-      Blood eosinophil count observations with unit standardisation and data quality flags.
-      One row per observation using the EOS_COUNT cluster. Applies the standardise_count_observation
-      macro to infer correct units and values (conversions attempted only when a value is implausibly
-      high; out-of-range values pass through unchanged), then categorises by clinical severity.
+      Blood eosinophil count results from the EOS_COUNT cluster, with unit standardisation and
+      data quality flags. One row per distinct result: where the same result (person, clinical
+      date, value, unit and concept) was entered more than once, only the earliest entry is kept
+      (earliest date_recorded, then lowest id). Applies the standardise_count_observation
+      macro to infer correct units and values when a value is outside the plausible band.
+      Unconvertible out-of-range values pass through unchanged. Results are categorised by clinical severity.
       Standard unit: 10*9/L.
     config:
       meta:
         owner:
           name: ThomasShallcross
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -20,7 +22,12 @@ models:
               - original_result_value
               - original_result_unit_code
               - concept_code
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: EOS_COUNT
     columns:
+      - name: date_recorded
+        description: EMIS save time of the retained source observation; null when unavailable.
       - name: id
         description: Unique observation identifier
         data_tests:
@@ -67,7 +74,7 @@ models:
       - name: is_negative
         description: TRUE if inferred value is negative
       - name: is_extreme_outlier
-        description: TRUE if inferred value exceeds 20 x10*9/L (the BIOLOGICAL_UPPER bound)
+        description: TRUE if inferred value exceeds 100 x10*9/L (the BIOLOGICAL_UPPER bound)
       - name: eosinophil_category
         description: Clinical severity category based on inferred value
         data_tests:

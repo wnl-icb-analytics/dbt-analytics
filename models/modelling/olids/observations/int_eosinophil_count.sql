@@ -8,7 +8,7 @@
 All blood eosinophil count observations with unit standardisation and data quality flags.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 Uses the standardise_count_observation macro: values inside the absolute range are kept
-as-is; conversions are attempted only when a value is implausibly high; nothing is dropped
+as-is; conversions are attempted below or above that range; nothing is dropped
 (out-of-range values pass through, carried by flags).
 Standard unit: 10*9/L (billion per liter).
 */
@@ -22,7 +22,8 @@ deduplicated AS (
     {{ deduplicate_table(
         table='raw_observations',
         partition_cols=['person_id', 'clinical_effective_date', 'result_value', 'result_unit_code', 'mapped_concept_code'],
-        order_cols=['date_recorded', 'id']
+        order_cols=['date_recorded', 'id'],
+        order_direction='ASC'
     ) }}
 ),
 
@@ -31,6 +32,7 @@ base_observations AS (
         id,
         person_id,
         clinical_effective_date,
+        date_recorded,
         result_value,
         result_unit_code,
         result_unit_display,
@@ -53,6 +55,7 @@ SELECT
     id,
     person_id,
     clinical_effective_date,
+    date_recorded,
     concept_code,
     code_description,
     source_cluster_id,

@@ -1,0 +1,27 @@
+models:
+- name: int_nice_mart_medications_all
+  description: >-
+    Inhaler prescriptions suitable for maintenance and reliever therapy (MART). One row per
+    medication order, including inactive and deceased people, through the build date. Eligible
+    products do not establish that the person uses a MART regimen. Triple therapy and
+    maintenance-only strengths are excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ICS_FORMOTEROL_MART_RX
+        source: ECL_CACHE
+  columns:
+  - name: person_id
+    description: Person with the evidence.
+  - name: medication_order_id
+    description: Source event identifier.
+  - name: order_date
+    description: Clinical calendar date; observations use the shared source-date correction.

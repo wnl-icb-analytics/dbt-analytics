@@ -1,0 +1,52 @@
+models:
+  - name: fct_person_ltc_summary_by_month
+    description: >
+      Long-term condition registers at each completed month-end, in the shape of
+      fct_person_ltc_summary: one row per person, month-end and condition the person
+      is on. Each register applies its full rules (age, resolution, medication and
+      other criteria) as at the month-end, through the matching
+      fct_person_<register>_by_month model.
+      {{ doc('ltc_register_by_month_scope') }}
+      NDH rows contain NDH/IGT/PRD members only, as in fct_person_ltc_summary.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+              - condition_code
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_unique_value_count_to_be_between:
+              arguments:
+                max_value: 60
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: condition_code
+        description: Condition code from ltc_register_denominator_rules.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('ltc_register_denominator_rules')
+                field: condition_code
+      - name: condition_name
+        description: Condition name from ltc_register_denominator_rules.
+      - name: clinical_domain
+        description: Clinical domain from ltc_register_denominator_rules.
+      - name: is_qof
+        description: Whether the register is a QOF register.
+      - name: earliest_diagnosis_date
+        description: Earliest qualifying diagnosis known by the month-end, as defined by the condition's register.
+      - name: latest_diagnosis_date
+        description: Latest qualifying diagnosis known by the month-end, as defined by the condition's register.

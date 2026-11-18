@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (Analyst-managed reference datasets and business rules). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE__NCL.ANALYST_MANAGED.LSOA2011_LSOA2021 \ndbt: source(''reference_analyst_managed'', ''LSOA2011_LSOA2021'') \nColumns:\n  LSOA11CD -> lsoa11_cd\n  LSOA11NM -> lsoa11_nm\n  LSOA21CD -> lsoa21_cd\n  LSOA21NM -> lsoa21_nm\n  CHGIND -> chgind\n  LAD22CD -> lad22_cd\n  LAD22NM -> lad22_nm\n  LAD22NMW -> lad22_nmw\n  OBJECTID -> objectid"
+        description="Raw layer (Analyst-managed reference datasets and business rules. TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE__NCL.ANALYST_MANAGED.LSOA2011_LSOA2021 \ndbt: source(''reference_analyst_managed'', ''LSOA2011_LSOA2021'') \nColumns:\n  LSOA11CD -> lsoa11_cd\n  LSOA11NM -> lsoa11_nm\n  LSOA21CD -> lsoa21_cd\n  LSOA21NM -> lsoa21_nm\n  CHGIND -> chgind\n  LAD22CD -> lad22_cd\n  LAD22NM -> lad22_nm\n  LAD22NMW -> lad22_nmw\n  OBJECTID -> objectid"
     )
 }}
 select

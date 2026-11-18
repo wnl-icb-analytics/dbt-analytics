@@ -20,7 +20,8 @@ deduplicated AS (
     {{ deduplicate_table(
         table='raw_observations',
         partition_cols=['person_id', 'clinical_effective_date', 'result_value', 'result_unit_code', 'mapped_concept_code'],
-        order_cols=['date_recorded', 'id']
+        order_cols=['date_recorded', 'id'],
+        order_direction='ASC'
     ) }}
 ),
 
@@ -29,6 +30,7 @@ base_observations AS (
         id,
         person_id,
         clinical_effective_date,
+        date_recorded,
         result_value,
         result_unit_code,
         result_unit_display,
@@ -51,6 +53,7 @@ SELECT
     id,
     person_id,
     clinical_effective_date,
+    date_recorded,
     concept_code,
     code_description,
     source_cluster_id,

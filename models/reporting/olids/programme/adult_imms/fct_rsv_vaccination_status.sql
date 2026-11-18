@@ -4,9 +4,10 @@
         tags=['adult_imms'],
         cluster_by=['person_id'])
 }}
---THIS TABLE CAPTURES RSV FOR THE ADULT IMMS POPULATION AND RSV MATERNITY VACCINATIONS. 
+--THIS TABLE CAPTURES RSV FOR THE COHORTS AGE 75+ ROUTINE, CARE HOME RESIDENTS aged 50+, CURRENTLY PREGNANT 
+--AND NEW FOR SEPTEMBER 2026 THOSE WITH CLINICAL RISK AGED 65-74 (IMMUNOSUPPRESSED OR CHRONIC RESPIRATORY DISEASE)
 WITH
--- All eligible people (from adult current vaccination population aged 75+ or those in a care home for older people or those currently pregnant aged 12 to 55))
+-- All eligible people 
 eligible AS (
     SELECT 
         person_id
@@ -14,11 +15,10 @@ eligible AS (
        ,TRUE as eligible
         ,IS_CARE_HOME_RESIDENT
         ,IS_PREGNANT
-        -- ,TURN_75_AFTER_SEP_2024
-        -- ,TURN_80_AFTER_SEP_2024
+        ,IN_RSV_CLINICAL_RISK_GROUP
     FROM {{ ref('int_adult_imms_current_population') }}
-    --FROM DEV__MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_CURRENT_POPULATION
-    where age >= 75 or IS_CARE_HOME_RESIDENT OR IS_PREGNANT
+    --FROM MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_CURRENT_POPULATION
+    where age >= 75 or (IS_CARE_HOME_RESIDENT AND AGE >=50) OR IS_PREGNANT OR (IN_RSV_CLINICAL_RISK_GROUP and AGE BETWEEN 65 AND 74)
 )
 -- RSV SINGLE DOSE
 ,rsv as (

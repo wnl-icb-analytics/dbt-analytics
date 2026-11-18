@@ -14,8 +14,8 @@ Cost basis: 'actual' = EPD item_actual_cost reimbursed spend.
 Covers the WNL footprint (the EPD feed was repointed to NCL + NWL 2026-06).
 Patients with no pseudo key (sk_patient_id NULL — out-of-area / unmatched) are
 dropped, so this joins cleanly to the person dimensions like the other POD
-summaries. NOTE: the feed lags — check the epd_covers_slam_cost_window test
-before relying on recent months.
+summaries. The feed lags SLAM by about two months; the resource index window
+ends at the latest month every source covers.
 */
 
 select

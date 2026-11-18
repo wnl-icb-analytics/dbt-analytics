@@ -105,10 +105,10 @@ Grain stays 1:1 with `DATA_LAKE.SDL` — same rows, no joins to other data, no b
 | `dv_financial_year` | Validated to `'YYYYYY'`; accepts `202526`, `2025/26`, `2025-26`, `2025-2026`; second year must follow the first | Junk (`215551`) and ambiguous bare years (`2020`) → NULL, then the FY token in the platform file name (`PLCM_2627_InformationStandard...`), then derived from the activity date (PLD feeds — see below) |
 | `dv_financial_month` | Whole number 1 (April) – 12 (March) | Junk and fractional values → NULL, then derived from the activity date (PLD feeds) |
 | `dv_financial_period_source` | Records per row which of the three sources supplied the period: `stated`, `file_name` or `activity_date` | NULL when the period is unrecoverable |
-| `dv_total_cost` and all price/activity/quantity fields | Parsed to `NUMBER(38,6)`: strips currency symbols and thousands commas; accounting-style `(1,234.56)` → negative | Non-numeric text (`TBC`) → NULL |
+| `dv_total_cost` and all price/activity/quantity fields | Parsed to `NUMBER(38,6)` when the whole value is a number: pound signs and spaces removed, commas removed only in thousands groups, accounting-style `(1,234.56)` → negative, exponents (`4.97E-13`) accepted | Text (`TBC`, `100mg + 200mg`), Excel errors (`#DIV/0!`), decimal commas (`1,5`) → NULL; drug quantity text stays in `drug_quantity_raw` |
 | `dv_dataset_created_at` | Provider's `DATE_AND_TIME_DATA_SET_CREATED` parsed across every format found in profiling (ISO, UK, US AM/PM, Excel serial numbers, several broken variants) | Unparseable values → NULL |
 | `dv_provider_code` | ODS code cleaned via the Dictionary: site-suffixed codes that are not valid org codes resolve to the parent (`RAS00` → `RAS`) | — |
-| Activity/clinical dates | Parsed from UK date formats | Unparseable → NULL |
+| Activity/clinical dates | Parsed from ISO, UK `DD/MM/YYYY` and `DD-MM-YYYY`, `DD-Mon-YY(YY)`, two-digit-year `DD/MM/YY`, US `MM/DD/YYYY` only when it carries an AM/PM time (SQL Server exports), and Excel serial day numbers for 2000–2030 | Unparseable, time-only artefacts (`mm:ss.s`) → NULL |
 | Column pruning | Columns <5% populated dropped (LSPLCM: 580 → ~60) | Originals remain in DATA_LAKE.SDL |
 
 **Activity-date period derivation (PLD, Drugs, Devices).** Providers bill by activity date, so when the stated period and the file-name token both fail, the period is derived from the feed's activity date: PLD uses the activity end/start dates (including the plain-named columns used by pre-Sep-2021 layouts), Drugs the dispensed then delivery date, Devices the implantation then insertion date. The rule was validated before adoption: where both a stated period and an activity date exist, the months agree at 99.86% (PLD, 531m rows), 99.85% (Drugs) and 98.8% (Devices), with year-and-month jointly matching at 99.71% (Drugs); the drug delivery date agrees 100%. The derived periods were also checked against the independent load timestamp: 0.00% are logically impossible (activity after the file was loaded) vs 0.03% of provider-stated periods, with a tighter lag distribution — the derivation is measurably cleaner than the field it backfills around. Dates are gated to plausible values (April 2015 – today) so junk cannot create phantom periods. ACM is excluded — it is an aggregate feed with no activity dates. `dv_financial_period_source` makes every row's provenance visible.
@@ -145,6 +145,23 @@ The winning file per slice is published in `STAGING.SLAM.STG_SLAM_LATEST_SUBMISS
 3. **Backloaded history ordering**: for ~340 provider-months (none in 26/27, concentrated 20/21–23/24), load order and the provider-stated creation date disagree about which file is latest. The views follow load order.
 4. **Upstream rebuilds rewrite history**: if the platform pipeline rebuilds a feed (schema drift), the staging tables are rebuilt from it and figures can change. Nightly tests flag grain breaks.
 5. **Unmapped files**: anything in `META_UNMAPPED_FILES` is absent from all downstream layers. Currently 3 SLAM files, all missing their data upstream rather than awaiting mapping.
+6. **Rows that do not follow their layout**: some provider rows carry an extra field (an unquoted `3,470.00`, an inserted value), so the rest of the row sits one column late and its last data field is lost. The platform pipeline finds these with `audit_rows.py`, repairs reviewed cases in `lib/row_repairs.py` and quarantines files that follow no single edit (`META_REJECTED_FILES`). Around 150 rows across all SDL feeds were affected by 2026-09; the audit is re-run to catch new ones.
+
+### Provider coding issues
+
+These are values a provider consistently sends in its own convention, not parsing or alignment faults. Staging passes them through as submitted; handle them in reporting where they matter.
+
+| Provider | Feed | Issue | Scale |
+|---|---|---|---|
+| R1K00 | ACM, PLD, Drugs | Local code `598` as commissioner / residence responsibility | ~4M ACM, ~9M PLD rows |
+| RKE00 | ACM, PLD | Site of treatment as `Q4` / `RKERKEQ4` rather than an ODS site code | ~7M ACM, ~6M PLD rows |
+| RF400 | ACM | Site of treatment as a two-letter suffix | ~1.3M rows |
+| DF904, DF900 | PLD | Age sent as a band (`18-64`), so age is NULL | ~1.2M rows |
+| 8HH48 | PLD | Activity start dates sent as time-only Excel artefacts (`mm:ss.s`); unrecoverable, so the period falls back to the file name | ~3.5M rows |
+| RHW00 | ACM | Dataset creation time sent as a time-only artefact in some 2024/25 files, so `dv_dataset_created_at` is NULL (latest-submission selection uses the load time, so it is unaffected) | ~14k rows |
+| RP400 | Drugs | Drug quantity and unit of measure swapped; dose text stays in `drug_quantity_raw` and `dv_drug_quantity` is NULL | ~60k rows |
+| RP600 | Drugs | One file with financial year as a five-digit number | ~55k rows |
+| Several | ACM | Actual market forces factor holds price-sized values (tens of thousands) rather than a factor near 1 | ~25k rows |
 
 ## Verification queries
 

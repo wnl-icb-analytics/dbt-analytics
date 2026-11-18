@@ -1,0 +1,51 @@
+version: 2
+models:
+  - name: dq_person_activity_coverage
+    description: >-
+      One row per output_type, source_dataset and source_record_type, summarising
+      available longitudinal activity.
+      Counts describe recorded source evidence, not distinct real-world interactions.
+      Different source windows and OLIDS NCL coverage limit comparisons. This summary
+      records missing linkage, absent or partial dates and the latest received delivery.
+      Source date extremes remain visible, including implausible supplied dates.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [output_type, source_dataset, source_record_type]
+    columns:
+      - name: output_type
+        description: healthcare_event or clinical_record.
+      - name: source_dataset
+        description: "{{ doc('navigation_source_dataset') }}"
+      - name: source_record_type
+        description: "{{ doc('navigation_source_record_type') }}"
+      - name: record_count
+        description: Source milestones or clinical items retained in the shared output.
+      - name: unlinked_record_count
+        description: Records without sk_patient_id. These remain in the output.
+      - name: missing_provider_record_count
+        description: Records without a provider organisation code. A local code is not necessarily an ODS code.
+      - name: coded_record_count
+        description: Records with an event code or clinical source code, excluding separately mapped codes.
+      - name: unlabelled_code_record_count
+        description: Records with a populated event or clinical source code and no corresponding label.
+      - name: undated_record_count
+        description: Records without a supported event or clinical date.
+      - name: date_only_record_count
+        description: Records with day precision and no supported clock time.
+      - name: partial_date_record_count
+        description: Records with month or year precision.
+      - name: unknown_precision_record_count
+        description: Records whose date precision is unknown, including absent dates.
+      - name: first_record_date
+        description: Earliest retained source date; not a guarantee of continuous coverage.
+      - name: last_record_date
+        description: Latest retained source date, which may describe future planned care or an implausible source value.
+      - name: latest_source_received_at
+        description: Latest source receipt, import or extraction timestamp in this group.
+      - name: profiled_at
+        description: Time this aggregate summary was rebuilt.

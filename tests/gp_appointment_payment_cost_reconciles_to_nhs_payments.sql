@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- Payment-basis appointment cost must add back to the published NHS
 -- payments for every practice year the fact covers in full. Carried-forward
 -- and imputed years are excluded (their total is an estimate, not a

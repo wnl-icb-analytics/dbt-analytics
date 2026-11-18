@@ -7,8 +7,9 @@ Population: everyone with WNL registration exposure in the latest rolling
 the old current-registration filter
 dropped (~17% of in-patch patient-keyed spend). One row per patient.
 
-  * actual_cost_12m   - patient-attributable spend over the window
-    (rolled from int_person_cost_index_actual_monthly)
+  * actual_cost_12m   - patient-attributable spend over the window: SLAM +
+    EPD + MHSDS + CSDS (int_person_cost_index_actual_monthly), with a
+    per-source split. GP appointments are excluded (no NWL person-level feed).
   * expected_cost_12m - WNL age-sex cost-per-month rate for the patient's
     band x their months registered
   * weighted_months_12m - Core need basis: the practice's UKHFD Core
@@ -31,8 +32,9 @@ into the weights.
 
 Registered geography attributes via the *window* practice (last registered
 month), so leavers and decedents attribute to where they were registered.
-Age at window end (at death for decedents); missing age/gender carry an
-'Unknown' band matching the curve so their spend still standardises.
+Age at window end (at death when on or before that reference date); missing
+age/gender carry an 'Unknown' band matching the curve so their spend still
+standardises.
 */
 
 {{ config(materialized = 'table') }}
@@ -41,7 +43,7 @@ with bounds as (
     select
         max(activity_month)                       as window_end_month,
         dateadd(month, -11, max(activity_month))  as window_start_month
-    from {{ ref('int_cost_index_slam_activity_monthly') }}
+    from {{ ref('int_person_cost_index_actual_monthly') }}
 ),
 
 exposure_months as (
@@ -90,7 +92,7 @@ population as (
             'p.date_of_birth',
             'e.window_end_month',
             is_deceased_field='e.date_of_death is not null',
-            death_date_field='e.date_of_death'
+            death_date_field='case when e.date_of_death <= e.window_end_month then e.date_of_death end'
         ) }}
     from population_base as e
     left join {{ ref('dim_person_demographics_basic') }} as p
@@ -100,7 +102,11 @@ population as (
 cost as (
     select
         c.sk_patient_id,
-        sum(c.actual_cost) as actual_cost_12m
+        sum(c.actual_cost) as actual_cost_12m,
+        sum(c.slam_cost)   as slam_cost_12m,
+        sum(c.epd_cost)    as epd_cost_12m,
+        sum(c.mhsds_cost)  as mhsds_cost_12m,
+        sum(c.csds_cost)   as csds_cost_12m
     from {{ ref('int_person_cost_index_actual_monthly') }} as c
     cross join bounds as b
     where c.activity_month between b.window_start_month and b.window_end_month
@@ -166,6 +172,10 @@ select
     pop.residence_ward_2025_name,
     pop.residence_lsoa_2021_code,
     coalesce(cost.actual_cost_12m, 0)                       as actual_cost_12m,
+    coalesce(cost.slam_cost_12m, 0)                         as slam_cost_12m,
+    coalesce(cost.epd_cost_12m, 0)                          as epd_cost_12m,
+    coalesce(cost.mhsds_cost_12m, 0)                        as mhsds_cost_12m,
+    coalesce(cost.csds_cost_12m, 0)                         as csds_cost_12m,
     curve.expected_cost_per_month * pop.months_registered   as expected_cost_12m,
     coalesce(w.weighted_to_registered_ratio, mr.ratio)      as practice_weighted_ratio,
     w.financial_year                                       as practice_weight_financial_year,
@@ -177,7 +187,7 @@ from population as pop
 cross join mean_ratio as mr
 left join {{ ref('int_organisation_borough_mapping') }} as org_bor
     on pop.practice_code = org_bor.practice_code
-left join {{ ref('stg_reference_wnl_gp_practice_neighbourhood') }} as nb_reg
+left join {{ ref('practice_wnl_all') }} as nb_reg
     on pop.practice_code = nb_reg.practice_code
 left join practice_weights as w
     on pop.practice_code = w.practice_code

@@ -25,7 +25,7 @@ SELECT
     COUNT_IF(referral.priority_type_code = '3') AS count_two_week_priority,
 
 FROM
-    {{ ref('stg_csds_cyp101referral') }} AS referral
+    {{ ref('stg_csds_referral') }} AS referral
 LEFT JOIN
     {{ ref('stg_csds_bridging') }} AS bridging 
 ON 

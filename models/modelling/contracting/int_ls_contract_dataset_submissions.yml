@@ -1,0 +1,44 @@
+models:
+  - name: int_ls_contract_dataset_submissions
+    description: >
+      Streamlit dashboard source table used to monitor monthly contract
+      monitoring submissions across LSACM, LSPLCM, LSDrPLCM,
+      LSDePLCM and LSREF datasets.
+
+      The model generates all expected provider and dataset combinations,
+      then joins the latest available submission for each combination,
+      allowing missing submissions to be identified.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    columns:
+      - name: provider_code
+        description: NHS provider code expected to submit the dataset.       
+      - name: provider_shorthand
+        description: Short reporting name for the provider.
+      - name: provider_name
+        description: Full provider name.
+      - name: dataset
+        description: Submission dataset identifier.       
+      - name: financial_year
+        description: Financial year associated with the latest submission.
+      - name: fy_month_submitted
+        description: Financial month of the latest submission received.
+      - name: meta_file_id
+        description: SDL metadata file identifier for the latest submission.
+      - name: file_version
+        description: File version extracted from the submitted filename.
+      - name: date_submitted
+        description: Date the file was submitted to SDL.
+      - name: submitted_row_count
+        description: Row count recorded in SDL metadata for the submitted file.
+      - name: latest_month_received
+        description: >
+          Indicates whether the provider's latest received submission
+          matches the most recent financial month received across all
+          providers and datasets.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

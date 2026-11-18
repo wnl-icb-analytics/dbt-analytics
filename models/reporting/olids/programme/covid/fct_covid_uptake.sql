@@ -149,8 +149,9 @@ final_uptake AS (
         WHEN cd.vaccination_date >= cc.campaign_start_date
         AND cd.vaccination_status = 'VACCINATION_ADMINISTERED'
         THEN TRUE ELSE FALSE END AS vaccinated,
+        -- Declines count from decline_tracking_start (spec COVDECL_DAT, 1 August for autumn)
         CASE
-        WHEN cd.vaccination_date >= cc.campaign_start_date
+        WHEN cd.vaccination_date >= cc.decline_tracking_start
         AND cd.vaccination_status = 'VACCINATION_DECLINED'
         THEN TRUE ELSE FALSE END AS declined,
         cd.eligible_no_record,
@@ -164,10 +165,10 @@ final_uptake AS (
             AND cd.vaccination_date < cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_ADMINISTERED'
             THEN 'Eligible - Vaccinated - Pre-Campaign'
             WHEN cd.is_eligible
-            AND cd.vaccination_date >= cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_DECLINED'
+            AND cd.vaccination_date >= cc.decline_tracking_start AND cd.vaccination_status = 'VACCINATION_DECLINED'
             THEN 'Eligible - Declined'
             WHEN cd.is_eligible
-            AND cd.vaccination_date < cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_DECLINED'
+            AND cd.vaccination_date < cc.decline_tracking_start AND cd.vaccination_status = 'VACCINATION_DECLINED'
             THEN 'Eligible - Declined - Pre-Campaign'
             WHEN cd.is_eligible AND cd.eligible_no_record THEN 'Eligible - No Record'
             WHEN NOT cd.is_eligible AND cd.vaccinated THEN 'Not Eligible - Vaccinated'
@@ -198,7 +199,8 @@ final_uptake AS (
     LEFT JOIN (
         -- Every COVID campaign the models report on
         -- (campaign list: macros/config/covid_campaign_selection.sql)
-        SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date
+        SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date,
+            decline_tracking_start
         FROM ({{ covid_reported_campaigns() }})
     ) cc
         ON cd.campaign_id = cc.campaign_id

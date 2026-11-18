@@ -29,7 +29,8 @@ SELECT
     screen.screen_date,
     screen.screening_tool,
     screen.score_value,
-    MAX(intervention.intervention_date) AS latest_intervention_date
+    MAX(intervention.intervention_date) AS latest_intervention_date,
+    MIN(intervention.intervention_date) AS first_intervention_date
 FROM positive_screens AS screen
 LEFT JOIN interventions AS intervention
     ON screen.person_id = intervention.person_id

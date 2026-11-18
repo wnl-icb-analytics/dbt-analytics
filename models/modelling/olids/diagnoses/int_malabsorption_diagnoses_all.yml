@@ -8,7 +8,7 @@ models:
       taken from the QAdmissions 2023 paper.
 
       Observation-level data: one row per coded diagnosis. The wide feature
-      row aggregates to person grain in int_qadmissions_features. No
+      row aggregates to person grain in qadmissions_input_features. No
       resolution codes are included - the feature is "ever diagnosed".
     config:
       meta:
@@ -35,6 +35,11 @@ models:
         description: 'Date when the malabsorption diagnosis was clinically effective.'
         data_tests:
           - not_null
+      - name: date_recorded
+        description: >
+          Date the observation was entered in the source system. Use with
+          clinical_effective_date for point-in-time views, as an observation
+          can be back-dated. May be NULL.
       - name: concept_code
         description: 'SNOMED concept code for the malabsorption diagnosis.'
       - name: concept_display

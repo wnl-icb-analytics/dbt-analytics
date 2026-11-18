@@ -1,6 +1,6 @@
--- The reporting decile uses an unambiguous IMD 2025 result first, then a valid
--- submitted ECDS decile. This test also covers missing and ambiguous LSOA
--- mappings.
+-- The reporting decile uses IMD 2025 for the recorded LSOA 2021 first, then an
+-- unambiguous IMD 2025 result for the LSOA 2011, then a valid submitted ECDS
+-- decile. This test also covers missing and ambiguous LSOA mappings.
 with lsoa_imd_2025 as (
     select
         bridge.old_lsoa_code
@@ -20,12 +20,16 @@ comparison as (
         encounter.visit_occurrence_id
         , encounter.deprivation_decile_at_event
         , case
+            when lsoa_21.index_of_multiple_deprivation_decile is not null
+                then lsoa_21.index_of_multiple_deprivation_decile
             when lsoa.unambiguous_imd_2025_decile is not null
                 then lsoa.unambiguous_imd_2025_decile
             when try_to_number(encounter.imd_at_event) between 1 and 10
                 then try_to_number(encounter.imd_at_event)
           end as expected_decile
     from {{ ref('int_sus_uec_encounter') }} as encounter
+    left join {{ ref('stg_reference_imd2025') }} as lsoa_21
+        on encounter.lsoa_21_at_event = lsoa_21.lsoa_code_2021
     left join lsoa_imd_2025 as lsoa
         on encounter.lsoa_11_at_event = lsoa.old_lsoa_code
 )

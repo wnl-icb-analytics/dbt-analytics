@@ -1,0 +1,68 @@
+unit_tests:
+- name: nice_ind122_completed_follow_up_windows
+  model: fct_person_haematuria_test_hypertension_ind122_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9702::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9703::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9704::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9705::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9706::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9707::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9708::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9709::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+    format: sql
+  - input: ref('fct_person_hypertension_register_by_month')
+    rows: |-
+      SELECT '2026-08-30'::DATE AS earliest_diagnosis_date, '2026-08-30'::DATE AS latest_diagnosis_date, -9701::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2026-08-30'::DATE AS earliest_diagnosis_date, '2026-08-30'::DATE AS latest_diagnosis_date, -9702::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2026-05-30'::DATE AS earliest_diagnosis_date, '2026-05-30'::DATE AS latest_diagnosis_date, -9703::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2026-06-30'::DATE AS earliest_diagnosis_date, '2026-06-30'::DATE AS latest_diagnosis_date, -9704::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2026-05-30'::DATE AS earliest_diagnosis_date, '2026-05-30'::DATE AS latest_diagnosis_date, -9705::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2026-07-01'::DATE AS earliest_diagnosis_date, '2026-07-01'::DATE AS latest_diagnosis_date, -9706::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2025-06-30'::DATE AS earliest_diagnosis_date, '2025-06-30'::DATE AS latest_diagnosis_date, -9707::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2025-07-01'::DATE AS earliest_diagnosis_date, '2025-07-01'::DATE AS latest_diagnosis_date, -9708::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+      UNION ALL
+      SELECT '2025-06-29'::DATE AS earliest_diagnosis_date, '2025-06-29'::DATE AS latest_diagnosis_date, -9709::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date
+    format: sql
+  - input: ref('int_urine_blood_test_all')
+    rows: |-
+      SELECT -9702::NUMBER AS person_id, '2026-08-30'::DATE AS clinical_effective_date, 'URINE_BLOOD_TEST_COD'::VARCHAR AS cluster_id
+      UNION ALL
+      SELECT -9705::NUMBER AS person_id, '2026-05-30'::DATE AS clinical_effective_date, 'URINE_BLOOD_TEST_COD'::VARCHAR AS cluster_id
+    format: sql
+  expect:
+    rows:
+    - person_id: -9703
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9704
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9705
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9708
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

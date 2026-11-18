@@ -1,0 +1,44 @@
+models:
+  - name: int_nice_multimorbidity_diagnoses_all
+    description: >-
+      Additional diagnoses for NICE multimorbidity categories. One row per observation and
+      code-list group, including inactive and deceased people, through the build date. Covers
+      inflammatory bowel disease, anorexia or bulimia, connective tissue disorders and
+      bronchiectasis. No age, registration or lookback restriction applies.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind207
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: CROHNS_COD, ULCCOLITIS_COD, EATDISORDER_COD
+            source: PCD
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: BRISTOL/MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER, QCOVID/HAS_CF_OR_BRONCHIECTASIS, OPENSAFELY/INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED
+            source: OPENCODELISTS
+    columns:
+      - name: id
+        description: Source observation identifier; may occur in several clusters.
+        data_tests: [not_null]
+      - name: person_id
+        description: Person with this additional diagnosis evidence.
+      - name: clinical_effective_date
+        description: Corrected clinical timestamp of the diagnosis.
+      - name: date_recorded
+        description: >-
+          Recorded timestamp; a null falls back to the clinical date for assessment of
+          when evidence became available.
+      - name: cluster_id
+        description: Maintained source cluster used to assign the category.
+      - name: concept_code
+        description: Mapped SNOMED CT concept code.
+      - name: concept_display
+        description: Mapped SNOMED CT concept label.
+      - name: category_code
+        description: Additional DIGESTIVE, MENTAL_HEALTH, MUSCULOSKELETAL or RESPIRATORY category evidence.

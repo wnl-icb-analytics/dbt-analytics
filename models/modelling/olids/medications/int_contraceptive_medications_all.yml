@@ -1,0 +1,31 @@
+models:
+- name: int_contraceptive_medications_all
+  description: Oral, patch and emergency hormonal contraceptive issues. One row per medication order and
+    matching method list, for all people. ECL_CACHE CONTRACEP_COC_RX includes co-cyprindiol; CONTRACEP_POP_RX
+    includes drospirenone 4 mg; CONTRACEP_PATCH_RX excludes HRT patches; CONTRACEP_EHC_RX includes historical
+    emergency PC4 and excludes ulipristal 5 mg. Vaginal rings and other methods are outside these lists.
+    Orders follow the medication BNF input date cleaning.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: CONTRACEP_COC_RX, CONTRACEP_POP_RX, CONTRACEP_PATCH_RX, CONTRACEP_EHC_RX
+        source: ECL_CACHE
+  columns:
+  - name: is_practice_issued
+    description: True for Electronic, Print or Handwritten issue descriptions. Outside, Over The Counter
+      and missing descriptions are false.
+  - name: issue_method
+    description: Order issue method description, supplied by the medication BNF input.
+  - name: source_cluster_id
+    description: Maintained contraceptive method list.
+  - name: order_date
+    description: Clinical date of the issue.

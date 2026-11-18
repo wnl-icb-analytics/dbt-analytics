@@ -1,0 +1,43 @@
+models:
+  - name: int_efi2_rules
+    description: >-
+      eFI2 deficit-rule results for living OLIDS people whose 65th birthday could have
+      occurred by scoring, using the first day of their approximate birth month. Rows
+      identify a person, deficit, sub-deficit, rule and evidence date; several results
+      can remain for one deficit. Anaemia uses the latest valid haemoglobin. BMI uses
+      the latest eligible reading, with save time then observation ID breaking ties, unlike the earliest-reading rule in legacy AIC.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - end_date
+              - deficit
+              - other_instructions
+              - has_deficit
+              - sub_deficit
+              - last_date
+    columns:
+      - name: person_id
+        description: Person identifier.
+        tests:
+          - not_null
+      - name: deficit
+        description: Frailty deficit.
+      - name: other_instructions
+        description: Rule instruction the flag was evaluated under.
+      - name: has_deficit
+        description: >-
+          Whether the person meets the deficit rule. Anaemia uses the latest valid haemoglobin
+          in g/L, below 130 for males or 120 for females. BMI uses the latest eligible
+          reading.
+      - name: sub_deficit
+        description: Sub-classification of the deficit (e.g. CLINIC_SYSTOLIC_HTN, Obese).
+      - name: end_date
+        description: As-at date for the scoring run.
+      - name: last_date
+        description: Most recent qualifying observation date for the deficit.

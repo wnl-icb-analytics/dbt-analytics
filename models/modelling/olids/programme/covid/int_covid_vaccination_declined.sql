@@ -3,23 +3,23 @@ COVID Vaccination Declined Rule
 
 Business Rule: Person with COVID vaccination declined status if they have:
 1. COVID vaccination declined code (COVDECL_COD) within tracking period
-2. No age restrictions (applies to all ages)
+2. AND no COVID vaccination in the same campaign (int_covid_vaccination_given): the spec
+   rejects vaccinated people before testing for a decline (5.1.1 AUT26VACC_DECL)
+3. No age restrictions (applies to all ages)
 
 This tracks people who actively declined vaccination.
 Used for vaccination status reporting and understanding uptake barriers.
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every COVID campaign the models report on
     -- (campaign list: macros/config/covid_campaign_selection.sql)
-    {{ covid_build_campaigns() }}
+    {{ covid_reported_campaigns() }}
 ),
 
 -- Step 1: Find people with COVID vaccination declined codes (for all campaigns)
@@ -55,7 +55,10 @@ people_declined_with_age AS (
     FROM people_with_covid_vaccination_declined pcd
     LEFT JOIN {{ ref('dim_person_demographics') }} demo 
         ON pcd.person_id = demo.person_id
+    LEFT JOIN {{ ref('int_covid_vaccination_given') }} vg
+        ON pcd.campaign_id = vg.campaign_id AND pcd.person_id = vg.person_id
     WHERE demo.birth_date_approx IS NOT NULL
+        AND vg.person_id IS NULL
 ),
 
 -- Step 3: Format for status table

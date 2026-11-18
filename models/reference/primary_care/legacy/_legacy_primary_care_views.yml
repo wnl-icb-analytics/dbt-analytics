@@ -1,0 +1,104 @@
+version: 2
+
+# Compatibility views that keep the names and columns of the views the primary
+# care org manager app used to publish in REFERENCE.PRIMARY_CARE. New work
+# should use the *_wnl_* models.
+
+models:
+  - name: practice_all
+    description: >-
+      Legacy. Use practice_wnl_all. WNL GP practices in any status, one row per
+      practice, with the column names of the former app-managed PRACTICE_ALL
+      view.
+    config: &legacy_owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: practice_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: practice_active
+    description: >-
+      Legacy. Use practice_wnl_active. Open WNL GP practices, one row per
+      practice, with the column names of the former app-managed
+      PRACTICE_ACTIVE view, including neighbourhood_code_legacy.
+    config: *legacy_owner
+    columns:
+      - name: practice_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: practice_current
+    description: >-
+      Legacy. Use practice_wnl_active. Open WNL GP practices, one row per
+      practice, with the column names of the former app-managed
+      PRACTICE_CURRENT view.
+    config: *legacy_owner
+    columns:
+      - name: practice_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: pcn_membership_all
+    description: >-
+      Legacy. Use practice_wnl_all, which carries each practice's current PCN.
+      WNL GP practices in any status, one row per practice, with the columns of
+      the former app-managed PCN_MEMBERSHIP_ALL view.
+    config: *legacy_owner
+    columns:
+      - name: practice_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: pcn_membership_current
+    description: >-
+      Legacy. Use practice_wnl_active, which carries each practice's current
+      PCN. Open WNL GP practices, one row per practice, with the columns of the
+      former app-managed PCN_MEMBERSHIP_CURRENT view.
+    config: *legacy_owner
+    columns:
+      - name: practice_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: pcn_membership_active
+    description: >-
+      Legacy. Use practice_wnl_active, which carries each practice's current
+      PCN. Open WNL GP practices, one row per practice, with the columns of the
+      former app-managed PCN_MEMBERSHIP_ACTIVE view.
+    config: *legacy_owner
+    columns:
+      - name: practice_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: pcn_current
+    description: >-
+      Legacy. Use pcn_wnl_active. Active WNL PCNs, one row per PCN, with the
+      columns of the former app-managed PCN_CURRENT view.
+    config: *legacy_owner
+    columns:
+      - name: pcn_code
+        data_tests:
+          - unique
+          - not_null
+
+  - name: neighbourhood_current
+    description: >-
+      Legacy. Use neighbourhood_wnl_active. Active WNL neighbourhoods, one row
+      per neighbourhood, with the columns of the former app-managed
+      NEIGHBOURHOOD_CURRENT view.
+    config: *legacy_owner
+    columns:
+      - name: neighbourhood_code
+        data_tests:
+          - unique
+          - not_null

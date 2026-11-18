@@ -1,0 +1,203 @@
+unit_tests:
+- name: nice_antiseizure_counselling_topics_expiry_and_exclusions
+  model: fct_person_antiseizure_contraception_advice_ind78_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE
+      AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES (-9309, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9309, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9308, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9308, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9307, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9307, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9306, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9306, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9305, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9305, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9304, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9304, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9303, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9303, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9302, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9302, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9301, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9301, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9310, ''2026-09-30'', 55, ''1971-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9311, ''2026-09-30'', 30, ''1996-01-15'', ''Male'', ''SYNTHETIC'', ''Synthetic practice'')'
+  - input: ref('int_nice_contraception_evidence_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS latest_asm_date,
+      column4::DATE AS first_sterilisation_hysterectomy_date FROM VALUES (-9309, ''2026-08-31'', ''2026-10-01'',
+      NULL),
+
+      (-9309, ''2026-09-30'', ''2026-10-01'', NULL),
+
+      (-9308, ''2026-08-31'', ''2026-03-30'', NULL),
+
+      (-9308, ''2026-09-30'', ''2026-03-30'', NULL),
+
+      (-9307, ''2026-08-31'', ''2026-08-01'', ''2026-10-01''),
+
+      (-9307, ''2026-09-30'', ''2026-08-01'', ''2026-10-01''),
+
+      (-9306, ''2026-08-31'', ''2026-08-01'', ''2026-09-30''),
+
+      (-9306, ''2026-09-30'', ''2026-08-01'', ''2026-09-30''),
+
+      (-9305, ''2026-08-31'', ''2026-08-01'', NULL),
+
+      (-9305, ''2026-09-30'', ''2026-08-01'', NULL),
+
+      (-9304, ''2026-08-31'', ''2026-08-01'', NULL),
+
+      (-9304, ''2026-09-30'', ''2026-08-01'', NULL),
+
+      (-9303, ''2026-08-31'', ''2026-08-01'', NULL),
+
+      (-9303, ''2026-09-30'', ''2026-08-01'', NULL),
+
+      (-9302, ''2026-08-31'', ''2026-08-01'', NULL),
+
+      (-9302, ''2026-09-30'', ''2026-08-01'', NULL),
+
+      (-9301, ''2026-08-31'', ''2026-08-01'', NULL),
+
+      (-9301, ''2026-09-30'', ''2026-08-01'', NULL),
+
+      (-9310, ''2026-09-30'', ''2026-08-01'', NULL),
+
+      (-9311, ''2026-09-30'', ''2026-08-01'', NULL)'
+  - input: ref('int_nice_reproductive_advice_topics_all')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::DATE AS event_date, column4::BOOLEAN
+      AS is_contraception_topic, column5::BOOLEAN AS is_pregnancy_topic FROM VALUES (-9301, ''BOTH'', ''2025-08-31'',
+      TRUE, TRUE),
+
+      (-9301, ''BOTH'', ''2025-08-31'', TRUE, TRUE),
+
+      (-9302, ''C'', ''2026-08-31'', TRUE, FALSE),
+
+      (-9303, ''P'', ''2026-08-31'', FALSE, TRUE),
+
+      (-9304, ''C'', ''2025-09-30'', TRUE, FALSE),
+
+      (-9304, ''P'', ''2026-09-30'', FALSE, TRUE),
+
+      (-9305, ''C'', ''2026-08-01'', TRUE, FALSE),
+
+      (-9305, ''P'', ''2026-10-01'', FALSE, TRUE),
+
+      (-9303, ''FUTURE_C'', ''2026-10-01'', TRUE, FALSE),
+
+      (-9306, ''BOTH'', ''2026-08-31'', TRUE, TRUE),
+
+      (-9307, ''BOTH'', ''2026-08-31'', TRUE, TRUE),
+
+      (-9308, ''BOTH'', ''2026-08-31'', TRUE, TRUE),
+
+      (-9309, ''BOTH'', ''2026-08-31'', TRUE, TRUE),
+
+      (-9310, ''BOTH'', ''2026-08-31'', TRUE, TRUE),
+
+      (-9311, ''BOTH'', ''2026-08-31'', TRUE, TRUE)'
+  - input: ref('fct_person_epilepsy_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::DATE AS earliest_diagnosis_date,
+      NULL::DATE AS latest_diagnosis_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -9308
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      latest_contraception_advice_date: '2026-08-31'
+      latest_pregnancy_advice_date: '2026-08-31'
+    - person_id: -9307
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      latest_contraception_advice_date: '2026-08-31'
+      latest_pregnancy_advice_date: '2026-08-31'
+    - person_id: -9307
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      latest_contraception_advice_date: '2026-08-31'
+      latest_pregnancy_advice_date: '2026-08-31'
+    - person_id: -9306
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      latest_contraception_advice_date: '2026-08-31'
+      latest_pregnancy_advice_date: '2026-08-31'
+    - person_id: -9305
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      latest_contraception_advice_date: '2026-08-01'
+      latest_pregnancy_advice_date: null
+    - person_id: -9305
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_contraception_advice_date: '2026-08-01'
+      latest_pregnancy_advice_date: null
+    - person_id: -9304
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      latest_contraception_advice_date: '2025-09-30'
+      latest_pregnancy_advice_date: null
+    - person_id: -9304
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      latest_contraception_advice_date: '2025-09-30'
+      latest_pregnancy_advice_date: '2026-09-30'
+    - person_id: -9303
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      latest_contraception_advice_date: null
+      latest_pregnancy_advice_date: '2026-08-31'
+    - person_id: -9303
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_contraception_advice_date: null
+      latest_pregnancy_advice_date: '2026-08-31'
+    - person_id: -9302
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      latest_contraception_advice_date: '2026-08-31'
+      latest_pregnancy_advice_date: null
+    - person_id: -9302
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_contraception_advice_date: '2026-08-31'
+      latest_pregnancy_advice_date: null
+    - person_id: -9301
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      latest_contraception_advice_date: '2025-08-31'
+      latest_pregnancy_advice_date: '2025-08-31'
+    - person_id: -9301
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_contraception_advice_date: null
+      latest_pregnancy_advice_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history

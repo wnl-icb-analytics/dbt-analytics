@@ -1,0 +1,49 @@
+models:
+- name: int_nice_physical_health_evidence
+  description: >-
+    Physical health evidence for registered, living, non-test people on diabetes or severe
+    mental illness registers, or with a lithium order in the preceding six months. One row per
+    candidate person on the build date. Evidence stops at the build date. Indicators apply their
+    own windows and lithium stop rules; null dates mean no qualifying evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: >-
+      Person in the candidate population for NICE indicators.
+  - name: reporting_date
+    description: >-
+      Build date on which population and evidence are assessed.
+  - name: latest_bmi_date
+    description: Latest valid BMI recording (10 to 150 kg/m2), or valid adult calculated BMI. Coded BMI30
+      alone does not count.
+  - name: latest_blood_pressure_date
+    description: Latest valid complete systolic/diastolic pair under int_blood_pressure_all, distinct
+      from NICE BP-control result selection.
+  - name: latest_total_cholesterol_date
+    description: Latest total-cholesterol test with a numeric cholesterol_value.
+  - name: latest_cholesterol_hdl_ratio_date
+    description: Latest cholesterol/HDL ratio with a numeric ratio.
+  - name: latest_lipid_date
+    description: Latest numeric total, HDL, LDL, non-HDL, triglyceride or ratio test, or completed NONVALCHOL_COD
+      test without a numeric result.
+  - name: latest_glucose_or_hba1c_date
+    description: Latest performed blood-glucose or HbA1c test, including tests without numeric results.
+  - name: latest_alcohol_record_date
+    description: Latest alcohol units, usage or screening-tool record.
+  - name: latest_lithium_level_date
+    description: Latest serum lithium record. Timestamp, recorded-result flag and observation id decide
+      ties within the day.
+  - name: latest_lithium_level
+    description: Selected serum lithium result in mmol/L; null when no record or the selected record has
+      no numeric result.
+  - name: is_latest_lithium_level_in_range
+    description: Whether the selected lithium result is 0.4 to 1.0 mmol/L inclusive; false when missing.

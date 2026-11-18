@@ -1,0 +1,28 @@
+models:
+- name: int_downs_syndrome_diagnoses_all
+  description: >-
+    Down's syndrome diagnoses from PCD DS_COD, one row per observation for all
+    people, including inactive and deceased people. Clinical and recorded dates
+    allow consumers to select diagnoses known at their reporting date. Missing
+    clinical dates and dates after recording follow get_observations corrections.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: DS_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: person_id
+    description: Person with a recorded Down's syndrome diagnosis.
+  - name: clinical_effective_date
+    description: Corrected clinical diagnosis date.
+  - name: date_recorded
+    description: Recorded date; null does not block a clinically dated diagnosis.

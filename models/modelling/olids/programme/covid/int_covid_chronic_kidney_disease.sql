@@ -12,16 +12,14 @@ This condition is NOT eligible in 2025/26 restricted campaigns.
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every COVID campaign the models report on
     -- (campaign list: macros/config/covid_campaign_selection.sql)
-    {{ covid_build_campaigns() }}
+    {{ covid_reported_campaigns() }}
 ),
 
 -- Step 1: Find people with CKD diagnosis (for all campaigns)
@@ -104,8 +102,10 @@ people_with_ckd_eligible AS (
             ELSE 'Not eligible'
         END AS eligibility_reason
     FROM people_with_ckd_diagnosis pcd
-    FULL OUTER JOIN people_with_ckd_stages pcs 
-        ON pcd.campaign_id = pcs.campaign_id AND pcd.person_id = pcs.person_id AND pcs.stage_rank = 1
+    -- Latest stage record only, filtered before the join: in the ON clause of a FULL
+    -- OUTER JOIN the rank filter would let older stage rows through unmatched
+    FULL OUTER JOIN (SELECT * FROM people_with_ckd_stages WHERE stage_rank = 1) pcs
+        ON pcd.campaign_id = pcs.campaign_id AND pcd.person_id = pcs.person_id
     LEFT JOIN people_with_ckd_stages_3_5 pcs35
         ON COALESCE(pcd.campaign_id, pcs.campaign_id) = pcs35.campaign_id 
         AND COALESCE(pcd.person_id, pcs.person_id) = pcs35.person_id

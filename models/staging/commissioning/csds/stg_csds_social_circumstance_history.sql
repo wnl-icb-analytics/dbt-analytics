@@ -1,0 +1,17 @@
+select
+    r.cyp006_unique_id
+    , r.local_patient_identifier_extended
+    , r.social_and_personal_circumstance_snomed_ct::varchar as social_circumstance_code
+    , r.social_and_personal_circumstance_recorded_date::date as recorded_date
+    , r.person_id
+    , r.organisation_identifier_code_of_provider as organisation_code_provider
+    , r.unique_submission_id
+    , r.record_number
+    , r.effective_from
+    , r.reporting_period_start_date
+    , r.reporting_period_end_date
+    , r.file_type
+    , h.csds_version
+from {{ ref('raw_csds_cyp006socpercircumstances') }} as r
+inner join {{ ref('stg_csds_activesubmission') }} as h
+    on r.unique_submission_id = h.unique_submission_id

@@ -6,7 +6,7 @@
 
 /*
 All epilepsy diagnosis observations from clinical records.
-Uses QOF epilepsy cluster IDs per v50 business rules:
+Uses QOF epilepsy cluster IDs per v51 business rules:
 - EPIL_COD: Epilepsy diagnoses
 - EPILRES_COD: Epilepsy resolved codes
 

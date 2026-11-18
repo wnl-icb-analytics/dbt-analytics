@@ -24,12 +24,12 @@ Preconditions:
 - `yq` and `python3` with PyYAML are available.
 - For a proof of the checkers themselves, do not rely on an empty git diff.
 
-- **Known-good fixture.** Check a documented reference model that already has description, tests and `ref()`. Run `control-dbt-analytics ci-static --files models/reference/data_dictionary/nhs_ethnicity_2001.sql`. Exit code `0`. `ci-static.files.txt` contains that path. Each of `ci-hardcoded`, `ci-staging`, `ci-descriptions` and `ci-tests` stdout ends with a `PASSED:` line and exit code `0`.
+- **Known-good fixture.** Check a documented reference model that already has description, tests and `ref()`. Run `control-dbt-analytics ci-static --files models/reference/data_dictionary/ethnicity_2001.sql`. Exit code `0`. `ci-static.files.txt` contains that path. Each of `ci-hardcoded`, `ci-staging`, `ci-descriptions` and `ci-tests` stdout ends with a `PASSED:` line and exit code `0`.
 - **Changed-files entry.** Check the branch against main. Run `control-dbt-analytics ci-static --base origin/main`. If SQL files changed, the same four `PASSED:` or `FAILED:` lines appear for those paths. If no SQL files changed, stdout says the run is a skip and is not proof of the checkers.
-- **Hardcoded-refs script.** Run the Actions command. Run `bash scripts/ci/check_hardcoded_refs.sh models/reference/data_dictionary/nhs_ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: No hardcoded table references found.`
-- **Staging-refs script.** Run `bash scripts/ci/check_staging_refs.sh models/reference/data_dictionary/nhs_ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: All raw/source references follow the layer boundary.`
-- **Descriptions script.** Run `python3 scripts/ci/check_model_descriptions.py models/reference/data_dictionary/nhs_ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: All models have descriptions.`
-- **Tests script.** Run `bash scripts/ci/check_model_tests.sh models/reference/data_dictionary/nhs_ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: All models have tests.`
+- **Hardcoded-refs script.** Run the Actions command. Run `bash scripts/ci/check_hardcoded_refs.sh models/reference/data_dictionary/ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: No hardcoded table references found.`
+- **Staging-refs script.** Run `bash scripts/ci/check_staging_refs.sh models/reference/data_dictionary/ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: All raw/source references follow the layer boundary.`
+- **Descriptions script.** Run `python3 scripts/ci/check_model_descriptions.py models/reference/data_dictionary/ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: All models have descriptions.`
+- **Tests script.** Run `bash scripts/ci/check_model_tests.sh models/reference/data_dictionary/ethnicity_2001.sql`. Exit code `0` and stdout `PASSED: All models have tests.`
 - **Proof.** Keep `ci-static.summary.txt` plus the four `ci-*.stdout.log` files. The summary `result:` line is `PASSED` and lists the fixture path.
 
 ## Gotchas

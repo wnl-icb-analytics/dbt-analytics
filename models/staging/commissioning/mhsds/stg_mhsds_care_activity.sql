@@ -1,7 +1,7 @@
 {{ config(materialized='table', tags=['mhsds']) }}
 
 with accepted_records as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs202careactivity')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs202careactivity'), 'mhs202_uniq_id') }}
 )
 
 select

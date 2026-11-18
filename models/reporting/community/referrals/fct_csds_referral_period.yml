@@ -1,0 +1,92 @@
+version: 2
+models:
+- name: fct_csds_referral_period
+  description: >-
+    CSDS referral state in each accepted submission. Each row is one referral and submission. A
+    referral is open at period end when it appears in that month's submission, was received by that
+    date, has no service discharge by then, and its teams in that submission are not all closed or
+    rejected. A referral that stops being submitted counts as closed. Teams close only on a closure or
+    rejection date, because some submissions omit or truncate the team section.
+    Attendance uses contacts whose date and reporting period are both no later than the period end.
+    Later corrections can revise historical results. Community referrals such as health visiting
+    and school nursing legitimately stay open for years. An open referral without attendance is
+    evidence of waiting, not eligibility for a national waiting-time standard.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_period_id
+    description: Key for the referral and accepted submission.
+    data_tests:
+    - unique
+    - not_null
+  - name: referral_source_record_id
+    description: Provider-qualified referral identifier; joins to source_record_id in fct_csds_referral.
+    data_tests:
+    - not_null
+  - name: source_row_id
+    description: CYP101 row supplying this period's referral state.
+  - name: person_id
+    description: CSDS person identifier on this period's referral row.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null when the person has no bridge.
+  - name: person_provider_period_id
+    description: Key for the person, provider and reporting period, for joining period demographics. Null without a person.
+  - name: provider_organisation_code
+    description: Provider organisation code.
+  - name: provider_organisation_name
+    description: Provider organisation name; null when unmatched.
+  - name: source_icb_commissioner_code
+    description: Source-derived ICB commissioner of the referral.
+  - name: reporting_period_start_date
+    description: First date of the accepted reporting month.
+  - name: reporting_period_end_date
+    description: Last date of the accepted reporting month; the date state is evaluated at.
+  - name: referral_received_date
+    description: Referral received date as reported in this period.
+  - name: referral_discharge_date
+    description: Service discharge date as reported in this period.
+  - name: primary_reason_for_referral_code
+    description: Submitted primary reason for referral. Unmatched codes remain visible.
+  - name: priority_type_code
+    description: Submitted referral priority.
+  - name: source_of_referral_code
+    description: Submitted source of referral.
+  - name: n_service_teams
+    description: CYP102 team relationships for this referral in the same submission. Zero when none were submitted.
+  - name: n_service_teams_ended
+    description: Those teams with a closure or rejection date on or before the period end.
+  - name: service_or_team_type_code
+    description: Team type when all same-submission teams share one; null when there are none or they differ.
+  - name: first_recorded_attended_contact_date
+    description: Earliest attended contact (codes 5 or 6) evidenced by this period, across any submitted version.
+  - name: last_recorded_attended_contact_date
+    description: Latest attended contact evidenced by this period.
+  - name: attendance_evidence_available_by_date
+    description: Date by which the attendance evidence used here had been both delivered and reported.
+  - name: is_recorded_open_at_period_end
+    description: Received by period end, not discharged by then, and not every same-submission team closed or rejected. Null when the receipt date is missing.
+  - name: has_no_team_in_submission
+    description: No CYP102 team row for this referral in the submission. The referral can still be open; the guidance expects at least one team, and some submissions omit the team section.
+  - name: is_wnl_commissioner
+    description: The referral's source-derived or submitted commissioner is West and North London.
+  - name: recorded_access_state
+    description: Receipt date missing, not started, discharged, all teams ended (closed or rejected), attended contact recorded, or no attended contact recorded, at period end.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [referral_date_missing, not_started, discharged, all_teams_ended, attended_contact_recorded, no_attended_contact_recorded]
+  - name: is_open_without_recorded_attendance
+    description: Open at period end with no attended contact evidenced by then.
+  - name: days_open_without_recorded_attendance
+    description: Days from receipt to period end for open referrals without attendance; null otherwise.
+  - name: observed_days_to_first_attendance
+    description: Days from receipt to first evidenced attendance; null when either is missing or attendance precedes receipt.
+  - name: has_pre_referral_attendance
+    description: First evidenced attendance falls before the recorded receipt date.
+  - name: submission_id
+    description: Accepted submission supplying this period.
+  - name: source_file_received_at
+    description: Time the submission portal received the file.

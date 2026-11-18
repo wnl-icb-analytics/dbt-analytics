@@ -2,32 +2,13 @@ version: 2
 
 models:
   - name: stg_lsplcm
-    description: |
-      Cleaned SLAM PLD (LSPLCM) — provider patient-level contract-monitoring
-      submissions from ServicesDataLocal. Grain 1:1 with DATA_LAKE.SDL.LSPLCM;
-      columns <5% populated dropped (~520 of 580). Incremental (pure append of
-      new files); full-refresh after an upstream SDL rebuild.
-
-      Full submission history. SLAM files are cumulative-YTD restatements, so
-      summing this table double-counts — report from stg_lsplcm_latest (or
-      join stg_slam_latest_submission) for the current provider statement.
-
-      Cleaning applied: dv_financial_year validated to 'YYYYYY' with the
-      platform file-name FY token as fallback; dv_financial_month validated to
-      1-12; dv_provider_code cleaned via dictionary lookup (site-suffixed
-      codes resolve to the parent org); dv_dataset_created_at multi-format
-      parsed; activity count, unit price and total cost parsed to NUMBER(38,6)
-      (currency symbols, thousands commas and accounting negatives handled;
-      'TBC' and other junk -> NULL); activity start/end dates parsed from UK
-      date formats. Invalid values become NULL, never guesses; originals kept
-      in *_raw or the unprefixed column.
-
-      Column conventions: meta_* = typed SDL pipeline metadata (reliable);
-      submission_* = file identity from META_FILE_REGISTRY; dv_* = derived /
-      cleaned in this model; *_raw = the original provider text retained
-      alongside a dv_ column. All other columns are 1:1 passthrough of
-      provider-submitted text (source is all TEXT) — code columns are not
-      validated here.
+    description: >-
+      SLAM patient-level contract-monitoring activity submitted by providers through
+      ServicesDataLocal, one row per submitted source row. Full submission history is
+      retained. Files are cumulative year-to-date restatements, so summing submissions
+      double-counts. stg_lsplcm_latest holds the current provider statement for each financial
+      period. Interpreted fields use dv_*; original text and load metadata remain available.
+      Other supplied codes are not validated.
     config:
       meta:
         owner:
@@ -74,12 +55,10 @@ models:
           the stated period was incomplete; plausibility-gated (2015-04-01 to
           today).
       - name: dv_financial_year
-        description: |
-          Validated financial year as 'YYYYYY' (e.g. '202627'). Provider value
-          where it parses to consecutive years; else the FY token from the
-          platform file-name prefix; else derived from the activity date
-          (providers bill by activity date - dv_financial_period_source records
-          which applied); else NULL. Original in financial_year_raw.
+        description: >-
+          Financial year as consecutive start and end years in six digits, such as 202526.
+          Uses the valid submitted year, otherwise the file-name year and then an eligible
+          activity date. Original text remains in financial_year_raw.
       - name: dv_financial_month
         description: |
           Financial month 1 (April) - 12 (March). Provider value where valid;
@@ -113,10 +92,9 @@ models:
       - name: provider_code
         description: Provider ODS code as submitted (ORGANISATION_IDENTIFIER_CODE_OF_PROVIDER). Cleaned in dv_provider_code.
       - name: dv_provider_code
-        description: |
-          Provider ODS code cleaned via dictionary lookup (site-suffixed codes
-          like RAS00 resolve to RAS when not a valid org code). Original in
-          provider_code.
+        description: >-
+          Recognised trust identifiers are retained; other supplied values use their first three
+          characters. Original provider text is in provider_code.
         data_tests:
           - not_null
       - name: commissioner_code
@@ -216,18 +194,22 @@ models:
 
       # Measures (derived)
       - name: dv_activity_count
-        description: ACTIVITY_COUNT_POINT_OF_DELIVERY as NUMBER(38,6).
+        description: >-
+          ACTIVITY_COUNT_POINT_OF_DELIVERY as NUMBER(38,6). Unparseable values are null.
       - name: dv_activity_unit_price
-        description: ACTIVITY_UNIT_PRICE as NUMBER(38,6).
+        description: >-
+          ACTIVITY_UNIT_PRICE as NUMBER(38,6). Unparseable values are null.
       - name: dv_total_cost
-        description: TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; sum-safe.
+        description: >-
+          TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; Unparseable values are null.
 
   - name: stg_lsplcm_latest
     description: |
-      SLAM PLD, current provider statement only - stg_lsplcm restricted to the
-      winning file per (provider, FY, month) via stg_slam_latest_submission.
-      Sum-safe; superseded cumulative restatements excluded. Report from this
-      view; cleaning and column conventions as stg_lsplcm.
+      SLAM PLD, current provider statement only - stg_lsplcm restricted to the files selected in
+      stg_slam_latest_submission: the latest upload of each (site, recipient) stream for each provider, FY
+      and month. Parallel contracts are kept; superseded restatements are excluded. Where a slice keeps
+      several files, each commissioner x POD x treatment function group keeps only the latest file's rows.
+      Sum-safe. Report from this view; cleaning and column conventions as stg_lsplcm.
     config:
       meta:
         owner:

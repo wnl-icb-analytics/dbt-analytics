@@ -1,0 +1,44 @@
+version: 2
+
+seeds:
+  - name: townsend_lsoa_2011
+    description: >
+      Townsend Deprivation Score per UK small area (2011 boundaries),
+      calculated from 2011 Census variables (unemployment, no-car ownership,
+      non-owner-occupation and overcrowding). Higher scores indicate greater
+      deprivation.
+
+      Source: UK Data Service, "2011 UK Townsend Deprivation Scores", LSOA
+      scores file
+      (https://statistics.ukdataservice.ac.uk/dataset/2011-uk-townsend-deprivation-scores).
+      Method: Yousaf and Bonsall (2017), UK Data Service Census Support.
+      Unemployment and overcrowding are log-transformed, each indicator is
+      converted to a z-score across the whole UK, and the four z-scores are
+      summed. Quintiles divide areas, not people, into five equal groups.
+      
+
+      Coverage is UK-wide: 2011 LSOAs in England and Wales, 2011 Data Zones
+      in Scotland and 2011 Super Output Areas in Northern Ireland (42,619
+      areas). int_person_geography joins it on each person's postcode-derived 2011
+      LSOA to give townsend_score. It is the source of the QAdmissions `town`
+      feature, which the model was trained on specifically; IMD is not a
+      substitute.
+    columns:
+      - name: lsoa_2011_code
+        description: '2011 small-area code: LSOA (England and Wales, e.g. E01029868), Data Zone (Scotland) or Super Output Area (Northern Ireland). Trimmed of trailing whitespace from the source export.'
+        data_tests:
+          - unique
+          - not_null
+      - name: lsoa_2011_label
+        description: 'LSOA 2011 human-readable label.'
+      - name: townsend_score
+        description: 'Townsend Deprivation Score. Higher values indicate greater deprivation. Observed UK range -7.03 to +13.31.'
+        data_tests:
+          - not_null
+      - name: townsend_quintile
+        description: 'UK-wide Townsend quintile (1 = least deprived, 5 = most deprived).'
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]

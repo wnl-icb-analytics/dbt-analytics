@@ -1,0 +1,40 @@
+models:
+- name: int_nice_immunosuppression_all
+  description: >-
+    Immunosuppression evidence used as a proxy for the shingles indicator IND219. One row per
+    source type, source event and evidence type, including inactive and deceased people. Uses
+    COVID vaccination code lists for diagnoses and treatment, without an age or season
+    restriction. These lists do not establish a shingles-specific definition or anaphylaxis
+    exclusion.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_kind
+        - source_event_id
+        - evidence_type
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: IMMDX_COV_COD,IMMRX_COD,IMM_ADM_COD,DXT_CHEMO_COD
+        source: UKHSA_COVID
+        versioned: true
+  columns:
+  - name: source_kind
+    description: OBSERVATION or MEDICATION_ORDER.
+  - name: source_event_id
+    description: Source observation or medication-order key. Unique with source kind and evidence type.
+  - name: person_id
+    description: Person with proxy evidence, regardless of current registration or vital status.
+  - name: evidence_date
+    description: >-
+      Corrected clinical timestamp or medication-order timestamp. Undated observations use 1
+      January 1900. No campaign date restriction applies.
+  - name: evidence_type
+    description: 'UKHSA_COVID cluster: IMMDX_COV_COD, IMMRX_COD, IMM_ADM_COD or DXT_CHEMO_COD.'
+  - name: terminology_version
+    description: Version supplied by the configured current autumn COVID campaign, applied to all historical
+      evidence.

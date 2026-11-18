@@ -2,23 +2,31 @@
 models:
   - name: int_medication_orders_repeat_current
     description: |
-      Latest repeat medication orders currently active based on supply duration.
-
-      Grain: One row per person × medication (latest order only, current medications)
-
-      Inclusion criteria:
-      - Repeat prescriptions only (authorisation_type = '182918009' from REPEAT_PRESCRIPTION cluster)
-      - Order date + duration >= today (current supply not expired)
-      - Order date <= today (exclude future orders)
-      - Latest order per person-medication combination
-      - Duration defaults to 28 days if NULL
-
-      Uses medication_order table as source of truth for dispensing events and duration.
+      Estimated current repeat supply, one row per person and SNOMED product with a
+      latest eligible GP issue whose inclusive supply end reaches the build date.
+      Supply duration, fallback, grace and cancellation cap follow the
+      medication_supply_columns macro. Cancellation of the latest issue's
+      authorisation ends supply from that date, even if an older authorisation's
+      issue has supply left; cancellations of other authorisations are ignored;
+      a later issue from an uncancelled authorisation restarts supply.
+      Future and missing clinical dates are excluded. Latest selection uses clinical
+      date, recorded time (nulls last), then higher order ID, before testing expiry.
+      An issue is not evidence of dispensing. QOF six-month recency is separate.
 
     config:
       meta:
         owner:
           name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: REPEAT_PRESCRIPTION
+            source: ECL_CACHE
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - mapped_concept_code
     columns:
       - name: person_id
         description: Person identifier
@@ -36,5 +44,13 @@ models:
           - not_null
 
       - name: latest_duration
-        description: Duration in days for most recent order (NULL defaults to 28
-          days in currency calculation)
+        description: Normalised recorded duration in days for the selected issue; null means unknown. See effective_duration_days for the local estimate.
+
+      - name: medication_order_id
+        description: Selected latest eligible medication issue identifier.
+      - name: effective_duration_days
+        description: Local supply estimate in days, recorded duration when 1 to 365 inclusive, otherwise 28.
+      - name: is_duration_imputed
+        description: True when the local 28-day fallback replaces a missing or implausible duration.
+      - name: supply_end_date
+        description: Issue date plus effective duration, inclusive, giving one day's grace. Capped at the day before authorisation cancellation.

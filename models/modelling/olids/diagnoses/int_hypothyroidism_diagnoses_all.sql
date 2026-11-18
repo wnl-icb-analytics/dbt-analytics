@@ -10,7 +10,11 @@ Uses hypothyroidism cluster IDs:
 - HYPOTHY_COD: ECL-based hypothyroidism diagnoses (<< 40930008 |Hypothyroidism|, 113 concepts)
 - THY_COD: Legacy hypothyroidism diagnoses (retained for backward compatibility)
 
-Hypothyroidism is a chronic endocrine condition with no resolution codes.
+Recorded ever-diagnosed evidence from these lists; no resolution list is applied.
+This does not establish current disease or exclude transient hypothyroidism.
+The narrower NICE IND138 register requires a levothyroxine order in the preceding
+6 months and excludes a latest subclinical or compensated diagnosis, using evidence
+known by the reference date for people registered on that date.
 No age restrictions applied.
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
@@ -22,6 +26,8 @@ SELECT
     obs.id,
     obs.person_id,
     obs.clinical_effective_date,
+    obs.result_value,
+    obs.date_recorded,
     obs.mapped_concept_code AS concept_code,
     obs.mapped_concept_display AS concept_display,
     obs.cluster_id AS source_cluster_id,

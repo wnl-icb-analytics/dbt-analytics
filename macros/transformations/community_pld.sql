@@ -26,23 +26,30 @@ registry as (
 )
 {% endmacro %}
 
-{# Clean the small set of provider codes before joining it to contact/referral
-   rows. The IN lookup otherwise makes Snowflake aggregate the wide feed. #}
-{% macro community_pld_provider_codes(raw_model) %}
-source_provider_codes as (
-    select distinct
-        upper(trim(coalesce(
-            organisation_identifier_code_of_provider, provider_code, meta_provider_code
-        ))) as source_provider_code
-    from {{ ref(raw_model) }}
-),
+{# Deduplicate type-41 membership so the lookup cannot multiply source rows. #}
+{% macro community_pld_provider_codes() %}
 provider_codes as (
-    select
-        source_provider_code,
-        {{ clean_organisation_id('source_provider_code') }} as cleaned_provider_code
-    from source_provider_codes
+    select distinct
+        organisation_code as source_provider_code
+    from {{ ref('stg_dictionary_dbo_organisation') }}
+    where SK_ORGANISATION_TYPE_ID = 41
 )
 {% endmacro %}
+
+{# Supplied provider code, normalised for the type-41 lookup. #}
+{% macro community_pld_provider_input() -%}
+upper(trim(coalesce(organisation_identifier_code_of_provider, provider_code, meta_provider_code)))
+{%- endmacro %}
+
+{# Full code for a type-41 organisation, otherwise its first three characters
+   (clean_organisation_id without its per-row subquery). #}
+{% macro community_pld_provider_code() -%}
+case
+            when provider_codes.source_provider_code is not null
+                then {{ community_pld_provider_input() }}
+            else left({{ community_pld_provider_input() }}, 3)
+        end
+{%- endmacro %}
 
 {# Provider-stated reporting period (DLP cols, else plain financial cols),
    validated. The final select coalesces these with the activity-date and

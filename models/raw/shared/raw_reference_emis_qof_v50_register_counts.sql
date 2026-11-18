@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (Analyst-managed reference datasets and business rules). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE__NCL.ANALYST_MANAGED.EMIS_QOF_V50_REGISTER_COUNTS \ndbt: source(''reference_analyst_managed'', ''EMIS_QOF_V50_REGISTER_COUNTS'') \nColumns:\n  REFERENCE_DATE -> reference_date\n  INDICATOR_CODE -> indicator_code\n  INDICATOR_DESCRIPTION -> indicator_description\n  ORGANISATION -> organisation\n  CDB -> cdb\n  POPULATION_COUNT -> population_count\n  PARENT_POPULATION -> parent_population\n  PERCENTAGE -> percentage\n  MALES -> males\n  FEMALES -> females\n  EXCLUDED -> excluded\n  STATUS -> status"
+        description="Raw layer (Analyst-managed reference datasets and business rules. TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE__NCL.ANALYST_MANAGED.EMIS_QOF_V50_REGISTER_COUNTS \ndbt: source(''reference_analyst_managed'', ''EMIS_QOF_V50_REGISTER_COUNTS'') \nColumns:\n  REFERENCE_DATE -> reference_date\n  INDICATOR_CODE -> indicator_code\n  INDICATOR_DESCRIPTION -> indicator_description\n  ORGANISATION -> organisation\n  CDB -> cdb\n  POPULATION_COUNT -> population_count\n  PARENT_POPULATION -> parent_population\n  PERCENTAGE -> percentage\n  MALES -> males\n  FEMALES -> females\n  EXCLUDED -> excluded\n  STATUS -> status"
     )
 }}
 select

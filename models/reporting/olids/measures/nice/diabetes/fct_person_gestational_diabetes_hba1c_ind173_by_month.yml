@@ -1,0 +1,54 @@
+models:
+- columns:
+  - description: "Person identifier for someone in the indicator denominator."
+    name: person_id
+  - description: "Published NICE indicator identifier."
+    name: indicator_id
+  - description: "Published NICE indicator title."
+    name: indicator_name
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - description: "Month-end used to assess the population, age and evidence."
+    name: reporting_date
+  - description: "Inclusive start of the indicator measurement period before the reporting date."
+    name: measurement_period_start
+  - description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+    name: age
+  - description: "Short description of the people in the denominator."
+    name: denominator_description
+  - description: "ODS code of the registration practice at month-end."
+    name: practice_code
+  - description: "Name of the registration practice at month-end."
+    name: practice_name
+  - description: "Date of the latest qualifying HbA1c test in the measurement period; null when none is recorded."
+    name: latest_record_date
+  - description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+    name: is_in_denominator
+  - description: "Whether the person meets the indicator achievement rule on the reporting date."
+    name: is_in_numerator
+  - description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
+    name: indicator_status
+  config:
+    meta:
+      clinical_source: https://www.nice.org.uk/indicators/ind173
+      owner:
+        name: EddieDavison92
+  description: >-
+    HbA1c testing after gestational diabetes (NICE IND173). One row per person in the
+    denominator at the month-end.
+
+
+    People registered at the month-end on the gestational diabetes register whose latest episode
+    was more than 12 months before the month-end. Diabetes diagnosed more than 12 months before excludes the person unless a later code resolves it. Same-day resolution
+    does not count. Achieved with HbA1c testing in the last 12 months. No numeric result is
+    needed. No sex filter is applied. No personalised care adjustments are applied. Based on
+    NICE NG3. Recalculated for each of the last 60 month-ends with current rules, code lists and
+    records, so later corrections can change past months. Code lists: GESTDIAB_COD, DM_COD,
+    DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
+  name: fct_person_gestational_diabetes_hba1c_ind173_by_month
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

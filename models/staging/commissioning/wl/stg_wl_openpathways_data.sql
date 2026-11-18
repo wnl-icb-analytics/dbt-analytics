@@ -2,21 +2,16 @@
     config(materialized = 'table')
 }}
 
--- Sunday census date is already a partition column, so the week-ending
--- predicates can sit before the pick without changing which duplicate wins.
--- Closed pathways must be dropped after the pick: end date is not a
--- partition column, so filtering first would change the max pair.
--- Inner join on the group keys dropped any group with a null key; the
--- same nulls are excluded here so qualify does not keep those groups.
-with census as (
-    select
-        src.*,
-        case
-            when dayofweekiso(week_ending_date) = 7 then week_ending_date  -- Already Sunday
-            else dateadd('day', -dayofweek(week_ending_date), week_ending_date)  -- Move to previous Sunday
-        end as census_week_ending_date
-    from {{ ref('raw_wl_wl_openpathways_data') }} as src
-    where week_ending_date is not null
+{# Previous Sunday, or the date itself when it is a Sunday. #}
+{% set census_week_ending_date %}
+case
+            when dayofweekiso(week_ending_date) = 7 then week_ending_date
+            else dateadd('day', -dayofweek(week_ending_date), week_ending_date)
+        end
+{%- endset %}
+
+{% set valid_group_keys %}
+where week_ending_date is not null
         and pseudo_nhs_number is not null
         and referral_identifier is not null
         and patient_pathway_identifier is not null
@@ -25,35 +20,87 @@ with census as (
         and organisation_site_identifier_of_treatment is not null
         and referral_to_treatment_period_start_date is not null
         and date_and_time_data_set_created is not null
+{%- endset %}
+
+-- Sunday census date is already a partition column, so the week-ending
+-- predicates can sit before the pick without changing which duplicate wins.
+-- Closed pathways must be dropped after the pick: end date is not a
+-- partition column, so filtering first would change the max pair.
+-- Null group keys are excluded, as the original inner join on them did.
+with census as (
+    select
+        src.*,
+        {{ census_week_ending_date }} as census_week_ending_date
+    from {{ ref('raw_wl_wl_openpathways_data') }} as src
+    {{ valid_group_keys }}
+),
+-- Few groups hold more than one row, so the max pair is resolved for those
+-- groups only rather than windowing every wide row.
+duplicate_groups as (
+    select
+        pseudo_nhs_number,
+        referral_identifier,
+        patient_pathway_identifier,
+        activity_treatment_function_code,
+        organisation_identifier_code_of_provider,
+        organisation_site_identifier_of_treatment,
+        referral_to_treatment_period_start_date,
+        census_week_ending_date,
+        date_and_time_data_set_created,
+        max(der_submission_id) as max_submission_id,
+        max(der_row_id) as max_row_id
+    from (
+        -- Key columns only, read from source so the wide census rows are not buffered twice.
+        select
+            pseudo_nhs_number,
+            referral_identifier,
+            patient_pathway_identifier,
+            activity_treatment_function_code,
+            organisation_identifier_code_of_provider,
+            organisation_site_identifier_of_treatment,
+            referral_to_treatment_period_start_date,
+            date_and_time_data_set_created,
+            der_submission_id,
+            der_row_id,
+            {{ census_week_ending_date }} as census_week_ending_date
+        from {{ ref('raw_wl_wl_openpathways_data') }}
+        {{ valid_group_keys }}
+    ) as keys
+    where census_week_ending_date <= current_date
+    group by
+        pseudo_nhs_number,
+        referral_identifier,
+        patient_pathway_identifier,
+        activity_treatment_function_code,
+        organisation_identifier_code_of_provider,
+        organisation_site_identifier_of_treatment,
+        referral_to_treatment_period_start_date,
+        census_week_ending_date,
+        date_and_time_data_set_created
+    having count(*) > 1
 ),
 picked as (
-    select *
-    from census
-    where census_week_ending_date <= current_date
-    qualify
-        der_submission_id = max(der_submission_id) over (
-            partition by
-                pseudo_nhs_number,
-                referral_identifier,
-                patient_pathway_identifier,
-                activity_treatment_function_code,
-                organisation_identifier_code_of_provider,
-                organisation_site_identifier_of_treatment,
-                referral_to_treatment_period_start_date,
-                census_week_ending_date,
-                date_and_time_data_set_created
-        )
-        and der_row_id = max(der_row_id) over (
-            partition by
-                pseudo_nhs_number,
-                referral_identifier,
-                patient_pathway_identifier,
-                activity_treatment_function_code,
-                organisation_identifier_code_of_provider,
-                organisation_site_identifier_of_treatment,
-                referral_to_treatment_period_start_date,
-                census_week_ending_date,
-                date_and_time_data_set_created
+    select c.*
+    from census as c
+    left join duplicate_groups as d
+        on c.pseudo_nhs_number = d.pseudo_nhs_number
+        and c.referral_identifier = d.referral_identifier
+        and c.patient_pathway_identifier = d.patient_pathway_identifier
+        and c.activity_treatment_function_code = d.activity_treatment_function_code
+        and c.organisation_identifier_code_of_provider = d.organisation_identifier_code_of_provider
+        and c.organisation_site_identifier_of_treatment = d.organisation_site_identifier_of_treatment
+        and c.referral_to_treatment_period_start_date = d.referral_to_treatment_period_start_date
+        and c.census_week_ending_date = d.census_week_ending_date
+        and c.date_and_time_data_set_created = d.date_and_time_data_set_created
+    where c.census_week_ending_date <= current_date
+        and (
+            -- A single-row group keeps its row unless either id is null,
+            -- as null never equals the group max.
+            (d.pseudo_nhs_number is null
+                and c.der_submission_id is not null
+                and c.der_row_id is not null)
+            or (c.der_submission_id = d.max_submission_id
+                and c.der_row_id = d.max_row_id)
         )
 )
 select

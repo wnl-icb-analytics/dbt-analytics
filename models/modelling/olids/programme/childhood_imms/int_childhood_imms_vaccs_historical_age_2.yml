@@ -1,7 +1,22 @@
 ﻿models:
   - name: int_childhood_imms_vaccs_historical_age_2
-    description: Intermediate table for historical population aged 2 years old at each analysis month and who have complete or outofschedule vaccinations
-      (declined, contraindicated and overdue excluded). Multiple lines per person
+    description: >
+      Vaccination completion flags for children aged 2, one row per person and analysis
+      month. Flags use all events recorded to date, not only earlier ones. Covers the last
+      48 analysis months, using registrations overlapping each month. No separate deceased
+      filter applies. Unmet rules return 0 when the person and practice match back to the
+      calculation; an unmatched practice name leaves the calculated fields null. Flags use
+      recorded age at event and rounded month intervals from the approximate birth date.
+      Before 1 July 2024, completion requires 6-in-1 doses 1 to 3, Hib/MenC and MMR dose 1.
+      From 1 July 2024, it requires 6-in-1 doses 1 to 4, with dose 4 at 18 to 24 rounded
+      months, and one qualifying MMRV dose. From 1 January 2025, a separate MMRV dose 2
+      flag tests 18 to 24 rounded months, but all_comp_by_2 can be 1 without that flag.
+      All completion pathways also require the MenB and PCV flags.
+      MenB checks a retained third administration by 24 rounded months. PCV requires a
+      retained first and second administration, second-dose age 1 or 2, a non-negative
+      rounded interval from the first birthday and at least 4 full weeks between doses.
+      The PCV pathway requires birth on or after 16 January 2020. Declined and
+      contraindicated records do not count.
     config:
       meta:
         owner:

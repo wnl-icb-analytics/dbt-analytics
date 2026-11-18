@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_diabetes_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- Clinical evidence is bounded by today. Its PIT pair is strict as-of
 -- and derives age at the reference date where age is used.
 
 {{
@@ -60,6 +60,7 @@ WITH diabetes_person_aggregates AS (
         ) AS all_resolved_concept_codes
 
     FROM {{ ref('int_diabetes_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -116,7 +117,7 @@ register_logic AS (
                 diag.latest_type1_date IS NOT NULL
                 AND (
                     diag.latest_type2_date IS NULL
-                    OR diag.latest_type1_date >= diag.latest_type2_date
+                    OR diag.latest_type1_date::DATE >= diag.latest_type2_date::DATE
                 )
                 THEN 'Type 1'
             -- Type 2: Latest Type 2 > Latest Type 1 (or no Type 1)
@@ -124,7 +125,7 @@ register_logic AS (
                 diag.latest_type2_date IS NOT NULL
                 AND (
                     diag.latest_type1_date IS NULL
-                    OR diag.latest_type2_date > diag.latest_type1_date
+                    OR diag.latest_type2_date::DATE > diag.latest_type1_date::DATE
                 )
                 THEN 'Type 2'
             -- Unknown: On register but no specific type codes

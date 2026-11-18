@@ -44,7 +44,10 @@ select
      /* Time and date */
     , core.appointment_date as start_date
     , core.appointment_time as start_time
+    , {{ fin_year_from_date('core.appointment_date') }} as financial_year
     , core.appointment_expected_duration as expected_duration
+    , core.appointment_consultation_medium as consultation_medium_used_code
+    , medium.description as consultation_medium_used_name
     
     /* Outcome information */
     , core.appointment_outcome as appointment_outcome
@@ -76,6 +79,7 @@ select
     ,dict_proc.description AS primary_procedure_name
 
     /* Clinician information */
+    , core.appointment_care_professional_consultant as consultant_code
     , core.appointment_care_professional_main_specialty as main_specialty_code
     , dict_spec.specialty_name as main_specialty_name
     , dict_spec.specialty_category as main_specialty_category
@@ -84,6 +88,7 @@ select
 
     /* Referral information */
     , core.appointment_referral_referring_organisation as referral_organisation_id
+    , referring.organisation_name as referral_organisation_name
     , core.appointment_referral_received_date as referral_organisation_date
     , core.appointment_referral_source_op as referral_source_op
     , dict_appt_referral_source.referral_group as referral_source_op_desc
@@ -91,8 +96,26 @@ select
     , dict_appt_priority.priority_type_desc as referral_acuity_desc
 
     /* Commissioning information */
-    , iff(core.spec_comm is null, 'N','Y') as spec_comm_flag -- Adding Spec_comm   
-    , core.spec_comm as spec_comm
+    , coalesce(
+        core.appointment_commissioning_commissioner_assignment_commissioner
+        , core.appointment_commissioning_service_agreement_commissioner
+    ) as commissioner_code_at_event
+    , case
+        when core.appointment_commissioning_commissioner_assignment_commissioner is not null
+            then {{ sus_commissioner_organisation_name('cam_commissioner') }}
+        else {{ sus_commissioner_organisation_name('service_commissioner') }}
+      end as commissioner_name_at_event
+    , case
+        when core.appointment_commissioning_commissioner_assignment_commissioner is not null
+            then 'CAM'
+        when core.appointment_commissioning_service_agreement_commissioner is not null
+            then 'DSCRO'
+      end as commissioner_source_at_event
+    , iff(core.spec_comm_code is null, 'N','Y') as spec_comm_flag -- Adding Spec_comm   
+    , core.spec_comm_code as spec_comm_code
+    , dict_pss_sc.spec_comm_desc
+    , core.pss_service_line_code as pss_service_line_code
+    , dict_pss_sl.service_line_number_desc as pss_service_line_desc
     , core.appointment_commissioning_grouping_core_hrg as core_hrg_code -- consider changing to something more aligned with team understanding
     , dict_hrg.hrg_description as core_hrg_desc
     , dict_hrg.hrg_chapter_key as core_hrg_chapter
@@ -107,6 +130,7 @@ select
     ,eth.ethnicity_desc as ethnicity_desc_at_event
     ,core.appointment_patient_residence_derived_postcode_district as postcode_district_at_event
     ,core.appointment_patient_residence_derived_lsoa_11 as lsoa_11_at_event
+    ,core.appointment_patient_residence_derived_lsoa_21 as lsoa_21_at_event
     ,core.appointment_patient_residence_derived_local_authority_district as lad_at_event
     ,core.appointment_patient_residence_derived_index_of_multiple_deprivation_decile as imd_at_event
     ,core.appointment_patient_registration_general_practice as reg_practice_at_event
@@ -151,6 +175,12 @@ left join
     on core.appointment_commissioning_service_agreement_provider = dict_provider.service_provider_full_code
 
 -- referral source
+left join {{ ref('stg_dictionary_dbo_organisation') }} as referring
+    on core.appointment_referral_referring_organisation = referring.organisation_code
+
+left join {{ ref('nhs_dd_consultation_medium_used') }} as medium
+    on core.appointment_consultation_medium = medium.code
+
 left join
     {{ ref('stg_dictionary_op_sourceofreferrals') }} as dict_appt_referral_source
     on core.appointment_referral_source_op = dict_appt_referral_source.bk_source_of_referral_code
@@ -175,3 +205,21 @@ left join ethnicity_codes as eth
 
 left join gender_codes as gen
     on core.appointment_patient_identity_gender = gen.gender_code
+
+{{ join_sus_commissioner_organisation(
+    'core.appointment_commissioning_commissioner_assignment_commissioner',
+    'cam_commissioner'
+) }}
+
+{{ join_sus_commissioner_organisation(
+    'core.appointment_commissioning_service_agreement_commissioner',
+    'service_commissioner'
+) }}
+
+left join
+    {{ ref('pss_spec_comm')}} as dict_pss_sc
+    on core.spec_comm_code = dict_pss_sc.spec_comm_code
+
+left join
+    {{ ref('pss_service_line')}} as dict_pss_sl
+    on core.pss_service_line_code = dict_pss_sl.service_line_number_code

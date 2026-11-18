@@ -1,0 +1,29 @@
+models:
+- name: int_nice_larc_advice_all
+  description: >-
+    Long-acting reversible contraception (LARC) advice. One row per observation, including
+    inactive and deceased people, through the build date. Code list: ECL_CACHE LARC_ADV_COD.
+    Records distinguish verbal, written and unspecified advice; injection discussions and IUD
+    counselling have unspecified format. Thread checks, fitting, removal, declines and advice
+    not indicated are excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: LARC_ADV_COD
+        source: ECL_CACHE
+  columns:
+  - name: advice_modality
+    description: NON_SPECIFIC, WRITTEN, VERBAL or UNKNOWN, from the maintained code description. Unknown
+      does not establish either specific modality.
+  - name: concept_display
+    description: Authoritative code description from the maintained list.
+  - name: event_date
+    description: Corrected clinical date.

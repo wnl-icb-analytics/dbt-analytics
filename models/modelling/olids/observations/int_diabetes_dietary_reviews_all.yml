@@ -1,0 +1,41 @@
+models:
+- name: int_diabetes_dietary_reviews_all
+  description: Completed dietary reviews, dietitian contacts and nutrition assessments. One row per observation
+    for all people, including inactive and deceased people. Food-intake findings, intake observables, malnutrition screening tools and appetite
+    questionnaires alone do not count. Professional competence cannot be verified. This is the
+    local reading used for IND89, which has no national code list.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: DM_DIET_REVIEW_COD
+        source: ECL_CACHE
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NUTRIASS_COD
+        source: PCD
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD
+        source: OPENCODELISTS
+  columns:
+  - name: id
+    description: Source observation identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: person_id
+    description: Person with the record.
+  - name: clinical_effective_date
+    description: Clinical date corrected by the observation extraction; consumers bound it at their reporting
+      date.
+  - name: source_cluster_id
+    description: Maintained code list supplying this evidence; overlapping memberships retain the first
+      name alphabetically.
+  - name: concept_code
+    description: SNOMED CT code for the qualifying activity.
+  - name: evidence_type
+    description: Completed activity, including explicitly recorded dietitian attendance.

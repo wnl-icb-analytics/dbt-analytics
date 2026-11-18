@@ -1,0 +1,6 @@
+{{ config(materialized='ephemeral') }}
+
+{{ select_data_dictionary_history(
+    'stg_ukhfd_data_dictionary_patient_classification',
+    excluded_columns=['category', 'valid_to_date']
+) }}

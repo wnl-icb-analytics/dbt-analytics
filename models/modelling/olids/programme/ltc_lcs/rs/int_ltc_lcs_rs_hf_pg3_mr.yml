@@ -6,7 +6,7 @@ models:
       Excludes PG2 (HR) patients.
 
       Patients on Heart Failure register meeting:
-      - Rule 2: earliest HF code (episode excluding Review/End) in last
+      - Rule 2: earliest HF code (episode excluding Review/Ended) in last
         6 months - first diagnosis within 6 months (include on pass)
       - Rule 3: latest NYHA classification is Class II (include on pass)
       - Rule 4: latest oedema code is ankle/feet oedema (include on pass)
@@ -17,6 +17,7 @@ models:
         item via the issue #400 screenshots) - exclude on pass, include on fail
 
       Rule actions verified against the EMIS search screenshots in issue #400.
+      Same-day records are ordered by EMIS save time, then observation ID.
     config:
       meta:
         owner:
@@ -25,6 +26,9 @@ models:
       - dbt_utils.at_least_one:
           arguments:
             column_name: person_id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: XACE_COD
       - valuesets_have_codes:
           arguments:
             valuesets:

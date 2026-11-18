@@ -222,17 +222,17 @@ mh_inpatient_rolling AS (
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
--- Attended contacts excluding Health Visiting Service (team type 16), as in
+-- Attended contacts excluding Health Visiting Service (delivering team type 16), as in
 -- int_segmentation_community_activity.
 community_activity AS (
     SELECT
         sk_patient_id,
         CAST(care_contact_date AS DATE) AS activity_date,
         COUNT(*) AS contact_count
-    FROM {{ ref('int_csds_contact_currency') }}
+    FROM {{ ref('fct_csds_care_contact') }}
     WHERE
-        attendance_status IN ('5', '6')
-        AND COALESCE(team_type_code, '') != '16'
+        source_attendance_status_code IN ('5', '6')
+        AND COALESCE(service_or_team_type_code, '') != '16'
         AND sk_patient_id IS NOT NULL
         AND sk_patient_id != '1'
         AND CAST(care_contact_date AS DATE) >= DATEADD(

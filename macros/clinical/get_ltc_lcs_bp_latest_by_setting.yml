@@ -1,0 +1,20 @@
+version: 2
+macros:
+  - name: get_ltc_lcs_bp_latest_by_setting
+    description: >
+      Excludes upstream-flagged result headers before ranking. Genuine empty results remain eligible.
+      LTC LCS BP evidence, one row per person as at the supplied date. Links XML components by
+      calendar date before ranking by clinical date, save time and observation ID. Only the
+      home-setting wrapper ranks before linking. Consumers apply threshold tests afterwards.
+      Clinic/home pools require positive inputs and retain values outside usual
+      plausibility ranges. Diabetes keeps its own BP_COD and component pools.
+    arguments:
+      - name: as_at
+        type: string
+        description: Inclusive SQL clinical-date cutoff. Defaults to current_date(). Ignored when population is given.
+      - name: population
+        type: string
+        description: >
+          Optional query returning person_id and reporting_date. When given, returns one row per
+          population row as at its reporting_date, with reporting_date added, by taking each
+          day's winning record and the latest qualifying day on or before the reference date.

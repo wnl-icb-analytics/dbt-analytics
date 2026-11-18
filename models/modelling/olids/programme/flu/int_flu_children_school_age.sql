@@ -12,16 +12,14 @@ Typically covers Reception to Year 11 but can be adjusted per campaign.
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every flu campaign the models report on
     -- (campaign list: macros/config/flu_campaign_selection.sql)
-    {{ flu_build_campaigns() }}
+    {{ flu_reported_campaigns() }}
 ),
 
 -- Step 1: Find children in the school age range based on birth dates (for all campaigns)

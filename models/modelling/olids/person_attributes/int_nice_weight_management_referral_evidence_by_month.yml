@@ -1,0 +1,65 @@
+models:
+- name: int_nice_weight_management_referral_evidence_by_month
+  description: >-
+    Weight management referrals for adult NICE obesity register members. One row per person and
+    month-end. The latest numeric BMI in the preceding 12 months must be valid and in an obese
+    category. Follow-up evidence runs from a qualifying BMI through day 90, inclusive, capped at
+    the month-end. Attendance without a later programme end is a proxy; sparsely coded ends or
+    ends from another programme can affect it. Recalculated for each of the last 60 month-ends
+    with current rules, code lists and records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: HEIGHT
+  columns:
+  - name: latest_bmi_date
+    description: >-
+      Latest valid BMI known on the reporting date in the 12 months before the reporting date,
+      from the NICE obesity register.
+  - name: bmi_value
+    description: BMI in kg/m^2, valid range 10 to 150.
+  - name: bmi_source
+    description: Recorded BMI or calculated from weight and contributing height.
+  - name: requires_lower_bmi_thresholds
+    description: >-
+      Higher-risk ethnicity known on the reporting date uses the shared NG246 lower
+      thresholds. Unknown ethnicity uses standard thresholds.
+  - name: bmi_category
+    description: >-
+      Shared ethnicity-adjusted obese class on the reporting date.
+  - name: timely_referral_date
+    description: >-
+      Latest referral within 0 to 90 days inclusive after any qualifying BMI in the year,
+      capped on the reporting date.
+  - name: timely_offer_date
+    description: Latest offer within the qualifying BMI follow-up window.
+  - name: timely_decline_date
+    description: Latest declined referral within the qualifying BMI follow-up window.
+  - name: latest_referral_date
+    description: >-
+      Latest weight management referral in the 24 months before the reporting date.
+  - name: latest_attendance_date
+    description: >-
+      Latest attendance or commencement in the 12 months before the reporting date.
+  - name: latest_end_date
+    description: >-
+      Latest programme end in the 24 months before the reporting date; only ends later than
+      attendance cancel the attendance proxy.
+  - name: has_previous_referral
+    description: Referral in the preceding 24 months. IND220 excludes only non-achievers with this flag.
+  - name: is_currently_attending
+    description: Attendance in the preceding twelve months with no later programme end. Both measures
+      exclude only non-achievers with this flag.
+  - name: earliest_qualifying_bmi_date
+    description: >-
+      Earliest qualifying BMI in the measure cohort window on the reporting date; null when
+      none qualifies. Used for the 90-day deadline.

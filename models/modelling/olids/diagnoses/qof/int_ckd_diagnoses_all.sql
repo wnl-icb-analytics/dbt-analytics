@@ -17,7 +17,7 @@ Clinical Purpose:
 - CKD staging and progression tracking
 - Resolution status monitoring
 
-QOF Context (v50):
+QOF Context (v51):
 CKD register includes persons aged 18+ with CKD Stage 3-5 diagnosis who have not:
 - Been resolved (CKDRES_COD after CKD_COD)
 - Been downstaged to Stage 1-2 (CKD1AND2_COD after CKD_COD)

@@ -20,7 +20,8 @@ deduplicated AS (
     {{ deduplicate_table(
         table='raw_observations',
         partition_cols=['person_id', 'clinical_effective_date', 'result_value', 'result_unit_code', 'mapped_concept_code'],
-        order_cols=['date_recorded', 'id']
+        order_cols=['date_recorded', 'id'],
+        order_direction='ASC'
     ) }}
 ),
 

@@ -1,0 +1,29 @@
+models:
+- name: int_non_numeric_lipid_test_all
+  description: Completed non-numeric lipid tests from QOF NONVALCHOL_COD (PCD), one row per observation.
+    Includes inactive and deceased people. Corrected clinical dates are capped at the build date. These
+    are recording evidence, not numeric cholesterol results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NONVALCHOL_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation identifier.
+  - name: person_id
+    description: Person with a completed lipid test.
+  - name: clinical_effective_date
+    description: Corrected clinical date, with the shared undated sentinel.
+  - name: date_recorded
+    description: Source recorded date, retained for provenance.
+  - name: source_cluster_id
+    description: NONVALCHOL_COD from PCD.

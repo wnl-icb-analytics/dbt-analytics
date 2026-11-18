@@ -1,0 +1,33 @@
+version: 2
+models:
+- name: fct_csds_latest_provider_caseload_referral
+  description: >-
+    Open CSDS referrals in each provider's latest accepted reporting month. Each row is one referral
+    from fct_csds_referral_period that is open at that provider's latest period end, including
+    referrals awaiting a first attended contact. Providers can lag the dataset; use
+    provider_months_behind_dataset or fct_csds_current_caseload_referral for a common month. This is
+    recorded caseload, not confirmed active treatment.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_period_id
+    description: Key for the referral and accepted submission.
+    data_tests:
+    - unique
+    - not_null
+  - name: dataset_latest_reporting_period_end_date
+    description: Latest accepted reporting period for any provider.
+  - name: provider_months_behind_dataset
+    description: Calendar months between this provider's latest period and the dataset's latest period.
+  - name: days_since_referral_received
+    description: Days from receipt to the provider's latest period end.
+  - name: days_since_last_attended_contact
+    description: Days from the last evidenced attended contact to period end; null without attendance.
+  - name: recorded_caseload_contact_state
+    description: Whether attendance was evidenced in the latest provider period, only earlier, or not at all.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [no_attended_contact_recorded, attended_in_latest_provider_period, attendance_recorded_in_earlier_period]

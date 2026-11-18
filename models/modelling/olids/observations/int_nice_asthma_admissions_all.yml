@@ -1,0 +1,26 @@
+models:
+- name: int_nice_asthma_admissions_all
+  description: >-
+    GP-coded asthma admissions from PCD ASTADMSN_COD. One row per observation, including
+    inactive and deceased people, through the build date. Hospital admissions not coded in GP
+    records are absent.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - observation_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ASTADMSN_COD
+        source: PCD
+  columns:
+  - name: person_id
+    description: Person with the admission record.
+  - name: observation_id
+    description: Unique source observation.
+  - name: event_date
+    description: Corrected clinical calendar date.

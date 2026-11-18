@@ -1,0 +1,35 @@
+models:
+- name: int_nice_asthma_review_all
+  description: >-
+    Asthma review components. One row per person and clinical date, including inactive and
+    deceased people. A complete review requires a review and written action plan on the same
+    date, plus an exacerbation count in the preceding calendar month through that date. The date
+    exactly one month earlier is excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - review_date
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: REV_COD,WRITPASTP_COD,ASTEXACB_COD
+        source: PCD
+  columns:
+  - name: person_id
+    description: Person with asthma review evidence.
+  - name: review_date
+    description: Clinical date of the review component records.
+  - name: has_review
+    description: Whether an ASTHMA_REVIEW is recorded on this date.
+  - name: has_action_plan
+    description: Whether an ASTHMA_ACTION_PLAN is recorded on this date.
+  - name: has_exacerbation_count
+    description: Whether an ASTHMA_EXACERBATION_COUNT is recorded on this date.
+  - name: is_complete_review
+    description: Whether this review has the same-day plan and preceding-month count required by QOF v51
+      AST015.

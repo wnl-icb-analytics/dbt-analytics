@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_pad_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Clinical evidence is bounded by today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -38,7 +38,7 @@ WITH pad_diagnoses AS (
             AS latest_diagnosis_date,
 
         -- Episode counts
-        COUNT(CASE WHEN is_diagnosis_code THEN 1 END) AS total_pad_episodes,
+        COUNT(DISTINCT IFF(is_diagnosis_code, {{ observation_reading_key(value=none) }}, NULL)) AS total_pad_episodes,
 
         -- Concept code arrays for traceability
         ARRAY_AGG(
@@ -54,6 +54,7 @@ WITH pad_diagnoses AS (
         ARRAY_AGG(DISTINCT ID::VARCHAR) AS all_IDs
 
     FROM {{ ref('int_pad_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

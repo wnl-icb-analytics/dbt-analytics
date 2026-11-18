@@ -1,17 +1,24 @@
 models:
   - name: int_covid_asthma
-    description: 'COVID asthma eligibility determination.
-
-      Grain: One row per person per campaign who meets active asthma criteria
-
-      Identifies people: • Diagnosed with asthma and recent inhaled medication (12 months) • 2+ oral steroid prescriptions within any 2-year window • OR recent asthma hospital admission (2 years) • Minimum age 5 years
-
-      Used by: Mart models for eligibility determination'
-    tests:
+    description: >-
+      COVID asthma risk group in OLIDS, one row per person and campaign, aged at least
+      5 at its reference date. Requires an ASTADM_COD emergency asthma admission in
+      the two-year lookback, or AST_COD diagnosis, ASTRXM1_COD inhaler use in the
+      12-month lookback and ASTRXM2_COD steroids on two dates less than 731 days apart
+      within or across adjacent campaign windows. Admissions qualify alone. Evidence
+      uses campaign-specific UKHSA_COVID codes through the audit end; membership does
+      not confirm a vaccination offer.
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ASTADM_COD,ASTRXM1_COD,ASTRXM2_COD,AST_COD
             source: UKHSA_COVID
+            versioned: true
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
     config:
       meta:
         indicator:
@@ -22,16 +29,13 @@ models:
           name_short: "COVID Eligible Asthma"
           description_short: "People with active asthma eligible for COVID vaccination"
           description_long: >
-            COVID vaccination eligibility for people with active asthma using complex
-            UKHSA business logic.
-            Requires either recent asthma hospital admission (ASTADM_COD within 2
-            years) or combination
-            of asthma diagnosis (AST_COD), recent inhaled medication (ASTRXM1_COD
-            within 12 months),
-            and oral steroid qualification (ASTRXM2_COD - 2+ prescriptions within
-            any 2-year window
-            from 3 overlapping periods). Minimum age requirement of 5 years for COVID
-            vaccination.
+            COVID asthma risk group (UKHSA AST_GROUP). Qualifies with an emergency
+            asthma admission (ASTADM_COD) in the 2 years before the campaign start,
+            with or without a diagnosis; or with an asthma diagnosis (AST_COD), an
+            inhaled medication (ASTRXM1_COD) in the 12 months before the campaign
+            start, and two oral steroid prescriptions (ASTRXM2_COD) on different
+            dates less than 731 days apart, within one of three overlapping windows
+            or across adjacent windows. Minimum age 5 years.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_10_ASTHMA"

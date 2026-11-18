@@ -1,0 +1,26 @@
+models:
+- name: int_nice_contraception_advice_all
+  description: >-
+    Contraception, conception and pregnancy advice. One row per observation, source and
+    code-list group, including inactive and deceased people, through the build date. Advice
+    includes counselling, leaflets and completed isotretinoin risk forms. One record does not
+    confirm every topic or advice tailored to pregnancy intentions. Referrals and declines do
+    not count.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: CONTRACEP_ADV_COD, LARC_ADV_COD
+        source: ECL_CACHE
+  columns:
+  - name: event_date
+    description: Corrected clinical date.

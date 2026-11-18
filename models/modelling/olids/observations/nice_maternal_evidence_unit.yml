@@ -1,0 +1,62 @@
+unit_tests:
+- name: nice_maternal_delivery_preserves_clinical_date_and_excludes_missing_dates
+  model: int_maternal_deliveries_all
+  given: &id001
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id, column3::VARCHAR AS source,
+      'Synthetic'::VARCHAR AS cluster_description, 'Synthetic'::VARCHAR AS code_description FROM VALUES
+      ('SYN_DELIVERY_CODE', 'DELIVERY_COD', 'ECL_CACHE'), ('SYN_WRONG_DELIVERY', 'DELIVERY_COD', 'SYNTHETIC_OTHER'),
+      ('SYN_DEP_CODE', 'DEPSCRN_COD', 'PCD'), ('SYN_ANX_CODE', 'ANXSCRN_COD', 'PCD'), ('SYN_BOTH_CODE',
+      'DEPSCRN_COD', 'PCD'), ('SYN_BOTH_CODE', 'ANXSCRN_COD', 'PCD'), ('SYN_CHECK_CODE', 'SYNTHETIC_SIX_WEEK_CHECK',
+      'PCD')
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: 'SELECT column1::VARCHAR AS id, column2::VARCHAR AS patient_id, column3::NUMBER AS person_id,
+      column4::TIMESTAMP_NTZ AS clinical_effective_date, column5::TIMESTAMP_NTZ AS date_recorded, column6::VARCHAR
+      AS result_value, column7::VARCHAR AS mapped_concept_code, column8::VARCHAR AS mapped_concept_display,
+      column9::VARCHAR AS result_units_source_concept_id, column10::VARCHAR AS result_unit_code, column11::VARCHAR
+      AS result_unit_display, column12::VARCHAR AS result_text, column13::VARCHAR AS allergy_medication_name,
+      column14::VARCHAR AS mapped_concept_id, column15::VARCHAR AS episodicity_source_concept_id, column16::BOOLEAN
+      AS is_problem, column17::BOOLEAN AS is_review, column18::TIMESTAMP_NTZ AS problem_end_date, column19::TIMESTAMP_NTZ
+      AS lds_transform_datetime, column20::NUMBER AS age_at_event
+
+      FROM VALUES (''SYN_DELIVERY'', ''SYN_P'', -96501, ''2026-05-01'', ''2026-04-01'', NULL, ''SYN_DELIVERY_CODE'',
+      ''Synthetic delivery'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+      (''SYN_NULL_DATE'', ''SYN_P'', -96501, NULL, ''2026-04-01'', NULL, ''SYN_DELIVERY_CODE'', ''Synthetic
+      delivery'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), (''SYN_WRONG_SOURCE'',
+      ''SYN_P'', -96501, ''2026-05-01'', ''2026-04-01'', NULL, ''SYN_WRONG_DELIVERY'', ''Synthetic delivery'',
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), (''SYN_DEP'', ''SYN_P'',
+      -96502, ''2026-05-01'', ''2026-05-02'', NULL, ''SYN_DEP_CODE'', ''Synthetic depression enquiry'',
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), (''SYN_ANX'', ''SYN_P'',
+      -96502, ''2026-05-02'', ''2026-05-03'', NULL, ''SYN_ANX_CODE'', ''Synthetic anxiety enquiry'', NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), (''SYN_BOTH'', ''SYN_P'', -96502,
+      ''2026-05-03'', ''2026-05-04'', NULL, ''SYN_BOTH_CODE'', ''Synthetic screening'', NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), (''SYN_SIX_WEEK_CHECK'', ''SYN_P'', -96503,
+      ''2026-05-01'', ''2026-05-02'', NULL, ''SYN_CHECK_CODE'', ''Synthetic six-week examination'', NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)'
+  expect:
+    rows:
+    - id: SYN_DELIVERY
+      person_id: -96501
+      clinical_effective_date: '2026-05-01 00:00:00'
+      date_recorded: '2026-04-01 00:00:00'
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ
+        AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded WHERE FALSE
+- name: nice_mental_health_enquiry_excludes_six_week_examination_and_deduplicates
+  model: int_mental_health_screening_all
+  given: *id001
+  expect:
+    rows:
+    - id: SYN_DEP
+      source_cluster_id: DEPSCRN_COD
+    - id: SYN_ANX
+      source_cluster_id: ANXSCRN_COD
+    - id: SYN_BOTH
+      source_cluster_id: ANXSCRN_COD
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ
+        AS clinical_effective_date, NULL::VARCHAR AS source_cluster_id WHERE FALSE

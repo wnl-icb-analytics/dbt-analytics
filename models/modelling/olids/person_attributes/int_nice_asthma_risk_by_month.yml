@@ -1,0 +1,45 @@
+models:
+- name: int_nice_asthma_risk_by_month
+  description: >-
+    Asthma risk factors for registered, living, non-test people aged 6 or over with an
+    unresolved asthma diagnosis. One row per person and month-end. Counts inhalers, prednisolone
+    order days and GP-coded admissions after the date 24 months before the month-end through the
+    date 12 months before it, inclusive. Hospital admissions not coded in GP records are absent.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person aged 6+ with an unresolved IND186 diagnosis.
+  - name: reporting_date
+    description: >-
+      Completed month-end on which population and evidence are assessed.
+  - name: risk_period_start
+    description: Exclusive start of the prior-year risk window.
+  - name: risk_period_end
+    description: Inclusive end of the prior-year risk window.
+  - name: saba_inhaler_count
+    description: Inhaler devices in the risk window. Doses divided by 60 for Accuhaler, 100 for Turbohaler,
+      otherwise 200, rounded to whole devices with a minimum of one per matched order.
+  - name: oral_steroid_course_count
+    description: Distinct prednisolone order days in the risk window, used as a proxy for oral steroid
+      courses.
+  - name: latest_asthma_admission_date
+    description: Latest GP-coded ASTADMSN_COD admission in the risk window; null when none.
+  - name: has_high_saba_use
+    description: At least six SABA inhalers in the risk window.
+  - name: has_repeated_oral_steroids
+    description: At least two distinct prednisolone order days in the risk window.
+  - name: has_asthma_admission
+    description: A GP-coded asthma admission in the risk window.
+  - name: is_higher_risk
+    description: At least one of the three GP risk factors is present.

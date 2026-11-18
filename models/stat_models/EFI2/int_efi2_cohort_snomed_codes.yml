@@ -1,0 +1,56 @@
+models:
+  - name: int_efi2_cohort_snomed_codes
+    description: >-
+      Observations matching eFI2 code rules in OLIDS, one row per distinct person,
+      code-rule entry and retained observation values. Includes living people whose
+      65th birthday could have occurred by scoring, using the first day of their
+      approximate birth month. Code-specific event-age and lookback rules apply;
+      future clinical dates are excluded. Identical values can collapse, and codes can
+      contribute to several deficits.
+      Identical evidence keeps the latest save time, then the highest observation ID.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - snomed_code
+              - code_description
+              - deficit
+              - other_instructions
+              - time_constraint_years
+              - age_limit
+              - result_value
+              - result_value_unit
+              - clinical_effective_date
+              - end_date
+    columns:
+      - name: observation_id
+        description: Source observation selected within the existing evidence grain.
+      - name: date_recorded
+        description: EMIS save time of that observation; null when unavailable.
+      - name: person_id
+        description: Person identifier.
+        tests:
+          - not_null
+      - name: deficit
+        description: Frailty deficit the code contributes to.
+      - name: other_instructions
+        description: Free-text rule the code is subject to (drives the rules engine).
+      - name: snomed_code
+        description: SNOMED concept id of the matched observation.
+      - name: result_value
+        description: Numeric result value of the observation, where present.
+      - name: clinical_effective_date
+        description: Date of the observation.
+      - name: age_at_event
+        description: Age in years at the observation date.
+      - name: age_at_end
+        description: Age in years at the end (as-at) date.
+      - name: gender
+        description: Normalised gender carried from the patient list.
+      - name: end_date
+        description: As-at date for the scoring run.

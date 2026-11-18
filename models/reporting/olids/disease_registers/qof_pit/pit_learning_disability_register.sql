@@ -8,10 +8,10 @@
 /*
 Learning Disability Register - Point in Time (PIT)
 
-QOF v50 Business Logic (via calculate_learning_disability_register macro):
+QOF v51 Business Logic (via calculate_learning_disability_register macro):
 - Has learning disability diagnosis (LD_COD)
 - NOT excluded (LDREM_COD) after latest diagnosis
-- No age restriction (all ages included per QOF v50)
+- No age restriction (all ages included per QOF v51)
 */
 
 WITH register_data AS (

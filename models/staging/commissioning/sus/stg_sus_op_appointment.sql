@@ -7,15 +7,24 @@ with organisation_codes as (
     select distinct organisation_code
     from {{ ref('stg_dictionary_dbo_organisation') }}
     where sk_organisation_type_id = 41
+),
+
+-- Data lake enrichment of each appointment record; unique on primarykey_id and import.
+derived as (
+    select primarykey_id
+        , dmic_import_log_id
+        , dmic_lsoa2021
+    from {{ ref('raw_sus_op_derived') }}
 )
 
-select  primarykey_id,
+select  core.primarykey_id,
 
     -- patient details at time
     {{ consistent_sk_patient_id_format('appointment_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id,
     appointment_patient_identity_local_patient_identifier_value as local_patient_identifier,
     appointment_patient_residence_derived_postcode_district,
     appointment_patient_residence_derived_lsoa_11,
+    derived.dmic_lsoa2021 as appointment_patient_residence_derived_lsoa_21,
     appointment_patient_residence_derived_local_authority_district,
     appointment_patient_identity_ethnic_category_2021,
     appointment_patient_residence_derived_index_of_multiple_deprivation_decile,
@@ -31,18 +40,35 @@ select  primarykey_id,
     appointment_referral_to_treatment_ubrn_value_pseudo as unique_booking_reference_number,
     appointment_referral_to_treatment_ubrn_issuer as booking_reference_issuer,
     appointment_identifier, 
+    try_to_timestamp_ntz(core.system_interchange_received_date::varchar) as source_received_at,
     appointment_date::date as appointment_date,
     appointment_time::time as appointment_time,
     case when provider.organisation_code is not null
         then core.appointment_commissioning_service_agreement_provider
         else left(core.appointment_commissioning_service_agreement_provider, 3)
     end as appointment_commissioning_service_agreement_provider,
+    nullif(upper(trim(appointment_commissioning_service_agreement_commissioner)), '')
+        as appointment_commissioning_service_agreement_commissioner,
+    appointment_commissioning_service_agreement_is_commissioner_recognised,
+    nullif(upper(trim(appointment_commissioning_service_agreement_commissioner_derived)), '')
+        as appointment_commissioning_service_agreement_commissioner_derived,
+    nullif(upper(trim(appointment_commissioning_commissioner_assignment_commissioner)), '')
+        as appointment_commissioning_commissioner_assignment_commissioner,
+    nullif(trim(appointment_commissioning_commissioner_assignment_flowchart_reference), '')
+        as appointment_commissioning_commissioner_assignment_flowchart_reference,
     appointment_care_location_site_code_of_treatment,
     appointment_expected_duration::integer as appointment_expected_duration,
+    appointment_consultation_medium,
     appointment_outcome,
     appointment_attended_or_dna,
     appointment_first_attendance,
     appointment_administrative_category,
+    case
+        when nullif(trim(appointment_care_professional_consultant), '') is null
+          or lower(trim(appointment_care_professional_consultant)) = 'none'
+            then null
+        else upper(trim(appointment_care_professional_consultant))
+    end as appointment_care_professional_consultant,
     appointment_care_professional_main_specialty,
     appointment_referral_referring_organisation,
     appointment_referral_received_date::date as appointment_referral_received_date,
@@ -51,8 +77,12 @@ select  primarykey_id,
     appointment_care_professional_treatment_function,
     appointment_commissioning_grouping_core_hrg,
     //Added Spec Comm
-    appointment_commissioning_pss_grouping_national_programme_code as spec_comm,
+    appointment_commissioning_pss_grouping_national_programme_code as spec_comm_code,
+    appointment_commissioning_pss_grouping_prescribed_service_line_code as pss_service_line_code,
     appointment_commissioning_tariff_calculation_final_price
 from {{ ref('raw_sus_op_appointment') }} as core
 left join organisation_codes as provider
     on core.appointment_commissioning_service_agreement_provider = provider.organisation_code
+left join derived
+    on core.primarykey_id = derived.primarykey_id
+    and core.dmic_import_log_id = derived.dmic_import_log_id

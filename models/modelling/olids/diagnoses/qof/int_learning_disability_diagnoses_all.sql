@@ -15,7 +15,7 @@ Clinical Purpose:
 - Learning disability support and monitoring
 - Annual health checks eligibility
 
-QOF Context (v50):
+QOF Context (v51):
 Learning disability register includes persons with LD diagnosis who have not been
 excluded (LDREM_COD after LD_COD). No age restriction in QOF spec.
 

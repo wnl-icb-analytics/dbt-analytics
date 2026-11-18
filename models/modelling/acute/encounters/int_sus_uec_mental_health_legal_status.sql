@@ -22,6 +22,8 @@ select
     , d.legal_status_desc
     , m.assigned_at
     , m.expires_at
+    , coalesce(m.assigned_at::date, m.start_date) as legal_status_start_date
+    , coalesce(m.assigned_at::timestamp_ntz, timestamp_ntz_from_parts(m.start_date, m.start_time)) as legal_status_start_at
 from {{ ref('stg_sus_ecds_patient_mental_health_act_legal_status') }} as m
 left join {{ ref('int_sus_uec_encounter') }} as sa
     on m.primarykey_id = sa.visit_occurrence_id

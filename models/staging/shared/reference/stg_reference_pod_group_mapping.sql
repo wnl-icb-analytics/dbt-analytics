@@ -1,6 +1,6 @@
 -- Governed POD group mapping (POD Group Manager app). One row per
 -- (pod_code, local_pod_code, local_pod_description) combination -> one of the
--- 18 curated POD groups. Key fields upper-cased/trimmed for joining to SLAM
+-- curated POD groups. Key fields upper-cased/trimmed for joining to SLAM
 -- feeds; empty strings collapsed to NULL (join with equal_null semantics --
 -- many combinations have no local code/description, and ~13 lines have no POD
 -- code at all, keyed on local code only).
@@ -11,6 +11,7 @@ select
     nullif(upper(trim(local_point_of_delivery_code)), '')        as local_pod_code,
     nullif(upper(trim(local_point_of_delivery_description)), '') as local_pod_description,
     pod_group_overview_master                                    as pod_group,
+    pod_lookup,
     notes,
     updated_at
 from {{ ref('raw_pod_group_mapping') }}

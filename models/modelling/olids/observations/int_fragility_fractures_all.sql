@@ -7,7 +7,7 @@
 
 /*
 All fragility fracture observations from clinical records.
-Uses QOF cluster ID FF_COD for fractures after April 2012 as per QOF guidelines.
+Uses PCD cluster ID FF_COD for fractures on or after 1 April 2012.
 
 Clinical Purpose:
 - QOF osteoporosis register data collection
@@ -43,9 +43,9 @@ SELECT
     -- Clinical flags (observation-level only)
     obs.cluster_id = 'FF_COD' AS is_fragility_fracture_code
 
-FROM ({{ get_observations("'FF_COD'") }}) obs
--- Only include fractures after April 2012 as per QOF requirements
-WHERE obs.clinical_effective_date >= '2012-04-01'
+FROM ({{ get_observations("'FF_COD'", source='PCD') }}) obs
+-- Include fractures on or after 1 April 2012
+WHERE obs.clinical_effective_date::DATE >= '2012-04-01'
   AND obs.clinical_effective_date IS NOT NULL
 
 ORDER BY person_id, clinical_effective_date DESC

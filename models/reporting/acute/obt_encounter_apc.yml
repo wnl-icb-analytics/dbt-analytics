@@ -5,7 +5,9 @@ models:
       Admitted patient care from SUS for reporting, with one row per hospital
       spell, including open spells. Retains the encounter model's population,
       supplied discharge codes and length-of-stay adjustment. Missing dictionary
-      matches leave labels null without removing spells.
+      matches leave labels null without removing spells. Current PCN,
+      neighbourhood and health borough fields use the latest maintained mapping
+      for the practice recorded on the spell, not historical membership.
     config:
       meta:
         owner:
@@ -71,6 +73,14 @@ models:
           spells and where neither estimate can be calculated. This does not
           replace end_date and does not drive point of delivery.
 
+      - name: decided_to_admit_date
+        data_type: date
+        description: Submitted spell decision-to-admit date. No clock is supplied. Null when not recorded.
+
+      - name: discharge_ready_date
+        data_type: date
+        description: Submitted date the patient was ready for discharge. It is not the discharge date. Null when not recorded.
+
       - name: has_estimated_discharge_date
         data_type: boolean
         description: >-
@@ -121,6 +131,19 @@ models:
       - name: spell_admission_method
         data_type: varchar
         description: "Method of admission of the spell (code)"
+
+      - name: admission_administrative_category_code
+        data_type: varchar
+        description: >-
+          Administrative category code at the start of the spell, supplied by
+          SUS+. Null means no code was supplied.
+
+      - name: admission_administrative_category_name
+        data_type: varchar
+        description: >-
+          Newest published NHS Data Dictionary description for the administrative
+          category at the start of the spell. Null when the supplied code is
+          missing or has no dictionary match.
 
       - name: admission_method_name
         data_type: varchar
@@ -213,6 +236,30 @@ models:
         data_type: varchar
         description: "Treatment function description for the specialised service within which the patient is treated."
 
+      - name: commissioner_code_at_event
+        data_type: varchar
+        description: >-
+          Commissioner Assignment Method (CAM) commissioner when supplied;
+          otherwise the service-agreement/DSCRO commissioner.
+
+      - name: commissioner_name_at_event
+        data_type: varchar
+        description: >-
+          Latest available organisation name for commissioner_code_at_event,
+          not the name at the activity date. Null when the code is missing or
+          has no organisation lookup match.
+
+      - name: commissioner_source_at_event
+        data_type: varchar
+        description: >-
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO when the service-agreement commissioner
+          was used. Null when neither source supplied a commissioner.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CAM, DSCRO]
+
       - name: hrg_code
         data_type: varchar
         description: "The spell level HRG returned by the grouper as a result of grouping non-excluded episodes."
@@ -233,9 +280,21 @@ models:
         data_type: varchar
         description: "Specialised Commission Flag"
 
-      - name: spec_comm
+      - name: spec_comm_code
         data_type: varchar
         description: "Specialised Commission Code"
+
+      - name: spec_comm_desc
+        data_type: varchar
+        description: "Specialised Commission description from the latest retained UKHFD lookup. Null indicates there is no corresponding code or the code did not match in the lookup."
+
+      - name: pss_service_line_code
+        data_type: varchar
+        description: "Prescribed Specialised Services service line code"
+
+      - name: pss_service_line_desc
+        data_type: varchar
+        description: "Prescribed Specialised Services service line description from the latest retained UKHFD lookup. Null indicates there is no corresponding code or the code did not match in the lookup."
 
       - name: type
         data_type: varchar
@@ -271,7 +330,19 @@ models:
 
       - name: lsoa_11_at_event
         data_type: varchar
-        description: "Patient LSOA 2011 at time of event"
+        description: >-
+          Patient LSOA 2011 of residence at the time of the spell. Populated
+          across the full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2021 of residence at the time of the spell. Populated
+          for spells discharged from 1 April 2024 (about 96%); mostly null for
+          earlier spells, so use lsoa_11_at_event for trends that span that
+          date. From April 2026 the value comes from SUS+; before that it
+          comes from the data lake's derivation, where about 2.5% of values
+          are not a 2021 successor of lsoa_11_at_event.
 
       - name: lad_at_event
         data_type: varchar
@@ -284,6 +355,18 @@ models:
       - name: reg_practice_at_event
         data_type: varchar
         description: "Patient registered GP practice at time of event"
+
+      - name: reg_practice_pcn_name_latest
+        data_type: varchar
+        description: Latest maintained PCN name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        data_type: varchar
+        description: Latest maintained integrated neighbourhood name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        data_type: varchar
+        description: Latest maintained WNL health borough for reg_practice_at_event; not historical membership.
 
       - name: visit_occurrence_type
         data_type: varchar

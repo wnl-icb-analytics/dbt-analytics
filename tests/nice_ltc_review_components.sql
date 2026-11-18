@@ -13,7 +13,7 @@ UNION ALL
 
 SELECT indicator.person_id, indicator.indicator_id
 FROM {{ ref('fct_person_dementia_care_plan_ind142') }} AS indicator
-INNER JOIN {{ ref('int_ltc_review_profile') }} AS profile
+INNER JOIN {{ ref('int_nice_ltc_population') }} AS profile
     ON indicator.person_id = profile.person_id
 WHERE indicator.is_in_numerator
     AND NOT COALESCE(indicator.latest_review_date >= profile.earliest_dementia_diagnosis_date, FALSE)

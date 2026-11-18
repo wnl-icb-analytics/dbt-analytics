@@ -1,0 +1,33 @@
+unit_tests:
+- name: nice_fit_source_excludes_screening_and_future_dates
+  model: int_nice_colorectal_referral_fit_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+            column3::TIMESTAMP_NTZ AS clinical_effective_date,
+            column4::VARCHAR AS cluster_id, column5::VARCHAR AS mapped_concept_code
+        FROM VALUES
+            ('SYN_REF', -93401, '2026-09-30', 'GICANREF_COD', 'SYN_SCREEN'),
+            ('SYN_CLINICAL_FIT', -93401, '2026-09-30', 'FAECIMM_COD', 'SYN_FIT'),
+            ('SYN_SCREEN_FIT', -93401, '2026-09-30', 'FAECIMM_COD', 'SYN_SCREEN'),
+            ('SYN_OTHER_SOURCE', -93401, '2026-09-30', 'FAECIMM_COD', 'SYN_OTHER_SCREEN'),
+            ('SYN_FUTURE', -93401, '2999-01-01', 'FAECIMM_COD', 'SYN_FIT')
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id, column3::VARCHAR AS source
+      FROM VALUES
+          ('SYN_SCREEN', 'COLCANSCREV_COD', 'PCD'),
+          ('SYN_OTHER_SCREEN', 'COLCANSCREV_COD', 'SYNTHETIC_OTHER')
+  expect:
+    rows:
+    - id: SYN_REF
+      source_cluster_id: GICANREF_COD
+    - id: SYN_CLINICAL_FIT
+      source_cluster_id: FAECIMM_COD
+    - id: SYN_OTHER_SOURCE
+      source_cluster_id: FAECIMM_COD
+  config:
+    tags: [monthly-full, nice-history]

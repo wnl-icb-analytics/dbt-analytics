@@ -6,37 +6,57 @@
 }}
 --define PPV clinical risk groups using COVID. PLUS Cochlear Implant and CSF leak specified in UKHSA rules.
 WITH PPV_clinical_risk_groups AS (
-select distinct person_id
+SELECT DISTINCT PERSON_ID FROM (
+SELECT PERSON_ID 
 FROM (
-SELECT person_id, subcohort as risk_group, reference_date
-    --from REPORTING.OLIDS_PROGRAMME.FCT_FLU_ELIGIBILITY
-    FROM {{ ref('fct_flu_eligibility') }}
-   WHERE subcohort 
-   in ('Chronic Respiratory Disease','Asplenia','Chronic Heart Disease','Chronic Kidney Disease','Diabetes','Chronic Liver Disease','Immunosuppression')
-   QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, RISK_GROUP ORDER BY REFERENCE_DATE DESC) = 1
+    SELECT
+        person_id,
+        campaign_id,
+        TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01') AS valid_from,
+        DATEADD(DAY,-1,LEAD(TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01')) 
+        OVER (PARTITION BY person_id ORDER BY campaign_id)) AS valid_to,
+        CASE
+            WHEN COALESCE(HAS_CRD, FALSE)
+              OR COALESCE(HAS_ASPLENIA, FALSE)
+              OR COALESCE(HAS_CHD, FALSE)
+              OR COALESCE(HAS_CKD, FALSE)
+              OR COALESCE(HAS_CLD, FALSE)
+              OR COALESCE(HAS_DIABETES, FALSE)
+              OR COALESCE(IS_IMMUNOSUPPRESSED, FALSE)
+            THEN TRUE
+            ELSE FALSE
+        END AS IN_PPV_CLINICAL_RISK_GROUP
+    FROM {{ ref('int_covid_flu_risk_group_flags') }}
+    --FROM MODELLING.OLIDS_PROGRAMME.INT_COVID_FLU_RISK_GROUP_FLAGS
+    WHERE campaign_id LIKE 'Flu%'
+) a WHERE  IN_PPV_CLINICAL_RISK_GROUP AND valid_to IS NULL
 
 UNION ALL
-SELECT person_id, 'Cochlear Implant' as risk_group, date(clinical_effective_date) as reference_date
+
+SELECT person_id
 FROM {{ ref('int_cochlear_implant_latest') }}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_COCHLEAR_IMPLANT_LATEST  
 
 UNION ALL
-SELECT person_id, 'CSF Leak' as risk_group, date(clinical_effective_date) as reference_date
+
+SELECT person_id
 FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
-) a
+) b
 )
---September 2026 add new group for RSV clinical risk groups which includes immunosuppression and chronic lung disease.
+-- RSV clinical risk is chronic respiratory disease or immunosuppression at any
+-- age. fct_flu_eligibility only publishes those subcohorts under 65, because
+-- everyone 65 and over qualifies for flu by age. The flags model reads the flu
+-- clinical intermediates before that gate. RSV_1D applies the 65-74 band at
+-- eligibility, not on this flag.
 ,RSV_clinical_risk_groups AS (
-select distinct person_id
-FROM (
-SELECT person_id, subcohort as risk_group, reference_date
-    --from REPORTING.OLIDS_PROGRAMME.FCT_FLU_ELIGIBILITY
-    FROM {{ ref('fct_flu_eligibility') }}
-   WHERE subcohort 
-   in ('Chronic Respiratory Disease','Immunosuppression')
-   QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, RISK_GROUP ORDER BY REFERENCE_DATE DESC) = 1
-   ) a
+-- Current flu campaign only: the flags model has a row only where a person is
+-- in a clinical group that campaign, so a person's last row can be from an
+-- older season whose evidence has lapsed.
+SELECT DISTINCT person_id
+FROM {{ ref('int_covid_flu_risk_group_flags') }}
+WHERE campaign_id = '{{ flu_current_campaign() }}'
+    AND (COALESCE(has_crd, FALSE) OR COALESCE(is_immunosuppressed, FALSE))
 )
 
 SELECT DISTINCT
@@ -67,7 +87,7 @@ END AS TURN_65_AFTER_SEP_2023
 ,CASE WHEN imm.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_IMMUNOSUPPRESSED
 --PPV clinical risk group flag which includes immunosuppression but also other risk groups eligible for PPV
 ,CASE WHEN ppv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_PPV_CLINICAL_RISK_GROUP
---RSV clinical risk group flag which includes immunosuppression and chronic lung disease. 
+-- RSV clinical risk flag: immunosuppression or chronic respiratory disease, any age.
 ,CASE WHEN rsv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_RSV_CLINICAL_RISK_GROUP
 ,CASE WHEN preg.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_PREGNANT
 ,dem.GENDER

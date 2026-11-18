@@ -1,11 +1,29 @@
 models:
   - name: int_illicit_drug_use_all
-    description: 'DETERMINE ILLICIT DRUG USE using PCD Ref ILLSUB_COD'
+    description: >
+      OLIDS illicit drug use observations in PCD refset clusters ILLSUB_COD and
+      ILLSUBASSDEC_COD. One row per observation per matched cluster. The source cluster identifies
+      each match when an observation belongs to both clusters. Observations dated after
+      today are excluded. Undated observations are kept with clinical date 1900-01-01.
+      illicit_drug_assessed_last_12m is true when the clinical date is in the last 365
+      days. ILLICIT_DRUG_PATTERN groups concept codes into patterns such as dependence,
+      misuse, remission and overdose, and is null for unlisted codes. ILLICIT_DRUG_CLASS
+      assigns a substance class from the concept display text. It is null for 'Does not
+      misuse drugs' and 'Has never misused drugs', and 'Unknown Substance' where no class
+      matches.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
       - cluster_ids_exist:
           arguments:
-            cluster_ids: ILLSUB_COD
+            cluster_ids: ILLSUB_COD, ILLSUBASSDEC_COD
+    columns:
+      - name: source_cluster_id
+        description: Matched ILLSUB_COD or ILLSUBASSDEC_COD cluster; part of the observation-match key.
+      - name: date_recorded
+        description: EMIS save time of the observation; null when unavailable.

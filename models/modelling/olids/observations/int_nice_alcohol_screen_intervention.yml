@@ -1,16 +1,11 @@
 models:
   - name: int_nice_alcohol_screen_intervention
-    description: >
-      NICE alcohol brief-intervention evidence, one row per positive screening
-      observation and source cluster for all people, including inactive and
-      deceased people. A qualifying screen is FAST at least 3 or AUDIT-C at
-      least 5, using the valid scores in int_alcohol_screening_all. Full AUDIT
-      does not qualify. Holds the latest recorded intervention from
-      int_alcohol_intervention on or after that screen and within three calendar
-      months, including both dates. Declined interventions and future evidence
-      do not count. Screens without an intervention remain with a null date.
-      IND197, IND199, IND200 and IND202 apply their own screen windows; a later
-      unmatched screen does not erase an earlier completed intervention.
+    description: >-
+      Alcohol brief interventions following a positive screen. One row per screening
+      observation and code-list group, including inactive and deceased people. FAST scores of
+      at least 3 or AUDIT-C scores of at least 5 qualify; full AUDIT does not. Interventions
+      must occur from the screen date to three calendar months later, inclusive, by the build
+      date. Null intervention dates mean none was recorded; declines do not count.
     config:
       meta:
         owner:
@@ -21,6 +16,12 @@ models:
             combination_of_columns:
               - screening_observation_id
               - source_cluster_id
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              (first_intervention_date IS NULL AND latest_intervention_date IS NULL)
+              OR (first_intervention_date BETWEEN screen_date AND latest_intervention_date
+                  AND latest_intervention_date <= DATEADD(month, 3, screen_date))
     columns:
       - name: screening_observation_id
         description: Source observation identifier; part of the observation and cluster key.
@@ -38,3 +39,5 @@ models:
         description: Valid score from the named tool, at least 3 for FAST or 5 for AUDIT-C.
       - name: latest_intervention_date
         description: Latest recorded intervention within zero to three calendar months after this screen; null if none by the build date.
+      - name: first_intervention_date
+        description: First recorded intervention within zero to three calendar months after this screen; null if none by the build date. A pair has completed by a historical date when this date is on or before it. The latest historical intervention must still be selected from events capped at that date.

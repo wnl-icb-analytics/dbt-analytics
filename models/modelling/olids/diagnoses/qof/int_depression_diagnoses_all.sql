@@ -42,7 +42,7 @@ SELECT
     CASE WHEN obs.cluster_id = 'DEPR_COD' THEN TRUE ELSE FALSE END AS is_diagnosis_code,
     CASE WHEN obs.cluster_id = 'DEPRES_COD' THEN TRUE ELSE FALSE END AS is_resolved_code,
 
-    -- QOF: "first or new episode" for DEPR_DAT — exclude reviews and ended
+    -- DEPR_DAT uses first/new episodes. Episode type "None" counts because it matches published QOF.
     CASE
         WHEN ecm.source_display IN ('Review', 'Ended', 'Changed', 'Evolved', 'Flare Up') THEN FALSE
         ELSE TRUE  -- First, New, unspecified count

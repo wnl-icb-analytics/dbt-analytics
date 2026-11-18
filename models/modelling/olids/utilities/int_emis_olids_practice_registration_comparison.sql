@@ -20,11 +20,13 @@ Categorization:
 - 2-5% Variance: Between 2-5% variance
 - 5-20% Variance: Between 5-20% variance
 - 20%+ Variance: 20% or greater variance
-- Missing Data: No EMIS or OLIDS data available
+- Missing Data: EMIS list size absent or zero (e.g. practice only in OLIDS). A practice with EMIS but no OLIDS registrations has an OLIDS count of 0 and falls in a variance category
 
 Data Sources:
 - EMIS: Static extract (date from seed file)
-- OLIDS: Regular episode types only, active as of EMIS extract date
+- OLIDS: Regular registrations open on the EMIS extract date, as recorded by the
+  daily registration snapshot when it covers that date, otherwise rebuilt from
+  current registration history
 */
 
 with emis_registrations as (
@@ -41,6 +43,7 @@ olids_regular_counts as (
     select
         practice_ods_code as practice_code,
         regular_registered_patients as olids_regular_count,
+        olids_count_basis,
         snapshot_date
     from {{ ref('int_olids_regular_registrations_at_point_in_time') }}
 ),
@@ -63,6 +66,7 @@ comparison as (
         coalesce(p.borough, e.borough) as borough,
         coalesce(e.emis_list_size, 0) as emis_list_size,
         coalesce(o.olids_regular_count, 0) as olids_regular_count,
+        o.olids_count_basis,
         e.extract_date,
 
         -- Calculate difference (signed)
@@ -106,6 +110,7 @@ select
     absolute_difference,
     percent_difference,
     absolute_percent_difference,
+    olids_count_basis,
     extract_date,
 
     -- Acceptance criteria: <2% variance OR <5 persons difference

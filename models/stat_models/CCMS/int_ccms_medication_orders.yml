@@ -1,0 +1,35 @@
+models:
+  - name: int_ccms_medication_orders
+    description: |
+      Medication orders matching the Cambridge Comorbidity Score dm+d list,
+      one row per order and matching condition. Includes all people. Non-lithium
+      orders have clinical dates on or after the build date minus 12 months;
+      lithium (conditionid 5029) has no lookback. Future-dated orders remain
+      included to preserve the existing CCMS definition.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [medication_order_id, conditionid]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: medication_order_id
+        description: stg_olids_medication_order.id.
+      - name: order_date
+        description: Clinical effective date of the order.
+        data_tests:
+          - not_null
+      - name: mapped_concept_code
+        description: dm+d code on the order, joined to BASE_CCMS_DMD_CODES.productid.
+      - name: conditionid
+        description: CCMS condition identifier from BASE_CCMS_DMD_CODES.
+        data_tests:
+          - not_null
+      - name: conditionname
+        description: CCMS condition name from BASE_CCMS_DMD_CODES.

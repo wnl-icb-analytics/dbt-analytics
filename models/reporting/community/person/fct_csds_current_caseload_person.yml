@@ -1,0 +1,33 @@
+version: 2
+models:
+- name: fct_csds_current_caseload_person
+  description: >-
+    People with at least one open CSDS referral in the dataset's latest accepted month. Each row is
+    one person and provider, with counts of open referrals and those without recorded attendance.
+    Count distinct person_id across providers because a person can appear at several. Open referrals
+    without a person ID remain in fct_csds_current_caseload_referral. Recorded caseload, not
+    confirmed active treatment.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: caseload_person_provider_id
+    description: Key for the person and provider.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier.
+    data_tests:
+    - not_null
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null when the person has no bridge.
+  - name: evidence_date
+    description: Reporting period end the caseload is evaluated at.
+  - name: n_open_referrals
+    description: Open referrals for this person at this provider.
+  - name: n_open_referrals_without_attendance
+    description: Of those, referrals with no attended contact evidenced.
+  - name: days_since_last_attended_contact
+    description: Days from the latest attended contact on any open referral to the evidence date.

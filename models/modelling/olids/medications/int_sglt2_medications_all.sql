@@ -22,6 +22,7 @@ WITH sglt2_orders_base AS (
         mo.medication_order_id,
         mo.medication_statement_id,
         mo.order_date,
+        mo.date_recorded,
         mo.order_medication_name,
         mo.order_dose,
         mo.order_quantity_value,
@@ -55,6 +56,7 @@ sglt2_enhanced AS (
         sob.medication_order_id,
         sob.medication_statement_id,
         sob.order_date,
+        sob.date_recorded,
         sob.order_medication_name,
         sob.order_dose,
         sob.order_quantity_value,
@@ -79,9 +81,7 @@ sglt2_enhanced AS (
         END AS sglt2_drug,
 
         -- Order recency flags (SGLT2 inhibitors are typically long-term therapy)
-        sob.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        sob.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        sob.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('sob.order_date') }}
     FROM sglt2_orders_base sob
     LEFT JOIN drug_clusters dc
         ON sob.mapped_concept_code = dc.mapped_concept_code

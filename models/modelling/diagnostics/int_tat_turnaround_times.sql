@@ -1,12 +1,13 @@
 {{ config(materialized="table", tags=["tat", "daily"]) }}
 
--- Modelled imaging Turnaround Times: applies the business logic from the original
--- R/Python pipeline on top of the typed staging model.
+-- Supported analyst table for imaging Turnaround Times. Query this model, not
+-- DATA_LAKE__NCL.ANALYST_MANAGED.TURNAROUND_TIMES_RAW (retired copy). Keep
+-- DATA_LAKE.TAT.TURNAROUND_TIMES_RAW as the ingest landing table.
+-- Applies the original R/Python pipeline rules on staged rows:
 --   * TAT hours (scan / report / overall)
 --   * Flex/Freeze classification (datedifftest window), out-of-range rows dropped
 --   * cancer pathway flag standardised to Y/N/Unclassified
 --   * restatement: only the latest submission per trust + data period survives
--- This is the analyst-facing table replacing DATA_LAKE__NCL.ANALYST_MANAGED.TURNAROUND_TIMES_RAW.
 
 with staged as (
 

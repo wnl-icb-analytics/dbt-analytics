@@ -1,0 +1,74 @@
+models:
+  - name: fct_person_diabetes_triple_target_by_month
+    description: >-
+      National Diabetes Audit treatment targets (triple target) at each of the last 60 completed
+      month-ends. One row per diabetes register member per month-end.
+
+
+      {{ doc('diabetes_triple_target_rules') }} {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        clinical_source: https://digital.nhs.uk/data-and-information/publications/statistical/national-diabetes-audit/report-1-care-processes-and-treatment-targets-2021-22-full-report/methodology-copy
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - reporting_date
+    columns:
+      - name: person_id
+        description: Person on the diabetes register at the month-end.
+        data_tests:
+          - not_null
+      - name: reporting_date
+        description: Completed month-end at which the population and readings are assessed.
+        data_tests:
+          - not_null
+      - name: measurement_period_start
+        description: "{{ doc('diabetes_triple_target_measurement_period_start') }}"
+      - name: age
+        description: Age in completed years at the month-end, from the approximate birth date; null when unknown.
+      - name: practice_code
+        description: ODS code of the registration practice at the month-end.
+      - name: practice_name
+        description: Name of the registration practice at the month-end.
+      - name: diabetes_type
+        description: Type 1, Type 2 or Unknown from the diabetes register at the month-end; Type 1 wins a same-day tie.
+      - name: nda_diabetes_type
+        description: "{{ doc('diabetes_triple_target_nda_diabetes_type') }}"
+      - name: latest_hba1c_date
+        description: "{{ doc('diabetes_triple_target_latest_hba1c_date') }}"
+      - name: latest_hba1c_value
+        description: "{{ doc('diabetes_triple_target_latest_hba1c_value') }}"
+      - name: is_latest_hba1c_valid
+        description: Latest HbA1c in the audit period is IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when none is recorded.
+      - name: is_hba1c_recorded_in_period
+        description: An HbA1c test is recorded in the audit period, including tests with missing or invalid results.
+      - name: hba1c_in_target_range
+        description: "{{ doc('diabetes_triple_target_hba1c_in_target_range') }}"
+      - name: latest_bp_date
+        description: "{{ doc('diabetes_triple_target_latest_bp_date') }}"
+      - name: latest_systolic_value
+        description: Systolic value in mmHg of the latest blood pressure in the audit period.
+      - name: latest_diastolic_value
+        description: Diastolic value in mmHg of the latest blood pressure in the audit period.
+      - name: is_valid_bp
+        description: Both latest blood pressure components are in the plausible range. False when none is recorded.
+      - name: is_bp_recorded_in_period
+        description: A complete blood pressure pair is recorded in the audit period.
+      - name: bp_in_target_range
+        description: "{{ doc('diabetes_triple_target_bp_in_target_range') }}"
+      - name: has_cvd
+        description: "{{ doc('diabetes_triple_target_has_cvd') }}"
+      - name: is_statin_indicated
+        description: "{{ doc('diabetes_triple_target_is_statin_indicated') }}"
+      - name: latest_statin_order_date
+        description: Latest statin or statin-combination order on or before the month-end; null when none is recorded.
+      - name: is_statin_prescribed_in_period
+        description: A statin order is dated in the audit period.
+      - name: is_statin_target_met
+        description: "{{ doc('diabetes_triple_target_is_statin_target_met') }}"
+      - name: all_three_targets_met
+        description: "{{ doc('diabetes_triple_target_all_three_targets_met') }}"

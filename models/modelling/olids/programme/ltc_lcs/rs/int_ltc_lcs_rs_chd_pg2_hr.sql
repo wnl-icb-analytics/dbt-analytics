@@ -22,7 +22,7 @@ pg1_exclusions as (
 rule_2_chd_not_over_one_year_ago as (
     select person_id
     from ({{ get_ltc_lcs_observations("on_chd_reg_pg2_hr_vs1") }})
-    where 
+    where
     clinical_effective_date < dateadd(month, -12, current_date())
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),
@@ -30,8 +30,8 @@ rule_2_chd_not_over_one_year_ago as (
 rule_3_chd_in_last_year_excl_last_month as (
     select person_id
     from ({{ get_ltc_lcs_observations("on_chd_reg_pg2_hr_vs1") }})
-    where 
-    clinical_effective_date >= dateadd(month, -12, current_date())
+    where
+    clinical_effective_date > dateadd(month, -12, current_date())
     and clinical_effective_date < dateadd(month, -1, current_date())
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),
@@ -42,7 +42,7 @@ patient_rules as (
         (r2.person_id is null) as rule_2_chd_not_over_one_year_ago,
         (r3.person_id is not null) as rule_3_chd_in_last_year_excl_last_month,
         case
-            when r1.person_id is null 
+            when r1.person_id is null
                 and r2.person_id is null
                 and r3.person_id is not null
             then 'Included'

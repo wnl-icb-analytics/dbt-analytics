@@ -5,7 +5,7 @@ models:
       source for the QAdmissions feature `b_falls`. Falls are events rather
       than chronic diagnoses, so this model lives in the observations folder
       and produces one row per coded event (not per person). The wide
-      feature row aggregates to person grain in int_qadmissions_features.
+      feature row aggregates to person grain in qadmissions_input_features.
 
       Cluster source: QAdmissions 2023 paper-faithful codelist
       `FALLS_COD_Q`, ingested via DEFINITION_STORE.
@@ -34,6 +34,11 @@ models:
         description: 'Date the fall was clinically effective. Filtered to non-null and not in the future.'
         data_tests:
           - not_null
+      - name: date_recorded
+        description: >
+          Date the observation was entered in the source system. Use with
+          clinical_effective_date for point-in-time views, as an observation
+          can be back-dated. May be NULL.
       - name: concept_code
         description: 'SNOMED concept code for the falls observation.'
       - name: concept_display

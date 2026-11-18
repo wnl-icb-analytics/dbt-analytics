@@ -1,0 +1,38 @@
+unit_tests:
+- name: nice_ind318_fixed_entry_known_dates_and_category_cap
+  model: fct_person_heart_failure_ef_category_ind318_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, column3::DATE AS birth_date_approx,
+      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3301,'2026-03-31','1960-01-01'),(-3301,'2026-04-30','1960-01-01'),(-3302,'2026-09-30','1960-01-01'),(-3303,'2026-09-30','1960-01-01'),(-3303,'2026-10-31','1960-01-01'),(-3304,'2026-09-30','1960-01-01'),(-3305,'2026-09-30','1960-01-01')
+  - input: ref('fct_person_heart_failure_register_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id,column2::DATE AS month_end_date,'2020-01-01'::DATE AS earliest_diagnosis_date,'2026-04-01'::DATE
+      AS latest_diagnosis_date,FALSE AS is_on_hfref_register FROM VALUES (-3301,'2026-03-31'),(-3301,'2026-04-30'),(-3302,'2026-09-30'),(-3303,'2026-09-30'),(-3303,'2026-10-31'),(-3304,'2026-09-30'),(-3305,'2026-09-30')
+  - input: ref('int_heart_failure_diagnoses_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id,column2::DATE AS clinical_effective_date,column3::DATE AS date_recorded,TRUE
+      AS is_diagnosis_code,FALSE AS is_resolved_code FROM VALUES (-3301,'2026-04-01',NULL),(-3302,'2026-03-31',NULL),(-3303,'2026-04-01','2026-10-01'),(-3304,'2026-04-01',NULL),(-3305,'2026-04-01',NULL)
+  - input: ref('int_heart_failure_ef_category_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id,column2::DATE AS clinical_effective_date,column3::DATE AS date_recorded,TRUE
+      AS is_reduced_ef,FALSE AS is_mildly_reduced_ef,FALSE AS is_preserved_ef FROM VALUES (-3301,'2020-01-01',NULL),(-3301,'2020-01-01',NULL),(-3303,'2026-04-01',NULL),(-3304,'2026-09-30','2026-10-01'),(-3305,'2026-10-01',NULL)
+  expect:
+    rows:
+    - person_id: -3301
+      reporting_date: '2026-04-30'
+      is_in_numerator: true
+    - person_id: -3303
+      reporting_date: '2026-10-31'
+      is_in_numerator: true
+    - person_id: -3304
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -3305
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

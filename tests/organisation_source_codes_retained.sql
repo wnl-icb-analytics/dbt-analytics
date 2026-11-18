@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- Retired organisation and site codes must remain available for historical activity.
 with source_codes as (
     select organisation_code

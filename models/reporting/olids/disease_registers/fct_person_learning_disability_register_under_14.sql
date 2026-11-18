@@ -10,7 +10,7 @@ Learning Disability Register (Under 14)
 
 Business Logic:
 - Has learning disability diagnosis (LD_COD)
-- NOT excluded: no exclusion code (LDREM_COD) after latest diagnosis
+- NOT excluded: no exclusion code (LDREM_COD) on or after latest diagnosis
 - Age < 14 years (specialist settings cohort)
 
 Clinical Context:
@@ -29,15 +29,15 @@ WITH learning_disability_diagnoses AS (
         MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
             AS latest_diagnosis_date,
 
-        -- Register logic: LD diagnosis without subsequent exclusion
+        -- Register logic: no LD exclusion on or after latest diagnosis
         COALESCE(
             -- Must have an LD diagnosis
             MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) IS NOT NULL
-            -- Must not have been excluded after latest diagnosis
+            -- Must not have been excluded on or after latest diagnosis
             AND (
                 MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END) IS NULL
-                OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
-                    > MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END)
+                OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)::DATE
+                    > MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END)::DATE
             ),
             FALSE
         ) AS has_active_ld_diagnosis,
@@ -51,6 +51,7 @@ WITH learning_disability_diagnoses AS (
         ) AS all_ld_concept_displays
 
     FROM {{ ref('int_learning_disability_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 )
 

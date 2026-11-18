@@ -4,7 +4,10 @@
 -- means the curve and the actual have diverged in window or exclusions
 -- (e.g. one holds out stale EPD and the other does not).
 --
--- Returns one row when the totals differ beyond float rounding.
+-- Empty, null or zero actual totals cannot establish self-calibration.
+-- Returns one row for invalid totals or drift beyond float rounding.
+{{ config(severity = 'error') }}
+
 select actual_total, expected_total
 from (
     select
@@ -12,4 +15,7 @@ from (
         sum(expected_cost_12m) as expected_total
     from {{ ref('fct_person_resource_index') }}
 )
-where div0(abs(actual_total - expected_total), actual_total) > 1e-6
+where actual_total is null
+   or expected_total is null
+   or actual_total = 0
+   or abs(actual_total - expected_total) / nullif(abs(actual_total), 0) > 1e-6

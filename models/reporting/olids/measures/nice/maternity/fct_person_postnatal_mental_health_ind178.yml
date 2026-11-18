@@ -1,0 +1,75 @@
+models:
+- name: fct_person_postnatal_mental_health_ind178
+  description: >-
+    Mental health enquiry in women after their latest childbirth (NICE IND178). One row per
+    person in the denominator on the build date.
+
+
+    People registered on the build date who are women with a latest delivery 16 weeks to 12
+    months before the build date. The 16-week wait completes follow-up. Delivery records must
+    be known by then and dated at age 12 to 55 inclusive. Records within 180 days of the first
+    form one delivery, dated by that first record. Baby-sex or maternal blood-loss records can
+    date delivery; a six-week postnatal examination alone cannot. Achieved with a depression
+    or anxiety enquiry 4 to 16 weeks after delivery. No personalised care adjustments are
+    applied. Based on NICE CG192. Code lists: DELIVERY_COD (ECL cache); DEPSCRN_COD,
+    ANXSCRN_COD (PCD).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind178
+      indicator:
+        id: IND178
+        type: MEASURE
+        category: MATERNITY
+        clinical_domain: Maternity
+        name_short: "Postnatal mental health enquiry"
+        description_short: "Mental health enquiry after childbirth."
+        description_long: >-
+          People registered on the build date who are women with a latest delivery 16 weeks to
+          12 months before the build date. The 16-week wait completes follow-up. Delivery
+          records must be known by then and dated at age 12 to 55 inclusive. Records within
+          180 days of the first form one delivery, dated by that first record. Baby-sex or
+          maternal blood-loss records can date delivery; a six-week postnatal examination
+          alone cannot. Achieved with a depression or anxiety enquiry 4 to 16 weeks after
+          delivery. No personalised care adjustments are applied. Based on NICE CG192. Code
+          lists: DELIVERY_COD (ECL cache); DEPSCRN_COD, ANXSCRN_COD (PCD).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND178
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "12 months before the reporting date. Deliveries on this boundary are excluded."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: current_practice_code
+    description: "ODS code of the registration practice at the reporting date."
+  - name: current_practice_name
+    description: "Name of the registration practice at the reporting date."
+  - name: delivery_date
+    description: "First clinical date of the latest known delivery episode, used to assess the postnatal enquiry period."
+  - name: latest_record_date
+    description: "Latest mental health enquiry from 4 to 16 weeks after delivery, inclusive; null if absent."
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."

@@ -1,0 +1,40 @@
+models:
+- name: int_levothyroxine_medications_all
+  description: Levothyroxine-containing medication orders, one row per medication order, for all people
+    including inactive and deceased people. All retained dates are included. LEVOTHYROXINE_RX includes
+    oral and injectable products and levothyroxine/liothyronine combinations. Liothyronine-only and named
+    thyroid extract products are excluded. Generic combination products of unknown extract origin count;
+    the list does not exclude all extracts.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: LEVOTHYROXINE_RX
+        source: ECL_CACHE
+  columns:
+  - name: medication_order_id
+    description: Source event identifier.
+    data_tests:
+    - not_null
+  - name: person_id
+    description: Person identifier.
+  - name: date_recorded
+    description: Source recorded date; null means the clinical or order date determines when evidence
+      is known.
+  - name: order_date
+    description: Dated medication order. No build-relative treatment window is applied.
+  - name: mapped_concept_code
+    description: Mapped SNOMED CT product code.
+  - name: mapped_concept_display
+    description: Authoritative product display.
+  - name: bnf_code
+    description: BNF classification code.
+  - name: bnf_name
+    description: Authoritative BNF label.

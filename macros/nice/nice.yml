@@ -1,0 +1,33 @@
+macros:
+  - name: nice_reference_dates
+    description: One current build date or the last 60 completed month-ends. Only current and by_month modes are accepted.
+  - name: nice_reference_population
+    description: Common active, living, non-test population at the current date or each completed month-end. Subject calculations apply their own candidate rules. Returns person_id, reporting_date, age, birth_date_approx, gender, practice_code and practice_name.
+  - name: nice_register
+    description: >-
+      One row per member and reference date for any of the 39 condition codes in
+      ltc_register_history_models(), including LD_U14. Explicit model pairs read
+      live facts filtered to is_on_register for current mode and existing monthly
+      membership tables for by_month. Returns person_id, reporting_date,
+      condition_code, true is_on_register and earliest/latest diagnosis dates
+      with source timestamp precision. Obesity dates represent latest valid BMI
+      and latest BMI evidence, matching the LTC summary. DM also returns
+      diabetes_type, earliest/latest type 1 and type 2 dates and latest_resolved_date.
+      SMI adds latest_remission_date (current latest_resolved_date) and
+      has_active_smi_diagnosis; remission at or after the latest diagnosis means
+      inactive SMI but does not remove membership. CKD adds latest_resolved_date
+      and latest_stage_1_2_date. FRAIL adds latest_frailty_severity. NDH adds
+      has_unresolved_diabetes, false for eligible members, using current diabetes
+      flags or the monthly register's existing exclusion. Other codes return only
+      common columns. No test-patient exclusion is added; NICE consumers join
+      nice_reference_population. Unsupported codes and reference modes fail compilation.
+  - name: nice_ltc_summary
+    description: Long LTC membership at person, reference date and condition, with earliest/latest diagnosis dates. Current mode filters is_on_register.
+  - name: nice_ref
+    description: FROM input for current/monthly pairs with identical physical columns. Current mode relabels the last-built input date to today's evaluation date; monthly mode retains the stored date. Callers supply an alias.
+  - name: nice_financial_year_start
+    description: Inclusive 1 April start of the financial year containing the supplied SQL date expression.
+  - name: nice_financial_year_end
+    description: Inclusive 31 March end of the financial year containing the supplied SQL date expression.
+  - name: nice_practice_columns
+    description: Emits normalised practice fields under current_practice_* or historical practice_* names. A null alias reads already named union/status inputs.

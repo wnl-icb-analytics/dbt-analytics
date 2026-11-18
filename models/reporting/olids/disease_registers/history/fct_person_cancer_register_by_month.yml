@@ -1,0 +1,31 @@
+models:
+  - name: fct_person_cancer_register_by_month
+    description: >
+      Cancer register at each completed month-end, on the rules of
+      fct_person_cancer_register: a first or new CAN_COD episode on or after 1 April
+      2003, with no age restriction or resolution.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest first or new cancer episode known by the month-end, including episodes before April 2003.
+      - name: latest_diagnosis_date
+        description: Latest first or new cancer episode known by the month-end.

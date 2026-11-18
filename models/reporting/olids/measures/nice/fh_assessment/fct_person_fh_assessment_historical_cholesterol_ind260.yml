@@ -1,0 +1,86 @@
+models:
+- name: fct_person_fh_assessment_historical_cholesterol_ind260
+  description: >-
+    Familial hypercholesterolaemia assessment after high cholesterol (NICE IND260). One row
+    per person in the denominator on the build date.
+
+
+    People registered on the build date with lifetime total cholesterol above 7.5 mmol/L at
+    age 0 to 29, or above 9.0 mmol/L at age 30 or over. The earliest valid high reading uses
+    approximate birth-date age. Achieved with recorded familial hypercholesterolaemia
+    assessment, possible or clinical diagnosis, referral or genetic evidence, or secondary
+    hyperlipidaemia diagnosed after that reading. Familial evidence can predate the reading;
+    genetic testing need not be positive. Generic lipid referrals and secondary
+    hyperlipidaemia history alone do not count. Familial referral codes began in 2021. No
+    personalised care adjustments are applied. Based on NICE CG71. Code lists: CHOL2_COD,
+    SBROOME_COD, DULIPID_COD, POSSFH_COD, FHYP_COD, FHYPGEN_COD (PCD); FH_ASSESS_COD,
+    FH_REFER_COD, SECONDARY_HYPERLIPID_COD (ECL_CACHE).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind260
+      indicator:
+        id: IND260
+        type: MEASURE
+        category: FH_ASSESSMENT
+        clinical_domain: Cardiometabolic
+        name_short: "Historical cholesterol assessment"
+        description_short: "Familial hypercholesterolaemia assessment after a qualifying lifetime cholesterol reading"
+        description_long: >-
+          People registered on the build date with lifetime total cholesterol above 7.5 mmol/L
+          at age 0 to 29, or above 9.0 mmol/L at age 30 or over. The earliest valid high
+          reading uses approximate birth-date age. Achieved with recorded familial
+          hypercholesterolaemia assessment, possible or clinical diagnosis, referral or
+          genetic evidence, or secondary hyperlipidaemia diagnosed after that reading.
+          Familial evidence can predate the reading; genetic testing need not be positive.
+          Generic lipid referrals and secondary hyperlipidaemia history alone do not count.
+          Familial referral codes began in 2021. No personalised care adjustments are applied.
+          Based on NICE CG71. Code lists: CHOL2_COD, SBROOME_COD, DULIPID_COD, POSSFH_COD,
+          FHYP_COD, FHYPGEN_COD (PCD); FH_ASSESS_COD, FH_REFER_COD, SECONDARY_HYPERLIPID_COD
+          (ECL_CACHE).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND260
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Date of the earliest qualifying lifetime cholesterol reading."
+  - name: latest_record_date
+    description: "Latest of the first recorded familial assessment, clinical diagnosis, referral and genetic evidence dates and the qualifying secondary hyperlipidaemia dates; null without qualifying evidence. Repeated familial evidence does not update this date."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: qualifying_reading_date
+    description: "Date of the earliest qualifying lifetime cholesterol reading."
+  - name: qualifying_cholesterol_value
+    description: "Total cholesterol of the selected qualifying reading, in mmol/L."
+  - name: has_qualifying_secondary_hyperlipidaemia
+    description: "Whether secondary hyperlipidaemia was diagnosed after the earliest qualifying high reading and through the reporting date."
+  - name: first_fh_assessment_date
+    description: "First recorded familial hypercholesterolaemia assessment or possible diagnosis through the reporting date; null when absent."
+  - name: first_clinical_fh_diagnosis_date
+    description: "First clinical familial hypercholesterolaemia diagnosis through the reporting date; null when absent. Counts as assessment even before the qualifying cholesterol reading."
+  - name: first_fh_referral_date
+    description: "First referral for familial hypercholesterolaemia assessment through the reporting date; null when absent. Generic lipid referrals do not count."
+  - name: first_genetic_fh_date
+    description: "First genetic familial hypercholesterolaemia record through the reporting date; null when absent. Includes testing without confirmation of a positive result."
+  - name: latest_secondary_hyperlipidaemia_date
+    description: "Latest secondary hyperlipidaemia diagnosis through the reporting date; null when absent. Only a date after the earliest qualifying high reading counts for achievement."
+  - name: age_at_earliest_qualifying_reading
+    description: "Age in completed years at the earliest qualifying lifetime cholesterol reading, calculated from the approximate birth date; null when no such reading is known or the indicator does not supply it."

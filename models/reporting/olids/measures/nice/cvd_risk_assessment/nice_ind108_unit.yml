@@ -1,0 +1,50 @@
+unit_tests:
+  - name: nice_ind108_inclusive_window_expiry_and_upper_cap
+    model: fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108_by_month
+    config:
+      tags: ['monthly-full', 'nice-history']
+    given:
+      - input: ref('int_nice_reference_population_by_month')
+        format: sql
+        rows: |
+          SELECT people.person_id, dates.reporting_date, 50 AS age,
+              '1976-01-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+              'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+          FROM (SELECT column1::NUMBER AS person_id FROM VALUES (-1), (-2)) AS people
+          CROSS JOIN (SELECT column1::DATE AS reporting_date FROM VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+      - input: ref('fct_person_rheumatoid_arthritis_register_by_month')
+        format: sql
+        rows: |
+          SELECT people.person_id, dates.month_end_date,
+              '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+              '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+          FROM (SELECT column1::NUMBER AS person_id FROM VALUES (-1), (-2)) AS people
+          CROSS JOIN (SELECT column1::DATE AS month_end_date FROM VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+      - input: ref('fct_person_chd_register_by_month')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date,
+              NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+      - input: ref('fct_person_stroke_tia_register_by_month')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date,
+              NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+      - input: ref('fct_person_familial_hypercholesterolaemia_register_by_month')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date,
+              NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+      - input: ref('int_cvd_risk_assessment_all')
+        format: sql
+        rows: |
+          SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              column3::VARCHAR AS id, column4::FLOAT AS risk_score_value,
+              'QRISK3 assessment'::VARCHAR AS concept_display, TRUE AS is_qrisk_code
+          FROM VALUES (-1, '2025-06-30', 'A', 10), (-2, '2026-10-01', 'A', NULL)
+    expect:
+      rows:
+        - {person_id: -1, reporting_date: '2026-09-30', latest_risk_assessment_date: '2025-06-30', is_in_numerator: true}
+        - {person_id: -1, reporting_date: '2026-10-31', latest_risk_assessment_date: '2025-06-30', is_in_numerator: false}
+        - {person_id: -2, reporting_date: '2026-09-30', latest_risk_assessment_date: null, is_in_numerator: false}
+        - {person_id: -2, reporting_date: '2026-10-31', latest_risk_assessment_date: '2026-10-01', is_in_numerator: true}

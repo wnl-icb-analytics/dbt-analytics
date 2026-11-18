@@ -79,12 +79,13 @@ SELECT
 FROM {{ ref('int_hba1c_all') }}
 
 -- Only include observations with DQ issues
-WHERE (is_ifcc AND (hba1c_original_value < 20 OR hba1c_original_value > 200))  -- IFCC out of range
+WHERE original_result_value IS NOT NULL
+  AND ((is_ifcc AND (hba1c_original_value < 20 OR hba1c_original_value > 200))  -- IFCC out of range
    OR (is_dcct AND (hba1c_original_value < 3 OR hba1c_original_value > 20))    -- DCCT out of range
    OR clinical_effective_date IS NULL                        -- Missing date
    OR clinical_effective_date > CURRENT_DATE                 -- Future date
    OR (is_ifcc = FALSE AND is_dcct = FALSE)                  -- Unknown measurement type
    OR (is_ifcc = TRUE AND is_dcct = TRUE)                    -- Ambiguous measurement type
-   OR is_valid_hba1c = FALSE                                 -- Invalid per original logic
+   OR is_valid_hba1c = FALSE)                                -- Invalid per original logic
 
 ORDER BY person_id, clinical_effective_date DESC

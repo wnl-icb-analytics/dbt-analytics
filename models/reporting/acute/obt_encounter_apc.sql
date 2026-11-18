@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='view'
+        materialized='table'
     )
 }}
 
@@ -17,6 +17,8 @@ select
     , start_time
     , end_date
     , end_time
+    , decided_to_admit_date
+    , discharge_ready_date
     , estimated_discharge_date
     , has_estimated_discharge_date
     , estimated_discharge_date_method
@@ -25,6 +27,8 @@ select
     , duration_to_date
     , unadjusted_length_of_stay_days
     , excess_bed_days
+    , admission_administrative_category_code
+    , admission_administrative_category_name
     , spell_admission_method
     , admission_method_name
     , admission_method_group
@@ -38,12 +42,18 @@ select
     , main_specialty_category
     , treatment_function_code
     , treatment_function_code_desc
+    , commissioner_code_at_event
+    , commissioner_name_at_event
+    , commissioner_source_at_event
     , hrg_code
     , core_hrg_desc
     , core_hrg_chapter
     , core_hrg_chapter_desc
     , spec_comm_flag
-    , spec_comm
+    , spec_comm_code
+    , spec_comm_desc
+    , pss_service_line_code
+    , pss_service_line_desc
     , type
     , cost
     , age_at_event
@@ -53,13 +63,19 @@ select
     , ethnicity_desc_at_event
     , postcode_district_at_event
     , lsoa_11_at_event
+    , lsoa_21_at_event
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event
+    , practice.pcn_name as reg_practice_pcn_name_latest
+    , practice.neighbourhood_name as reg_practice_neighbourhood_name_latest
+    , practice.health_borough_name as reg_practice_health_borough_name_latest
     , visit_occurrence_type
     , discharge_destination_code
     , discharge_destination_name
     , discharge_method_code
     , discharge_method_name
     , critical_care_days_for_length_of_stay
-from {{ ref('int_sus_apc_encounter') }}
+from {{ ref('int_sus_apc_encounter') }} as encounter
+left join {{ ref('practice_wnl_all') }} as practice
+    on encounter.reg_practice_at_event = practice.practice_code

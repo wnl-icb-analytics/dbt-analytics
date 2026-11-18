@@ -1,0 +1,75 @@
+{% macro nice_ind128(reference='current') %}
+{#- Calculate IND128 at eligible person/reporting-date grain in current or by_month mode. -#}
+-- NICE IND128: https://www.nice.org.uk/indicators/ind128
+-- Oral anticoagulant order in 6 months for people on the AF register with a latest CHA2DS2-VASc of 2 or more, or no CHA2DS2-VASc and a latest CHADS2 of 2 or more; excludes an anticoagulant allergy or adverse reaction ever, or anticoagulation contraindicated in 12 months.
+WITH indicator_population AS (
+    SELECT
+        profile.*,
+        population.age,
+        population.practice_code,
+        population.practice_name
+    FROM {{ nice_ref('int_atrial_fibrillation_profile', reference) }} AS profile
+    INNER JOIN ({{ nice_reference_population(reference) }}) AS population
+        ON profile.person_id = population.person_id
+        AND profile.reporting_date = population.reporting_date
+    WHERE (
+            profile.latest_chadsvasc_score >= 2
+            OR (profile.latest_chadsvasc_date IS NULL AND profile.latest_chads2_score >= 2)
+        )
+        -- NICE exclusions: persisting contraindication anywhere on the record (allergy or adverse
+        -- reaction), or an expiring contraindication recorded in the preceding 12 months
+        AND NOT profile.has_anticoagulant_adverse_reaction
+        AND NOT profile.has_anticoagulant_persisting_contraindication
+        AND NOT COALESCE(profile.latest_anticoagulant_contraindicated_date >= DATEADD(month, -12, profile.reporting_date), FALSE)
+),
+
+assessed AS (
+    SELECT
+        population.person_id,
+        population.reporting_date,
+        population.age,
+        population.practice_code,
+        population.practice_name,
+        population.latest_chadsvasc_score,
+        population.latest_chadsvasc_date,
+        population.latest_chads2_score,
+        population.latest_anticoagulant_order_date,
+        population.latest_anticoagulant_type,
+        population.latest_doac_order_date,
+        population.latest_vka_order_date,
+        population.is_doac_ineligible,
+        population.has_doac_exception,
+        population.latest_anticoagulant_review_date,
+        COALESCE(population.latest_anticoagulant_order_date >= DATEADD(month, -6, population.reporting_date), FALSE) AS is_in_numerator
+    FROM indicator_population AS population
+)
+
+SELECT
+    person_id,
+    'IND128' AS indicator_id,
+    'Atrial fibrillation: current treatment with anticoagulation' AS indicator_name,
+    'In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who are currently treated with anticoagulation drug therapy.' AS indicator_description,
+    reporting_date,
+    DATEADD(month, -6, reporting_date) AS measurement_period_start,
+    age,
+    'Atrial fibrillation with raised stroke risk' AS denominator_description,
+    {{ nice_practice_columns('assessed', reference) }},
+    latest_chadsvasc_score,
+    latest_chadsvasc_date,
+    latest_chads2_score,
+    latest_anticoagulant_order_date,
+    latest_anticoagulant_type,
+    latest_doac_order_date,
+    latest_vka_order_date,
+    is_doac_ineligible,
+    has_doac_exception,
+    latest_anticoagulant_review_date,
+    TRUE AS is_in_denominator,
+    is_in_numerator,
+    CASE
+        WHEN is_in_numerator THEN 'ACHIEVED'
+        WHEN latest_anticoagulant_order_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
+        ELSE 'NEVER_TREATED'
+    END AS indicator_status
+FROM assessed
+{% endmacro %}

@@ -1,0 +1,64 @@
+models:
+- name: fct_person_alcohol_nice_indicators_by_month
+  description: >-
+    Alcohol screening and brief intervention results. One row per person, indicator and
+    month-end.
+
+
+    Includes NICE IND196, NICE IND197, NICE IND198, NICE IND199, NICE IND200, NICE IND201,
+    NICE IND202. Each indicator has its own denominator, measurement window and
+    exclusions. Supporting evidence accompanies the achievement status. No personalised
+    care adjustments are applied. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Start of the indicator diagnosis or screening period. Shifted diagnosis periods exclude diagnoses on this date; other periods include it. Achievement windows are given in the model description."
+  - name: age
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice attributed at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice attributed at the reporting month-end."
+  - name: new_diagnosis_date
+    description: "First qualifying hypertension, depression or anxiety diagnosis date; null for indicators without a new-diagnosis population."
+  - name: latest_alcohol_screen_date
+    description: "Date of the latest FAST, AUDIT-C or AUDIT screen through the reporting date; null when none is recorded."
+  - name: latest_alcohol_screen_tool
+    description: "FAST, AUDIT-C or AUDIT for the latest alcohol screen; null when no screen is recorded."
+  - name: latest_alcohol_screen_score
+    description: "Numeric score of the latest alcohol screen; null when missing or outside the tool's valid range."
+  - name: latest_positive_alcohol_screen_date
+    description: "Date of the latest FAST score of at least 3 or AUDIT-C score of at least 5 through the reporting date; null when none is recorded."
+  - name: latest_intervention_after_positive_screen_date
+    description: "Latest brief intervention within 3 months after the latest positive alcohol screen and through the reporting date; null when absent. Earlier screen and intervention pairs can still achieve the indicator."
+  - name: latest_record_date
+    description: "Latest screen or brief intervention that meets the indicator rule; null when no qualifying evidence is recorded."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."

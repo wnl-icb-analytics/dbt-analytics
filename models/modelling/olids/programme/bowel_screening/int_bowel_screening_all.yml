@@ -1,23 +1,33 @@
 models:
   - name: int_bowel_screening_all
-    description: 'NHS bowel screening programme observations from clinical records.
-
-      One row per bowel screening observation using COLCANSCREV_COD, COLCANSCRDEC_COD, COLCANSCR_COD PCD Refset clusters for core programme tracking.'
+    description: >-
+      Bowel screening records in OLIDS, one row per observation and matching PCD
+      cluster (COLCANSCREV_COD, COLCANSCR_COD and COLCANSCRDEC_COD). Covers completion
+      and decline, regardless of age, sex, registration or death. Future events remain
+      included; missing dates appear as 1900-01-01. Result-only code 368481000000103
+      does not count as completion.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: COLCANSCREV_COD, COLCANSCRDEC_COD, COLCANSCR_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
     columns:
+      - name: date_recorded
+        description: EMIS save time of the selected observation; null when unavailable.
       - name: id
         description: 'Unique identifier for the observation'
       - name: person_id
         description: 'Unique identifier for the person'
       - name: clinical_effective_date
         description: 'Date when the screening observation was recorded'
+      - name: result_value
+        description: Original numeric result; null for a value-free event. Used to distinguish repeated readings.
       - name: concept_code
         description: 'Mapped clinical concept code'
       - name: concept_display

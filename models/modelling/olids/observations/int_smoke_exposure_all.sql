@@ -1,0 +1,5 @@
+{{ config(materialized='table', cluster_by=['person_id', 'event_date']) }}
+
+SELECT person_id, id AS observation_id, clinical_effective_date::DATE AS event_date
+FROM ({{ get_observations("'SMOKE_EXPOSURE_COD'", source='ECL_CACHE') }})
+WHERE clinical_effective_date::DATE <= CURRENT_DATE()

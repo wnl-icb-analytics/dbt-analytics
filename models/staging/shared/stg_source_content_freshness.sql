@@ -6,6 +6,11 @@ One source-derived content-currency signal per profiled DATA_LAKE source.
 Dates inside each feed take precedence over Snowflake object-change metadata.
 Expected days describe normal delivery cadence. SLA days are contractual and
 apply only to OLIDS. Breach days mark a sustained delay that needs attention.
+
+Ranges are set from observed history (source content freshness snapshot and
+source load dates): expected days cover the usual peak content age just before
+the next delivery lands; breach days sit beyond the worst normal peak, so a
+breach means a delivery is genuinely late.
 */
 
 with olids as (
@@ -66,9 +71,9 @@ pds as (
         max(content_at)::timestamp_ntz as observed_at,
         'core_business_effective_date' as signal_type,
         'Latest business-effective date reached by person, address, and registered-practice data' as signal_detail,
-        1 as expected_days,
+        12 as expected_days,
         null::number as sla_days,
-        7 as breach_after_days
+        21 as breach_after_days
     from pds_core_dates
 ),
 
@@ -202,9 +207,9 @@ sus_apc as (
         observed_at,
         'provider_volume_consensus_receipt_date' as signal_type,
         'Latest receipt date reached by providers representing 90% of records received in the prior 90 days' as signal_detail,
-        7 as expected_days,
+        15 as expected_days,
         null::number as sla_days,
-        14 as breach_after_days
+        24 as breach_after_days
     from sus_source_consensus
     where source_schema = 'DATA_LAKE.SUS_UNIFIED_APC'
 ),
@@ -216,9 +221,9 @@ sus_op as (
         observed_at,
         'provider_volume_consensus_receipt_date' as signal_type,
         'Latest receipt date reached by providers representing 90% of records received in the prior 90 days' as signal_detail,
-        7 as expected_days,
+        15 as expected_days,
         null::number as sla_days,
-        14 as breach_after_days
+        24 as breach_after_days
     from sus_source_consensus
     where source_schema = 'DATA_LAKE.SUS_UNIFIED_OP'
 ),
@@ -230,9 +235,9 @@ sus_ecds as (
         observed_at,
         'provider_volume_consensus_receipt_date' as signal_type,
         'Latest receipt date reached by providers representing 90% of records received in the prior 90 days' as signal_detail,
-        7 as expected_days,
+        12 as expected_days,
         null::number as sla_days,
-        14 as breach_after_days
+        21 as breach_after_days
     from sus_source_consensus
     where source_schema = 'DATA_LAKE.SUS_UNIFIED_ECDS'
 ),
@@ -244,9 +249,9 @@ epd as (
         max(received_date)::timestamp_ntz as observed_at,
         'reporting_period_end' as signal_type,
         'Latest prescribing reporting-period end date in the submission header' as signal_detail,
-        30 as expected_days,
+        95 as expected_days,
         null::number as sla_days,
-        45 as breach_after_days
+        115 as breach_after_days
     from {{ ref('raw_epd_pc_medsheader') }}
 ),
 
@@ -262,9 +267,9 @@ csds as (
         max(upload_date_time)::timestamp_ntz as observed_at,
         'reporting_period_end' as signal_type,
         'Latest reporting-period end date in the community-services header' as signal_detail,
-        30 as expected_days,
+        52 as expected_days,
         null::number as sla_days,
-        45 as breach_after_days
+        65 as breach_after_days
     from {{ ref('raw_csds_cyp000header') }}
 ),
 
@@ -280,9 +285,9 @@ mhsds as (
         max(dmic_date_added)::timestamp_ntz as observed_at,
         'reporting_period_end' as signal_type,
         'Latest reporting-period end date in the mental-health header' as signal_detail,
-        30 as expected_days,
+        63 as expected_days,
         null::number as sla_days,
-        45 as breach_after_days
+        75 as breach_after_days
     from {{ ref('raw_mhsds_mhs000header') }}
 ),
 
@@ -339,9 +344,9 @@ waiting_list as (
         max(der_submission_date_time_from_dlp)::timestamp_ntz as observed_at,
         'week_ending_date' as signal_type,
         'Latest submitted waiting-list week ending date' as signal_detail,
-        7 as expected_days,
+        16 as expected_days,
         null::number as sla_days,
-        14 as breach_after_days
+        23 as breach_after_days
     from {{ ref('raw_wl_wl_submissionlog_data') }}
     where der_is_latest_filetype_provider_weekending = true
 ),
@@ -353,9 +358,9 @@ ers as (
         max(dmic_date_added)::timestamp_ntz as observed_at,
         'reporting_period_end' as signal_type,
         'Latest e-Referral Service reporting-period end date in the submission header' as signal_detail,
-        30 as expected_days,
+        5 as expected_days,
         null::number as sla_days,
-        45 as breach_after_days
+        10 as breach_after_days
     from {{ ref('raw_ers_pc_ebsx00header') }}
 ),
 
@@ -390,9 +395,9 @@ pmct as (
         max(ingested_at)::timestamp_ntz as observed_at,
         'diagnostics_reporting_period' as signal_type,
         'Latest diagnostics reporting month in the current performance presentation feed' as signal_detail,
-        30 as expected_days,
+        80 as expected_days,
         null::number as sla_days,
-        60 as breach_after_days
+        95 as breach_after_days
     from {{ ref('raw_performance_diagnosticsmonthlysourceappendreviseprovcomm') }}
 ),
 
@@ -421,7 +426,7 @@ terminology as (
         max(run_end)::timestamp_ntz as observed_at,
         'latest_successful_release' as signal_type,
         'Latest terminology release loaded successfully from NHS TRUD' as signal_detail,
-        35 as expected_days,
+        63 as expected_days,
         null::number as sla_days,
         120 as breach_after_days
     from {{ ref('raw_reference_ingest_log') }}

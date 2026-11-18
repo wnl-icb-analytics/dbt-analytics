@@ -231,7 +231,8 @@ processes are outside it. A measure is one row per person in the indicator's
 denominator, restricted to currently registered, living, non-test people
 through `dim_person_active_patients`, assessed on the build date. It emits the
 shared columns listed in `fct_person_nice_indicator_status.yml` (`person_id`,
-`indicator_id`, `reporting_date`, `measurement_period_start`, `age`, practice,
+`indicator_id`, `indicator_name`, `indicator_description`, `denominator_description`,
+`reporting_date`, `measurement_period_start`, `age`, practice,
 `is_in_denominator`, `is_in_numerator`, `indicator_status`) plus its own
 readings, thresholds and provenance.
 
@@ -351,9 +352,20 @@ reviewers must still confirm that it covers the stated key or key combination.
   satisfy a generic test.
 - Put a test where its promise is made. Downstream models should test their new
   composition and grain, not copy every upstream assertion.
+- A model that reads a code cluster through `get_observations`,
+  `get_medication_orders`, `get_medication_statements` or
+  `get_lipid_observations` lists each cluster in a `cluster_ids_exist` test with
+  the same `source` and `versioned` arguments as the call. A model that reads LTC
+  LCS value sets through a `get_ltc_lcs_*` macro lists each value set in a
+  `valuesets_have_codes` test using the GUID the SQL uses, because friendly names
+  are not unique. The Cluster Existence Tests CI check enforces both.
 - Use singular tests for domain rules that generic tests cannot express. Select
   only the model keys and context needed to diagnose a failure. Treat any
   returned rows as potentially patient-level under the safety rules above.
+- Tag a test `reconciliation` when it compares a model with source or model
+  data built separately, such as source row counts or retained keys. Partial
+  deploys and PR validation exclude the tag because they mix fresh and stale
+  relations; scheduled and full builds rebuild both sides and run it.
 
 ## Validate the change
 

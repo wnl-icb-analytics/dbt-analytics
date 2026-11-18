@@ -1,20 +1,11 @@
 models:
   - name: int_bmi_latest
-    description: 'Most recent valid BMI measurement per person with ethnicity-adjusted categorisation.
-
-      One row per person with their latest BMI including ethnicity-adjusted clinical categorisation per NICE NG246. Uses lower BMI thresholds for cardiometabolic risk populations.
-
-      Key Features:
-
-      • Latest valid BMI per person with ethnicity-adjusted thresholds
-
-      • Heights and weights recorded under age 18 are excluded upstream so paediatric measurements never feed calculated BMI
-
-      • Includes both standard and ethnicity-adjusted categorisations
-
-      • Provides ethnicity context for clinical decision-making
-
-      Purpose: Supports clinical assessment and population health monitoring with appropriate ethnic considerations.'
+    description: >-
+      Latest valid BMI in OLIDS, one row per person with a recorded or calculated BMI
+      of 10-150 kg/m2 up to the build date. Includes inactive and deceased people aged
+      at least 18, using age at build for living people and age at death otherwise.
+      Calculations use adult height and weight only. NICE NG246 categories use lower
+      thresholds for qualifying ethnicities.
     config:
       meta:
         indicator:
@@ -164,7 +155,9 @@ models:
           - not_null
           - unique
       - name: age
-        description: 'Age in years at time of analysis (adults 18+ only)'
+        description: >-
+          Age in years at the build date for living people or at death for deceased people.
+          Only people aged 18 or over on that basis are included.
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -190,14 +183,20 @@ models:
         tests:
           - not_null
       - name: bmi_source
-        description: 'Source of BMI value (recorded or calculated)'
+        description: >-
+          Recorded for BMIVAL_COD observations. Calculated uses the most recent prior height
+          with a qualifying weight, both recorded at age 18 or over, only on dates without
+          recorded BMI.
         tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ['recorded', 'calculated']
       - name: requires_lower_bmi_thresholds
-        description: 'Flag indicating if person requires lower BMI thresholds per NICE NG246'
+        description: >-
+          True for South Asian, Chinese, other Asian, Middle Eastern, Black African and
+          African-Caribbean ethnicities, under NICE NG246. Based on the recorded evidence
+          selected by int_ethnicity_cardiometabolic_risk.
       - name: cardiometabolic_risk_ethnicity_group
         description: 'Ethnicity group classification for cardiometabolic risk assessment'
       - name: is_valid_bmi
@@ -208,7 +207,9 @@ models:
               arguments:
                 values: [true]
       - name: bmi_category
-        description: 'BMI categorisation using ethnicity-adjusted thresholds per NICE NG246'
+        description: >-
+          NICE NG246 BMI category. Overweight and obesity start at 25 and 30 kg/m2, or 23 and
+          27.5 for qualifying cardiometabolic-risk ethnicities.
         tests:
           - not_null
           - accepted_values:

@@ -2,12 +2,13 @@ models:
   - name: int_bmi_qof
     description: 'BMI measurements with QOF-specific obesity register logic and ethnicity-adjusted thresholds.
 
-      One row per person combining numeric BMI values (BMIVAL_COD) and BMI30+ codes (BMI30_COD) with QOF-specific thresholds (25+, 27.5+, 30+).'
+      One row per person combining numeric BMI values (BMIVAL_COD) and BMI30+ codes (BMI30_COD) with QOF-specific thresholds (25+, 27.5+, 30+). Built from int_bmi_qof_all.'
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: BMI30_COD, BMIVAL_COD
+    columns:
+      - name: person_id
+        data_tests:
+          - unique
+          - not_null

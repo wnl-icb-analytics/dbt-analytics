@@ -1,0 +1,21 @@
+version: 2
+models:
+  - name: stg_reference_primary_care_practice_neighbourhood_history
+    description: >-
+      SCD2 history of WNL practice to neighbourhood (Integrated Neighbourhood
+      Team) mapping from the primary care org manager app. Baselined at
+      2026-04-01 and captured prospectively; there is no national history.
+      One row per practice per mapping version.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - valid_from
+    columns:
+      - name: is_current
+        description: True on the current version (valid_to is null).

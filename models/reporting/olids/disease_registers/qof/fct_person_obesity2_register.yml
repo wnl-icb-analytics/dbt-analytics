@@ -3,10 +3,14 @@ models:
     description: >
       QOF v51 OBES2 register for people aged 18 or over with BMI at least 35 in
       the preceding 12 months, or BMI at least 32.5 when their most recent
-      journal ethnicity code is in a lower-threshold group, and at least four
-      of ASCVD, unresolved hypertension, dyslipidaemia, obstructive sleep
+      journal ethnicity date equals the latest lower-threshold ethnicity date,
+      and at least four of ASCVD, unresolved hypertension, dyslipidaemia,
+      obstructive sleep
       apnoea and unresolved type 2 diabetes. One row represents a qualifying
-      person. The OLIDS patient contract does not expose the patient-table
+      person. All evidence is dated on or before today. BMI and lipid windows
+      exclude the date 12 months ago; the medication window excludes the date
+      six months ago. Resolution on the diagnosis date does not remove a
+      comorbidity. The OLIDS patient contract does not expose the patient-table
       ethnicity fallback in the national rules.
     config:
       meta:
@@ -53,7 +57,7 @@ models:
       - name: latest_bmi_32_5_date
         description: Latest date in the 12-month window with numeric BMI at least 32.5
       - name: has_lower_bmi_threshold_ethnicity
-        description: Whether the most recent journal ethnicity code qualifies for the 32.5 threshold
+        description: Whether the latest journal ethnicity date equals the latest lower-threshold ethnicity date
         data_tests:
           - not_null
       - name: latest_ethnicity_date

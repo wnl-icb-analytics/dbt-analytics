@@ -1,18 +1,21 @@
 models:
   - name: fct_person_smoking_ind157
-    description: |
-      NICE IND157: LTC smokers offered support. One row per currently registered,
-      living, non-test person on the coronary heart disease, peripheral arterial
-      disease, stroke or TIA, hypertension, diabetes, COPD, chronic kidney disease or
-      asthma register, whose latest smoking status is current smoker, assessed on the
-      build date.
+    description: >-
+      Stop-smoking support for smokers with the listed long-term conditions (NICE IND157).
+      One row per person in the denominator on the build date.
 
-      Achievement requires a stop-smoking referral, a pharmacotherapy record or a
-      pharmacotherapy prescription in the preceding 12 months. QOF v51 SMOK004 defines
-      this evidence through REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD. Generic advice
-      and declined-care codes alone do not qualify.
 
-      Personalised care adjustments are not applied.
+      People registered on the build date whose latest smoking status is current smoker, on
+      coronary heart disease, peripheral arterial disease, stroke, transient ischaemic
+      attack, hypertension, diabetes, COPD, chronic kidney disease or asthma registers. The
+      asthma arm uses the treatment-dependent QOF register. Achieved with a stop-smoking
+      referral, drug treatment record or prescription in the 12 months before the build
+      date. Advice or declined care alone does not count. Smoking records require recorded
+      age of at least 11. No personalised care adjustments are applied. Based on NICE NG209.
+      Code lists: CHD_COD, PAD_COD, STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD,
+      DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD,
+      CKD1AND2_COD, CKDRES_COD, AST_COD, ASTRES_COD, LSMOK_COD, EXSMOK_COD, NSMOK_COD,
+      SMOK_COD, REFERSSSA_COD, PHARM_COD (PCD); PHARMDRUG_COD (NHS drug refset).
     config:
       meta:
         owner:
@@ -23,20 +26,21 @@ models:
           type: "MEASURE"
           category: "LIFESTYLE"
           clinical_domain: "Lifestyle"
-          name_short: "LTC smokers offered support"
-          description_short: "Smoking cessation support offered in the preceding 12 months to current smokers with a listed long-term condition"
-          description_long: |
-            Currently registered, living, non-test people on the coronary heart disease,
-            peripheral arterial disease, stroke or TIA, hypertension, diabetes, COPD,
-            chronic kidney disease or asthma register, whose latest smoking status is
-            current smoker.
-
-            Achievement requires a stop-smoking referral, a pharmacotherapy record or a
-            pharmacotherapy prescription in the preceding 12 months. QOF v51 SMOK004
-            defines this evidence through REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD.
-            Generic advice and declined-care codes alone do not qualify.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Long-term condition smoking support"
+          description_short: "Stop-smoking support for current smokers with the listed long-term conditions."
+          description_long: >-
+            People registered on the build date whose latest smoking status is current
+            smoker, on coronary heart disease, peripheral arterial disease, stroke,
+            transient ischaemic attack, hypertension, diabetes, COPD, chronic kidney disease
+            or asthma registers. The asthma arm uses the treatment-dependent QOF register.
+            Achieved with a stop-smoking referral, drug treatment record or prescription in
+            the 12 months before the build date. Advice or declined care alone does not
+            count. Smoking records require recorded age of at least 11. No personalised care
+            adjustments are applied. Based on NICE NG209. Code lists: CHD_COD, PAD_COD,
+            STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD,
+            DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD, CKD1AND2_COD,
+            CKDRES_COD, AST_COD, ASTRES_COD, LSMOK_COD, EXSMOK_COD, NSMOK_COD, SMOK_COD,
+            REFERSSSA_COD, PHARM_COD (PCD); PHARMDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -44,58 +48,65 @@ models:
           sort_order: "NICE_IND157"
     columns: &smoking_columns
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "NICE published indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Inclusive start of the 12-month achievement window, or 24 months for IND99."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years on the reporting date; null when the birth date is missing."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice on the build date."
       - name: latest_smoking_status
-        description: Latest recorded smoking status
+        description: "Latest smoking status on or before the reporting date, with no expiry; null when none. Same-day priority is current smoker, ex-smoker, never smoked, then non-smoker with unknown history."
       - name: latest_smoking_status_date
-        description: Date of the latest smoking status record
+        description: "Date of the latest smoking status on or before the reporting date; null when none."
       - name: latest_never_smoked_date
-        description: Date of the latest never-smoked record; null if none
+        description: "Latest explicit never-smoked record on or before the reporting date; null when none."
       - name: latest_smoking_intervention_date
-        description: Date of the latest smoking cessation support record; null if none
+        description: "Latest stop-smoking referral, drug treatment record or prescription on or before the reporting date, including evidence outside the achievement window; null when none."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception."
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
 
 
   - name: fct_person_smoking_ind156
-    description: |
-      NICE IND156: LTC smoking status recorded. One row per currently registered,
-      living, non-test person on the coronary heart disease, peripheral arterial
-      disease, stroke or TIA, hypertension, diabetes, COPD, chronic kidney disease or
-      asthma register, assessed on the build date.
+    description: >-
+      Smoking status in the listed long-term conditions (NICE IND156). One row per person in
+      the denominator on the build date.
 
-      Achievement requires a smoking status record in the preceding 12 months. A person
-      whose latest status is never smoked also qualifies without a recent record if they
-      reach 26 by the current financial year end. Their never-smoked record must be
-      after their 25th birthday and after their earliest qualifying diagnosis. The
-      optional three-year ex-smoker exception is not applied.
 
-      Personalised care adjustments are not applied.
+      People registered on the build date on coronary heart disease, peripheral arterial
+      disease, stroke, transient ischaemic attack, hypertension, diabetes, COPD, chronic
+      kidney disease or asthma registers. The asthma arm uses the treatment-dependent QOF
+      register. Achieved with smoking status in the 12 months before the build date, or
+      latest never-smoked status recorded after both the 25th birthday and earliest
+      qualifying diagnosis if age reaches 26 by financial year-end. Birthdays use
+      approximate birth dates. The ex-smoker allowance counts latest ex-smoker status
+      recorded in three consecutive financial years with no smoker record since the first
+      qualifying record. Smoking records require recorded age of at least 11. No
+      personalised care adjustments are applied. Based on NICE NG209. Code lists: CHD_COD,
+      PAD_COD, STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD,
+      DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD,
+      AST_COD, ASTRES_COD, LSMOK_COD, EXSMOK_COD, NSMOK_COD, SMOK_COD (PCD).
     config:
       meta:
         owner:
@@ -106,21 +117,23 @@ models:
           type: "MEASURE"
           category: "LIFESTYLE"
           clinical_domain: "Lifestyle"
-          name_short: "LTC smoking status recorded"
-          description_short: "Smoking status recorded in the preceding 12 months for people with a listed long-term condition"
-          description_long: |
-            Currently registered, living, non-test people on the coronary heart disease,
-            peripheral arterial disease, stroke or TIA, hypertension, diabetes, COPD,
-            chronic kidney disease or asthma register.
-
-            Achievement requires a smoking status record in the preceding 12 months. A
-            person whose latest status is never smoked also qualifies without a recent
-            record if they reach 26 by the current financial year end. Their
-            never-smoked record must be after their 25th birthday and after their
-            earliest qualifying diagnosis. The optional three-year ex-smoker exception
-            is not applied.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Long-term condition smoking status"
+          description_short: "Smoking status recorded for people with the listed long-term conditions."
+          description_long: >-
+            People registered on the build date on coronary heart disease, peripheral
+            arterial disease, stroke, transient ischaemic attack, hypertension, diabetes,
+            COPD, chronic kidney disease or asthma registers. The asthma arm uses the
+            treatment-dependent QOF register. Achieved with smoking status in the 12 months
+            before the build date, or latest never-smoked status recorded after both the
+            25th birthday and earliest qualifying diagnosis if age reaches 26 by financial
+            year-end. Birthdays use approximate birth dates. The ex-smoker allowance counts
+            latest ex-smoker status recorded in three consecutive financial years with no
+            smoker record since the first qualifying record. Smoking records require
+            recorded age of at least 11. No personalised care adjustments are applied. Based
+            on NICE NG209. Code lists: CHD_COD, PAD_COD, STRK_COD, TIA_COD, HYP_COD,
+            HYPRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, COPDDIAG_COD,
+            COPDPROC_COD, COPDRES_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, AST_COD,
+            ASTRES_COD, LSMOK_COD, EXSMOK_COD, NSMOK_COD, SMOK_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -128,57 +141,56 @@ models:
           sort_order: "NICE_IND156"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "NICE published indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Inclusive start of the 12-month achievement window, or 24 months for IND99."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years on the reporting date; null when the birth date is missing."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice on the build date."
       - name: latest_smoking_status
-        description: Latest recorded smoking status
+        description: "Latest smoking status on or before the reporting date, with no expiry; null when none. Same-day priority is current smoker, ex-smoker, never smoked, then non-smoker with unknown history."
       - name: latest_smoking_status_date
-        description: Date of the latest smoking status record
+        description: "Date of the latest smoking status on or before the reporting date; null when none."
       - name: latest_never_smoked_date
-        description: Date of the latest never-smoked record; null if none
+        description: "Latest explicit never-smoked record on or before the reporting date; null when none."
       - name: latest_smoking_intervention_date
-        description: Date of the latest smoking cessation support record; null if none
+        description: "Latest stop-smoking referral, drug treatment record or prescription on or before the reporting date, including evidence outside the achievement window; null when none."
       - name: is_status_recorded_in_period
-        description: Whether a smoking status was recorded in the period (IND156)
+        description: "Whether smoking status was recorded in the inclusive 12-month achievement window; null for indicators without this rule."
       - name: is_never_smoker_covered
-        description: Whether a never-smoker reaching 26 by the end of the financial year is covered by a never-smoked record after their 25th birthday and after their earliest listed diagnosis (IND156)
+        description: "Whether the latest status is Never Smoked and a never-smoked record follows both the 25th birthday and earliest listed diagnosis, with age 26 reached by 31 March of the reporting financial year; null for indicators without this rule."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception or the three-year ex-smoker allowance."
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
 
   - name: fct_person_smoking_nice_indicators
-    description: |
-      Smoking status and support NICE indicator results. One row per eligible person and
-      indicator on the build date. Covers IND97, IND156, IND157.
+    description: >-
+      NICE smoking results. One row per person and indicator on the build date.
 
-      Each indicator retains its own population, evidence window and exclusions. The
-      individual indicator models define these rules. Results feed the combined NICE
-      indicator table and family history.
 
-      Personalised care adjustments are not applied.
+      Includes IND97, IND98, IND99, IND156, IND157, with the eligibility, exclusions and
+      achievement rules documented for each indicator.
     config:
       meta:
         owner:
@@ -190,33 +202,40 @@ models:
               - person_id
               - indicator_id
     columns:
+      - name: indicator_name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
         data_tests:
           - accepted_values:
               arguments:
-                values: ['IND156', 'IND157', 'IND97']
+                values: ['IND156', 'IND157', 'IND97', 'IND98', 'IND99']
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
       - name: latest_smoking_status
-        description: Latest recorded smoking status
+        description: "Latest smoking status on or before the reporting date, with no expiry; null when none. Same-day priority is current smoker, ex-smoker, never smoked, then non-smoker with unknown history."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception or the three-year ex-smoker allowance."
 
   - name: fct_person_smoking_nice_indicators_snapshot_input
-    description: |
-      Current smoking NICE indicator evidence for change history. One row per person and
-      indicator. Records the current practice, qualifying evidence and outcome.
+    description: >-
+      NICE smoking results. One row per person and indicator.
 
-      Reporting dates are omitted so a daily build alone does not create a new
-      historical version. Changes to recorded evidence, practice or achievement can
-      create a version in the family snapshot.
+
+      Includes IND97, IND98, IND99, IND156, IND157, with the eligibility, exclusions and
+      achievement rules documented for each indicator. Records achievement and evidence used to
+      track changes in clinical results.
+      Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
         owner:
@@ -229,42 +248,45 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person identifier; part of the snapshot unique_key.
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier; part of the snapshot unique_key.
+        description: "NICE indicator identifier."
         data_tests:
           - not_null
       - name: current_practice_code
-        description: ODS code of the current registration practice at the build.
+        description: "ODS code of the registration practice on the build date."
       - name: latest_record_date
-        description: Date of the latest qualifying record; null when none in the period.
+        description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception."
       - name: is_in_numerator
-        description: Whether the person met the indicator at the build.
+        description: "Whether the person meets the documented achievement rule on the build date."
       - name: indicator_status
-        description: Outcome label at the build.
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
       - name: latest_smoking_status
-        description: Latest recorded smoking status at the build.
+        description: "Latest smoking status on or before the reporting date, with no expiry; null when none. Same-day priority is current smoker, ex-smoker, never smoked, then non-smoker with unknown history."
 
   - name: fct_person_smoking_ind97
-    description: |
-      NICE IND97: LTC and SMI smoking status. One row per currently registered, living,
-      non-test person on the coronary heart disease, peripheral arterial disease, stroke
-      or TIA, hypertension, diabetes, COPD, chronic kidney disease or asthma register,
-      or with an SMI diagnosis on the SMI register, assessed on the build date.
+    description: >-
+      Smoking status in long-term conditions or severe mental illness (NICE IND97). One row
+      per person in the denominator on the build date.
 
-      Achievement requires a smoking status record in the preceding 12 months. A person
-      whose latest status is never smoked also qualifies without a recent record if they
-      reach 26 by the current financial year end. Their never-smoked record must be
-      after their 25th birthday and after their earliest qualifying diagnosis. The
-      optional three-year ex-smoker exception is not applied.
 
-      SMI eligibility requires schizophrenia, bipolar affective disorder or another
-      psychosis; lithium therapy alone does not qualify. IND156 is the later indicator
-      that omits the SMI population.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date on coronary heart disease, peripheral arterial
+      disease, stroke, transient ischaemic attack, hypertension, diabetes, COPD, chronic
+      kidney disease or asthma registers. The asthma arm uses the treatment-dependent QOF
+      register. Schizophrenia, bipolar disorder and other psychoses count, including
+      remission; lithium alone does not. Achieved with smoking status in the 12 months
+      before the build date, or latest never-smoked status recorded after both the 25th
+      birthday and earliest qualifying diagnosis if age reaches 26 by financial year-end.
+      Birthdays use approximate birth dates. The three-year ex-smoker exception is not
+      applied. Smoking records require recorded age of at least 11. People who have not
+      achieved are excluded if smoking care was recorded as unsuitable in the last 12
+      months. No other personalised care adjustments are applied. Based on NICE NG209. Code
+      lists: CHD_COD, PAD_COD, STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD, DMTYPE1_COD,
+      DMTYPE2_COD, DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD,
+      CKD1AND2_COD, CKDRES_COD, AST_COD, ASTRES_COD, MH_COD, LSMOK_COD, EXSMOK_COD,
+      NSMOK_COD, SMOK_COD, SMOKPCAPU_COD (PCD).
     config:
       meta:
         owner:
@@ -275,26 +297,25 @@ models:
           type: "MEASURE"
           category: "LIFESTYLE"
           clinical_domain: "Lifestyle"
-          name_short: "LTC and SMI smoking status"
-          description_short: "Smoking status recorded in the preceding 12 months for people with a listed long-term condition or severe mental illness"
-          description_long: |
-            Currently registered, living, non-test people on the coronary heart disease,
-            peripheral arterial disease, stroke or TIA, hypertension, diabetes, COPD,
-            chronic kidney disease or asthma register, or with an SMI diagnosis on the
-            SMI register.
-
-            Achievement requires a smoking status record in the preceding 12 months. A
-            person whose latest status is never smoked also qualifies without a recent
-            record if they reach 26 by the current financial year end. Their
-            never-smoked record must be after their 25th birthday and after their
-            earliest qualifying diagnosis. The optional three-year ex-smoker exception
-            is not applied.
-
-            SMI eligibility requires schizophrenia, bipolar affective disorder or
-            another psychosis; lithium therapy alone does not qualify. IND156 is the
-            later indicator that omits the SMI population.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Smoking status, includes mental illness"
+          description_short: "Smoking status in long-term conditions or severe mental illness."
+          description_long: >-
+            People registered on the build date on coronary heart disease, peripheral
+            arterial disease, stroke, transient ischaemic attack, hypertension, diabetes,
+            COPD, chronic kidney disease or asthma registers. The asthma arm uses the
+            treatment-dependent QOF register. Schizophrenia, bipolar disorder and other
+            psychoses count, including remission; lithium alone does not. Achieved with
+            smoking status in the 12 months before the build date, or latest never-smoked
+            status recorded after both the 25th birthday and earliest qualifying diagnosis
+            if age reaches 26 by financial year-end. Birthdays use approximate birth dates.
+            The three-year ex-smoker exception is not applied. Smoking records require
+            recorded age of at least 11. People who have not achieved are excluded if
+            smoking care was recorded as unsuitable in the last 12 months. No other
+            personalised care adjustments are applied. Based on NICE NG209. Code lists:
+            CHD_COD, PAD_COD, STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD, DMTYPE1_COD,
+            DMTYPE2_COD, DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD,
+            CKD1AND2_COD, CKDRES_COD, AST_COD, ASTRES_COD, MH_COD, LSMOK_COD, EXSMOK_COD,
+            NSMOK_COD, SMOK_COD, SMOKPCAPU_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:

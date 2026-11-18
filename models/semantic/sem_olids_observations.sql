@@ -23,11 +23,13 @@
     - Pre-computed clinical classifications from int/fct models
 
     Observation Groups:
-    - Cardiovascular: BP, BP control, cholesterol, LDL, QRISK
-    - Metabolic: HbA1c, BMI, waist circumference
+    - Cardiovascular: BP, BP control, cholesterol, LDL, HDL, non-HDL,
+      triglycerides, total:HDL ratio, QRISK
+    - Metabolic: HbA1c, BMI, waist circumference and adult waist-to-height ratio, blood glucose
     - Renal: eGFR (CKD staging), creatinine, urine ACR
     - Liver: ALT, GGT, bilirubin, composite high-LFT flag
     - Haematology: haemoglobin (anaemia), platelets, eosinophils
+    - Lifestyle: smoking status
     - Frailty: calculated eFI2, GP-recorded eFI/eFI2, Rockwood Clinical Frailty Scale
 
     Diabetes care processes (foot exam, retinal screening, 8/9 care
@@ -59,13 +61,33 @@ TABLES(
         PRIMARY KEY (person_id)
         COMMENT = 'Latest LDL cholesterol measurement',
 
+    hdl AS {{ ref('int_cholesterol_hdl_latest') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Latest valid HDL cholesterol. Numeric bands support HEART UK levels above 1.0 mmol/L for men and above 1.2 for women. No sex is inferred from the observation, and higher HDL is not necessarily protective.',
+
+    non_hdl AS {{ ref('int_cholesterol_non_hdl_latest') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Latest valid non-HDL cholesterol. The general healthy-adult reference limit is below 4 mmol/L. NICE secondary prevention uses a separate 2.6 mmol/L target, which this view does not score.',
+
+    triglycerides AS {{ ref('int_triglycerides_latest') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Latest valid triglycerides. Numeric bands support HEART UK levels below 1.7 mmol/L fasting and below 2.0 non-fasting. Sampling context is only assigned where the PCD code description specifies it.',
+
+    hdl_ratio AS {{ ref('int_cholesterol_hdl_ratio_latest') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Latest valid recorded total cholesterol to HDL ratio. Dimensionless as recorded. The model does not calculate a ratio from separately dated results or assign a treatment target.',
+
     bmi AS {{ ref('int_bmi_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest BMI with ethnicity-adjusted categories per NICE NG246',
+        COMMENT = 'Latest valid BMI of 10-150 kg/m2, up to the build date. People are aged at least 18 at the build date, or at death. Recorded BMI, height and weight are kept only when measured at age 18 or over. Categories use ethnicity-adjusted NICE NG246 thresholds.',
 
     waist AS {{ ref('int_waist_circumference_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest waist circumference with risk categories',
+        COMMENT = 'Latest valid waist circumference with adult waist-to-height ratio and NG246 band where assessable',
+
+    glucose AS {{ ref('int_blood_glucose_latest') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Latest blood glucose with a fasting flag from the recorded concept. Values keep their source units; they are not converted or categorised.',
 
     egfr AS {{ ref('int_egfr_latest') }}
         PRIMARY KEY (person_id)
@@ -89,7 +111,7 @@ TABLES(
 
     efi2 AS {{ ref('int_efi2_scores') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Calculated eFI2 score per living person aged 65+ as at end_date, recomputed from current OLIDS data rather than GP-recorded like efi or clinician-assessed like Rockwood. This is the preferred frailty measure: it covers the whole 65+ cohort (~258k people, against ~10k with a GP-recorded eFI) and reflects the latest data rather than whenever a practice last coded a score. Use for the current eFI2 cohort only; do not combine its category with efi or Rockwood categories. Profiled 2026-08-11: 63.58% Robust, 20.57% Mild, 9.18% Moderate, 6.68% Severe among 258,355 scored people; 4,732 had no matching demographics row.',
+        COMMENT = 'Calculated current eFI2 for living OLIDS people whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month. No GP-registration restriction. Differs from GP-recorded eFI/eFI2 and clinician-assessed Rockwood; categories must not be combined. This OLIDS score replaces the retired AIC import, whose age coverage, BMI selection, defaults and source timing differed.',
 
     rockwood AS {{ ref('int_rockwood_latest') }}
         PRIMARY KEY (person_id)
@@ -97,11 +119,11 @@ TABLES(
 
     lft AS {{ ref('int_lft_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest liver function tests (ALT, GGT, bilirubin) with high flags vs clinical upper reference limits. Pairs with NAFLD/chronic liver disease registers.',
+        COMMENT = 'Latest liver function tests (ALT, GGT, bilirubin). A high flag is true when the value exceeds its QAdmissions abnormal-LFT threshold from qadmissions_lab_thresholds where direction is high, approximately three times the clinical upper limit of normal. Pairs with NAFLD/chronic liver disease registers.',
 
     haemoglobin AS {{ ref('int_haemoglobin_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest haemoglobin with anaemia category',
+        COMMENT = 'Latest valid haemoglobin in g/L after conversion. Keeps a non-null inferred value from 25 to 300 g/L, and excludes negative values, extreme outliers and values that stay out of range.',
 
     platelets AS {{ ref('int_platelets_latest') }}
         PRIMARY KEY (person_id)
@@ -109,7 +131,11 @@ TABLES(
 
     eosinophils AS {{ ref('int_eosinophil_count_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest blood eosinophil count with category. Relevant to asthma/COPD phenotyping and biologic eligibility.'
+        COMMENT = 'Latest blood eosinophil count with category. Relevant to asthma/COPD phenotyping and biologic eligibility.',
+
+    smoking AS {{ ref('int_smoking_status_latest') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Latest recorded smoking status from LSMOK_COD, EXSMOK_COD and NSMOK_COD, using observations at age 11 or older. Excludes status-free pack-years and unknown-consumption records. People without status evidence are absent; sem_olids_population includes Unknown for population denominators.'
 )
 
 RELATIONSHIPS(
@@ -118,8 +144,13 @@ RELATIONSHIPS(
     hba1c (person_id) REFERENCES demographics,
     cholesterol (person_id) REFERENCES demographics,
     ldl (person_id) REFERENCES demographics,
+    hdl (person_id) REFERENCES demographics,
+    non_hdl (person_id) REFERENCES demographics,
+    triglycerides (person_id) REFERENCES demographics,
+    hdl_ratio (person_id) REFERENCES demographics,
     bmi (person_id) REFERENCES demographics,
     waist (person_id) REFERENCES demographics,
+    glucose (person_id) REFERENCES demographics,
     egfr (person_id) REFERENCES demographics,
     creatinine (person_id) REFERENCES demographics,
     qrisk (person_id) REFERENCES demographics,
@@ -130,7 +161,8 @@ RELATIONSHIPS(
     lft (person_id) REFERENCES demographics,
     haemoglobin (person_id) REFERENCES demographics,
     platelets (person_id) REFERENCES demographics,
-    eosinophils (person_id) REFERENCES demographics
+    eosinophils (person_id) REFERENCES demographics,
+    smoking (person_id) REFERENCES demographics
 )
 
 FACTS(
@@ -139,6 +171,10 @@ FACTS(
     bp.diastolic_value AS diastolic_value COMMENT = 'Diastolic BP (mmHg)',
     cholesterol.cholesterol_value AS cholesterol_value COMMENT = 'Total cholesterol (mmol/L)',
     ldl.ldl_cholesterol_value AS cholesterol_value COMMENT = 'LDL cholesterol (mmol/L)',
+    hdl.hdl_cholesterol_value AS cholesterol_value WITH SYNONYMS = ('HDL', 'HDL-C') COMMENT = 'HDL cholesterol (mmol/L)',
+    non_hdl.non_hdl_cholesterol_value AS cholesterol_value WITH SYNONYMS = ('non-HDL', 'non HDL-C') COMMENT = 'Non-HDL cholesterol (mmol/L)',
+    triglycerides.triglycerides_value AS triglycerides_value WITH SYNONYMS = ('TG', 'triglyceride') COMMENT = 'Triglycerides (mmol/L)',
+    hdl_ratio.cholesterol_hdl_ratio AS cholesterol_hdl_ratio WITH SYNONYMS = ('TC:HDL', 'cholesterol ratio') COMMENT = 'Recorded total cholesterol to HDL ratio. Not calculated from separately dated results.',
     qrisk.qrisk_score AS qrisk_score WITH SYNONYMS = ('CVD risk', 'cardiovascular risk') COMMENT = 'QRISK score (%)',
     bp_control.latest_bp_reading_age_months AS latest_bp_reading_age_months COMMENT = 'Months since last BP reading',
 
@@ -146,6 +182,10 @@ FACTS(
     hba1c.hba1c_ifcc AS hba1c_ifcc COMMENT = 'HbA1c value (mmol/mol IFCC)',
     bmi.bmi_value AS bmi_value COMMENT = 'BMI value (kg/m2)',
     waist.waist_circumference_value AS waist_circumference_value COMMENT = 'Waist circumference (cm)',
+    waist.height_cm AS height_cm COMMENT = 'Nearest valid adult height within 365 days of the waist reading (cm)',
+    waist.bmi_value_at_waist AS bmi_value_at_waist COMMENT = 'Valid adult BMI within 90 days of the waist reading (kg/m2); used to check NG246 band applicability below 35',
+    waist.waist_to_height_ratio AS waist_to_height_ratio COMMENT = 'Adult waist divided by paired height; null when no valid height pairs',
+    glucose.blood_glucose_value AS result_value WITH SYNONYMS = ('glucose', 'blood sugar') COMMENT = 'Latest blood glucose in the recorded source unit. Units are not standardised; use result_unit_display.',
 
     -- Renal
     egfr.egfr_value AS egfr_value COMMENT = 'eGFR value (mL/min/1.73m2)',
@@ -164,7 +204,7 @@ FACTS(
 
     -- Frailty
     efi.latest_efi_score_preferred AS latest_efi_score_preferred COMMENT = 'Latest GP-recorded eFI or coded eFI2 score (0-1). Not the calculated eFI2 score.',
-    efi2.efi2_score AS efi_score WITH SYNONYMS = ('calculated eFI2 score', 'electronic frailty index 2 score') COMMENT = 'Calculated electronic Frailty Index 2 score (0-1) for living people aged 65+. Recomputed as at efi2_score_date; use efi2_category for population counts. Do not combine with GP-recorded eFI/eFI2 or Rockwood scores.',
+    efi2.efi2_score AS efi_score WITH SYNONYMS = ('calculated eFI2 score', 'electronic frailty index 2 score') COMMENT = 'Calculated eFI2 score (0-1) for the living cohort whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month. Recomputed at efi2_score_date. Separate from GP-recorded eFI/eFI2 and Rockwood.',
     rockwood.rockwood_score AS rockwood_score COMMENT = 'Rockwood Clinical Frailty Scale score (1-9)',
 
     -- ESP
@@ -182,8 +222,13 @@ DIMENSIONS(
     hba1c.latest_hba1c_date AS clinical_effective_date COMMENT = 'Date of latest HbA1c',
     cholesterol.latest_cholesterol_date AS clinical_effective_date COMMENT = 'Date of latest cholesterol',
     ldl.latest_ldl_date AS clinical_effective_date COMMENT = 'Date of latest LDL',
+    hdl.latest_hdl_date AS clinical_effective_date COMMENT = 'Date of latest HDL cholesterol',
+    non_hdl.latest_non_hdl_date AS clinical_effective_date COMMENT = 'Date of latest non-HDL cholesterol',
+    triglycerides.latest_triglycerides_date AS clinical_effective_date COMMENT = 'Date of latest triglycerides',
+    hdl_ratio.latest_hdl_ratio_date AS clinical_effective_date COMMENT = 'Date of latest total cholesterol to HDL ratio',
     bmi.latest_bmi_date AS clinical_effective_date COMMENT = 'Date of latest BMI',
     waist.latest_waist_date AS clinical_effective_date COMMENT = 'Date of latest waist circumference',
+    glucose.latest_blood_glucose_date AS clinical_effective_date COMMENT = 'Date of latest blood glucose',
     egfr.latest_egfr_date AS clinical_effective_date COMMENT = 'Date of latest eGFR',
     creatinine.latest_creatinine_date AS clinical_effective_date COMMENT = 'Date of latest creatinine',
     qrisk.latest_qrisk_date AS clinical_effective_date COMMENT = 'Date of latest QRISK',
@@ -195,6 +240,7 @@ DIMENSIONS(
     haemoglobin.latest_haemoglobin_date AS clinical_effective_date COMMENT = 'Date of latest haemoglobin',
     platelets.latest_platelets_date AS clinical_effective_date COMMENT = 'Date of latest platelet count',
     eosinophils.latest_eosinophil_date AS clinical_effective_date COMMENT = 'Date of latest eosinophil count',
+    smoking.latest_smoking_date AS clinical_effective_date COMMENT = 'Date of latest smoking status',
 
     -- Core Demographics
     demographics.gender AS gender COMMENT = 'Patient gender (Male, Female, Unknown)',
@@ -204,7 +250,7 @@ DIMENSIONS(
     demographics.age_band_nhs AS age_band_nhs COMMENT = 'NHS Digital standard age bands (0-4, 5-14, 15-24, ..., 75-84, 85+)',
     demographics.age_band_esp AS age_band_esp COMMENT = 'ESP 2013 age bands (<1, 1-4, 5-9, ..., 80-84, 85-89, 90-94, 95+). Join to esp_weight for standardised rates.',
     demographics.age_life_stage AS age_life_stage COMMENT = 'Life stage (Infant, Toddler, Child, Adolescent, Young Adult, Adult, Older Adult, Elderly, Very Elderly, Unknown)',
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.ethnicity_subcategory AS ethnicity_subcategory COMMENT = 'Ethnicity subcategory (White: British, White: Irish, White: Roma, White: Traveller, White: Other White, Mixed: White and Black Caribbean, Mixed: White and Black African, Mixed: White and Asian, Mixed: Other Mixed, Asian: Indian, Asian: Pakistani, Asian: Bangladeshi, Asian: Chinese, Asian: Other Asian, Black: African, Black: Caribbean, Black: Other Black, Other: Arab, Other: Other, Unknown, Not Stated, Not Recorded, Recorded Not Known, Refused)',
     demographics.ethnicity_granular AS ethnicity_granular COMMENT = 'Detailed ethnicity classification (Unknown if not recorded)',
     demographics.main_language AS main_language COMMENT = 'Main spoken language (Not Recorded if unknown)',
@@ -233,9 +279,9 @@ DIMENSIONS(
 
     -- Deprivation
     demographics.imd_decile_19 AS imd_decile_19 COMMENT = 'IMD 2019 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
-    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least). Preferred over 2019.',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
 
     -- Blood Pressure (raw)
     bp.is_home_bp_event AS is_home_bp_event WITH SYNONYMS = ('HBPM', 'home monitoring', 'home BP') COMMENT = 'TRUE when the representative latest paired BP reading is home monitored. This flag exists only in this latest-reading view, not sem_olids_observations_history.',
@@ -243,7 +289,7 @@ DIMENSIONS(
     bp.is_hypertensive_range AS is_hypertensive_range COMMENT = 'TRUE when any paired reading on the latest BP date was hypertensive: >=140/90 clinic or >=135/85 home/ABPM. It need not describe the representative lowest-of-day reading.',
 
     -- Blood Pressure Control
-    bp_control.is_overall_bp_controlled AS is_overall_bp_controlled WITH SYNONYMS = ('BP at target', 'BP controlled', 'controlled') COMMENT = 'BP controlled per NICE NG136 — measurement-aware (HBPM/ABPM targets are clinic -5 mmHg)',
+    bp_control.is_overall_bp_controlled AS is_overall_bp_controlled WITH SYNONYMS = ('BP at target', 'BP controlled', 'controlled') COMMENT = 'Latest BP below the NICE NG136 target (both systolic and diastolic strictly below). Clinic targets: 140/90 under 80 (also T2DM and CKD under 80); 150/90 at 80+; 130/80 for CKD with ACR >= 70 mg/mmol under 80. Home/ABPM targets are 5 mmHg lower (e.g. 135/85). FALSE when not controlled; NULL for people with no BP reading.',
     bp_control.is_systolic_controlled AS is_systolic_controlled COMMENT = 'Systolic BP below NG136 target (HBPM/ABPM target is clinic -5 mmHg)',
     bp_control.is_diastolic_controlled AS is_diastolic_controlled COMMENT = 'Diastolic BP below NG136 target (HBPM/ABPM target is clinic -5 mmHg)',
     bp_control.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage from the higher systolic/diastolic stage: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Home/ABPM uses lower Stage 1/2 thresholds.',
@@ -252,8 +298,8 @@ DIMENSIONS(
     bp_control.applied_measurement_context AS applied_measurement_context WITH SYNONYMS = ('BP threshold context', 'clinic vs home') COMMENT = 'CLINIC or HBPM_ABPM — which NG136 variant was used to score control, matching the latest reading source',
     bp_control.is_case_finding_candidate AS is_case_finding_candidate WITH SYNONYMS = ('BP case finding') COMMENT = 'Elevated BP but not on HTN register',
     bp_control.is_latest_bp_within_recommended_interval AS is_latest_bp_within_recommended_interval WITH SYNONYMS = ('BP timely', 'timely BP') COMMENT = 'BP within recommended interval',
-    bp_control.has_t2dm AS has_t2dm COMMENT = 'Has Type 2 diabetes (affects BP threshold)',
-    bp_control.has_ckd AS has_ckd COMMENT = 'Has CKD (affects BP threshold)',
+    bp_control.has_t2dm AS has_t2dm COMMENT = 'On diabetes register with Type 2 diabetes, used to pick the BP target. Populated only for people with a BP reading (the BP control cohort); NULL for everyone else. For T2DM cohorts use sem_olids_population diabetes_type = ''Type 2'' joined on person_id.',
+    bp_control.has_ckd AS has_ckd COMMENT = 'On CKD register, used to pick the BP target. Populated only for people with a BP reading; NULL for everyone else. For CKD cohorts use sem_olids_population has_chronic_kidney_disease.',
     bp_control.is_diagnosed_htn AS is_diagnosed_htn WITH SYNONYMS = ('on HTN register', 'diagnosed hypertension') COMMENT = 'On hypertension register',
 
     -- HbA1c Categories
@@ -264,16 +310,28 @@ DIMENSIONS(
     -- Cholesterol Categories
     cholesterol.cholesterol_category AS cholesterol_category COMMENT = 'Cholesterol category (Desirable, Borderline, High)',
     ldl.LDL_CVD_Target_Met AS LDL_CVD_Target_Met COMMENT = 'Valid LDL <=2 mmol/L (Met, Not Met); no CVD eligibility or reporting period applied',
+    hdl.hdl_cholesterol_category AS cholesterol_category COMMENT = 'HDL numeric bands supporting HEART UK levels: 1.0 or below, Above 1.0 to 1.2, Above 1.2. No sex is inferred, and higher HDL is not necessarily protective.',
+    non_hdl.non_hdl_cholesterol_category AS cholesterol_category COMMENT = 'Non-HDL bands against the general healthy-adult reference limit below 4 mmol/L: Below general reference limit, At or above general reference limit. Does not score the NICE 2.6 mmol/L secondary-prevention target.',
+    triglycerides.triglycerides_category AS triglycerides_category COMMENT = 'Triglyceride numeric bands supporting HEART UK levels: Below 1.7, 1.7 to below 2.0, 2.0 or above. Sampling context is only assigned where the PCD code specifies it.',
+
+    -- Blood Glucose
+    glucose.is_fasting AS is_fasting COMMENT = 'TRUE when the latest blood glucose concept is a fasting code.',
+    glucose.result_unit_display AS result_unit_display COMMENT = 'Recorded unit of the latest blood glucose. Values are not converted, so group or filter by this before averaging.',
+
+    -- Smoking Status
+    smoking.smoking_status AS smoking_status COMMENT = 'Latest recorded smoking status (Current Smoker, Ex-Smoker, Never Smoked, Non-Smoker (History Unknown)). People without a recorded status are absent; use sem_olids_population for an Unknown category.',
+    smoking.is_current_smoker AS is_current_smoker COMMENT = 'TRUE when the latest smoking status is Current Smoker.',
+    smoking.is_ex_smoker AS is_ex_smoker COMMENT = 'TRUE when the latest smoking status is Ex-Smoker.',
 
     -- BMI Categories
     bmi.bmi_category AS bmi_category COMMENT = 'BMI category (Underweight, Normal, Overweight, Obese Class I, Obese Class II, Obese Class III). Uses ethnicity-adjusted thresholds per NICE NG246.',
     bmi.requires_lower_bmi_thresholds AS requires_lower_bmi_thresholds COMMENT = 'Uses lower BMI thresholds for ethnicity',
-    bmi.is_valid_bmi AS is_valid_bmi COMMENT = 'BMI in valid range',
+    bmi.is_valid_bmi AS is_valid_bmi COMMENT = 'TRUE when BMI is within 10-150 kg/m2. This latest view keeps only valid values.',
 
-    -- Waist Circumference Categories
-    waist.waist_risk_category AS waist_risk_category COMMENT = 'Waist circumference risk (Low Risk, Moderate Risk Female, Moderate Risk, High Risk, Very High Risk)',
-    waist.is_high_waist_risk AS is_high_waist_risk COMMENT = 'Waist >=88cm',
-    waist.is_very_high_waist_risk AS is_very_high_waist_risk COMMENT = 'Waist >=102cm',
+    -- Adult central adiposity
+    waist.waist_to_height_ratio_category AS waist_to_height_ratio_category COMMENT = 'NG246: Healthy central adiposity (0.4 to below 0.5), Increased central adiposity (0.5 to below 0.6), High central adiposity (0.6 or more). Requires valid adult waist/height and BMI below 35 within 90 days. Otherwise null.',
+    waist.height_measurement_date AS height_measurement_date COMMENT = 'Date of paired height, within 365 days either side of the waist reading',
+    waist.bmi_measurement_date AS bmi_measurement_date COMMENT = 'Date of BMI used to check NG246 band applicability, within 90 days either side',
 
     -- eGFR / CKD Staging
     egfr.ckd_stage AS ckd_stage COMMENT = 'CKD stage (1, 2, 3a, 3b, 4, 5)',
@@ -297,13 +355,13 @@ DIMENSIONS(
     acr.is_macroalbuminuria AS is_macroalbuminuria COMMENT = 'Macroalbuminuria present',
 
     -- Liver Function
-    lft.is_high_alt AS is_high_alt COMMENT = 'ALT above clinical upper reference limit',
-    lft.is_high_ggt AS is_high_ggt COMMENT = 'GGT above clinical upper reference limit',
-    lft.is_high_bilirubin AS is_high_bilirubin COMMENT = 'Bilirubin above clinical upper reference limit',
-    lft.high_lft AS high_lft WITH SYNONYMS = ('abnormal LFT', 'deranged LFTs') COMMENT = 'Any of ALT/GGT/bilirubin above its upper reference limit',
+    lft.is_high_alt AS is_high_alt COMMENT = 'TRUE when ALT exceeds the ALT QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when ALT is absent.',
+    lft.is_high_ggt AS is_high_ggt COMMENT = 'TRUE when GGT exceeds the GGT QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when GGT is absent.',
+    lft.is_high_bilirubin AS is_high_bilirubin COMMENT = 'TRUE when bilirubin exceeds the bilirubin QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when bilirubin is absent.',
+    lft.high_lft AS high_lft WITH SYNONYMS = ('abnormal LFT', 'deranged LFTs') COMMENT = 'TRUE when any of ALT, GGT or bilirubin exceeds its QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal.',
 
     -- Haematology
-    haemoglobin.haemoglobin_category AS haemoglobin_category WITH SYNONYMS = ('anaemia category') COMMENT = 'Haemoglobin category (e.g. Anaemia, Normal, High)',
+    haemoglobin.haemoglobin_category AS haemoglobin_category WITH SYNONYMS = ('anaemia category') COMMENT = 'Category of the inferred g/L value: Abnormal below 20 or above 250, Severe Anaemia below 80, Moderate Anaemia below 100, Mild Anaemia (female threshold) below 120, Mild Anaemia (male threshold) below 130, Normal up to 180, otherwise Elevated. Sex is not used to choose the band.',
     platelets.platelets_category AS platelets_category WITH SYNONYMS = ('thrombocytopenia category') COMMENT = 'Platelet count category (e.g. Low, Normal, High)',
     eosinophils.eosinophil_category AS eosinophil_category COMMENT = 'Eosinophil count category (e.g. Normal, Raised). Raised eosinophils inform asthma/COPD biologic eligibility.',
 
@@ -348,6 +406,18 @@ METRICS(
     cholesterol.cholesterol_high_count AS COUNT(DISTINCT CASE WHEN cholesterol.cholesterol_category = 'High' THEN cholesterol.person_id END) COMMENT = 'Patients with high cholesterol',
     ldl.patients_with_ldl AS COUNT(DISTINCT ldl.person_id) COMMENT = 'Patients with LDL',
     ldl.ldl_at_target_count AS COUNT(DISTINCT CASE WHEN ldl.LDL_CVD_Target_Met = 'Met' THEN ldl.person_id END) COMMENT = 'People with latest valid LDL <=2 mmol/L; no CVD eligibility or reporting period applied',
+    hdl.patients_with_hdl AS COUNT(DISTINCT hdl.person_id) COMMENT = 'Patients with HDL cholesterol',
+    hdl.hdl_at_or_below_1_count AS COUNT(DISTINCT CASE WHEN hdl.cholesterol_category = '1.0 or below' THEN hdl.person_id END) COMMENT = 'Patients with HDL 1.0 mmol/L or below',
+    hdl.hdl_above_1_to_1_2_count AS COUNT(DISTINCT CASE WHEN hdl.cholesterol_category = 'Above 1.0 to 1.2' THEN hdl.person_id END) COMMENT = 'Patients with HDL above 1.0 to 1.2 mmol/L',
+    hdl.hdl_above_1_2_count AS COUNT(DISTINCT CASE WHEN hdl.cholesterol_category = 'Above 1.2' THEN hdl.person_id END) COMMENT = 'Patients with HDL above 1.2 mmol/L',
+    non_hdl.patients_with_non_hdl AS COUNT(DISTINCT non_hdl.person_id) COMMENT = 'Patients with non-HDL cholesterol',
+    non_hdl.non_hdl_below_reference_count AS COUNT(DISTINCT CASE WHEN non_hdl.cholesterol_category = 'Below general reference limit' THEN non_hdl.person_id END) COMMENT = 'Patients with non-HDL below 4 mmol/L',
+    non_hdl.non_hdl_at_or_above_reference_count AS COUNT(DISTINCT CASE WHEN non_hdl.cholesterol_category = 'At or above general reference limit' THEN non_hdl.person_id END) COMMENT = 'Patients with non-HDL at or above 4 mmol/L',
+    triglycerides.patients_with_triglycerides AS COUNT(DISTINCT triglycerides.person_id) COMMENT = 'Patients with triglycerides',
+    triglycerides.triglycerides_below_1_7_count AS COUNT(DISTINCT CASE WHEN triglycerides.triglycerides_category = 'Below 1.7' THEN triglycerides.person_id END) COMMENT = 'Patients with triglycerides below 1.7 mmol/L',
+    triglycerides.triglycerides_1_7_to_below_2_count AS COUNT(DISTINCT CASE WHEN triglycerides.triglycerides_category = '1.7 to below 2.0' THEN triglycerides.person_id END) COMMENT = 'Patients with triglycerides 1.7 to below 2.0 mmol/L',
+    triglycerides.triglycerides_2_or_above_count AS COUNT(DISTINCT CASE WHEN triglycerides.triglycerides_category = '2.0 or above' THEN triglycerides.person_id END) COMMENT = 'Patients with triglycerides 2.0 mmol/L or above',
+    hdl_ratio.patients_with_hdl_ratio AS COUNT(DISTINCT hdl_ratio.person_id) COMMENT = 'Patients with a recorded total cholesterol to HDL ratio',
 
     -- BMI
     bmi.patients_with_bmi AS COUNT(DISTINCT bmi.person_id) COMMENT = 'Patients with BMI',
@@ -359,8 +429,13 @@ METRICS(
 
     -- Waist Circumference
     waist.patients_with_waist AS COUNT(DISTINCT waist.person_id) COMMENT = 'Patients with waist measurement',
-    waist.waist_high_risk_count AS COUNT(DISTINCT CASE WHEN waist.is_high_waist_risk THEN waist.person_id END) COMMENT = 'Patients with high waist risk (>=88cm)',
-    waist.waist_very_high_risk_count AS COUNT(DISTINCT CASE WHEN waist.is_very_high_waist_risk THEN waist.person_id END) COMMENT = 'Patients with very high waist risk (>=102cm)',
+    waist.patients_with_waist_to_height_ratio AS COUNT(DISTINCT CASE WHEN waist.waist_to_height_ratio IS NOT NULL THEN waist.person_id END) COMMENT = 'Patients whose latest waist reading has a valid adult height pair',
+    waist.waist_increased_central_adiposity_count AS COUNT(DISTINCT CASE WHEN waist.waist_to_height_ratio_category = 'Increased central adiposity' THEN waist.person_id END) COMMENT = 'Patients in the NG246 Increased central adiposity band',
+    waist.waist_high_central_adiposity_count AS COUNT(DISTINCT CASE WHEN waist.waist_to_height_ratio_category = 'High central adiposity' THEN waist.person_id END) COMMENT = 'Patients in the NG246 High central adiposity band',
+
+    -- Blood Glucose
+    glucose.patients_with_blood_glucose AS COUNT(DISTINCT glucose.person_id) COMMENT = 'Patients with blood glucose',
+    glucose.fasting_blood_glucose_count AS COUNT(DISTINCT CASE WHEN glucose.is_fasting THEN glucose.person_id END) COMMENT = 'Patients whose latest blood glucose is a fasting concept',
 
     -- eGFR / CKD
     egfr.patients_with_egfr AS COUNT(DISTINCT egfr.person_id) COMMENT = 'Patients with eGFR',
@@ -391,7 +466,7 @@ METRICS(
     efi.efi_severely_frail_count AS COUNT(DISTINCT CASE WHEN efi.latest_efi_category_preferred = 'Severely Frail' THEN efi.person_id END) COMMENT = 'Patients severely frail (eFI)',
 
     -- Frailty (calculated eFI2)
-    efi2.patients_with_efi2 AS COUNT(DISTINCT efi2.person_id) COMMENT = 'Living people aged 65+ with a calculated eFI2 score',
+    efi2.patients_with_efi2 AS COUNT(DISTINCT efi2.person_id) COMMENT = 'People in the living eFI2 cohort whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month.',
     efi2.efi2_robust_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'ROBUST' THEN efi2.person_id END) COMMENT = 'People classed Robust by calculated eFI2',
     efi2.efi2_mild_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'MILD FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Mild Frailty by calculated eFI2',
     efi2.efi2_moderate_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'MODERATE FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Moderate Frailty by calculated eFI2',
@@ -404,12 +479,18 @@ METRICS(
 
     -- Liver Function
     lft.patients_with_lft AS COUNT(DISTINCT lft.person_id) COMMENT = 'Patients with any liver function test',
-    lft.high_lft_count AS COUNT(DISTINCT CASE WHEN lft.high_lft THEN lft.person_id END) COMMENT = 'Patients with any abnormal LFT (ALT/GGT/bilirubin above reference)',
+    lft.high_lft_count AS COUNT(DISTINCT CASE WHEN lft.high_lft THEN lft.person_id END) COMMENT = 'Patients with any of ALT, GGT or bilirubin above its QAdmissions abnormal-LFT threshold',
 
     -- Haematology
     haemoglobin.patients_with_haemoglobin AS COUNT(DISTINCT haemoglobin.person_id) COMMENT = 'Patients with haemoglobin',
     platelets.patients_with_platelets AS COUNT(DISTINCT platelets.person_id) COMMENT = 'Patients with platelet count',
     eosinophils.patients_with_eosinophils AS COUNT(DISTINCT eosinophils.person_id) COMMENT = 'Patients with eosinophil count',
+
+    -- Smoking
+    smoking.patients_with_smoking_status AS COUNT(DISTINCT smoking.person_id) COMMENT = 'Patients with a recorded smoking status',
+    smoking.current_smoker_count AS COUNT(DISTINCT CASE WHEN smoking.smoking_status = 'Current Smoker' THEN smoking.person_id END) COMMENT = 'Patients whose latest smoking status is Current Smoker',
+    smoking.ex_smoker_count AS COUNT(DISTINCT CASE WHEN smoking.smoking_status = 'Ex-Smoker' THEN smoking.person_id END) COMMENT = 'Patients whose latest smoking status is Ex-Smoker',
+    smoking.never_smoked_count AS COUNT(DISTINCT CASE WHEN smoking.smoking_status = 'Never Smoked' THEN smoking.person_id END) COMMENT = 'Patients whose latest smoking status is Never Smoked',
 
     -- Averages
     bp.avg_systolic_bp AS AVG(bp.systolic_value) COMMENT = 'Average systolic BP',
@@ -417,12 +498,17 @@ METRICS(
     hba1c.avg_hba1c AS AVG(hba1c.hba1c_ifcc) COMMENT = 'Average HbA1c',
     cholesterol.avg_cholesterol AS AVG(cholesterol.cholesterol_value) COMMENT = 'Average cholesterol',
     ldl.avg_ldl AS AVG(ldl.cholesterol_value) COMMENT = 'Average LDL',
+    hdl.avg_hdl AS AVG(hdl.cholesterol_value) COMMENT = 'Average HDL cholesterol',
+    non_hdl.avg_non_hdl AS AVG(non_hdl.cholesterol_value) COMMENT = 'Average non-HDL cholesterol',
+    triglycerides.avg_triglycerides AS AVG(triglycerides.triglycerides_value) COMMENT = 'Average triglycerides',
+    hdl_ratio.avg_hdl_ratio AS AVG(hdl_ratio.cholesterol_hdl_ratio) COMMENT = 'Average recorded total cholesterol to HDL ratio',
     bmi.avg_bmi AS AVG(bmi.bmi_value) COMMENT = 'Average BMI',
+    glucose.avg_blood_glucose AS AVG(glucose.result_value) COMMENT = 'Average blood glucose in mixed source units. Filter or group by result_unit_display before using this.',
     egfr.avg_egfr AS AVG(egfr.egfr_value) COMMENT = 'Average eGFR',
     qrisk.avg_qrisk AS AVG(qrisk.qrisk_score) COMMENT = 'Average QRISK',
     acr.avg_acr AS AVG(acr.acr_value) COMMENT = 'Average ACR',
     efi.avg_efi_score AS AVG(efi.latest_efi_score_preferred) COMMENT = 'Average eFI score',
-    efi2.avg_efi2_score AS AVG(efi2.efi_score) COMMENT = 'Average calculated eFI2 score among living people aged 65+',
+    efi2.avg_efi2_score AS AVG(efi2.efi_score) COMMENT = 'Average calculated eFI2 score in the living cohort whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month.',
     rockwood.avg_rockwood AS AVG(rockwood.rockwood_score) COMMENT = 'Average Rockwood score',
     lft.avg_alt AS AVG(lft.alt_value) COMMENT = 'Average ALT (U/L)',
     lft.avg_ggt AS AVG(lft.ggt_value) COMMENT = 'Average GGT (U/L)',
@@ -431,6 +517,6 @@ METRICS(
     eosinophils.avg_eosinophils AS AVG(eosinophils.inferred_value) COMMENT = 'Average eosinophil count (10^9/L)'
 )
 
-COMMENT = 'OLIDS Clinical Observations Semantic View - Latest biomarkers and frailty scores with category-based metrics. Includes patient-specific BP thresholds, liver function (ALT/GGT/bilirubin), haematology (haemoglobin/platelets/eosinophils), calculated eFI2, GP-recorded eFI/eFI2, and Rockwood frailty. Grain: one row per person; calculated eFI2 is current as-at scoring only, not a clinical history. ESP 2013 weights available via age_band_esp. Diabetes care processes, foot exam, and retinal screening live in sem_olids_diabetes_care. NICE BP indicators IND239-246 live in sem_olids_bp_indicators.'
-AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person with latest values; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(patients_with_bp_assessment), AGG(bp_controlled_count) FROM SEM_OLIDS_OBSERVATIONS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce out-of-target HbA1c patients here and SGLT2 exposure in sem_olids_prescribing before joining. BP control here uses patient-specific thresholds (T2DM, CKD, age); use sem_olids_bp_indicators for NICE IND239-246 fixed-target achievement. Prefer category-based counts over averages for population health questions. For eFI2 population questions, use efi2_category; its rows are already limited to the living 65+ scoring cohort. It is a calculated current score, not the GP-recorded eFI/eFI2 fields or Rockwood. Diabetes care processes and retinal screening are in sem_olids_diabetes_care. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
-AI_QUESTION_CATEGORIZATION 'Use this view for questions about: general patient-specific BP control, HbA1c control, cholesterol, BMI, waist circumference, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, and current frailty. For NICE BP indicators IND239-246 use sem_olids_bp_indicators. Use efi2_category for calculated eFI2 population counts in living people aged 65+; use latest_efi_* only for GP-recorded eFI/eFI2 and frailty_category only for Rockwood assessments. This view holds the LATEST value per biomarker only; calculated eFI2 has no serial history. For serial clinical readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker control x medication, care-process gaps x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'
+COMMENT = 'Latest clinical measurements for the OLIDS demographic population, with one row per person in each linked measurement table. People without measurements remain in the demographic population; measurement dates can differ. Demographics are current. ESP 2013 weights support age-standardised rates. person_id supports cohort linkage; final results must be aggregate-only. Diabetes care and NICE blood pressure indicators have separate views.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person with latest values; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(patients_with_bp_assessment), AGG(bp_controlled_count) FROM SEM_OLIDS_OBSERVATIONS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce out-of-target HbA1c patients here and SGLT2 exposure in sem_olids_prescribing before joining. BP control here uses patient-specific thresholds (T2DM, CKD, age); use sem_olids_bp_indicators for NICE IND239-246 fixed-target achievement. Prefer category-based counts over averages for population health questions. HDL, non-HDL and triglyceride categories are the upstream numeric bands, not invented treatment targets. The total:HDL ratio is the recorded ratio only. Blood glucose values keep source units, so group by result_unit_display before averaging. Smoking here is latest recorded status only; people without a record are absent. For eFI2 population questions, use efi2_category; its rows are already limited to the living 65+ scoring cohort. It is a calculated current score, not the GP-recorded eFI/eFI2 fields or Rockwood. Diabetes care processes and retinal screening are in sem_olids_diabetes_care. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
+AI_QUESTION_CATEGORIZATION 'Use this view for questions about: general patient-specific BP control, HbA1c control, total cholesterol, LDL, HDL, non-HDL, triglycerides, recorded total:HDL ratio, blood glucose, smoking status, BMI, waist circumference and adult waist-to-height ratio, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, and current frailty. Do not invent a treatment target for the total:HDL ratio. Blood glucose is not categorised and units are not standardised. Smoking status here is the latest recorded QOF status; use sem_olids_population when Unknown (no record) must be in the denominator. For NICE BP indicators IND239-246 use sem_olids_bp_indicators. Use efi2_category for calculated eFI2 population counts in living people aged 65+; use latest_efi_* only for GP-recorded eFI/eFI2 and frailty_category only for Rockwood assessments. This view holds the LATEST value per biomarker only; calculated eFI2 has no serial history. For serial clinical readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker control x medication, care-process gaps x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

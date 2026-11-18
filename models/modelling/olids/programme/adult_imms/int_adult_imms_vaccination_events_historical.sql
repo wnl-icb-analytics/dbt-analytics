@@ -135,7 +135,8 @@ QUALIFY
 -- keep only rows that are not beaten by a future better priority
     AND priority = best_future_priority
 )
---IDENTIFY DUPLICATE ROWS WHERE SAME CODE CAN BE USED FOR DIFFERENT DOSES
+--fix september 2026
+--IDENTIFY DUPLICATE ROWS WHERE SAME CODE CAN BE USED FOR DIFFERENT DOSES - BUT NOT FOR PPV and RSV (sort DESC for latest of these)
 ,IMM_ADM_DOSE_DEDUP as (
 	SELECT 
 	PERSON_ID,
@@ -145,9 +146,14 @@ QUALIFY
 	DOSE_NUMBER,
     EVENT_TYPE,
 	EVENT_DATE,
-	--ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num 
-    --keep event-type in.
-   ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE ORDER BY EVENT_DATE ASC) AS row_num
+    --keep event-type in and sort depending on the vaccine_id.
+  ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE ORDER BY
+    CASE
+    WHEN VACCINE_ID LIKE 'SHING%' THEN EVENT_DATE END ASC,
+    CASE
+    WHEN VACCINE_ID LIKE ANY ('PPV%', 'RSV%') THEN EVENT_DATE
+    END DESC
+    ) AS row_num
     FROM IMM_ADM_DECLINED_CONFLICT     
           ) 
 --in some cases someone has been vaccinated and then had a subsequent contraindicated code added. Choose earlier Admin

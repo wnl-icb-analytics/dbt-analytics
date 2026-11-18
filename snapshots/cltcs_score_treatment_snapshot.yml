@@ -3,9 +3,18 @@ snapshots:
     relation: ref('cltcs_score_treatment_snapshot_input')
     description: >
       SCD2 history of the C-LTCS treatment sub-score and its scaled subdomain
-      components, keyed on `sk_patient_id`. Built to support matching cohort
-      patients against a control cohort by comparing score state as-at a given
-      date.
+      components, keyed on `sk_patient_id` and `inclusion_rule`: one history per
+      patient per C-LTCS cohort ('original_criteria' or 'adults_with_complexity').
+      Built to support matching cohort patients against a control cohort by
+      comparing score state as-at a given date.
+
+      The snapshot also holds closed 'segment_7' histories. The second cohort was
+      first defined as segment 7 of fct_person_segment, then replaced in October
+      2026 by the Adults with Complexity cohort (fct_person_complex_adults, which
+      also includes people on the palliative care register). 'segment_7' rows were
+      scored against the segment 7 comparison group and keep that label; they were
+      closed when the cohort was replaced. 'adults_with_complexity' history starts
+      from that change.
 
       `check_cols` is `score_treatment` only, so a new version opens when the
       final score changes. The scaled subdomain scores are carried in the
@@ -21,7 +30,7 @@ snapshots:
 
     config:
       strategy: check
-      unique_key: [sk_patient_id]
+      unique_key: [sk_patient_id, inclusion_rule]
       updated_at: table_refresh_date
       hard_deletes: invalidate
       check_cols:
@@ -30,6 +39,11 @@ snapshots:
     columns:
       - name: sk_patient_id
         description: "Unique patient identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: inclusion_rule
+        description: "C-LTCS cohort the score belongs to: 'original_criteria', 'adults_with_complexity', or 'segment_7' (closed history from before October 2026). Part of the snapshot unique_key."
         data_tests:
           - not_null
 

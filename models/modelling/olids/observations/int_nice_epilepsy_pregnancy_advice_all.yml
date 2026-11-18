@@ -1,0 +1,26 @@
+models:
+- name: int_nice_epilepsy_pregnancy_advice_all
+  description: >-
+    Epilepsy pregnancy and contraception advice. One row per observation and code-list group,
+    including inactive and deceased people, through the build date. Code lists: PCD EPILCC_COD,
+    EPILPA_COD and EPILPCA_COD.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: EPILCC_COD, EPILPA_COD, EPILPCA_COD
+        source: PCD
+  columns:
+  - name: event_date
+    description: Corrected clinical date.
+  - name: source_cluster_id
+    description: >-
+      Code-list group identifying the evidence.

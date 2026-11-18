@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: qadmissions_predictions_history
+    description: >
+      Append-only monthly history of qadmissions_predictions: one row per
+      person per calendar month scored. Each row keeps the inputs that
+      produced its score.
+
+      A month is added on the first build in that month. Later builds in the
+      same month add nothing, and --full-refresh does not rebuild the table.
+      A month is not added when the failure guard on qadmissions_predictions
+      fails, so the previous months stand. To rescore a month, delete its
+      rows and rebuild.
+
+      The history exists only in this table, so do not rename or remove the
+      model without first copying the table.
+
+      Columns are as in qadmissions_predictions.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - score_month
+    columns:
+      - name: person_id
+        data_type: varchar
+        description: "OLIDS person identifier. With score_month, identifies a row."
+        data_tests:
+          - not_null
+
+      - name: score_month
+        data_type: date
+        description: "First day of the calendar month in which the row was scored."
+        data_tests:
+          - not_null

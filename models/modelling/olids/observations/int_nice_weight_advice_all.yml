@@ -1,0 +1,32 @@
+models:
+- name: int_nice_weight_advice_all
+  description: >-
+    Weight management advice from PCD WTMGINT_COD. One row per observation, including inactive
+    and deceased people and all clinical dates. Includes diet, exercise and referral advice in
+    the code list.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: WTMGINT_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation identifier.
+  - name: person_id
+    description: Person identifier.
+  - name: clinical_effective_date
+    description: Clinical advice timestamp.
+  - name: date_recorded
+    description: Source recorded date.
+  - name: concept_code
+    description: SNOMED CT concept code.
+  - name: concept_display
+    description: Authoritative concept display.

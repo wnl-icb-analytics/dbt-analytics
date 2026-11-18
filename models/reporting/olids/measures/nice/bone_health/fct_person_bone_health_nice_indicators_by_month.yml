@@ -1,0 +1,54 @@
+models:
+- name: fct_person_bone_health_nice_indicators_by_month
+  description: >-
+    Bone health NICE indicator results (IND91, IND92). One row per person, indicator and
+    month-end.
+
+
+    Each indicator uses its own denominator, evidence window and exclusions, described in
+    the member measures. Clinical fields are null where they do not apply to an indicator.
+    No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Start date of the indicator measurement or diagnosis cohort period; inclusion of this date depends on the indicator."
+  - name: age
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: latest_bone_sparing_order_date
+    description: "Latest bone-sparing drug prescription by the reporting date; it may be outside the 6-month treatment window. Null when never prescribed. Null where the field does not apply to an indicator."
+  - name: latest_record_date
+    description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

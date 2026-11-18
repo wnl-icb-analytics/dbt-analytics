@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  - name: dq_monitoring_provider_status
+    description: >
+      Historical provider-level monitoring status for configured core
+      providers. Detects absent providers, assesses SLAM providers against
+      the expected actual financial period, and exposes provider-level
+      volume movement for review.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: Date on which the provider assessment was performed.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Identifier of the monitored dataset.
+        tests:
+          - not_null
+
+      - name: dataset_group
+        description: Dataset family controlling the provider assessment logic.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['SUS', 'SLAM']
+
+      - name: provider_code
+        description: Provider organisation code.
+        tests:
+          - not_null
+
+      - name: provider_name
+        description: Provider organisation name resolved through provider configuration.
+        tests:
+          - not_null
+
+      - name: provider_scope
+        description: Operational classification assigned to the provider.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['CORE', 'OTHER']
+
+      - name: monitor_individually
+        description: Indicates whether the provider receives individual DQ assessment.
+        tests:
+          - not_null
+
+      - name: alert_enabled
+        description: Indicates whether the provider may subsequently generate automated alerts.
+        tests:
+          - not_null
+
+      - name: row_count
+        description: Current provider-level row count. Null indicates that the expected provider was absent.
+
+      - name: previous_row_count
+        description: Provider row count from the preceding measurement.
+
+      - name: row_count_change
+        description: Absolute provider row-count movement from the preceding measurement.
+
+      - name: row_count_change_pct
+        description: Percentage provider row-count movement from the preceding measurement.
+
+      - name: latest_refresh_date
+        description: Latest valid source dataset-created date observed for the provider.
+
+      - name: latest_actual_financial_year
+        description: Latest financial year containing actual provider activity where applicable.
+
+      - name: latest_actual_financial_month
+        description: Latest financial month containing actual provider activity where applicable.
+
+      - name: latest_update_date
+        description: Latest source processing or update date observed for the provider.
+
+      - name: expected_financial_year
+        description: Expected actual financial year derived from the modal core-provider reporting position.
+
+      - name: expected_financial_month
+        description: Expected actual financial month derived from the modal core-provider reporting position.
+
+      - name: provider_status
+        description: Current provider traffic-light assessment for the historical measurement date.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: status_rank
+        description: Numeric severity rank used for dashboard sorting.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+
+      - name: status_reason
+        description: Human-readable explanation of the provider assessment.
+        tests:
+          - not_null

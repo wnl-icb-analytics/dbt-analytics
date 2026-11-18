@@ -1,0 +1,40 @@
+models:
+- name: fct_person_dementia_nice_indicators_by_month
+  description: >-
+    Dementia baseline tests indicator results (IND80, IND118). One row per eligible
+    person, indicator and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility,
+    exclusions and achievement follow the individual measures. Supporting fields are null
+    where an indicator does not provide them. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."

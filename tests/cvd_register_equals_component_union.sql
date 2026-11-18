@@ -1,3 +1,5 @@
+{{ config(tags=['reconciliation']) }}
+
 -- CD_REG must contain exactly the union of the live CHD and stroke/TIA registers.
 
 WITH expected_membership AS (

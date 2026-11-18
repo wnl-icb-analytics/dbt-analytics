@@ -1,0 +1,738 @@
+unit_tests:
+- name: nice_ind131_season_switch_and_contraindication_policy
+  model: fct_person_flu_vaccination_ind131_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_flu_season_vaccination_all')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+  - input: ref('fct_person_chd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+  - input: ref('int_flu_vaccination_contraindication_all')
+    format: sql
+    rows: |-
+      SELECT -12102::NUMBER AS person_id, '2025-04-30'::TIMESTAMP_NTZ AS clinical_effective_date, FALSE AS is_persisting
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_persisting
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-06-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_persisting
+  expect:
+    rows:
+    - person_id: -12101
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind141_season_switch_and_contraindication_policy
+  model: fct_person_flu_vaccination_ind141_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_flu_season_vaccination_all')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+  - input: ref('fct_person_copd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+  - input: ref('int_flu_vaccination_contraindication_all')
+    format: sql
+    rows: |-
+      SELECT -12102::NUMBER AS person_id, '2025-04-30'::TIMESTAMP_NTZ AS clinical_effective_date, FALSE AS is_persisting
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_persisting
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-06-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_persisting
+  expect:
+    rows:
+    - person_id: -12101
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind152_season_switch_and_contraindication_policy
+  model: fct_person_flu_vaccination_ind152_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_flu_season_vaccination_all')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+  - input: ref('fct_person_chd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+  - input: ref('fct_person_stroke_tia_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+  - input: ref('fct_person_copd_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+  expect:
+    rows:
+    - person_id: -12101
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind163_season_switch_and_contraindication_policy
+  model: fct_person_flu_vaccination_ind163_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_flu_season_vaccination_all')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, '2020-01-01'::TIMESTAMP_NTZ AS earliest_type2_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+  - input: ref('int_flu_vaccination_contraindication_all')
+    format: sql
+    rows: |-
+      SELECT -12102::NUMBER AS person_id, '2025-04-30'::TIMESTAMP_NTZ AS clinical_effective_date, FALSE AS is_persisting
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_persisting
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-06-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_persisting
+  expect:
+    rows:
+    - person_id: -12101
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind164_season_switch_and_contraindication_policy
+  model: fct_person_flu_vaccination_ind164_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS reporting_date, 60::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_flu_season_vaccination_all')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2024 AS season_year, '2024-09-01'::DATE AS latest_vaccination_date, TRUE AS is_laiv
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, 2025 AS season_year, '2025-09-01'::DATE AS latest_vaccination_date, FALSE AS is_laiv
+  - input: ref('fct_person_stroke_tia_register_by_month')
+    format: sql
+    rows: |-
+      SELECT -12101::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12101::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12102::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12103::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-04-30'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+      UNION ALL
+      SELECT -12104::NUMBER AS person_id, '2026-05-31'::DATE AS month_end_date, TRUE AS is_on_register, '2020-01-01'::TIMESTAMP_NTZ AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date
+  expect:
+    rows:
+    - person_id: -12101
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12101
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12102
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12103
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-04-30'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -12104
+      reporting_date: '2026-05-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history

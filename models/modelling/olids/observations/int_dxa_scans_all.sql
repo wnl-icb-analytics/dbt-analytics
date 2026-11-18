@@ -7,7 +7,7 @@
 /*
 All DXA scan observations from clinical records.
 Uses QOF DXA cluster IDs:
-- DXA_COD: DXA scan procedures
+- DXA_COD: DXA scan results of osteoporotic without a numeric value
 - DXA2_COD: DXA T-score measurements (with numeric results)
 
 Clinical Purpose:
@@ -17,7 +17,7 @@ Clinical Purpose:
 - Support for osteoporosis register eligibility
 
 Key Clinical Information:
-- DXA scan procedures (DXA_COD)
+- Osteoporotic DXA results (DXA_COD)
 - T-score measurements (DXA2_COD) with numeric validation
 - T-score ≤ -2.5 indicates osteoporosis
 - Used in combination with clinical diagnosis for register inclusion
@@ -64,16 +64,15 @@ WITH base_observations AS (
             ELSE NULL
         END AS t_score_interpretation,
 
-        -- QOF osteoporosis confirmation flag
+        -- QOF v51 uses the unrounded T-score <= -2.5, with no lower limit
         CASE
             WHEN obs.cluster_id = 'DXA2_COD'
-                 AND CAST(obs.result_value AS NUMBER(6,2)) IS NOT NULL
-                 AND CAST(obs.result_value AS NUMBER(6,2)) <= -2.5
+                 AND obs.result_value <= -2.5
             THEN TRUE
             ELSE FALSE
         END AS confirms_osteoporosis_diagnosis
 
-    FROM ({{ get_observations("'DXA_COD', 'DXA2_COD'") }}) obs
+    FROM ({{ get_observations("'DXA_COD', 'DXA2_COD'", source='PCD') }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
 )
 

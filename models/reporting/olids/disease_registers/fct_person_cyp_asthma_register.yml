@@ -3,8 +3,9 @@ models:
     description: 'Children and young people asthma register for paediatric asthma
       management.
 
-      One row per person under 18 years with latest AST_COD > latest ASTRES_COD and
-      asthma medication prescribed within last 12 months.'
+      One row per person under 18 years with an AST_COD diagnosis and no ASTRES_COD
+      on or after that date. Evidence is dated on or before today. ASTTRT_COD medication
+      must be prescribed after the date 12 months before today and on or before today.'
 
     tests:
       - dbt_utils.at_least_one:
@@ -21,11 +22,10 @@ models:
           description_short: "Children and young people asthma register (non-QOF)"
           description_long: >
             Asthma register for children and young people under 18 years. Includes
-            persons  with active asthma diagnosis (latest AST_COD more recent than
-            any ASTRES_COD)  AND asthma medication prescribed within the last 12 months.
-            This register  differs from QOF asthma by restricting to under-18 population
-            and requiring  medication validation. Uses AST_COD (diagnosis), ASTRES_COD
-            (resolution),  and ASTTRT_COD (treatment) cluster codes.
+            persons with an AST_COD diagnosis and no ASTRES_COD on or after that date.
+            Treatment must be prescribed after the date 12 months before today and
+            on or before today. This local register uses an under-18 age threshold.
+            Uses AST_COD (diagnosis), ASTRES_COD (resolution) and ASTTRT_COD (treatment).
           is_qof: false
           source_column: "is_on_register"
           sort_order: "COND_RESP_CYP_AST"

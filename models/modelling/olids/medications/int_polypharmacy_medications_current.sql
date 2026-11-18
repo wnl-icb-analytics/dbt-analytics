@@ -6,16 +6,7 @@
     )
 }}
 
-/*
-Current repeat medications within polypharmacy scope (BNF chapters 1-4, 6-10).
-
-Filters current repeat medications to only those in polypharmacy scope using
-NHSBSA standard BNF chapter inclusion list. Significant row reduction occurs
-at this layer through the BNF scope INNER JOIN.
-
-Grain: One row per person × current polypharmacy-scope medication
-*/
-
+-- One row per person and current repeat product in the NHSBSA chapter scope.
 SELECT
     mo.person_id,
     mo.mapped_concept_code,
@@ -23,7 +14,11 @@ SELECT
     bnf.bnf_chapter,
     bnf.bnf_name,
     mo.latest_order_date,
-    mo.latest_duration
+    mo.latest_duration,
+    mo.effective_duration_days,
+    mo.is_duration_imputed,
+    mo.supply_end_date,
+    bnf.bnf_chemical_code
 FROM {{ ref('int_medication_orders_repeat_current') }} mo
 INNER JOIN {{ ref('int_polypharmacy_medications_list') }} bnf
     ON mo.mapped_concept_code = bnf.snomed_code

@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_smi_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
--- and derives age at the reference date where age is used.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -52,9 +51,9 @@ WITH smi_diagnoses AS (
         AND
         MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) IS NOT NULL
         AND
-        MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
+        CAST(MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) AS DATE)
             >=
-        MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
+        CAST(MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS DATE)
     )
     OR
     (
@@ -70,8 +69,8 @@ WITH smi_diagnoses AS (
          (
               MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) IS NOT NULL
               AND MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) IS NOT NULL
-              AND MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
-                  >= MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
+              AND CAST(MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) AS DATE)
+                  >= CAST(MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS DATE)
           )
           OR
           (
@@ -85,6 +84,7 @@ WITH smi_diagnoses AS (
         ARRAY_AGG(DISTINCT CASE WHEN is_resolved_code THEN concept_code END) AS all_resolved_concept_codes,
         ARRAY_AGG(DISTINCT CASE WHEN is_resolved_code THEN concept_display END) AS all_resolved_concept_displays
     FROM {{ ref('int_smi_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -94,7 +94,7 @@ lithium_stops AS (
         person_id,
         MAX(CAST(clinical_effective_date AS DATE)) AS litstp_dat
     FROM ({{ get_observations("'LITSTP_COD'", source='PCD') }})
-    WHERE clinical_effective_date <= CURRENT_DATE()
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
         AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= CURRENT_DATE())
     GROUP BY person_id
 ),
@@ -123,7 +123,7 @@ lithium_medications AS (
     FROM lithium_recent AS lr
     LEFT JOIN lithium_stops AS s
         ON lr.person_id = s.person_id
-        AND s.litstp_dat > lr.latest_lithium_order_date
+        AND CAST(s.litstp_dat AS DATE) > CAST(lr.latest_lithium_order_date AS DATE)
     WHERE s.person_id IS NULL
 ),
 
