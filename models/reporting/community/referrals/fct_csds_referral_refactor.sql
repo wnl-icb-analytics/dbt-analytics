@@ -1,8 +1,9 @@
 {{ config(materialized='table') }}
 
-WITH 
+WITH
+
 ---------------------------------------------------------------------------------------------------------
--- 0. REFERRALS CORE CTE (Pass 1)
+-- 0A. GOVERNED REFERRAL CORE
 ---------------------------------------------------------------------------------------------------------
 REFERRALS AS (
     SELECT *
@@ -10,26 +11,50 @@ REFERRALS AS (
     WHERE referral_received_date >= '2021-04-01'
 ),
 
-NORMALISED_REFERRALS AS (
-    SELECT 
+---------------------------------------------------------------------------------------------------------
+-- 0B. LEGACY REFERRAL FIELDS TEMPORARILY RETAINED
+-- Required for CLEAN_TEAM_CODE, RTT/UCR and post-Covid logic.
+---------------------------------------------------------------------------------------------------------
+LEGACY_REFERRALS AS (
+    SELECT
         REF.*,
+
         LPAD(
             TRIM(
                 SPLIT_PART(
-                    CASE 
-                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '22' THEN '58'
-                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '28' THEN '57'
-                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '4'  THEN '04'
-                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '99' 
-                             AND LEFT(REF."Organisation_identifier_(Code_of_provider)", 3) = 'RKE' THEN '12'
-                        ELSE REF."ServOrTeamTypeRefToCC_(Latest_List)_DV" 
+                    CASE
+                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '22'
+                            THEN '58'
+
+                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '28'
+                            THEN '57'
+
+                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '4'
+                            THEN '04'
+
+                        WHEN LEFT(TRIM(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"), 2) = '99'
+                             AND LEFT(
+                                 REF."Organisation_identifier_(Code_of_provider)",
+                                 3
+                             ) = 'RKE'
+                            THEN '12'
+
+                        ELSE REF."ServOrTeamTypeRefToCC_(Latest_List)_DV"
                     END,
-                    ',', 1
+                    ',',
+                    1
                 )
             ),
-            2, '0'
+            2,
+            '0'
         ) AS CLEAN_TEAM_CODE
+
     FROM DATA_LAKE.CSDS_SIMPLE."tblReferral" REF
+
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY REF."Unique_service_request_identifier"
+        ORDER BY REF."Record_Number" DESC
+    ) = 1
 ),
 
 PATIENT_DEDUPED AS (
@@ -290,7 +315,7 @@ PV AS (
         LEFT(CYP102."ORGANISATION CODE (PROVIDER)", 3) AS PROVIDERCODE, 
         'TRUE' AS "Post Covid flag"
     FROM DATA_LAKE.CSDS."CYP102ServiceTypeReferredTo" CYP102
-    INNER JOIN NORMALISED_REFERRALS REF
+    INNER JOIN LEGACY_REFERRALS REF
         ON CYP102."RECORD NUMBER" = REF."Record_Number"
        AND CYP102."PERSON ID" = REF."Person_ID"
        AND CYP102."UNIQUE SERVICE REQUEST IDENTIFIER" = REF."Unique_service_request_identifier"
@@ -393,7 +418,7 @@ SELECT
     REF.REFERRING_ORGANISATION_NAME AS REFERRING_ORGANISATION_NAME,
     REF.PRIMARY_REASON_FOR_REFERRAL_CODE AS PRIMARY_REASON_FOR_REFERRAL_CODE,
     REF.PRIMARY_REASON_FOR_REFERRAL_NAME AS PRIMARY_REASON_FOR_REFERRAL_DESC,
-    REF.CLEAN_TEAM_CODE AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_CODE,
+    LEGACY.CLEAN_TEAM_CODE AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_CODE,
     COALESCE(CSLK3.DESCRIPTION, 'Unknown Service') AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_NAME,
     REF.PRIORITY_TYPE_CODE AS PRIORITY_TYPE_CODE,
     REF.PRIORITY_TYPE_NAME AS PRIORITY_TYPE_DESC,
@@ -412,32 +437,32 @@ SELECT
          WHEN PAT1."Local_authority_district_unitary_authority" = 'E09000013' THEN 'Hammersmith and Fulham' 
          ELSE 'Non-WNL residence'
     END AS BOROUGH_OF_RESIDENCE,
-    REF."Waiting_time_measurement_type_(Community_Care)" AS WAITING_TIME_MEASUREMENT_TYPE_CODE,
+    LEGACY."Waiting_time_measurement_type_(Community_Care)" AS WAITING_TIME_MEASUREMENT_TYPE_CODE,
     CSLK4.DESCRIPTION AS WAITING_TIME_MEASUREMENT_TYPE_DESC,
-    CASE WHEN (REF.REFERRAL_RECEIVED_DATE < '2023-04-01' AND REF."ServOrTeamTypeRefToCC_(Latest_List)_DV" IN ('45','51','52','53') AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7')
+    CASE WHEN (REF.REFERRAL_RECEIVED_DATE < '2023-04-01' AND LEGACY."ServOrTeamTypeRefToCC_(Latest_List)_DV" IN ('45','51','52','53') AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7')
             OR REF.REFERRAL_RECEIVED_DATE >= '2023-04-01' AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7')) 
-          AND DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 0 AND 120 
+          AND DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 0 AND 120 
          THEN 1 
          ELSE 0
     END AS FLAG_FOR_2HR,
-    CASE WHEN REF.REFERRAL_RECEIVED_DATE < '2023-04-01' AND REF."ServOrTeamTypeRefToCC_(Latest_List)_DV" IN ('45','51','52','53') AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7') THEN 1
+    CASE WHEN REF.REFERRAL_RECEIVED_DATE < '2023-04-01' AND LEGACY."ServOrTeamTypeRefToCC_(Latest_List)_DV" IN ('45','51','52','53') AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7') THEN 1
          WHEN REF.REFERRAL_RECEIVED_DATE >= '2023-04-01' AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7') THEN 1 
          ELSE 0
     END AS UCR_REFERRALS,
-    CASE WHEN "Referaal_to_treatment_period_start_time" IS NOT NULL THEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) END AS WAIT_MINS,
-    CASE WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 0 AND 15 THEN '0 to 15'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 15 AND 30 THEN '15 to 30'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 30 AND 45 THEN '30 to 45'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 45 AND 60 THEN '45 to 60'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 60 AND 75 THEN '60 to 75'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 75 AND 90 THEN '75 to 90'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 90 AND 105 THEN '90 to 105'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) BETWEEN 105 AND 120 THEN '105 to 120'
-         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", REF."Referral_to_treatment_period_end_time")) > 120 THEN 'Over 120'
+    CASE WHEN "Referaal_to_treatment_period_start_time" IS NOT NULL THEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) END AS WAIT_MINS,
+    CASE WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 0 AND 15 THEN '0 to 15'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 15 AND 30 THEN '15 to 30'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 30 AND 45 THEN '30 to 45'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 45 AND 60 THEN '45 to 60'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 60 AND 75 THEN '60 to 75'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 75 AND 90 THEN '75 to 90'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 90 AND 105 THEN '90 to 105'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) BETWEEN 105 AND 120 THEN '105 to 120'
+         WHEN DATEDIFF(MINUTE, TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_start_date", "Referaal_to_treatment_period_start_time"), TIMESTAMP_FROM_PARTS("Referral_to_treatment_period_end_date", LEGACY."Referral_to_treatment_period_end_time")) > 120 THEN 'Over 120'
          ELSE 'Unknown' 
     END AS RTT_BY_WAITING_TIME_BAND,
     CASE WHEN CYP102_DATA."REFERRAL REJECTION DATE" IS NOT NULL OR CYP102_DATA."REFERRAL REJECTION REASON" IS NOT NULL THEN 'No - referrals rejected' ELSE 'Yes' END AS INCLUSION_FLAG,
-    CASE WHEN ((REF.REFERRAL_RECEIVED_DATE < '2023-04-01' AND REF."ServOrTeamTypeRefToCC_(Latest_List)_DV" IN ('45','51','52','53') AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7')) OR
+    CASE WHEN ((REF.REFERRAL_RECEIVED_DATE < '2023-04-01' AND LEGACY."ServOrTeamTypeRefToCC_(Latest_List)_DV" IN ('45','51','52','53') AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7')) OR
                (REF.REFERRAL_RECEIVED_DATE >= '2023-04-01' AND "Waiting_time_measurement_type_(Community_Care)" IN ('05','5','07','7'))) 
           AND REF.REFERRAL_ID IN (SELECT "Unique_service_request_identifier" FROM DATA_LAKE.CSDS_SIMPLE."tblCare_Contact" 
           WHERE "Activity_location_type_code" LIKE 'A%' OR "Activity_location_type_code" LIKE 'G%') 
@@ -448,14 +473,16 @@ SELECT
     CASE WHEN PV."Post Covid flag" IS NULL THEN 'FALSE' ELSE PV."Post Covid flag" END AS IS_POST_COVID,
     CASE WHEN NGH_RES.NEIGHBOURHOOD_NAME IS NULL THEN 'Unknown' ELSE NGH_RES.NEIGHBOURHOOD_NAME END AS NEIGHBOURHOOD_OF_RESIDENCE,   
     CASE WHEN NGH_REG.neighbourhood_name IS NULL THEN 'Unknown' ELSE NGH_REG.neighbourhood_name END AS PRACTICE_NEIGHBOURHOOD,
-    REF.SERVICE_DISCHARGE_DATE AS SERVICE_DISCHARGE_DATE,
-    REPORTING.MAIN_DATA.DETERMINE_FISCAL_YEAR__CH_TEMP(REF.REFERRAL_TO_TREATMENT_PERIOD_END_DATE) AS RTT_FIN_YEAR,
-    MONTHNAME(REF.REFERRAL_TO_TREATMENT_PERIOD_END_DATE) AS RTT_FIN_MONTH_TEXT,
-    REPORTING.MAIN_DATA.DETERMINE_FISCAL_MONTH__CH_TEMP(REF.REFERRAL_TO_TREATMENT_PERIOD_END_DATE) AS RTT_FIN_MONTH,
-    1 AS ACTIVITY
+    
+REF.SERVICE_DISCHARGE_DATE AS SERVICE_DISCHARGE_DATE,
+REPORTING.MAIN_DATA.DETERMINE_FISCAL_YEAR__CH_TEMP(LEGACY."Referral_to_treatment_period_end_date") AS RTT_FIN_YEAR,
+MONTHNAME(LEGACY."Referral_to_treatment_period_end_date") AS RTT_FIN_MONTH_TEXT,
+REPORTING.MAIN_DATA.DETERMINE_FISCAL_MONTH__CH_TEMP(LEGACY."Referral_to_treatment_period_end_date") AS RTT_FIN_MONTH,
+1 AS ACTIVITY
 
 FROM REFERRALS REF
     
+LEFT JOIN LEGACY_REFERRALS LEGACY ON REF.REFERRAL_ID = LEGACY."Unique_service_request_identifier"
 LEFT JOIN RESOLVED_PATIENT PAT1 ON REF.REFERRAL_ID = PAT1."Unique_service_request_identifier"
 LEFT JOIN PATIENT_DEDUPED PAT ON REF.REFERRAL_ID = PAT."Unique_service_request_identifier"
 LEFT JOIN "Dictionary".NELCSU."Pre_2020/21_LSOA_To_Commissioner" LSOA ON PAT1."Lower_super_output_area_(Residence)" = LSOA."LSOACode"
@@ -464,9 +491,12 @@ LEFT JOIN DIM_PRACTICE_LOOKUP PRAC ON PAT1.GPCODE = PRAC.PRACTICE_CODE
 LEFT JOIN "Dictionary"."dbo"."Ethnicity" ETH ON PAT1.RESOLVED_ETH_CODE = ETH."BK_EthnicityCode"
 LEFT JOIN "Dictionary"."dbo"."Gender" GEN ON PAT1."Person_stated_gender_code" = GEN."GenderCode"
 LEFT JOIN TMP_IMD IMD ON IMD.LSOA_CODE_2021 = PAT1."Lower_super_output_area_(Residence)"
-LEFT JOIN REFERENCE.DATA_DICTIONARY.CSDS_SERVICE_OR_TEAM_TYPE CSLK3 ON REF.CLEAN_TEAM_CODE = CSLK3.CODE
-LEFT JOIN {{ ref('csds_contact_code_lookup') }} CSLK4 ON LPAD(LTRIM(REF."Waiting_time_measurement_type_(Community_Care)",'0#'),2,'0') = CSLK4.CODE
-   AND CSLK4.CODE_SET_NAME = 'waiting_time_measurement_type'
+LEFT JOIN REFERENCE.DATA_DICTIONARY.CSDS_SERVICE_OR_TEAM_TYPE CSLK3 ON LEGACY.CLEAN_TEAM_CODE = CSLK3.CODE
+
+LEFT JOIN {{ ref('csds_contact_code_lookup') }} CSLK4
+    ON LPAD(LTRIM(LEGACY."Waiting_time_measurement_type_(Community_Care)", '0#'), 2, '0') = CSLK4.CODE
+   AND CSLK4.CSDS_FIELDNAME = 'WAITING TIME MEASUREMENT TYPE (COMMUNITY CARE)'
+
 LEFT JOIN TMP_CON CON ON REF.REFERRAL_ID = CON."Unique_service_request_identifier"
 LEFT JOIN CYP102_DATA ON REF.REFERRAL_ID = CYP102_DATA."UNIQUE SERVICE REQUEST IDENTIFIER"
 LEFT JOIN PV ON REF.REFERRAL_ID = PV."UNIQUE SERVICE REQUEST IDENTIFIER"
