@@ -19,8 +19,8 @@ SELECT
     CASE 
         WHEN service_code_dq = 'Valid' AND cscc_funding_status <> spec_comm_flag THEN 'CSCC Allocation'
         WHEN cscc_funding_status = spec_comm_flag AND cscc_dq <> 'Valid' THEN 'CSCC Code Invalid'
-        WHEN cscc_funding_status <> spec_comm_flag AND service_code_dq <> 'Valid' THEN 'Service Code Missing/Invalid' 
-        WHEN cscc_funding_status = spec_comm_flag AND service_code_dq <> 'Valid' THEN 'Service Code Incorrect Case'
+        WHEN cscc_funding_status <> spec_comm_flag AND service_code_dq in ('Missing Code','Invalid Code') THEN 'Service Code Missing/Invalid' 
+        WHEN cscc_funding_status = spec_comm_flag AND service_code_dq = 'Code fix required' THEN 'Service Code Incorrect Case'
     ELSE 'No issues' END AS dq_issue,
     --commissioned_service_category
     CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as acm_commissioned_service,
