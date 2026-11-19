@@ -11,4 +11,4 @@ SELECT
     concept_code,
     concept_display
 FROM {{ ref('int_cochlear_implant_all') }}
-QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, observation_id DESC) = 1

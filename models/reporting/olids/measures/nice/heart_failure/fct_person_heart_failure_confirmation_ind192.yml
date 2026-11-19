@@ -8,9 +8,11 @@ models:
     People registered on the build date on the heart failure register with an earliest
     unresolved diagnosis 3 to 15 months before the build date, allowing confirmation to finish.
     Diagnosis must also be recorded by that date. A diagnosis on the resolution date remains
-    unresolved. Achieved with an echocardiogram or specialist assessment within 3 months before
-    or after diagnosis. No personalised care adjustments are applied. Based on NICE NG106. Code
-    lists: HF_COD, HFRES_COD, ECOG_COD (PCD).
+    unresolved. Counts all national ECOG_COD records, including echo requests and referrals,
+    within 3 months either side of diagnosis; QOF uses a different window. Completed imaging
+    is reported separately. Specialist assessment is not counted: ECOG_COD has no completed
+    specialist-assessment codes. No personalised care adjustments are applied. Based on
+    NICE NG106. Code lists: HF_COD, HFRES_COD, ECOG_COD (PCD).
   config:
     meta:
       owner:
@@ -27,9 +29,10 @@ models:
           People registered on the build date on the heart failure register with an earliest
           unresolved diagnosis 3 to 15 months before the build date, allowing confirmation to
           finish. Diagnosis must also be recorded by that date. A diagnosis on the resolution
-          date remains unresolved. Achieved with an echocardiogram or specialist assessment
-          within 3 months before or after diagnosis. No personalised care adjustments are
-          applied. Based on NICE NG106. Code lists: HF_COD, HFRES_COD, ECOG_COD (PCD).
+          date remains unresolved. Counts all national ECOG_COD records, including echo
+          requests and referrals, within 3 months either side of diagnosis; QOF uses a
+          different window. No personalised care adjustments are applied. Based on NICE
+          NG106. Code lists: HF_COD, HFRES_COD, ECOG_COD (PCD).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -61,8 +64,8 @@ models:
     description: "Name of the registration practice at the reporting date."
   - name: latest_record_date
     description: >-
-      Latest echocardiogram or specialist assessment from 3 months before to 3 months after
-      diagnosis, inclusive; null if absent.
+      Latest ECOG_COD record from 3 months before to 3 months after diagnosis, inclusive,
+      including requests and referrals; null if absent.
   - name: is_in_denominator
     description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator

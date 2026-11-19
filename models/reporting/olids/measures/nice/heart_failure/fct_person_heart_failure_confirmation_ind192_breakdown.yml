@@ -1,0 +1,67 @@
+models:
+  - name: fct_person_heart_failure_confirmation_ind192_breakdown
+    description: >-
+      Completed-imaging breakdown beside the IND192 headline. One row per person
+      in its current denominator, with the same diagnosis and reporting date. Includes
+      completed ECOG_COD imaging and results within three calendar months either side of
+      diagnosis, capped at the reporting date. Requests and referrals alone do not count.
+      Specialist assessment is not counted: ECOG_COD has no completed specialist-assessment
+      codes. NT-proBNP alone does not count. QOF uses a different window.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person in the existing current IND192 denominator.
+        data_tests: [unique, not_null]
+      - name: reporting_date
+        description: Assessment date inherited from the headline measure.
+      - name: diagnosis_date
+        description: Earliest unresolved diagnosis used by the headline measure.
+      - name: has_headline_confirmation
+        description: >-
+          IND192 headline: any ECOG_COD record in NICE's window (QOF code list, NICE window).
+      - name: latest_completed_confirmation_date
+        description: >-
+          Latest qualifying imaging procedure or result in the inclusive three-month window;
+          null when absent.
+      - name: has_completed_confirmation
+        description: >-
+          True when qualifying completed imaging is recorded. False means no such recorded
+          evidence, not proof that no assessment occurred.
+  - name: fct_person_heart_failure_confirmation_ind192_breakdown_by_month
+    description: >-
+      Monthly completed-imaging breakdown beside the IND192 headline. One row
+      per person and month-end in its existing denominator. Uses the same inclusive
+      three-calendar-month confirmation window as the current breakdown, capped at the
+      month-end. Includes completed ECOG_COD imaging and results, not requests, referrals
+      or NT-proBNP alone. Specialist assessment is not counted: ECOG_COD has no completed
+      specialist-assessment codes. Recalculated with current records and rules, so later
+      corrections can change past months.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, reporting_date]
+    columns:
+      - name: person_id
+        description: Person in the existing monthly IND192 denominator.
+      - name: reporting_date
+        description: Month-end assessment date inherited from the headline measure.
+      - name: diagnosis_date
+        description: Earliest unresolved diagnosis used for this month by the headline measure.
+      - name: has_headline_confirmation
+        description: >-
+          IND192 headline: any ECOG_COD record in NICE's window (QOF code list, NICE window).
+      - name: latest_completed_confirmation_date
+        description: >-
+          Latest qualifying completed imaging or result within the inclusive window and no
+          later than this month-end; null when absent.
+      - name: has_completed_confirmation
+        description: >-
+          True when qualifying completed imaging is recorded for this month. False is absence
+          of recorded evidence.

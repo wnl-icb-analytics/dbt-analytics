@@ -1,26 +1,15 @@
 models:
   - name: int_polypharmacy_current
     description: |
-      Current polypharmacy medication counts and flags.
-
-      Grain: One row per person (only persons with current polypharmacy medications)
-
-      Inclusion criteria:
-      - Persons with at least 1 current polypharmacy-scope medication
-      - Medications counted from int_polypharmacy_medications_current (source of truth)
-
-      Polypharmacy scope uses exclusion-based filtering:
-      - Excludes most infections (except HIV and hepatitis antivirals)
-      - Excludes vitamins, minerals, nutrition products
-      - Excludes contraceptives, thyroid drugs, topicals
-      - Excludes devices, dressings, appliances
-      - See int_polypharmacy_medications_list for complete scope definition
-
-      Polypharmacy thresholds:
-      - Standard polypharmacy: 5+ medications
-      - Severe/complex polypharmacy: 10+ medications
-
-      Enriched with BNF codes and medication names for current medications.
+      Estimated current repeat chemical count, one row per person with at least one
+      in-scope supply. Counts distinct nine-character BNF chemicals across chapters
+      01 to 04 and 06 to 10. Brands, strengths and formulations of the same chemical
+      count once. A fixed combination counts once under its BNF chemical code,
+      separately from an individual component with a different chemical code.
+      Five or more is a local threshold; ten or more supports medication review
+      prioritisation. These are GP-issued repeat supplies, not the NHSBSA comparator,
+      which counts acute and repeat dispensing in a month at 8, 10, 15 and 20.
+      Product BNF/name arrays retain product details and can exceed the chemical count.
 
     config:
       meta:
@@ -33,7 +22,7 @@ models:
           - not_null
           - unique
       - name: medication_count
-        description: Count of distinct current polypharmacy-scope medications
+        description: Count of distinct current nine-character BNF chemicals in scope
         data_tests:
           - not_null
           - dbt_utils.expression_is_true:
@@ -50,7 +39,7 @@ models:
           - not_null
 
       - name: is_polypharmacy_5plus
-        description: Standard polypharmacy flag (5+ medications)
+        description: Local flag for at least five current BNF chemicals
         data_tests:
           - not_null
           - accepted_values:
@@ -58,7 +47,7 @@ models:
                 values: [true, false]
 
       - name: is_polypharmacy_10plus
-        description: Severe/complex polypharmacy flag (10+ medications)
+        description: Flag for at least ten current BNF chemicals, supporting medication review prioritisation
         data_tests:
           - not_null
           - accepted_values:

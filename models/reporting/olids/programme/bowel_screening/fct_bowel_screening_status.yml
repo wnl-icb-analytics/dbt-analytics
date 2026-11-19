@@ -7,6 +7,10 @@ models:
       when none is recorded. A decline does not override completion status.
       Result-only code 368481000000103 is excluded from completed screening;
       non-response and unsuitable codes are unavailable.
+
+      History counts include each person, concept, clinical calendar date and
+      recorded numeric value once. A null result is a value-free event, not a
+      missing count. Different concepts or values on the same day remain distinct.
     config:
       meta:
         owner:
@@ -14,7 +18,7 @@ models:
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: current_age
@@ -50,12 +54,55 @@ models:
       # - name: latest_is_non_response
       #   description: 'Flag indicating if latest observation is non-response to invitations'
       - name: total_completed_screenings
-        description: 'Total count of completed screening observations'
+        description: Distinct completed screening readings by concept, clinical calendar date and recorded value, including null results.
       # - name: total_unsuitable_records
       #   description: 'Total count of unsuitable status records'
       - name: total_declined_records
-        description: >-
-          Number of screening decline records in COLCANSCRDEC_COD.
+        description: Distinct screening decline readings by concept, clinical calendar date and recorded value, including null results.
       # - name: total_non_response_records
       #   description: 'Total count of non-response to invitation records'
 
+
+unit_tests:
+- name: bowel_screening_counts_distinct_readings
+  model: fct_bowel_screening_status
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_completed_screenings, NULL::NUMBER AS total_declined_records WHERE FALSE
+  given:
+  - input: ref('int_bowel_screening_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::VARCHAR AS concept_code,
+          column5::FLOAT AS result_value, TRUE::BOOLEAN AS is_completed_screening, FALSE::BOOLEAN AS is_declined_screening, FALSE::BOOLEAN AS is_unsuitable_screening, FALSE::BOOLEAN AS is_non_response_screening, FALSE::BOOLEAN AS is_cervix_removal
+      FROM VALUES ('SYN_A', -145401, '2024-01-01 09:00:00', 'SYN_C', NULL),
+      ('SYN_B', -145401, '2024-01-01 18:00:00', 'SYN_C', NULL),
+      ('SYN_C', -145401, '2024-01-01', 'SYN_OTHER', NULL),
+      ('SYN_D', -145401, '2024-01-02', 'SYN_C', NULL),
+      ('SYN_E', -145401, '2024-01-01', 'SYN_C', 0),
+      ('SYN_F', -145401, '2024-01-01', 'SYN_C', 1),
+      ('SYN_G', -145402, '2024-01-01', 'SYN_C', NULL)
+      UNION ALL
+      SELECT column1::VARCHAR, -145402::NUMBER, '2024-03-01'::TIMESTAMP_NTZ,
+          'SYN_DECLINE'::VARCHAR, NULL::FLOAT, FALSE::BOOLEAN, TRUE::BOOLEAN,
+          FALSE::BOOLEAN, FALSE::BOOLEAN, FALSE::BOOLEAN
+      FROM VALUES ('SYN_DECLINE_A'), ('SYN_DECLINE_B')
+  - input: ref('dim_person_demographics')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 'Female'::VARCHAR AS gender, 55::NUMBER AS age, TRUE::BOOLEAN
+      AS is_active, FALSE::BOOLEAN AS is_deceased FROM VALUES (-145401), (-145402)
+  - input: ref('int_bowel_screening_latest')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR
+      AS source_cluster_id, NULL::VARCHAR AS screening_observation_type, NULL::BOOLEAN AS is_completed_screening,
+      NULL::BOOLEAN AS is_declined_screening, NULL::BOOLEAN AS is_unsuitable_screening, NULL::BOOLEAN
+      AS is_non_response_screening WHERE FALSE
+  expect:
+    rows:
+    - person_id: -145401
+      total_completed_screenings: 5
+      total_declined_records: 0
+    - person_id: -145402
+      total_completed_screenings: 1
+      total_declined_records: 1

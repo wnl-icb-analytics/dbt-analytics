@@ -1,19 +1,60 @@
 models:
   - name: int_waist_circumference_all
-    description: 'Waist circumference measurements for cardiovascular and metabolic risk assessment.
-
-      One row per waist circumference observation using WAIST_COD cluster with a numeric result. Values outside 30-250 cm are kept and flagged is_valid_waist_circumference = FALSE with risk category Invalid; includes clinical risk categorisation.'
+    description: >-
+      Waist measurements, one row per numeric WAIST_COD observation, with adult
+      waist-to-height ratio and NG246 central adiposity band where assessable.
+      Includes all people with non-missing clinical dates up to the build date.
+      Explicit cm, m, mm and inch units convert to cm; other units cannot supply
+      a ratio. Waist validity is the local range 30 to 250 cm. This cannot detect
+      inch values mislabelled as cm; low unbanded ratios need source-unit review.
+      Both waist and height must be measured
+      at age 18 or over. The nearest valid adult height within 365 days pairs in either
+      direction. At equal distance prefer the later date, then recorded timestamp
+      with nulls last, then greatest ID. Height validity is 50 to 250 cm.
+      Only the numeric range matches
+      int_bmi_all: waist standardises explicit length units and prefers the latest
+      recorded timestamp before ID; BMI uses raw heights and ID alone.
+      The nearest valid BMI within 90 days determines
+      band applicability; recorded BMI wins same-day ties over calculated BMI.
+      These pairing windows are local rules. NG246 bands require BMI below 35.
+      Ratio below 0.4, missing BMI or BMI at least 35 gives no band. Missing height,
+      invalid circumference or non-adult measurement gives null ratio and band.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: WAIST_COD
+            cluster_ids: "WAIST_COD, HEIGHT"
     columns:
       - name: id
-        description: Unique identifier for each waist circumference observation
-        tests:
-          - unique
-          - not_null
+        description: Source waist observation identifier, one row per ID.
+        data_tests: [unique, not_null]
+      - name: waist_circumference_value
+        description: Circumference in cm; null when the source unit is missing or unsupported.
+      - name: original_result_value
+        description: Numeric waist result as recorded, before unit conversion.
+      - name: original_result_unit_display
+        description: Recorded unit display, falling back to the source unit concept when unmapped.
+      - name: date_recorded
+        description: EMIS save timestamp used for same-day selection.
+      - name: height_cm
+        description: Paired adult height in cm, null when none meets the local 365-day rule.
+      - name: height_measurement_date
+        description: Clinical date of the paired height; may follow the waist date but never the build date.
+      - name: bmi_value_at_waist
+        description: Nearest valid adult BMI within 90 days, in kg/m2; null when missing.
+      - name: bmi_measurement_date
+        description: Clinical date of the paired BMI used to check the NG246 below-35 restriction.
+      - name: waist_to_height_ratio
+        description: Waist divided by paired height in the same unit. Bands compare fixed-point lengths against height times each threshold.
+      - name: waist_to_height_ratio_category
+        description: >-
+          NG246 1.9.14 band: Healthy central adiposity [0.4,0.5), Increased central
+          adiposity [0.5,0.6), High central adiposity [0.6,infinity), for BMI below 35.
+          Null means the band is unassessable or outside NICE's stated applicability.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Healthy central adiposity, Increased central adiposity, High central adiposity]

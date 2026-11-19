@@ -1,11 +1,19 @@
 models:
   - name: int_referral_pulmonary_rehab_latest
-    description: 'Determine most recent pulmonary rehabilitation code including declined, attendance and not suitable using PCD REFSET: PULRHBPU_COD - patient not suitable, PULRHBATT_COD attended, PULRHBOFF_COD referred, PULRHBDEC_COD declined.'
+    description: >-
+      Last recorded pulmonary rehabilitation event per person from PULRHBPU_COD,
+      PULRHBATT_COD, PULRHBOFF_COD and PULRHBDEC_COD. Includes attended, offered,
+      declined and unsuitable events, up to the build date, for active, inactive
+      and deceased people with evidence. No validity filter applies.
+      Ties use the latest save time, then the highest observation ID.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: PULRHBPU_COD, PULRHBATT_COD, PULRHBOFF_COD, PULRHBDEC_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id]

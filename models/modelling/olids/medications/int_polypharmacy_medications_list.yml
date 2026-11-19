@@ -2,38 +2,11 @@
 models:
   - name: int_polypharmacy_medications_list
     description: |
-      BNF medications in scope for polypharmacy calculation using exclusion-based filtering.
-
-      Grain: One row per SNOMED code included in polypharmacy scope
-
-      Approach:
-      - Exclusions defined in stg_reference_bnf_polypharmacy_exclusions (seed: bnf_polypharmacy_exclusions.csv)
-      - Hierarchical matching: normalized BNF prefixes; the longest matching rule wins
-      - New BNF codes are included unless explicitly excluded
-      - Must have valid SNOMED code mapping
-
-      Included chapters (with exclusions):
-      - Ch 1: Gastro-Intestinal System (excl 1.7, 1.8)
-      - Ch 2: Cardiovascular System (all included)
-      - Ch 3: Respiratory System (excl 3.8, 3.9)
-      - Ch 4: Central Nervous System (all included)
-      - Ch 5: Infections (ONLY 5.3.1 HIV and 5.3.3 hepatitis included)
-      - Ch 6: Endocrine System (excl 6.1.6, 6.2)
-      - Ch 7: Obstetrics, Gynaecology & Urinary Tract (excl 7.1, 7.2, 7.3)
-      - Ch 8: Malignant Disease & Immunosuppression (all included)
-      - Ch 9: Nutrition & Blood (excl 9.1-9.14, essentially all)
-      - Ch 10: Musculoskeletal & Joint Diseases (excl 10.3)
-
-      Excluded chapters (all subchapters):
-      - Ch 11: Eye preparations
-      - Ch 12: Ear, nose, and oropharynx
-      - Ch 13: Skin preparations
-      - Ch 14: Vaccines and immunoglobulins
-      - Ch 15: Anaesthesia
-      - Ch 18: Contrast media
-      - Ch 20-23: Dressings and appliances
-
-      Reference: GitHub issue #158
+      SNOMED products in the NHSBSA polypharmacy chapter scope, one row per product.
+      Includes BNF chapters 01 to 04 and 06 to 10, with at least nine BNF characters.
+      Where a product has several mappings, the lowest BNF code then name is used.
+      bnf_chemical_code holds the first nine BNF characters counted by consumers.
+      Fixed combinations count as one chemical code, without splitting ingredients.
 
     config:
       meta:
@@ -52,10 +25,12 @@ models:
           - not_null
 
       - name: bnf_chapter
-        description: First 2 characters of the BNF code (BNF chapter number). Chapter 05 appears
-          only for the HIV (05.03.01) and viral hepatitis (05.03.03) subchapters.
+        description: First two BNF characters. Only chapters 01 to 04 and 06 to 10 are included.
         data_tests:
           - not_null
+
+      - name: bnf_chemical_code
+        description: Nine-character BNF chemical code used for counting; each fixed combination has its own code.
 
       - name: bnf_name
         description: BNF name/description of the medication
