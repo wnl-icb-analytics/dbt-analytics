@@ -83,6 +83,7 @@ select il.patient_id
       end as route_summary
       , coalesce(pd.practice_code, 'Unknown') as practice_code
     , coalesce(pd.practice_name, 'Unknown') as practice_name
+    , pd.local_authority_name
     , pd.age 
     , coalesce(pd.main_language, 'Unknown') as main_language
     , coalesce(pd.gender, 'Unknown') as gender

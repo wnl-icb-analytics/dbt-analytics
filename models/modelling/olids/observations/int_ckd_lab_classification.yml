@@ -1,31 +1,38 @@
 models:
   - name: int_ckd_lab_classification
     description: >-
-      Laboratory evidence of CKD in OLIDS, one row per person with a valid latest eGFR
-      or urine ACR result, regardless of diagnosis. Includes inactive and deceased
-      people. Latest laboratory criteria and G/A stages use the latest valid tests,
-      which may have different dates. Confirmation reflects historical abnormal pairs
-      and need not describe the latest result.
+      CKD laboratory evidence, one row per person with an eligible eGFR or latest valid
+      urine ACR, regardless of diagnosis, registration or death. Eligible eGFRs are valid
+      results dated on or before the build date, excluding the 1900-01-01 missing-date
+      sentinel. Low-eGFR confirmation uses the last two eligible clinical days, both below
+      60 mL/min/1.73m2 and more than three calendar months apart. The separate local flag
+      caps their interval at 730 days. ACR confirmation checks for any historical
+      abnormal pair 90-730 days apart. Stage fields use existing descriptive labels,
+      not G1-G5 or A1-A3 codes, and the latest eGFR and ACR may have different dates.
+      This is laboratory evidence, not the CVDPREVENT uncoded-CKD indicator population.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - unique
           - not_null
       - name: latest_egfr_value
-        description: 'Most recent estimated glomerular filtration rate value (mL/min/1.73m²)'
+        description: 'Latest eligible eGFR in mL/min/1.73m2; null for people with only valid ACR evidence.'
       - name: latest_egfr_date
-        description: 'Date of the most recent eGFR measurement'
+        description: >-
+          Clinical date of the latest eligible eGFR. Same-day results are ordered by
+          date_recorded descending with nulls last, then observation ID descending.
+          Comes from int_egfr_latest. Persistence compares with an earlier clinical day.
       - name: latest_egfr_stage
-        description: 'CKD stage label from the latest valid eGFR, from Normal/High (>=90) to CKD Stage 5 (<15); not G1-G5 codes'
+        description: 'CKD stage label from the latest eligible eGFR, from Normal/High (>=90) to CKD Stage 5 (<15); not G1-G5 codes'
       - name: latest_acr_value
         description: 'Most recent albumin-to-creatinine ratio value (mg/mmol)'
       - name: latest_acr_date
@@ -34,16 +41,25 @@ models:
         description: 'Albuminuria category label from the latest valid ACR (Normal to Severely Increased); not A1-A3 codes'
       - name: has_confirmed_low_egfr
         description: >-
-          True for successive abnormal eGFR results below 60 mL/min/1.73m2, 90-730 days apart.
-          Normal results do not break the pair. Low eGFR records flagged invalid or dated
-          after build can contribute. Confirmation can be historical.
+          True when the last two eligible eGFR clinical days are both below 60 mL/min/1.73m2
+          and more than three calendar months apart, following the CVDPREVENT
+          CVDP002CKD persistence approach. No upper interval. A normal result in the
+          latest pair prevents confirmation. Each day uses the result with the latest
+          save time, nulls last, then highest observation ID. False when fewer than two
+          eligible days exist. Does not apply CVDPREVENT's audit delay or indicator population.
+      - name: has_confirmed_low_egfr_within_2_years_local
+        description: >-
+          Local capped variant of has_confirmed_low_egfr, requiring the same selected
+          pair to be at most 730 days apart. The cap is not a CVDPREVENT requirement.
       - name: has_confirmed_high_acr
         description: >-
-          True for successive abnormal ACR results at least 3 mg/mmol, 90-730 days apart.
-          Normal results do not break the pair. Confirmation can be historical.
+          True when any two abnormal ACR results at least 3 mg/mmol are 90-730 days apart.
+          Intervening results do not break the pair. Confirmation can be historical and
+          can include future-dated results. Retained local rule, not the CVDPREVENT
+          eGFR persistence definition.
       - name: latest_ckd_stage_inferred
         description: >-
-          Combined eGFR stage and ACR category labels from the latest valid eGFR and ACR. The two tests may have
+          Combined stage labels from the latest eligible eGFR and latest valid ACR. The two tests may have
           different dates.
       - name: latest_labs_meet_ckd_criteria
         description: >-
@@ -51,6 +67,6 @@ models:
           least 3 mg/mmol.
       - name: has_confirmed_ckd_by_labs
         description: >-
-          True if either historical low-eGFR or high-ACR confirmation is present. Uses the
-          pair rules on has_confirmed_low_egfr and has_confirmed_high_acr, not necessarily the
-          latest test results.
+          True if has_confirmed_low_egfr or has_confirmed_high_acr is true. Combines
+          last-two eligible eGFR confirmation with historical ACR confirmation, so a
+          true flag does not require both latest laboratory results to be abnormal.

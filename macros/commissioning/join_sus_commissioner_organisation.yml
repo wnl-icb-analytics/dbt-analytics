@@ -1,0 +1,25 @@
+version: 2
+
+macros:
+  - name: join_sus_commissioner_organisation
+    description: >-
+      Joins a SUS commissioner code to the latest available organisation name.
+      Exact codes take priority over the three-character fallback for older
+      five-character codes ending in 00. The SUS private-patient code VPP is
+      looked up as the NHS Data Dictionary default code VPP00.
+    arguments:
+      - name: code_expression
+        type: string
+        description: SQL expression containing the SUS commissioner code.
+      - name: alias
+        type: string
+        description: Prefix used for the exact and fallback organisation aliases.
+
+  - name: sus_commissioner_organisation_name
+    description: >-
+      Returns the organisation name selected by
+      join_sus_commissioner_organisation.
+    arguments:
+      - name: alias
+        type: string
+        description: Alias prefix passed to join_sus_commissioner_organisation.

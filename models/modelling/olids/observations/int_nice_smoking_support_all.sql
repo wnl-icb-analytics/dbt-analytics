@@ -33,11 +33,9 @@ support_events AS (
     SELECT
         'MEDICATION_ORDER' AS source_kind,
         medication.id::VARCHAR AS source_key,
-        person.person_id,
+        medication.person_id,
         medication.clinical_effective_date::DATE AS event_date
     FROM {{ ref('stg_olids_medication_order') }} AS medication
-    INNER JOIN {{ ref('int_patient_person_unique') }} AS person
-        ON medication.patient_id = person.patient_id
     INNER JOIN pharmacotherapy_codes AS codes
         ON medication.mapped_concept_code = codes.mapped_concept_code
 )

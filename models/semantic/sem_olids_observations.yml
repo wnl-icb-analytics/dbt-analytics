@@ -8,7 +8,16 @@ models:
       in the demographic population; measurement dates can differ. Demographics are
       current. ESP 2013 weights support age-standardised rates. person_id supports
       cohort linkage; final results must be aggregate-only. Diabetes care and NICE
-      blood pressure indicators have separate views.
+      blood pressure indicators have separate views. Waist-to-height ratio uses
+      paired adult measurements; NG246 bands require a valid BMI below 35.
+    data_tests:
+      - semantic_grain_count:
+          arguments:
+            source_model: int_waist_circumference_latest
+            entity: waist
+            metric: patients_with_waist_to_height_ratio
+            grain_key: person_id
+            source_filter: waist_to_height_ratio is not null
     config:
       materialized: semantic_view
       schema: SEMANTIC

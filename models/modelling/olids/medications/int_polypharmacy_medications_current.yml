@@ -2,24 +2,11 @@
 models:
   - name: int_polypharmacy_medications_current
     description: |
-      Current repeat medications within polypharmacy scope using exclusion-based filtering.
-
-      Grain: One row per person × medication (current polypharmacy-scope medications only)
-
-      Inclusion criteria:
-      - Current repeat prescriptions (from int_medication_orders_repeat_current)
-      - Medications in polypharmacy scope (INNER JOIN with int_polypharmacy_medications_list)
-      - Active supply (order date + duration >= today)
-
-      Polypharmacy scope excludes:
-      - Most of Chapter 5 (infections, except HIV 5.3.1 and hepatitis 5.3.3)
-      - Chapter 9 subchapters (vitamins, minerals, nutrition)
-      - Various subchapters (contraceptives, thyroid drugs, topicals, etc.)
-      - Chapters 11-15, 18, 20-23 (devices, dressings, appliances)
-
-      See int_polypharmacy_medications_list for complete exclusion details.
-
-      Enriched with BNF details for medication identification and categorization.
+      Estimated current repeat products in the NHSBSA chapter scope, one row per
+      person and SNOMED product. Uses int_medication_orders_repeat_current supply
+      and cancellation rules and int_polypharmacy_medications_list chapter membership.
+      Products sharing a nine-character BNF chemical remain separate here; consumers
+      count each chemical once. Supply is estimated from GP issues, not dispensing.
 
     config:
       meta:
@@ -42,10 +29,12 @@ models:
           - not_null
 
       - name: bnf_chapter
-        description: BNF chapter (2-digit code) - varies based on polypharmacy 
-          scope exclusions
+        description: Two-character BNF chapter code within 01 to 04 or 06 to 10
         data_tests:
           - not_null
+
+      - name: bnf_chemical_code
+        description: Nine-character BNF chemical code used for counting; each fixed combination has its own code.
 
       - name: bnf_name
         description: BNF name/description of the medication
@@ -57,6 +46,15 @@ models:
 
       - name: latest_duration
         description: Duration in days for most recent order
-    tests:
+      - name: effective_duration_days
+        description: Local supply estimate in days, recorded duration when 1 to 365 inclusive, otherwise 28.
+      - name: is_duration_imputed
+        description: True when the local 28-day fallback replaces a missing or implausible duration.
+      - name: supply_end_date
+        description: Issue date plus effective duration, inclusive, giving one day's grace. Capped at the day before authorisation cancellation.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, mapped_concept_code]
       - dbt_utils.at_least_one:
           column_name: person_id

@@ -25,7 +25,7 @@
     Observation Groups:
     - Cardiovascular: BP, BP control, cholesterol, LDL, HDL, non-HDL,
       triglycerides, total:HDL ratio, QRISK
-    - Metabolic: HbA1c, BMI, waist circumference, blood glucose
+    - Metabolic: HbA1c, BMI, waist circumference and adult waist-to-height ratio, blood glucose
     - Renal: eGFR (CKD staging), creatinine, urine ACR
     - Liver: ALT, GGT, bilirubin, composite high-LFT flag
     - Haematology: haemoglobin (anaemia), platelets, eosinophils
@@ -83,7 +83,7 @@ TABLES(
 
     waist AS {{ ref('int_waist_circumference_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest waist circumference with risk categories',
+        COMMENT = 'Latest valid waist circumference with adult waist-to-height ratio and NG246 band where assessable',
 
     glucose AS {{ ref('int_blood_glucose_latest') }}
         PRIMARY KEY (person_id)
@@ -182,6 +182,9 @@ FACTS(
     hba1c.hba1c_ifcc AS hba1c_ifcc COMMENT = 'HbA1c value (mmol/mol IFCC)',
     bmi.bmi_value AS bmi_value COMMENT = 'BMI value (kg/m2)',
     waist.waist_circumference_value AS waist_circumference_value COMMENT = 'Waist circumference (cm)',
+    waist.height_cm AS height_cm COMMENT = 'Nearest valid adult height within 365 days of the waist reading (cm)',
+    waist.bmi_value_at_waist AS bmi_value_at_waist COMMENT = 'Valid adult BMI within 90 days of the waist reading (kg/m2); used to check NG246 band applicability below 35',
+    waist.waist_to_height_ratio AS waist_to_height_ratio COMMENT = 'Adult waist divided by paired height; null when no valid height pairs',
     glucose.blood_glucose_value AS result_value WITH SYNONYMS = ('glucose', 'blood sugar') COMMENT = 'Latest blood glucose in the recorded source unit. Units are not standardised; use result_unit_display.',
 
     -- Renal
@@ -325,10 +328,10 @@ DIMENSIONS(
     bmi.requires_lower_bmi_thresholds AS requires_lower_bmi_thresholds COMMENT = 'Uses lower BMI thresholds for ethnicity',
     bmi.is_valid_bmi AS is_valid_bmi COMMENT = 'TRUE when BMI is within 10-150 kg/m2. This latest view keeps only valid values.',
 
-    -- Waist Circumference Categories
-    waist.waist_risk_category AS waist_risk_category COMMENT = 'Waist circumference risk (Low Risk, Moderate Risk Female, Moderate Risk, High Risk, Very High Risk)',
-    waist.is_high_waist_risk AS is_high_waist_risk COMMENT = 'Waist >=88cm',
-    waist.is_very_high_waist_risk AS is_very_high_waist_risk COMMENT = 'Waist >=102cm',
+    -- Adult central adiposity
+    waist.waist_to_height_ratio_category AS waist_to_height_ratio_category COMMENT = 'NG246: Healthy central adiposity (0.4 to below 0.5), Increased central adiposity (0.5 to below 0.6), High central adiposity (0.6 or more). Requires valid adult waist/height and BMI below 35 within 90 days. Otherwise null.',
+    waist.height_measurement_date AS height_measurement_date COMMENT = 'Date of paired height, within 365 days either side of the waist reading',
+    waist.bmi_measurement_date AS bmi_measurement_date COMMENT = 'Date of BMI used to check NG246 band applicability, within 90 days either side',
 
     -- eGFR / CKD Staging
     egfr.ckd_stage AS ckd_stage COMMENT = 'CKD stage (1, 2, 3a, 3b, 4, 5)',
@@ -426,8 +429,9 @@ METRICS(
 
     -- Waist Circumference
     waist.patients_with_waist AS COUNT(DISTINCT waist.person_id) COMMENT = 'Patients with waist measurement',
-    waist.waist_high_risk_count AS COUNT(DISTINCT CASE WHEN waist.is_high_waist_risk THEN waist.person_id END) COMMENT = 'Patients with high waist risk (>=88cm)',
-    waist.waist_very_high_risk_count AS COUNT(DISTINCT CASE WHEN waist.is_very_high_waist_risk THEN waist.person_id END) COMMENT = 'Patients with very high waist risk (>=102cm)',
+    waist.patients_with_waist_to_height_ratio AS COUNT(DISTINCT CASE WHEN waist.waist_to_height_ratio IS NOT NULL THEN waist.person_id END) COMMENT = 'Patients whose latest waist reading has a valid adult height pair',
+    waist.waist_increased_central_adiposity_count AS COUNT(DISTINCT CASE WHEN waist.waist_to_height_ratio_category = 'Increased central adiposity' THEN waist.person_id END) COMMENT = 'Patients in the NG246 Increased central adiposity band',
+    waist.waist_high_central_adiposity_count AS COUNT(DISTINCT CASE WHEN waist.waist_to_height_ratio_category = 'High central adiposity' THEN waist.person_id END) COMMENT = 'Patients in the NG246 High central adiposity band',
 
     -- Blood Glucose
     glucose.patients_with_blood_glucose AS COUNT(DISTINCT glucose.person_id) COMMENT = 'Patients with blood glucose',
@@ -515,4 +519,4 @@ METRICS(
 
 COMMENT = 'Latest clinical measurements for the OLIDS demographic population, with one row per person in each linked measurement table. People without measurements remain in the demographic population; measurement dates can differ. Demographics are current. ESP 2013 weights support age-standardised rates. person_id supports cohort linkage; final results must be aggregate-only. Diabetes care and NICE blood pressure indicators have separate views.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person with latest values; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(patients_with_bp_assessment), AGG(bp_controlled_count) FROM SEM_OLIDS_OBSERVATIONS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce out-of-target HbA1c patients here and SGLT2 exposure in sem_olids_prescribing before joining. BP control here uses patient-specific thresholds (T2DM, CKD, age); use sem_olids_bp_indicators for NICE IND239-246 fixed-target achievement. Prefer category-based counts over averages for population health questions. HDL, non-HDL and triglyceride categories are the upstream numeric bands, not invented treatment targets. The total:HDL ratio is the recorded ratio only. Blood glucose values keep source units, so group by result_unit_display before averaging. Smoking here is latest recorded status only; people without a record are absent. For eFI2 population questions, use efi2_category; its rows are already limited to the living 65+ scoring cohort. It is a calculated current score, not the GP-recorded eFI/eFI2 fields or Rockwood. Diabetes care processes and retinal screening are in sem_olids_diabetes_care. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
-AI_QUESTION_CATEGORIZATION 'Use this view for questions about: general patient-specific BP control, HbA1c control, total cholesterol, LDL, HDL, non-HDL, triglycerides, recorded total:HDL ratio, blood glucose, smoking status, BMI, waist circumference, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, and current frailty. Do not invent a treatment target for the total:HDL ratio. Blood glucose is not categorised and units are not standardised. Smoking status here is the latest recorded QOF status; use sem_olids_population when Unknown (no record) must be in the denominator. For NICE BP indicators IND239-246 use sem_olids_bp_indicators. Use efi2_category for calculated eFI2 population counts in living people aged 65+; use latest_efi_* only for GP-recorded eFI/eFI2 and frailty_category only for Rockwood assessments. This view holds the LATEST value per biomarker only; calculated eFI2 has no serial history. For serial clinical readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker control x medication, care-process gaps x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'
+AI_QUESTION_CATEGORIZATION 'Use this view for questions about: general patient-specific BP control, HbA1c control, total cholesterol, LDL, HDL, non-HDL, triglycerides, recorded total:HDL ratio, blood glucose, smoking status, BMI, waist circumference and adult waist-to-height ratio, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, and current frailty. Do not invent a treatment target for the total:HDL ratio. Blood glucose is not categorised and units are not standardised. Smoking status here is the latest recorded QOF status; use sem_olids_population when Unknown (no record) must be in the denominator. For NICE BP indicators IND239-246 use sem_olids_bp_indicators. Use efi2_category for calculated eFI2 population counts in living people aged 65+; use latest_efi_* only for GP-recorded eFI/eFI2 and frailty_category only for Rockwood assessments. This view holds the LATEST value per biomarker only; calculated eFI2 has no serial history. For serial clinical readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker control x medication, care-process gaps x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

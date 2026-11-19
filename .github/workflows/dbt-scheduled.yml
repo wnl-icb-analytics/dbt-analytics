@@ -16,7 +16,7 @@
 #                                    build --select +staging+ tag:indicator_definitions+
 #                                    --full-refresh
 #   09:00, 13:00       sdl-intraday  SDL refresh procs, then
-#                                    build --select source:sdl_wnl+
+#                                    build --select source:sdl_wnl+ stg_reference_pod_group_mapping
 #   20:17 1st          dev-monthly-full-refresh
 #                                    build --full-refresh --target dev, from latest main
 #
@@ -46,6 +46,11 @@
 # build refreshes ltc_lcs_cf_dashboard_base, which inner joins def_indicator
 # and def_indicator_usage to choose the case-finding indicators it publishes,
 # so a stale parent silently drops a newly added indicator from the dashboard.
+#
+# sdl-intraday rebuilds the SLAM cost index models, so it also selects
+# stg_reference_pod_group_mapping to run its pod_group_service_lens coverage
+# test. A POD group added in the POD Group Manager app without a lens row then
+# skips those models instead of publishing it as Unmapped.
 #
 # Does NOT publish artifacts to the DBT_ARTIFACTS stage: latest/ is the
 # state:modified baseline meaning "main, as deployed", written only by
@@ -129,7 +134,7 @@ jobs:
             monthly-full-refresh) dbt_args="build --select +staging+ tag:indicator_definitions+ --full-refresh" ;;
             dev-monthly-full-refresh) dbt_args="build --full-refresh"; dbt_target=dev ;;
             snapshots)            dbt_args="snapshot" ;;
-            sdl-intraday)         dbt_args="build --select source:sdl_wnl+" ;;
+            sdl-intraday)         dbt_args="build --select source:sdl_wnl+ stg_reference_pod_group_mapping" ;;
             skip)                 dbt_args="" ;;
           esac
 
@@ -158,7 +163,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/dbt" --version
 
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         if: steps.plan.outputs.run_type == 'sdl-intraday'
         with:
           version: "0.9.x"
