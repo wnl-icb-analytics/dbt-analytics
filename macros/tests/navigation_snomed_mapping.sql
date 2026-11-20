@@ -7,7 +7,8 @@
     left join {{ ref('snomed_concept') }} as mapped_concept
         on r.mapped_code = mapped_concept.snomed_code
     -- Historical deliveries can await new reference entries until full refresh.
-    where (source_concept.snomed_code is not null
+    where (r.snomed_mapping_method is null) <> (r.mapped_code is null)
+        or (source_concept.snomed_code is not null
             {% if not flags.FULL_REFRESH %}
             and r.mapped_code is not null
             {% endif %}

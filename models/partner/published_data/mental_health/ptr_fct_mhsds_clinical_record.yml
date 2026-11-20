@@ -59,8 +59,8 @@ models:
 
       - name: clinical_description
         description: >
-          Authoritative submitted-code label, or a mapped SNOMED CT label for legacy
-          Read codes. Interpret with clinical_label_status.
+          Supported original-system label. Read v2 and CTV3 use read_code.term or
+          null, never a mapped SNOMED label.
 
       - name: standardised_snomed_code
         description: >
@@ -88,7 +88,7 @@ models:
 
       - name: clinical_label_status
         description: >
-          Distinguishes labelled codes, mapped legacy codes, missing codes, unrecognised
+          Distinguishes labelled original codes, mapped source components, missing codes, unrecognised
           schemes, unmatched codes or expressions, and coding systems without a local
           reference. Labels do not establish scheme validity for a submitted MHSDS
           version.
@@ -144,7 +144,7 @@ models:
 
       - name: clinical_value_parse_status
         description: >
-          value_missing, numeric, numeric_rounded, or not_numeric_or_out_of_range.
+          no value, numeric, numeric (rounded), or not numeric or out of range.
           Non-numeric does not necessarily mean an invalid assessment response.
 
       - name: assessment_score_numeric
@@ -162,8 +162,8 @@ models:
 
       - name: assessment_response_status
         description: >
-          value_missing, known_non_score, enumerated_response, within_published_range,
-          response_unmatched or reference_not_available. Null outside assessments. This
+          no value, non-score response, listed response, within published range,
+          unmatched response or reference unavailable. Null outside assessments. This
           describes the latest available reference, not historic submission validity.
 
       - name: assessment_definition_version
@@ -392,3 +392,18 @@ models:
         description: >
           Historical clustering response and same-submission parent person identifiers
           agree.
+      - name: snomed_code
+        description: >-
+          Selected SNOMED CT concept identifier. Recognised recorded SNOMED CT first, then the recognised MHSDS supplied target, then the national preferred-term Read map, then the legacy Read dictionary. Supplied targets are excluded for ICD-10 and OPCS-4. Inactive concepts are retained; unresolved codes remain null.
+      - name: snomed_code_name
+        description: >-
+          Latest retained preferred term belonging to snomed_code.
+      - name: snomed_mapping_method
+        description: >-
+          {{ doc('navigation_snomed_mapping_method') }}
+      - name: is_snomed_mapping_assured
+        description: >-
+          {{ doc('navigation_is_snomed_mapping_assured') }}
+      - name: clinical_code_system
+        description: >-
+          Readable terminology named by coding_scheme_description, including specification-fixed SNOMED CT. Submitted scheme fields remain unchanged; no scheme is inferred from code shape.

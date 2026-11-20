@@ -58,7 +58,7 @@ select
             then 'labelled'
         when a.finding_scheme_code in ('02', '03')
             and mapped_snomed_finding.snomed_code is not null then 'mapped_to_snomed'
-        when a.finding_scheme_code = '05' then 'reference_not_available'
+        when a.finding_scheme_code = '05' then 'reference unavailable'
         else 'code_unmatched'
     end as finding_label_status
     , a.standardised_snomed_finding_code

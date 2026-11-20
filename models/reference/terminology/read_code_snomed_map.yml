@@ -1,0 +1,36 @@
+version: 2
+models:
+  - name: read_code_snomed_map
+    description: >-
+      One recognised SNOMED CT concept per exact Read v2 or CTV3 code and coding
+      system. National preferred-term maps take precedence over the legacy Read
+      dictionary. Read v2 uses term 00; CTV3 uses term type P. Synonym-only codes
+      and term-ID matches are not national candidates. A candidate must exist in
+      snomed_concept, including inactive concepts, or the next method is tried.
+      Both assured and unassured national entries are eligible. No source code
+      is truncated, case-folded or stripped of dots to obtain a match.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [coding_system, code]
+    columns:
+      - name: coding_system
+        description: read_v2 or ctv3, as used by the scheme-qualified Read dictionary.
+      - name: code
+        description: Exact source code or supported legacy dictionary alternative. Case and dots are significant.
+      - name: snomed_code
+        description: Recognised SNOMED CT concept identifier, including inactive concepts.
+      - name: snomed_code_name
+        description: Latest retained preferred term for snomed_code.
+      - name: snomed_mapping_method
+        description: National preferred-term map or legacy dictionary supplying the selected concept.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['National CTV3 map', 'National Read v2 map', 'Legacy Read dictionary']
+      - name: is_assured
+        description: National map assurance flag. Null for the legacy dictionary; false means explicitly unassured.
