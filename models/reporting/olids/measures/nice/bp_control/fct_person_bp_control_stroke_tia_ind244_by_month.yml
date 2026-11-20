@@ -1,20 +1,18 @@
 models:
 - name: fct_person_bp_control_stroke_tia_ind244_by_month
   description: >-
-    Blood pressure control in stroke or transient ischaemic attack for people aged 80 or over
-    (NICE IND244). One row per person in the denominator at each month-end.
-
-
-    People registered at the month-end aged 80 or over on the stroke or transient ischaemic
-    attack register. Achieved when both values of the latest complete blood pressure pair in
-    the last 12 months are below 150/90 mmHg in clinic or 145/85 mmHg at home or on ambulatory
-    monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable, with
-    no older pair substituted. Validity and same-day selection rules are described under
-    latest_systolic_value and latest_diastolic_value. No personalised care adjustments are
-    applied. Based on NICE NG136. Recalculated for each of the last 60 month-ends with current
-    rules, code lists and records, so later corrections can change past months. Code lists:
-    BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; STRK_COD, TIA_COD
-    (PCD).
+    Blood pressure control in stroke or transient ischaemic attack for people aged 80 or over (NICE
+    IND244). One row per person in the denominator at each month-end. People registered at the
+    month-end aged 80 or over on the stroke or transient ischaemic attack register. Achieved when
+    both values of the latest blood pressure context minima in the last 12 months are below 150/90
+    mmHg in clinic or 145/85 mmHg at home or on ambulatory monitoring. Incomplete readings are
+    ignored; an invalid-only latest date is unassessable, with no older pair substituted. Validity
+    and same-day selection rules are described under latest_systolic_value and
+    latest_diastolic_value. No personalised care adjustments are applied. Based on NICE NG136.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records, so
+    later corrections can change past months. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+    ABPM_COD, HOMEAMBBP_COD; STRK_COD, TIA_COD (PCD). At the latest eligible date, any clinic, home
+    or ambulatory context can meet its own strict NICE target. {{ doc('bp_control_evidence_rule') }}
   config:
     meta:
       owner:
@@ -42,29 +40,29 @@ models:
   - name: denominator_description
     description: "Short description of the people in the denominator."
   - name: latest_bp_date
-    description: "Date of the latest complete blood pressure pair through the reporting date; may precede the measurement window. Null when absent."
+    description: "Latest clinical date with eligible complete numeric control evidence. May precede the measurement window; null when absent."
   - name: is_valid_bp
-    description: "Whether the selected complete pair has systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive; null when no pair exists."
+    description: "Selected daily values have systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive, with systolic above diastolic. Null when no complete evidence exists."
   - name: latest_systolic_value
-    description: "Systolic blood pressure of the selected complete pair, in mmHg; valid range 40 to 350, inclusive. On the latest date, valid pairs take priority, then the lowest systolic and diastolic values. Components without a shared reading identifier use the highest plausible value for each component on that date, or the highest recorded value if none is plausible, and may combine different readings. Null when no pair is recorded."
+    description: "Independent minimum valid systolic in mmHg within the selected date and context. May come from a different reading to diastolic. Invalid-only dates retain the latest complete reading. Null when absent."
   - name: latest_diastolic_value
-    description: "Diastolic blood pressure of the selected complete pair, in mmHg; valid range 20 to 200, inclusive. On the latest date, valid pairs take priority, then the lowest systolic and diastolic values. Components without a shared reading identifier use the highest plausible value for each component on that date, or the highest recorded value if none is plausible, and may combine different readings. Null when no pair is recorded."
+    description: "Independent minimum valid diastolic in mmHg within the selected date and context. May come from a different reading to systolic. Invalid-only dates retain the latest complete reading. Null when absent."
   - name: is_home_bp_event
-    description: "Whether the selected blood pressure pair has home monitoring evidence."
+    description: "Whether the selected daily minima use home evidence, with an average preferred on that date."
   - name: is_abpm_bp_event
-    description: "Whether the selected blood pressure pair has ambulatory monitoring evidence."
+    description: "Whether the selected daily minima use ABPM, preferring daytime, then unspecified, then 24-hour averages."
   - name: applied_measurement_context
-    description: "CLINIC for clinic readings or HBPM_ABPM for home or ambulatory readings; determines which target applies."
+    description: "CLINIC or HBPM_ABPM for the selected context. On the latest eligible date a context meeting this indicator target takes priority. Otherwise prefer valid clinic, home, then ambulatory evidence."
   - name: indicator_systolic_threshold
-    description: "Systolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no pair exists."
+    description: "Systolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no eligible complete evidence exists."
   - name: indicator_diastolic_threshold
-    description: "Diastolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no pair exists."
+    description: "Diastolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no eligible complete evidence exists."
   - name: is_in_denominator
     description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_bp_recorded_in_last_12m
-    description: "Whether the selected complete pair was recorded in the 12 months before the reporting date, including both boundary dates."
+    description: "Whether the latest eligible control date is in the preceding 12 months, including both boundary dates."
   - name: is_latest_bp_within_indicator_target
-    description: "Whether the selected complete pair is valid and strictly below both indicator targets, regardless of its date."
+    description: "Whether the selected daily context minima are valid and strictly below both indicator targets, regardless of their date."
   - name: is_in_numerator
     description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status

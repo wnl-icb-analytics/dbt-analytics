@@ -3,11 +3,11 @@
 {% set calculation_235 = nice_ind235('by_month') %}
 {% set calculation_235 = calculation_235 | replace(ref('int_nice_reference_population_by_month') | string, 'synthetic_population') %}
 {% set calculation_235 = calculation_235 | replace(ref('int_ckd_profile_by_month') | string, 'synthetic_profile') %}
-{% set calculation_235 = calculation_235 | replace(ref('int_nice_blood_pressure_latest_by_month') | string, 'synthetic_bp') %}
+{% set calculation_235 = calculation_235 | replace(nice_ref('int_nice_blood_pressure_control_latest_by_context', 'by_month') | string, '(SELECT * FROM synthetic_bp_context)') %}
 {% set calculation_264 = nice_ind264('by_month') %}
 {% set calculation_264 = calculation_264 | replace(ref('int_nice_reference_population_by_month') | string, 'synthetic_population') %}
 {% set calculation_264 = calculation_264 | replace(ref('int_ckd_profile_by_month') | string, 'synthetic_profile') %}
-{% set calculation_264 = calculation_264 | replace(ref('int_nice_blood_pressure_latest_by_month') | string, 'synthetic_bp') %}
+{% set calculation_264 = calculation_264 | replace(nice_ref('int_nice_blood_pressure_control_latest_by_context', 'by_month') | string, '(SELECT * FROM synthetic_bp_context)') %}
 
 WITH synthetic_keys AS (
     SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date
@@ -44,6 +44,14 @@ synthetic_bp AS (
         70::NUMBER AS latest_diastolic_value,
         'CLINIC' AS applied_measurement_context
     FROM synthetic_keys
+),
+synthetic_bp_context AS (
+    SELECT person_id, reporting_date AS reporting_date, latest_bp_date AS reading_date,
+        latest_systolic_value AS systolic_value, latest_diastolic_value AS diastolic_value,
+        is_valid_bp, FALSE AS is_home_bp_event, FALSE AS is_abpm_bp_event, applied_measurement_context,
+        IFF(is_home_bp_event, 'HOME', IFF(is_abpm_bp_event, 'ABPM', 'CLINIC')) AS bp_context_group,
+        NULL::TIMESTAMP_NTZ AS date_recorded, 'SYN' AS observation_id
+    FROM synthetic_bp
 ),
 actual AS (
     SELECT indicator_id, reporting_date, latest_bp_date, latest_record_date, is_in_numerator, indicator_status
