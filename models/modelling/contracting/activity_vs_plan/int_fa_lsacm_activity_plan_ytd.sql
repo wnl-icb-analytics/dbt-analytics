@@ -82,4 +82,5 @@ LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
 )
 select *
 from latest_submissions
-where comm_group = 'WNL'
+--add in NHSE activity as well as WNL
+where comm_group = 'WNL' OR COMMISSIONER_CODE IN ('13R','13Q')
