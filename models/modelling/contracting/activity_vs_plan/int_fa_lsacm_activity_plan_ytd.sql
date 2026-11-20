@@ -55,14 +55,20 @@ WHEN acm.service_code IS NULL THEN 'Missing Code'
 ELSE 'Valid' END AS service_code_dq,
  --define SPEC_COMM_FLAG for reporting. icb_delegation_26_27 = 'BLUE' is locally commissioned so use the CSSC code for Funding Status
 CASE
-     WHEN acm.commissioner_code in ('13Q','13R') then 'Retained'
+        WHEN acm.commissioner_code in ('13Q','13R') then 'Retained'
         WHEN acm.service_code = 'NULL' or acm.service_code is null or acm.service_code = '99999' then 'ICB-commissioned'
         WHEN upper(acm.service_code) like '%XXX' AND ser.service_code is not null then cs.funding_status
         WHEN ser.icb_delegation_26_27 <> 'BLUE' then ser.current_funding_status
         WHEN ser.icb_delegation_26_27 = 'BLUE' then cs.funding_status
-    ELSE 'Invalid Service Code' 
-    END AS spec_comm_flag
-,IFF(acm.commissioner_code IN ('07X','07M','08H','08D','07R','93C','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','Y05','T04','Z9B2Z'),'WNL','Other') comm_group,
+        ELSE 'Invalid Service Code' END AS spec_comm_flag,
+CASE
+        WHEN acm.commissioner_code in (
+            '07X','07M','08H','08D','07R','93C','07P','07W','07Y',
+            '08C','08E','08G','08Y','09A','W2U3Z','Y05','T04',
+            'Z9B2Z','QMJ','QRV'
+        ) THEN 'WNL'
+        WHEN acm.commissioner_code in ('13R','13Q') THEN 'NHSE'
+        ELSE 'Other' END AS comm_group,
 acm.dv_actual_activity as activity_actual,
 acm.dv_planned_activity as activity_plan,
 acm.dv_actual_price AS price_actual,
@@ -83,4 +89,4 @@ LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
 select *
 from latest_submissions
 --add in NHSE activity as well as WNL
-where comm_group = 'WNL' OR COMMISSIONER_CODE IN ('13R','13Q')
+where comm_group in ('WNL','NHSE')

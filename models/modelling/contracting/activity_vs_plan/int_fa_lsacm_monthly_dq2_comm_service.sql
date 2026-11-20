@@ -14,7 +14,7 @@ SELECT
    fa.provider_shorthand,
     fa.meta_file_id,
     l.financial_month as Latest_month,
-    IFF(fa.comm_group = 'Other', 'NHSE', fa.comm_group) AS comm_group,
+    fa.comm_group,
     fa.spec_comm_flag,
       -- DQ issue
     CASE 
