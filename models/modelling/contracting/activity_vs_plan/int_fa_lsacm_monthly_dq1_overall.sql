@@ -16,6 +16,7 @@ SELECT
        fa.provider_shorthand,
         fa.meta_file_id,
         l.financial_month as Latest_month,
+        IFF(fa.comm_group = 'Other', 'NHSE', fa.comm_group) AS comm_group,
         SUM(fa.activity_plan) AS activity_plan,
         SUM(fa.activity_actual) AS activity_actual,
         --variance activity
