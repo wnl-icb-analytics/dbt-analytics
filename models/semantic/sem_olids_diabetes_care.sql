@@ -26,8 +26,14 @@
     - Foot check detail (Townson risk, per-foot status, exemptions)
 
     12-month completion windows are relative to the build date, not a
-    fixed QOF year end. Register includes inactive/deceased persons —
-    filter is_active = TRUE.
+    fixed QOF year end.
+
+    Populations differ by table, so denominators differ:
+    - cp and foot come from the diabetes register and include inactive
+      and deceased people; filter is_active = TRUE for current cohorts.
+    - triple covers register members who are currently registered,
+      living and not test patients (nice_reference_population, built on
+      dim_person_active_patients).
 #}
 
 TABLES(
@@ -37,15 +43,15 @@ TABLES(
 
     cp AS {{ ref('fct_person_diabetes_9_care_processes') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Diabetes 8 + 9 care-process completion (rolling 12 months from build date). One row per person on the diabetes register.',
+        COMMENT = 'Diabetes 8 + 9 care-process completion (rolling 12 months from build date). One row per person on the diabetes register, including inactive and deceased people.',
 
     triple AS {{ ref('fct_person_diabetes_triple_target') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'National Diabetes Audit treatment targets: latest HbA1c <=58 mmol/mol and BP <=140/80 in the 15 calendar months ending this month, plus a statin where indicated. One row per registered person on the diabetes register.',
+        COMMENT = 'National Diabetes Audit treatment targets: latest HbA1c <=58 mmol/mol and BP <=140/80 in the 15 calendar months ending this month, plus a statin where indicated. One row per person on the diabetes register who is currently registered, living and not a test patient. Inactive and deceased people are not in this table.',
 
     foot AS {{ ref('fct_person_diabetes_foot_check') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Foot check detail: Townson risk level, per-foot status, exemptions, declines'
+        COMMENT = 'Foot check detail: Townson risk level, per-foot status, exemptions, declines. One row per person on the diabetes register, including inactive and deceased people.'
 )
 
 RELATIONSHIPS(
@@ -137,9 +143,9 @@ DIMENSIONS(
 
 METRICS(
     -- Denominators
-    cp.dm_register_count AS COUNT(DISTINCT cp.person_id) COMMENT = 'People on the diabetes register (care-process model)',
-    triple.patients_with_triple_target AS COUNT(DISTINCT triple.person_id) COMMENT = 'People on the diabetes register (triple-target model)',
-    foot.patients_with_foot_model AS COUNT(DISTINCT foot.person_id) COMMENT = 'People on the diabetes register (foot-check model)',
+    cp.dm_register_count AS COUNT(DISTINCT cp.person_id) COMMENT = 'People on the diabetes register (care-process model), including inactive and deceased people',
+    triple.patients_with_triple_target AS COUNT(DISTINCT triple.person_id) COMMENT = 'People in the triple-target table: on the diabetes register, currently registered, living and not test patients',
+    foot.patients_with_foot_model AS COUNT(DISTINCT foot.person_id) COMMENT = 'People on the diabetes register (foot-check model), including inactive and deceased people',
 
     -- Care-process completion
     cp.all_8_count AS COUNT(DISTINCT CASE WHEN cp.all_8_processes_completed THEN cp.person_id END) COMMENT = 'People with all 8 care processes completed in last 12m',
@@ -162,6 +168,6 @@ METRICS(
     foot.permanently_exempt_count AS COUNT(DISTINCT CASE WHEN foot.is_permanently_exempt THEN foot.person_id END) COMMENT = 'People permanently exempt from foot checks'
 )
 
-COMMENT = 'OLIDS Diabetes Care Semantic View - care-process completion (8 + 9 with retinal), triple treatment targets with their matching latest measurement evidence, and foot-check detail for the diabetes register. Grain: one row per person on the diabetes register (QOF, age >=17). 12-month windows are rolling from build date. Register includes inactive/deceased persons — filter is_active = TRUE. Broader biomarker history and clinical categories live in sem_olids_observations and sem_olids_observations_history.'
-AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person grain; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(dm_register_count), AGG(all_8_count) FROM SEM_OLIDS_DIABETES_CARE WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce the diabetes cohort here and appointments in sem_olids_appointments before joining. Completion rate is AGG(all_8_count) / AGG(dm_register_count) (per-process AGG(*_done_count) over AGG(dm_register_count)). Triple-target flags follow the National Diabetes Audit and use the latest readings in the 15 calendar months ending this month. latest_hba1c_value is IFCC mmol/mol; read it with is_latest_hba1c_valid. is_statin_target_met is NULL when a statin is not indicated, so use statin_indicated_count as its denominator. The triple-target table holds registered people only. For foot-check care-process reporting prefer the cp foot_check_completed_in_last_12m flag; use the foot model only for risk-level and exemption detail (its recency window uses month-boundary arithmetic and can differ slightly). The 12-month windows are relative to the build date, not the QOF year end.'
+COMMENT = 'OLIDS Diabetes Care Semantic View - care-process completion (8 + 9 with retinal), triple treatment targets with their matching latest measurement evidence, and foot-check detail for the diabetes register. Grain: one row per person on the diabetes register (QOF, age >=17). 12-month windows are rolling from build date. Populations differ by table: care-process and foot data cover the whole register, including inactive and deceased people (filter is_active = TRUE for current cohorts); triple-target data covers only people who are currently registered, living and not test patients, so its denominator is smaller. Broader biomarker history and clinical categories live in sem_olids_observations and sem_olids_observations_history.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person grain; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(dm_register_count), AGG(all_8_count) FROM SEM_OLIDS_DIABETES_CARE WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce the diabetes cohort here and appointments in sem_olids_appointments before joining. Completion rate is AGG(all_8_count) / AGG(dm_register_count) (per-process AGG(*_done_count) over AGG(dm_register_count)). Triple-target flags follow the National Diabetes Audit and use the latest readings in the 15 calendar months ending this month. latest_hba1c_value is IFCC mmol/mol; read it with is_latest_hba1c_valid. is_statin_target_met is NULL when a statin is not indicated, so use statin_indicated_count as its denominator. Denominators differ across tables: the care-process and foot tables include inactive and deceased people, while the triple-target table holds only people who are currently registered, living and not test patients. Use patients_with_triple_target, not dm_register_count, as the denominator for triple-target rates, and filter is_active = TRUE and is_deceased = FALSE before comparing care-process rates with triple-target rates. For foot-check care-process reporting prefer the cp foot_check_completed_in_last_12m flag; use the foot model only for risk-level and exemption detail (its recency window uses month-boundary arithmetic and can differ slightly). The 12-month windows are relative to the build date, not the QOF year end.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: diabetes 8/9 care processes, care-process gaps, retinal screening, foot checks and foot risk (Townson), National Diabetes Audit triple target status (HbA1c, BP, statin) and its matching evidence, and diabetes care quality by practice/PCN/deprivation/ethnicity. For broader latest biomarker analysis use sem_olids_observations; for serial readings use sem_olids_observations_history. For diabetes prevalence and type use sem_olids_population. For diabetes medications use sem_olids_prescribing.'
