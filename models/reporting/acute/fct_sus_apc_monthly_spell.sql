@@ -1,4 +1,4 @@
-{{ config(materialized='view', tags=['monthly', 'sus']) }}
+{{ config(tags=['monthly', 'sus']) }}
 
 select
      encounters.sk_encounter_id

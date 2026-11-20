@@ -9,7 +9,9 @@ These models expose the supplied monthly SUS date-range data without reproducing
 - `fct_sus_apc_monthly_episode` has one row per admitted-patient source encounter.
 - `fct_sus_apc_monthly_spell` has one row per admitted-patient source encounter where `dv_is_spell = 1`. The source `sk_encounter_id` is the key because `spell_identifier` is not unique.
 
-The facts retain the full history supplied by the date-range sources. Source inspection found activity from April 2015 to July 2026. These sources do not expose separate Current, Reconciliation or Post-Reconciliation populations, and they are not rolling two-month tables.
+The facts retain the full history supplied by the date-range sources. Validation on 20 November 2026 found the latest activity date was 30 September 2026 in all four facts. The earliest retained activity varies by dataset. These sources do not expose separate Current, Reconciliation or Post-Reconciliation populations, and they are not rolling two-month tables.
+
+The four reporting facts are physical tables, inheriting the reporting folder's materialisation. They refresh when dbt builds them. Raw and staging models remain views.
 
 All four facts retain every administrative category. The shared facts do not apply the legacy private-activity exclusion. Applying that rule would remove 1.2189% of inspected outpatient rows and 1.9205% of inspected admitted-patient rows. A report that needs this population should apply an agreed filter downstream.
 
@@ -42,3 +44,7 @@ Each unmatched legacy field needs classification as a required derivation, a fie
 ## Validation
 
 The models test `sk_encounter_id` as the row key. The PBR staging model tests the same key because the spell enrichment assumes a one-to-one join. `analyses/sus_monthly/sus_monthly_reconciliation.sql` compares monthly source and fact row counts and returns discrepancies only.
+
+On 20 November 2026, all four reporting tables built successfully in DEV, all eight reporting key tests passed, and the monthly reconciliation returned no discrepancies. This validates preservation of the supplied source counts; it does not establish record-level equivalence with ERNI or resolve the legacy field decisions above.
+
+ERNI comparison identified an August 2026 OP coverage gap for provider RV3 already present in the Snowflake source. Its ingestion or extract cause remains unconfirmed. This source investigation is separate from the dbt implementation and must be resolved before claiming full ERNI replacement readiness.
