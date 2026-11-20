@@ -1,0 +1,716 @@
+models:
+  - name: fct_sus_apc_monthly_spell
+    description: 'One row per source-selected admitted-patient spell representative record in the monthly SUS date-range feed. Rows satisfy dv_is_spell = 1. All administrative categories are retained. PBR enrichment is left joined and does not remove unmatched spells.'
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_encounter_id
+        data_type: NUMBER
+        description: 'Unique source encounter row identifier and model grain key.'
+        data_tests:
+          - not_null
+          - unique
+      - name: dv_extract_type
+        data_type: TEXT
+        description: 'As supplied in source field dv_Extract_Type.'
+      - name: dv_query_id
+        data_type: TEXT
+        description: 'As supplied in source field dv_Query_ID.'
+      - name: dv_fin_year
+        data_type: TEXT
+        description: 'As supplied in source field dv_FinYear.'
+      - name: dv_fin_month
+        data_type: NUMBER
+        description: 'As supplied in source field dv_FinMonth.'
+      - name: dv_activity_period_date
+        data_type: NUMBER
+        description: 'As supplied in source field dv_Activity_Period_Date.'
+      - name: generated_record_id
+        data_type: TEXT
+        description: 'As supplied in source field Generated_Record_ID.'
+      - name: spell_identifier
+        data_type: NUMBER
+        description: 'Analytical spell linkage identifier. It is not unique in the source and is not the model key.'
+      - name: unique_cds_identifier
+        data_type: TEXT
+        description: 'As supplied in source field Unique_CDS_Identifier.'
+      - name: hospital_provider_spell_no
+        data_type: TEXT
+        description: 'As supplied in source field Hospital_Provider_Spell_No.'
+      - name: referrer_code
+        data_type: TEXT
+        description: 'As supplied in source field Referrer_Code.'
+      - name: referring_organisation_code
+        data_type: TEXT
+        description: 'As supplied in source field Referring_Organisation_Code.'
+      - name: organisation_code_patient_pathway_identifier
+        data_type: TEXT
+        description: 'As supplied in source field Organisation_Code_Patient_Pathway_Identifier.'
+      - name: rtt_patient_pathway_identifier
+        data_type: NUMBER
+        description: 'As supplied in source field RTT_Patient_Pathway_Identifier.'
+      - name: rtt_period_end_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field RTT_Period_End_Date.'
+      - name: rtt_period_start_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field RTT_Period_Start_Date.'
+      - name: dv_rtt_length_derived
+        data_type: NUMBER
+        description: 'As supplied in source field dv_RTT_Length_Derived.'
+      - name: rtt_status
+        data_type: TEXT
+        description: 'As supplied in source field RTT_Status.'
+      - name: decided_to_admit_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Decided_To_Admit_Date.'
+      - name: episode_start_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Episode_Start_Date.'
+      - name: episode_end_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Episode_End_Date.'
+      - name: dv_episode_gross_length_of_stay
+        data_type: NUMBER
+        description: 'As supplied in source field dv_EpisodeGrossLengthOfStay.'
+      - name: episode_number
+        data_type: NUMBER
+        description: 'As supplied in source field Episode_Number.'
+      - name: last_episode_in_spell_indicator
+        data_type: TEXT
+        description: 'As supplied in source field Last_Episode_in_Spell_Indicator.'
+      - name: start_date_hospital_provider_spell
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Start_Date_Hospital_Provider_Spell.'
+      - name: start_time_hospital_provider_spell
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Start_Time_Hospital_Provider_Spell.'
+      - name: end_date_hospital_provider_spell
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field End_Date_Hospital_Provider_Spell.'
+      - name: discharge_time_hospital_provider_spell
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Discharge_Time_Hospital_Provider_Spell.'
+      - name: ready_for_discharge_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Ready_For_Discharge_Date.'
+      - name: dv_length_of_stay_gross
+        data_type: NUMBER
+        description: 'As supplied in source field dv_LengthOfStay_Gross.'
+      - name: dv_cds_activity_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field dv_CDSActivityDate.'
+      - name: source_of_admission_hospital_provider_spell
+        data_type: TEXT
+        description: 'As supplied in source field Source_of_Admission_Hospital_Provider_Spell.'
+      - name: discharge_destination_hospital_provider_spell
+        data_type: TEXT
+        description: 'As supplied in source field Discharge_Destination_Hospital_Provider_Spell.'
+      - name: discharge_method_hospital_provider_spell
+        data_type: TEXT
+        description: 'As supplied in source field Discharge_Method_Hospital_Provider_Spell.'
+      - name: administrative_category_on_admission
+        data_type: TEXT
+        description: 'As supplied in source field Administrative_Category_on_Admission.'
+      - name: first_regular_day_night_admission
+        data_type: TEXT
+        description: 'As supplied in source field First_Regular_Day_Night_Admission.'
+      - name: intended_management
+        data_type: TEXT
+        description: 'As supplied in source field Intended_Management.'
+      - name: patient_classification
+        data_type: TEXT
+        description: 'As supplied in source field Patient_Classification.'
+      - name: admission_method_hospital_provider_spell
+        data_type: TEXT
+        description: 'As supplied in source field Admission_Method_Hospital_Provider_Spell.'
+      - name: age_group_intended_at_epiend
+        data_type: NUMBER
+        description: 'As supplied in source field Age_Group_Intended_at_Epiend.'
+      - name: neonatal_level_of_care
+        data_type: TEXT
+        description: 'As supplied in source field Neonatal_Level_of_Care.'
+      - name: dv_number_diagnoses
+        data_type: NUMBER
+        description: 'As supplied in source field dv_NumberDiagnoses.'
+      - name: dv_number_procedures
+        data_type: NUMBER
+        description: 'As supplied in source field dv_NumberProcedures.'
+      - name: dv_number_unbundled_hr_gs
+        data_type: NUMBER
+        description: 'As supplied in source field dv_NumberUnbundledHRGs.'
+      - name: sk_patient_id
+        data_type: NUMBER
+        description: 'As supplied in source field SK_PatientID.'
+      - name: dw_nhs_number
+        data_type: TEXT
+        description: 'As supplied in source field DW_NHS_Number.'
+      - name: ccg_nhs_number
+        data_type: TEXT
+        description: 'As supplied in source field CCG_NHS_Number.'
+      - name: local_patient_identifier
+        data_type: TEXT
+        description: 'As supplied in source field Local_Patient_Identifier.'
+      - name: carer_support_indicator
+        data_type: TEXT
+        description: 'As supplied in source field Carer_Support_Indicator.'
+      - name: ethnic_category_code
+        data_type: TEXT
+        description: 'As supplied in source field Ethnic_Category_Code.'
+      - name: age_at_cds_activity_date
+        data_type: NUMBER
+        description: 'As supplied in source field Age_At_CDS_Activity_Date.'
+      - name: birth_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Birth_Date.'
+      - name: dv_year_of_birth
+        data_type: NUMBER
+        description: 'As supplied in source field dv_YearOfBirth.'
+      - name: gender_code
+        data_type: TEXT
+        description: 'As supplied in source field Gender_Code.'
+      - name: postcode_of_usual_address
+        data_type: NUMBER
+        description: 'As supplied in source field Postcode_of_Usual_Address.'
+      - name: dv_lsoa_code
+        data_type: TEXT
+        description: 'As supplied in source field dv_LSOACode.'
+      - name: legal_status_classification_code
+        data_type: TEXT
+        description: 'As supplied in source field Legal_Status_Classification_Code.'
+      - name: gp_code_original_data
+        data_type: TEXT
+        description: 'As supplied in source field GP_Code_Original_data.'
+      - name: gp_practice_code_original_data
+        data_type: TEXT
+        description: 'As supplied in source field GP_Practice_Code_Original_Data.'
+      - name: gp_practice_code_derived
+        data_type: TEXT
+        description: 'As supplied in source field GP_Practice_Code_Derived.'
+      - name: dv_practice_code_validated
+        data_type: TEXT
+        description: 'As supplied in source field dv_PracticeCode_Validated.'
+      - name: provider_reference_no
+        data_type: TEXT
+        description: 'As supplied in source field Provider_Reference_No.'
+      - name: commissioner_reference_no
+        data_type: TEXT
+        description: 'As supplied in source field Commissioner_Reference_No.'
+      - name: commissioner_serial_no_agreement_no
+        data_type: TEXT
+        description: 'As supplied in source field Commissioner_Serial_No_Agreement_No.'
+      - name: nhs_service_agreement_line_no
+        data_type: TEXT
+        description: 'As supplied in source field NHS_Service_Agreement_Line_No.'
+      - name: consultant_code
+        data_type: TEXT
+        description: 'As supplied in source field Consultant_Code.'
+      - name: main_specialty_code
+        data_type: TEXT
+        description: 'As supplied in source field Main_Specialty_Code.'
+      - name: treatment_function_code
+        data_type: TEXT
+        description: 'As supplied in source field Treatment_Function_Code.'
+      - name: local_sub_specialty_code
+        data_type: TEXT
+        description: 'As supplied in source field Local_Sub_Specialty_Code.'
+      - name: ward_code_at_episode_start_date
+        data_type: TEXT
+        description: 'As supplied in source field Ward_Code_at_Episode_Start_Date.'
+      - name: ward_code_at_episode_end_date
+        data_type: TEXT
+        description: 'As supplied in source field Ward_Code_at_Episode_End_Date.'
+      - name: dv_ward_code_at_admission
+        data_type: TEXT
+        description: 'As supplied in source field dv_WardCode_At_Admission.'
+      - name: dv_ward_code_at_discharge
+        data_type: TEXT
+        description: 'As supplied in source field dv_WardCode_At_Discharge.'
+      - name: dv_spec_com_service_code_national_episode
+        data_type: TEXT
+        description: 'As supplied in source field dv_SpecCom_ServiceCode_National_Episode.'
+      - name: dv_spec_com_service_code_national_spell
+        data_type: TEXT
+        description: 'As supplied in source field dv_SpecCom_ServiceCode_National_Spell.'
+      - name: dv_spec_com_service_code_local_episode
+        data_type: TEXT
+        description: 'As supplied in source field dv_SpecCom_ServiceCode_Local_Episode.'
+      - name: dv_spec_com_service_code_local_spell
+        data_type: TEXT
+        description: 'As supplied in source field dv_SpecCom_ServiceCode_Local_Spell.'
+      - name: organisation_code_code_of_provider
+        data_type: TEXT
+        description: 'As supplied in source field Organisation_Code_Code_of_Provider.'
+      - name: organisation_code_code_of_commissioner
+        data_type: TEXT
+        description: 'As supplied in source field Organisation_Code_Code_of_Commissioner.'
+      - name: site_code_of_treatment_at_start_of_episode
+        data_type: TEXT
+        description: 'As supplied in source field Site_code_of_Treatment_at_start_of_episode.'
+      - name: organisation_code_pct_of_residence
+        data_type: TEXT
+        description: 'As supplied in source field Organisation_Code_PCT_of_Residence.'
+      - name: commissioner_code_original_data
+        data_type: TEXT
+        description: 'As supplied in source field Commissioner_Code_Original_Data.'
+      - name: pct_derived_from_gp_practice
+        data_type: TEXT
+        description: 'As supplied in source field PCT_Derived_from_GP_Practice.'
+      - name: patient_postcode_derived_pct
+        data_type: TEXT
+        description: 'As supplied in source field Patient_Postcode_Derived_PCT.'
+      - name: dv_ccam_sel
+        data_type: TEXT
+        description: 'As supplied in source field dv_CCAM_SEL.'
+      - name: dv_ccam_swl
+        data_type: TEXT
+        description: 'As supplied in source field dv_CCAM_SWL.'
+      - name: dv_commissioner_code_of_residence
+        data_type: NUMBER
+        description: 'As supplied in source field dv_Commissioner_Code_of_Residence.'
+      - name: dv_purchaser_id
+        data_type: TEXT
+        description: 'As supplied in source field dv_Purchaser_ID.'
+      - name: dv_contract_suffix
+        data_type: TEXT
+        description: 'As supplied in source field dv_Contract_Suffix.'
+      - name: dv_cost_method_description
+        data_type: TEXT
+        description: 'As supplied in source field dv_CostMethodDescription.'
+      - name: programme_budgeting_category
+        data_type: TEXT
+        description: 'As supplied in source field Programme_Budgeting_Category.'
+      - name: core_hrg_calculated
+        data_type: TEXT
+        description: 'As supplied in source field Core_HRG_Calculated.'
+      - name: spell_core_hrg
+        data_type: TEXT
+        description: 'As supplied in source field Spell_Core_HRG.'
+      - name: dv_hrg
+        data_type: TEXT
+        description: 'As supplied in source field dv_HRG.'
+      - name: dv_local_cost_code
+        data_type: TEXT
+        description: 'As supplied in source field dv_Local_Cost_Code.'
+      - name: dv_reason_for_difference
+        data_type: TEXT
+        description: 'As supplied in source field dv_Reason_for_Difference.'
+      - name: spell_in_pbr_not_in_pbr
+        data_type: NUMBER
+        description: 'As supplied in source field Spell_In_Pbr_Not_In_Pbr.'
+      - name: dv_is_pbr
+        data_type: BOOLEAN
+        description: 'As supplied in source field dv_IsPBR.'
+      - name: dv_applicable_tariff
+        data_type: FLOAT
+        description: 'As supplied in source field dv_ApplicableTariff.'
+      - name: dv_base_cost
+        data_type: FLOAT
+        description: 'As supplied in source field dv_Base_Cost.'
+      - name: dv_is_short_stay
+        data_type: BOOLEAN
+        description: 'As supplied in source field dv_IsShortStay.'
+      - name: dv_special_service_id
+        data_type: TEXT
+        description: 'As supplied in source field dv_SpecialServiceID.'
+      - name: dv_service_adjustment_cost
+        data_type: FLOAT
+        description: 'As supplied in source field dv_ServiceAdjustment_Cost.'
+      - name: dv_best_practice_tariff_code
+        data_type: TEXT
+        description: 'As supplied in source field dv_BestPracticeTariff_Code.'
+      - name: dv_specialist_palliative_care_days
+        data_type: NUMBER
+        description: 'As supplied in source field dv_SpecialistPalliativeCareDays.'
+      - name: dv_rehab_days
+        data_type: NUMBER
+        description: 'As supplied in source field dv_RehabDays.'
+      - name: dv_delayed_discharge_days
+        data_type: NUMBER
+        description: 'As supplied in source field dv_DelayedDischargeDays.'
+      - name: dv_tariff_type
+        data_type: TEXT
+        description: 'As supplied in source field dv_TariffType.'
+      - name: dv_length_of_stay_net
+        data_type: NUMBER
+        description: 'As supplied in source field dv_LengthOfStay_Net.'
+      - name: dv_excess_bed_days
+        data_type: NUMBER
+        description: 'As supplied in source field dv_ExcessBedDays.'
+      - name: dv_excess_bed_days_cost
+        data_type: FLOAT
+        description: 'As supplied in source field dv_ExcessBedDays_Cost.'
+      - name: dv_mff_index_applied
+        data_type: FLOAT
+        description: 'As supplied in source field dv_MFF_Index_Applied.'
+      - name: pbr_final_tariff
+        data_type: FLOAT
+        description: 'As supplied in source field Pbr_Final_Tariff.'
+      - name: dv_total_cost_inc_mff
+        data_type: NUMBER
+        description: 'As supplied in source field dv_Total_Cost_Inc_MFF.'
+      - name: primary_diagnosis_code
+        data_type: TEXT
+        description: 'As supplied in source field Primary_Diagnosis_Code.'
+      - name: dv_is_spell
+        data_type: NUMBER
+        description: 'As supplied in source field dv_IsSpell.'
+      - name: secondary_diagnosis_code_1
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_1.'
+      - name: secondary_diagnosis_code_2
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_2.'
+      - name: secondary_diagnosis_code_3
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_3.'
+      - name: secondary_diagnosis_code_4
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_4.'
+      - name: secondary_diagnosis_code_5
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_5.'
+      - name: secondary_diagnosis_code_6
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_6.'
+      - name: secondary_diagnosis_code_7
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_7.'
+      - name: secondary_diagnosis_code_8
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_8.'
+      - name: secondary_diagnosis_code_9
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_9.'
+      - name: secondary_diagnosis_code_10
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_10.'
+      - name: secondary_diagnosis_code_11
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_11.'
+      - name: secondary_diagnosis_code_12
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Diagnosis_Code_12.'
+      - name: operation_status
+        data_type: TEXT
+        description: 'As supplied in source field Operation_Status.'
+      - name: primary_procedure_code
+        data_type: TEXT
+        description: 'As supplied in source field Primary_Procedure_Code.'
+      - name: primary_procedure_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Primary_Procedure_Date.'
+      - name: secondary_procedure_code_1
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_1.'
+      - name: secondary_procedure_date_1
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_1.'
+      - name: secondary_procedure_code_2
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_2.'
+      - name: secondary_procedure_date_2
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_2.'
+      - name: secondary_procedure_code_3
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_3.'
+      - name: secondary_procedure_date_3
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_3.'
+      - name: secondary_procedure_code_4
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_4.'
+      - name: secondary_procedure_date_4
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_4.'
+      - name: secondary_procedure_code_5
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_5.'
+      - name: secondary_procedure_date_5
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_5.'
+      - name: secondary_procedure_code_6
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_6.'
+      - name: secondary_procedure_date_6
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_6.'
+      - name: secondary_procedure_code_7
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_7.'
+      - name: secondary_procedure_date_7
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_7.'
+      - name: secondary_procedure_code_8
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_8.'
+      - name: secondary_procedure_date_8
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_8.'
+      - name: secondary_procedure_code_9
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_9.'
+      - name: secondary_procedure_date_9
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_9.'
+      - name: secondary_procedure_code_10
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_10.'
+      - name: secondary_procedure_date_10
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_10.'
+      - name: secondary_procedure_code_11
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_11.'
+      - name: secondary_procedure_date_11
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_11.'
+      - name: secondary_procedure_code_12
+        data_type: TEXT
+        description: 'As supplied in source field Secondary_Procedure_Code_12.'
+      - name: secondary_procedure_date_12
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied in source field Secondary_Procedure_Date_12.'
+      - name: dv_unbundled_hrg_1
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_1.'
+      - name: dv_unbundled_hrg_2
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_2.'
+      - name: dv_unbundled_hrg_3
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_3.'
+      - name: dv_unbundled_hrg_4
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_4.'
+      - name: dv_unbundled_hrg_5
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_5.'
+      - name: dv_unbundled_hrg_6
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_6.'
+      - name: dv_unbundled_hrg_7
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_7.'
+      - name: dv_unbundled_hrg_8
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_8.'
+      - name: dv_unbundled_hrg_9
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_9.'
+      - name: dv_unbundled_hrg_10
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_10.'
+      - name: dv_unbundled_hrg_11
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_11.'
+      - name: dv_unbundled_hrg_12
+        data_type: TEXT
+        description: 'As supplied in source field dv_Unbundled_HRG_12.'
+      - name: dv_unbundled_days_total
+        data_type: NUMBER
+        description: 'As supplied in source field dv_Unbundled_Days_Total.'
+      - name: dv_unbundled_cost_total
+        data_type: NUMBER
+        description: 'As supplied in source field dv_Unbundled_Cost_Total.'
+      - name: dv_critical_care_day_count
+        data_type: NUMBER
+        description: 'As supplied in source field dv_Critical_CareDay_Count.'
+      - name: admission_subtype_derived
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: admission_type_derived
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: age_at_end_of_spell
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: age_at_start_of_spell
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: aggregate_un_bundled_adjustment_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: applicable_costing_period
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: applicable_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: applied_mff_elective
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: applied_mff_non_elective
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: bpt_indicator_1
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: bpt_indicator_1_action
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: cds_schema_version
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: code_cleaning
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: core_hrg_version_calculated
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: duration_of_elective_wait
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: excluded_episodes_in_hospital_provider_spell
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: extract_date
+        data_type: TIMESTAMP_NTZ
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: final_tariff_applied
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: gp_practice_derived_from_pds
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: grouping_algorithm_version
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: grouping_method
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: length_of_stay_hospital_provider_spell
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: marital_status
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: mff_adjustment
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: nhs_number_status_indicator
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: number_bpt_indicators
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: number_diagnosis
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: number_of_commissioners_in_pb_r_spell
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: number_ss_cs
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: number_unbundled_non_priced_hr_gs
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: number_unbundled_priced_hr_gs
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: org_code_local_patient_identifier
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: patient_postcode_derived_pct_type
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: patient_type
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: pb_r_days_beyond_trimpoint
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: pb_r_final_adjusted_length_of_stay
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: pb_r_spell_error_status
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: pb_r_spell_trimpoint_days
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: postcode_sector_of_usual_address
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: provider_code_original_data
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: provider_site_code
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: reason_access_provided
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: sha_commissioner
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: sha_provider
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: significant_specialised_service_code
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: specialised_service_code_1
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: specialised_service_code_2
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: specialised_service_code_3
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_acc_length_of_stay
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_age
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_dominant_procedure
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_exclusion_reason
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_ncc_length_of_stay
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_npoc
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_pcc_length_of_stay
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_primary_diagnosis
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_programme_budgeting_category
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: spell_service_line
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: sus_version
+        data_type: TEXT
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: tariff_initial_amount_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: tariff_long_stay_payment_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: tariff_long_stay_rate_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: tariff_pre_mff_adjusted_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: tariff_service_adjustment_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+      - name: tariff_total_payment_national
+        data_type: NUMBER
+        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
