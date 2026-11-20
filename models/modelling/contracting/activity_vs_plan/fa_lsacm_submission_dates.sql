@@ -6,7 +6,9 @@
 
 /* Generate monthly submission timetable for contract activity taking into account bank holidays 
 and moving dates to following working day if 22nd of the month falls on a Friday 
---10th November use existing bank holiday date table -- and fix this issue 'in weekend_adjusted + submission_dates: after moving a date because of a bank holiday, script does not recheck whether the resulting date is a weekend or another bank holiday.'*/
+--10th November use existing bank holiday date table -- and fix this issue 'in weekend_adjusted + submission_dates: after moving a date because of a bank holiday, script does not recheck whether the resulting date is a weekend or another bank holiday.'
+--19th November fix. Activity months and Candidate date CTEs are now explicit, deterministic row numbering and day offsets to explicitly control the numbers used to create the months and days 
+rather than relying directly on Snowflake's sequence generator 'SEQ4()' which was returning an error when running inside dbt but not in Snowflake.*/
 WITH bank_holidays AS (
     --England and Wales bank holidays dictionary used to determine valid submission dates.
     SELECT
@@ -17,10 +19,11 @@ WITH bank_holidays AS (
 ),
 activity_months AS (
         --Generates monthly rows from April 2026. ROWCOUNT => 24 covers: FY 2026/27 and FY 2027/28 -- FOR NOW
-    SELECT
+        --Use the sequence to establish an order - NOT DATEADD which can be unstable, then explicitly number the resulting rows from 1 to 24.
+     SELECT
         DATEADD(
             MONTH,
-            SEQ4(),
+            ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1,
             '2026-04-01'::DATE
         ) AS activity_month
     FROM TABLE(GENERATOR(ROWCOUNT => 24))
@@ -46,17 +49,17 @@ target_dates AS (
     FROM activity_months
 ),
 candidate_dates AS (
-    /*  Generate the target date plus the following 9 days.
-        This allows the submission date to move forward across
-        weekends and consecutive bank holidays. */
+    --For every target submission date, create 10 possible dates: the target date itself and the following nine days. 
+    --It gives the later submission_dates CTE a little 10-day window to search for an allowable submission date.
     SELECT
         td.activity_month,
         td.target_date,
         DATEADD(DAY, g.day_offset, td.target_date) AS candidate_date
     FROM target_dates td
     CROSS JOIN (
-        SELECT SEQ4() AS day_offset
-        FROM TABLE(GENERATOR(ROWCOUNT => 10))
+        SELECT column1 AS day_offset
+        FROM VALUES
+            (0),(1),(2),(3),(4),(5),(6),(7),(8),(9)
     ) g
 ),
 submission_dates AS (

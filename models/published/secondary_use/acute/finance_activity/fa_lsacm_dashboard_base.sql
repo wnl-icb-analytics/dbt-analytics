@@ -151,8 +151,7 @@ SELECT
             'Z9B2Z','QMJ','QRV'
         ) then 'WNL'
         WHEN commissioner_code in ('13R','13Q') then 'NHSE'
-        ELSE 'OTHER'
-    END AS wnl_flag,
+        ELSE 'Other' END AS wnl_flag,
     acm.commissioned_service_category_code,
     acm.service_code,
     acm.dv_actual_activity AS activity,
