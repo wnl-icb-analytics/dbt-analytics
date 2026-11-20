@@ -22,7 +22,7 @@
     Content:
     - 8 care processes (HbA1c, BP, cholesterol, creatinine, urine ACR,
       foot exam, BMI, smoking) + retinal screening = 9 care processes
-    - Triple target (NDA: HbA1c <=58, BP <=140/80, statin where indicated)
+    - Triple target (NDA 2024-25: HbA1c <=58, BP <=140/90, statin where indicated)
     - Foot check detail (Townson risk, per-foot status, exemptions)
 
     12-month completion windows are relative to the build date, not a
@@ -41,7 +41,7 @@ TABLES(
 
     triple AS {{ ref('fct_person_diabetes_triple_target') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'National Diabetes Audit treatment targets: latest HbA1c <=58 mmol/mol and BP <=140/80 in the 15 calendar months ending this month, plus a statin where indicated. One row per registered person on the diabetes register.',
+        COMMENT = 'National Diabetes Audit treatment targets: latest HbA1c <=58 mmol/mol and BP <=140/90 in the 12 calendar months ending this month, plus a statin where indicated. One row per registered person on the diabetes register.',
 
     foot AS {{ ref('fct_person_diabetes_foot_check') }}
         PRIMARY KEY (person_id)
@@ -82,7 +82,7 @@ DIMENSIONS(
     triple.latest_hba1c_date AS latest_hba1c_date COMMENT = 'Date of the latest HbA1c in the triple-target audit period',
     cp.latest_retinal_screening_date AS latest_retinal_screening_date COMMENT = 'Date of latest retinal screening',
 
-    -- Triple target (National Diabetes Audit; audit period = 15 calendar months ending this month)
+    -- Triple target (National Diabetes Audit; audit period = 12 calendar months ending this month)
     triple.diabetes_type AS diabetes_type COMMENT = 'Diabetes type (Type 1, Type 2, Unknown)',
     triple.nda_diabetes_type AS nda_diabetes_type COMMENT = 'NDA reporting group: Type 1, or Type 2 and other',
     triple.is_hba1c_recorded_in_period AS is_hba1c_recorded_in_period COMMENT = 'HbA1c recorded in the audit period',
@@ -90,11 +90,12 @@ DIMENSIONS(
     triple.hba1c_in_target_range AS hba1c_in_target_range COMMENT = 'Latest HbA1c in the audit period <=58 mmol/mol (FALSE if none)',
     triple.latest_bp_date AS latest_bp_date COMMENT = 'Date of the latest paired BP in the audit period',
     triple.is_bp_recorded_in_period AS is_bp_recorded_in_period COMMENT = 'Paired BP recorded in the audit period',
-    triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP in the audit period <=140/80 mmHg (FALSE if none)',
+    triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP in the audit period <=140/90 mmHg (FALSE if none)',
     triple.has_cvd AS has_cvd COMMENT = 'On the CHD, stroke/TIA or PAD register',
     triple.is_statin_indicated AS is_statin_indicated COMMENT = 'Statin indicated: aged 40-80, or any age with CVD',
     triple.is_statin_prescribed_in_period AS is_statin_prescribed_in_period COMMENT = 'Statin prescribed in the audit period',
     triple.is_statin_target_met AS is_statin_target_met COMMENT = 'Statin prescribed where indicated; NULL when not indicated',
+    triple.is_in_nda_denominator AS is_in_nda_denominator COMMENT = 'Valid latest HbA1c and BP in the audit period; the NDA treatment-target denominator',
     triple.all_three_targets_met AS all_three_targets_met WITH SYNONYMS = ('triple target', 'NDA treatment targets') COMMENT = 'HbA1c and BP targets met and statin prescribed where indicated',
 
     -- Foot check detail
@@ -152,9 +153,10 @@ METRICS(
     cp.retinal_done_count AS COUNT(DISTINCT CASE WHEN cp.retinal_screening_completed_in_last_12m THEN cp.person_id END) COMMENT = 'People with retinal screening in last 12m',
 
     -- Treatment targets
+    triple.nda_denominator_count AS COUNT(DISTINCT CASE WHEN triple.is_in_nda_denominator THEN triple.person_id END) COMMENT = 'People with a valid HbA1c and BP in the audit period (NDA treatment-target denominator)',
     triple.triple_target_met_count AS COUNT(DISTINCT CASE WHEN triple.all_three_targets_met THEN triple.person_id END) COMMENT = 'People meeting all three treatment targets',
     triple.hba1c_target_met_count AS COUNT(DISTINCT CASE WHEN triple.hba1c_in_target_range THEN triple.person_id END) COMMENT = 'People with HbA1c <=58',
-    triple.bp_target_met_count AS COUNT(DISTINCT CASE WHEN triple.bp_in_target_range THEN triple.person_id END) COMMENT = 'People with BP <=140/80',
+    triple.bp_target_met_count AS COUNT(DISTINCT CASE WHEN triple.bp_in_target_range THEN triple.person_id END) COMMENT = 'People with BP <=140/90',
     triple.statin_indicated_count AS COUNT(DISTINCT CASE WHEN triple.is_statin_indicated THEN triple.person_id END) COMMENT = 'People with a statin indicated',
     triple.statin_target_met_count AS COUNT(DISTINCT CASE WHEN triple.is_statin_target_met THEN triple.person_id END) COMMENT = 'People with a statin indicated and prescribed in the audit period',
 
