@@ -1,25 +1,31 @@
 models:
 - name: fct_ers_dashboard_measure_event
   description: >-
-    One e-RS action counted towards an NHS England e-RS dashboard measure, per measure and action, using
-    the measure rules in the NHS England e-RS dashboard metadata, version 1.4 (June 2024). Count rows for
-    a measure_code within a period of action_at to reproduce a dashboard measure. Rules: referrals are
-    Referral Created (1422) actions on initial referrals, meaning no previous UBRN. Referrals accepted is
-    the latest Referral Accepted (1420) or Auto Accepted (1533) action per initial referral; when both
-    occur at the same time the auto-accept is counted. Referrals rejected counts every Referral Rejected
-    (1424) action on initial referrals. A&G requests is the first Advice Requested (1407) action per UBRN.
-    A&G first response is the first Advice Response (1408) at or after that request, with response time in
-    working hours. A&G outcomes counts every Advice Conversation Closed (1409) action. RAS requests
-    counts every Triage Requested (1608) action and RAS outcomes every Triage Outcome Recorded (1770)
-    action. ASI counts every Deferred to Service Provider (1430) action and ASI outcomes every Record ASI
-    Outcome (1810) action. Referrals received by provider is the first booking (1412), deferral (1430) or
-    triage request (1608) for each UBRN and provider; a missing provider forms its own group. The
-    first, latest and first-per-provider selections use the whole active action history, so each request
-    is counted once, in the period of the selected action, not once per reporting period. Directly
-    bookable service bookings are not included because the local extract does not identify directly
-    bookable services. Measures are independent: a referral counted in one month need not relate to
-    other measures in that month. Local EBSX02 data may differ slightly from the national DSCRO cut
-    used by NHS England. No geography, registration or date restriction is applied.
+    One e-RS action counted towards an NHS England e-RS dashboard measure, per measure and action,
+    following the NHS England e-RS dashboard metadata v1.4 (June 2024) and the SQL NHS England publishes
+    with it. Count rows for a measure_code within a period of action_at to reproduce a dashboard measure.
+    Referrals are Referral Created (1422) actions on initial referrals, meaning no previous UBRN.
+    Referrals accepted is the latest Referral Accepted (1420) or Auto Accepted (1533) action per initial
+    referral in each Monday-to-Sunday week (week_end_date), preferring the auto-accept; a Referral
+    Updated (1423) action at the same time voids it unless accept and auto-accept are both present, when
+    the auto-accept counts. NHS England runs its dashboard SQL one week at a time, so sum weeks for longer
+    periods; a referral accepted in two weeks counts in both. Referrals rejected counts every Referral Rejected (1424) action on initial
+    referrals. A&G requests is the first Advice Requested (1407) action per UBRN. A&G first response is
+    the first Advice Response (1408) at or after that request, counted in the month of the response with
+    the request's breakdowns; responses without a recorded request are not counted. NHS England takes
+    the first response even when it precedes the request; a handful of such requests differ. A&G
+    outcomes counts every Advice Conversation Closed (1409) action; NHS England counts distinct UBRNs. RAS requests counts every Triage Requested (1608)
+    action and RAS outcomes every Triage Outcome Recorded (1770) action. ASI counts every Deferred to
+    Service Provider (1430) action and ASI outcomes every Record ASI Outcome (1810) action. Referrals
+    received by provider is the first booking (1412), deferral (1430) or triage request (1608) for each
+    UBRN and provider; actions without a provider are excluded. Directly bookable service bookings are
+    not included: NHS England flags directly bookable services from the EBSX05 service extract, which
+    is not loaded. No bookable
+    service filter is applied to accepted or rejected referrals. Measures are independent: a referral
+    counted in one month need not relate to other measures in that month. NHS England assigns each week
+    to the month of its Monday, so monthly totals grouped by action_at can differ at month boundaries. Local EBSX02 data may differ
+    slightly from the national DSCRO cut used by NHS England. No geography, registration or date
+    restriction is applied.
   config:
     meta:
       owner:
@@ -82,6 +88,10 @@ models:
       referrals rejected.
   - name: action_reason_name
     description: Latest retained e-RS action-reason label, with supplied-label fallback.
+  - name: breakdown_action_id
+    description: >-
+      Action supplying the organisation, specialty, clinic type, priority and geography columns. The
+      initial advice request for advice_first_responses; otherwise the counted action.
   - name: referring_organisation_code
     description: >-
       ODS code of the referring organisation supplied on the action. May include organisations other than
@@ -102,6 +112,12 @@ models:
     description: e-RS service supplied on the action, where present.
   - name: service_name
     description: Latest retained service name, with supplied-label fallback.
+  - name: dashboard_specialty_code
+    description: >-
+      Specialty used by the NHS England dashboard: the service specialty where a service is present,
+      otherwise the referral search specialty. An e-RS specialty, not a national treatment function code.
+  - name: dashboard_specialty_name
+    description: Label for dashboard_specialty_code, from the same source as the code.
   - name: specialty_code
     description: e-RS referral search specialty. Not a national treatment function code.
   - name: specialty_name
@@ -138,8 +154,10 @@ models:
     description: >-
       Hours from the first advice request to the first response, less 24 hours for each weekend day or
       England and Wales bank holiday falling strictly between the request date and response date. A
-      non-working request or response date is not subtracted. Populated only for advice_first_responses.
-  - name: advice_response_working_days
+      non-working request or response date is not subtracted. NHS England's own calculation approximates
+      this and also subtracts a bank holiday on the request date. Populated only for advice_first_responses.
+  - name: advice_response_time_band
     description: >-
-      advice_response_working_hours grouped into whole days, rounded down, so 0 means under 24 working
-      hours. Populated only for advice_first_responses.
+      NHS England dashboard band for whole advice_response_working_hours: 0 to 2 days is up to 48 hours,
+      Over 2 to 5 days is over 48 and up to 120, Over 5 to 10 days is over 120 and up to 240, and Over 10
+      days is over 240. Populated only for advice_first_responses.

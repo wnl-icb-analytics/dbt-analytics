@@ -85,20 +85,28 @@ Reference agreement alone is not a confirmed person-level link.
 
 ## Dashboard measures
 
-`FCT_ERS_DASHBOARD_MEASURE_EVENT` holds the NHS England e-RS dashboard measures
-(metadata version 1.4, June 2024) as one row per measure and counted action.
-Count rows for a `measure_code` within a period of `action_at`. The model
-description gives each counting rule. Points to know:
+`FCT_ERS_DASHBOARD_MEASURE_EVENT` holds the NHS England e-RS dashboard measures as
+one row per measure and counted action. Rules follow the
+[dashboard metadata](https://digital.nhs.uk/dashboards/e-referral-service-dashboard-private-version)
+("Download the full data logic") and the Databricks SQL embedded in it, which is
+more specific than the written definitions. The model description gives each
+rule. Points to know:
 
-- Accepted, A&G requests, A&G first response and received by provider select one
-  action per request (or request and provider) across the whole history, so a
-  request is counted once, in the period of the selected action.
+- NHS England runs the SQL one Monday-to-Sunday week at a time. Only referrals
+  accepted depends on the period: it takes the latest accept per referral within
+  each week (`week_end_date`), so sum weeks for longer periods.
+- An accept with a Referral Updated (1423) action at the same time is not counted
+  unless accept and auto-accept are both present, when the auto-accept counts.
+- A&G first response takes its organisation and specialty breakdowns from the
+  initial request and is counted in the week of the response.
+  `advice_response_time_band` uses the dashboard's 48, 120 and 240 working-hour
+  thresholds.
+- `dashboard_specialty_*` is the service specialty where present, otherwise the
+  referral search specialty, as the dashboard groups it.
+- Received by provider excludes actions without a provider, as the dashboard does.
 - RAS outcomes use Triage Outcome Recorded (1770), not the request action.
-- A&G response time subtracts 24 hours per weekend day or England and Wales bank
-  holiday strictly between the request and response dates.
-- Received by provider keeps actions without a provider as a separate group.
-- DBS bookings are not built: the local extract does not identify directly
-  bookable services.
+- DBS bookings are not built: NHS England flags directly bookable services from
+  the EBSX05 service extract, which this project does not load.
 
 ## Sources
 

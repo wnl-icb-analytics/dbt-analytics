@@ -1,10 +1,14 @@
--- Selected measures count each request (or request and provider) once; A&G responses carry a response time.
+-- One-per-request measures select once; received rows have a provider; A&G responses carry a response time.
 -- Returns failed rules with counts only.
 with keyed as (
     select
         measure_code,
         ubrn_id,
-        iff(measure_code = 'referrals_received_by_provider', provider_organisation_code, null) as provider_key,
+        case measure_code
+            when 'referrals_received_by_provider' then provider_organisation_code
+            when 'referrals_accepted' then to_char(week_end_date, 'YYYY-MM-DD')
+        end as selection_key,
+        provider_organisation_code,
         advice_response_working_hours
     from {{ ref('fct_ers_dashboard_measure_event') }}
     where measure_code in (
@@ -16,13 +20,21 @@ with keyed as (
     from (
         select measure_code
         from keyed
-        group by measure_code, ubrn_id, provider_key
+        group by measure_code, ubrn_id, selection_key
         having count(*) > 1
     )
     group by measure_code
 )
 select measure_code || ' selected more than once' as failed_rule, failing_groups
 from duplicates
+
+union all
+
+select 'received without provider', count(*)
+from keyed
+where measure_code = 'referrals_received_by_provider'
+    and provider_organisation_code is null
+having count(*) > 0
 
 union all
 

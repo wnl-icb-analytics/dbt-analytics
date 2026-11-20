@@ -1,19 +1,25 @@
 {{ config(cluster_by=['measure_code', 'action_at']) }}
 
--- Measure rules follow the NHS England e-RS dashboard metadata, version 1.4 (June 2024).
-with actions as (
+-- Rules follow the NHS England e-RS dashboard metadata v1.4 (June 2024) and the SQL published with it.
+with measure_source as (
+    select *
+    from {{ ref('fct_ers_referral_action') }}
+    where action_code in (
+        '1407', '1408', '1409', '1412', '1420', '1422', '1423', '1424',
+        '1430', '1533', '1608', '1770', '1810'
+    )
+),
+
+actions as (
     select
         action_id,
         ubrn_id,
         action_code,
         action_at,
+        week_end_date,
         previous_ubrn_id,
         provider_organisation_code
-    from {{ ref('fct_ers_referral_action') }}
-    where action_code in (
-        '1407', '1408', '1409', '1412', '1420', '1422', '1424',
-        '1430', '1533', '1608', '1770', '1810'
-    )
+    from measure_source
 ),
 
 single_action_measures as (
@@ -34,16 +40,47 @@ single_action_measures as (
         or action_code in ('1409', '1608', '1770', '1430', '1810')
 ),
 
--- Latest accept or auto-accept for each initial referral; auto-accept wins a same-time tie.
-referrals_accepted as (
-    select 'referrals_accepted' as measure_code, action_id
+-- Accept or auto-accept actions at the latest accept time for each initial referral and
+-- Monday-to-Sunday week, the reporting period NHS England's dashboard SQL runs over.
+latest_accepts as (
+    select
+        ubrn_id,
+        action_id,
+        action_code,
+        action_at,
+        week_end_date
     from actions
     where action_code in ('1420', '1533')
         and previous_ubrn_id is null
+    qualify action_at = max(action_at) over (partition by ubrn_id, week_end_date)
+),
+
+referral_updates as (
+    select distinct ubrn_id, action_at
+    from actions
+    where action_code = '1423'
+        and previous_ubrn_id is null
+),
+
+-- One accept per referral and week, auto-accept first. An update (1423) at the same time
+-- voids the acceptance unless accept and auto-accept are both present, when the auto-accept counts.
+referrals_accepted as (
+    select 'referrals_accepted' as measure_code, a.action_id
+    from latest_accepts as a
+    left join referral_updates as u
+        on a.ubrn_id = u.ubrn_id
+        and a.action_at = u.action_at
     qualify row_number() over (
-        partition by ubrn_id
-        order by action_at desc, iff(action_code = '1533', 0, 1), action_id desc
-    ) = 1
+            partition by a.ubrn_id, a.week_end_date
+            order by iff(a.action_code = '1533', 0, 1), a.action_id desc
+        ) = 1
+        and (
+            u.ubrn_id is null
+            or (
+                a.action_code = '1533'
+                and count_if(a.action_code = '1420') over (partition by a.ubrn_id, a.week_end_date) > 0
+            )
+        )
 ),
 
 -- First booking, deferral or triage request for each request and provider.
@@ -51,6 +88,7 @@ referrals_received as (
     select 'referrals_received_by_provider' as measure_code, action_id
     from actions
     where action_code in ('1412', '1430', '1608')
+        and provider_organisation_code is not null
     qualify row_number() over (
         partition by ubrn_id, provider_organisation_code
         order by action_at, action_id
@@ -160,45 +198,60 @@ select
         when 'asi_outcomes' then 'ASI outcomes'
         when 'referrals_received_by_provider' then 'Referrals received by provider'
     end as measure_name,
-    a.action_id,
-    a.ubrn_id,
-    a.ubrn,
-    a.sk_patient_id,
-    a.action_at,
-    a.financial_year,
-    a.financial_month,
-    a.financial_month_name,
-    a.week_end_date,
-    a.action_code,
-    a.action_name,
-    a.action_reason_code,
-    a.action_reason_name,
-    a.referring_organisation_code,
-    a.referring_organisation_name,
-    a.referrer_commissioner_code,
-    a.referrer_commissioner_name,
-    a.provider_organisation_code,
-    a.provider_organisation_name,
-    a.service_id,
-    a.service_name,
-    a.specialty_code,
-    a.specialty_name,
-    a.service_specialty_code,
-    a.service_specialty_name,
-    a.clinic_type_code,
-    a.clinic_type_name,
-    a.priority_code,
-    a.priority_name,
-    a.registered_practice_code,
-    a.registered_practice_name,
-    a.registration_local_authority_code,
-    a.registration_local_authority_name,
-    a.residence_local_authority_code,
-    a.residence_local_authority_name,
+    e.action_id,
+    e.ubrn_id,
+    e.ubrn,
+    e.sk_patient_id,
+    e.action_at,
+    e.financial_year,
+    e.financial_month,
+    e.financial_month_name,
+    e.week_end_date,
+    e.action_code,
+    e.action_name,
+    e.action_reason_code,
+    e.action_reason_name,
+    -- A&G first responses take their breakdowns from the initial advice request.
+    c.action_id as breakdown_action_id,
+    c.referring_organisation_code,
+    c.referring_organisation_name,
+    c.referrer_commissioner_code,
+    c.referrer_commissioner_name,
+    c.provider_organisation_code,
+    c.provider_organisation_name,
+    c.service_id,
+    c.service_name,
+    iff(c.service_specialty_code is not null, c.service_specialty_code, c.specialty_code)
+        as dashboard_specialty_code,
+    iff(c.service_specialty_code is not null, c.service_specialty_name, c.specialty_name)
+        as dashboard_specialty_name,
+    c.specialty_code,
+    c.specialty_name,
+    c.service_specialty_code,
+    c.service_specialty_name,
+    c.clinic_type_code,
+    c.clinic_type_name,
+    c.priority_code,
+    c.priority_name,
+    c.registered_practice_code,
+    c.registered_practice_name,
+    c.registration_local_authority_code,
+    c.registration_local_authority_name,
+    c.residence_local_authority_code,
+    c.residence_local_authority_name,
     m.advice_request_action_id,
     m.advice_requested_at,
     m.advice_response_working_hours,
-    floor(m.advice_response_working_hours / 24) as advice_response_working_days
+    -- NHS England dashboard bands, applied to whole working hours.
+    case
+        when m.advice_response_working_hours is null then null
+        when floor(m.advice_response_working_hours) <= 48 then '0 to 2 days'
+        when floor(m.advice_response_working_hours) <= 120 then 'Over 2 to 5 days'
+        when floor(m.advice_response_working_hours) <= 240 then 'Over 5 to 10 days'
+        else 'Over 10 days'
+    end as advice_response_time_band
 from measure_actions as m
-inner join {{ ref('fct_ers_referral_action') }} as a
-    on m.action_id = a.action_id
+inner join measure_source as e
+    on m.action_id = e.action_id
+inner join measure_source as c
+    on coalesce(m.advice_request_action_id, m.action_id) = c.action_id
