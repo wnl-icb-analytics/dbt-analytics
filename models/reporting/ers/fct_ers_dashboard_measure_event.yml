@@ -1,0 +1,145 @@
+models:
+- name: fct_ers_dashboard_measure_event
+  description: >-
+    One e-RS action counted towards an NHS England e-RS dashboard measure, per measure and action, using
+    the measure rules in the NHS England e-RS dashboard metadata, version 1.4 (June 2024). Count rows for
+    a measure_code within a period of action_at to reproduce a dashboard measure. Rules: referrals are
+    Referral Created (1422) actions on initial referrals, meaning no previous UBRN. Referrals accepted is
+    the latest Referral Accepted (1420) or Auto Accepted (1533) action per initial referral; when both
+    occur at the same time the auto-accept is counted. Referrals rejected counts every Referral Rejected
+    (1424) action on initial referrals. A&G requests is the first Advice Requested (1407) action per UBRN.
+    A&G first response is the first Advice Response (1408) at or after that request, with response time in
+    working hours. A&G outcomes counts every Advice Conversation Closed (1409) action. RAS requests
+    counts every Triage Requested (1608) action and RAS outcomes every Triage Outcome Recorded (1770)
+    action. ASI counts every Deferred to Service Provider (1430) action and ASI outcomes every Record ASI
+    Outcome (1810) action. Referrals received by provider is the first booking (1412), deferral (1430) or
+    triage request (1608) for each UBRN and provider; a missing provider forms its own group. The
+    first, latest and first-per-provider selections use the whole active action history, so each request
+    is counted once, in the period of the selected action, not once per reporting period. Directly
+    bookable service bookings are not included because the local extract does not identify directly
+    bookable services. Measures are independent: a referral counted in one month need not relate to
+    other measures in that month. Local EBSX02 data may differ slightly from the national DSCRO cut
+    used by NHS England. No geography, registration or date restriction is applied.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - measure_code
+        - action_id
+  columns:
+  - name: measure_code
+    description: Stable measure identifier. Filter on this rather than measure_name.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - referrals
+          - referrals_accepted
+          - referrals_rejected
+          - advice_requests
+          - advice_first_responses
+          - advice_outcomes
+          - ras_requests
+          - ras_outcomes
+          - asi
+          - asi_outcomes
+          - referrals_received_by_provider
+  - name: measure_name
+    description: Measure name as published in the NHS England e-RS dashboard metadata.
+  - name: action_id
+    description: e-RS action counted by the measure. Joins to fct_ers_referral_action for further detail.
+    data_tests:
+    - not_null
+  - name: ubrn_id
+    description: Source identifier of the referral, triage or advice request.
+  - name: ubrn
+    description: Supplied booking reference, preserved unchanged.
+  - name: sk_patient_id
+    description: Shared pseudonymised NHS-number key supplied on the counted action. Null when missing.
+  - name: action_at
+    description: Date and time of the counted action. Assigns the row to a reporting period.
+  - name: financial_year
+    description: NHS April-March financial year of action_at, formatted YYYYYY, for example 202526.
+  - name: financial_month
+    description: NHS financial month of action_at, where April is 1 and March is 12.
+  - name: financial_month_name
+    description: Month name of action_at.
+  - name: week_end_date
+    description: Sunday ending the ISO week containing action_at.
+  - name: action_code
+    description: e-RS action code of the counted action.
+  - name: action_name
+    description: Latest retained e-RS action label, with supplied-label fallback.
+  - name: action_reason_code
+    description: >-
+      e-RS reason supplied on the counted action. Holds the outcome for A&G outcomes (for example Advice
+      Ended or Advice Converted by Provider), RAS outcomes and ASI outcomes, and the rejection reason for
+      referrals rejected.
+  - name: action_reason_name
+    description: Latest retained e-RS action-reason label, with supplied-label fallback.
+  - name: referring_organisation_code
+    description: >-
+      ODS code of the referring organisation supplied on the action. May include organisations other than
+      GP practices, such as sub-ICBs.
+  - name: referring_organisation_name
+    description: Latest retained organisation name, with supplied-label fallback. Blank names can mean a closed organisation.
+  - name: referrer_commissioner_code
+    description: Commissioner of the referring organisation supplied on the action.
+  - name: referrer_commissioner_name
+    description: Latest retained organisation name for the referrer commissioner, with supplied-label fallback.
+  - name: provider_organisation_code
+    description: >-
+      ODS code of the service provider supplied on the action. Null when the action carries no provider,
+      for example Referral Created actions before a service is chosen.
+  - name: provider_organisation_name
+    description: Latest retained organisation name for the provider, with supplied-label fallback.
+  - name: service_id
+    description: e-RS service supplied on the action, where present.
+  - name: service_name
+    description: Latest retained service name, with supplied-label fallback.
+  - name: specialty_code
+    description: e-RS referral search specialty. Not a national treatment function code.
+  - name: specialty_name
+    description: Latest retained e-RS specialty label, with supplied-label fallback.
+  - name: service_specialty_code
+    description: e-RS specialty of the receiving service, where a service is present.
+  - name: service_specialty_name
+    description: Latest retained e-RS specialty label for the service, with supplied-label fallback.
+  - name: clinic_type_code
+    description: e-RS clinic type supplied on the action, including two-week-wait clinic types.
+  - name: clinic_type_name
+    description: Latest retained e-RS clinic-type label, with supplied-label fallback.
+  - name: priority_code
+    description: e-RS priority supplied on the action. Uses the current priority, not the original priority.
+  - name: priority_name
+    description: Latest retained e-RS priority label, with supplied-label fallback.
+  - name: registered_practice_code
+    description: Registered GP practice supplied on the action.
+  - name: registered_practice_name
+    description: Latest retained organisation name for the practice, with supplied-label fallback.
+  - name: registration_local_authority_code
+    description: Local authority of GP registration supplied on the action.
+  - name: registration_local_authority_name
+    description: Latest retained geography name, with supplied-label fallback.
+  - name: residence_local_authority_code
+    description: Local authority of residence supplied on the action.
+  - name: residence_local_authority_name
+    description: Latest retained geography name, with supplied-label fallback.
+  - name: advice_request_action_id
+    description: First Advice Requested action answered by this response. Populated only for advice_first_responses.
+  - name: advice_requested_at
+    description: Time of the first advice request. Populated only for advice_first_responses.
+  - name: advice_response_working_hours
+    description: >-
+      Hours from the first advice request to the first response, less 24 hours for each weekend day or
+      England and Wales bank holiday falling strictly between the request date and response date. A
+      non-working request or response date is not subtracted. Populated only for advice_first_responses.
+  - name: advice_response_working_days
+    description: >-
+      advice_response_working_hours grouped into whole days, rounded down, so 0 means under 24 working
+      hours. Populated only for advice_first_responses.

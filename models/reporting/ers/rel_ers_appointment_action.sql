@@ -1,4 +1,4 @@
-{{ config(materialized='view', tags=['ers', 'large_periodic']) }}
+{{ config(materialized='view', tags=['ers']) }}
 
 select
     p.appointment_id,

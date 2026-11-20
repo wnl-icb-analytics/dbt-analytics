@@ -1,4 +1,4 @@
-{{ config(tags=['ers', 'large_periodic'], cluster_by=['sk_patient_id', 'pathway_started_at']) }}
+{{ config(tags=['ers'], cluster_by=['sk_patient_id', 'pathway_started_at']) }}
 
 with referral_history as (
     select

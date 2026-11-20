@@ -50,11 +50,10 @@ full-table staging rebuild or a watermark that could miss old corrections.
 The action ID is unique in the active population. No arbitrary deduplication
 is applied.
 
-The reporting tables have `ers` and `large_periodic` tags, without `daily`.
-Refresh their reference parents, action table and referral table in dependency
-order. Review `dbt ls --select +fct_ers_referral` before building that selection.
-Both facts rebuild from the complete active population, so corrections and
-removed submissions disappear on refresh. This PR creates no new schedule.
+The e-RS feed loads daily before the scheduled build, so the `models/reporting/ers`
+folder carries the `daily` tag and the scheduled `+tag:daily` selection rebuilds
+these tables and their parents each day. The facts rebuild from the complete
+active population, so corrections and removed submissions disappear on refresh.
 Use the tracked DEV target for development.
 
 ## Validation and legacy differences
@@ -83,6 +82,23 @@ missing test flag must not be interpreted as false.
 A direct-reference check found 3,010,321 OLIDS/e-RS matches: 3,006,805 with
 matching patient keys, 2,359 with conflicting keys and 1,157 with missing keys.
 Reference agreement alone is not a confirmed person-level link.
+
+## Dashboard measures
+
+`FCT_ERS_DASHBOARD_MEASURE_EVENT` holds the NHS England e-RS dashboard measures
+(metadata version 1.4, June 2024) as one row per measure and counted action.
+Count rows for a `measure_code` within a period of `action_at`. The model
+description gives each counting rule. Points to know:
+
+- Accepted, A&G requests, A&G first response and received by provider select one
+  action per request (or request and provider) across the whole history, so a
+  request is counted once, in the period of the selected action.
+- RAS outcomes use Triage Outcome Recorded (1770), not the request action.
+- A&G response time subtracts 24 hours per weekend day or England and Wales bank
+  holiday strictly between the request and response dates.
+- Received by provider keeps actions without a provider as a separate group.
+- DBS bookings are not built: the local extract does not identify directly
+  bookable services.
 
 ## Sources
 

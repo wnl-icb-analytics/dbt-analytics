@@ -89,8 +89,7 @@ They affect 74,319 outpatient UBRNs and 215 admitted-patient UBRNs.
 
 Only the supplied UBRN and issuer are added to SUS staging. Its selection rules
 and existing columns are unchanged. Downstream programme SQL is not modified.
-These e-RS outputs share the explicit `large_periodic` refresh of the parent
-facts; this change does not add a daily full rebuild or create a schedule.
+These e-RS outputs rebuild daily with the parent facts.
 
 The repeatable queries in `analyses/ers/` return aggregate coverage and
 reconciliation. Read [the referral and action guidance](ers-referrals.md) for

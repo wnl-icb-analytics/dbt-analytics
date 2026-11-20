@@ -1,4 +1,4 @@
-{{ config(tags=['ers', 'large_periodic'], cluster_by=['sk_patient_id', 'action_at']) }}
+{{ config(tags=['ers'], cluster_by=['sk_patient_id', 'action_at']) }}
 
 select
     a.action_id as action_id,

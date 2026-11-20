@@ -1,4 +1,4 @@
-{{ config(tags=['ers', 'large_periodic'], cluster_by=['sk_patient_id', 'appointment_at']) }}
+{{ config(tags=['ers'], cluster_by=['sk_patient_id', 'appointment_at']) }}
 
 with appointment_history as (
     select

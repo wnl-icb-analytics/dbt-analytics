@@ -1,4 +1,4 @@
-{{ config(tags=['ers', 'large_periodic']) }}
+{{ config(tags=['ers']) }}
 
 with acute_records as (
     select
