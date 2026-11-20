@@ -1,19 +1,26 @@
 {{ config(materialized='table') }}
 
 -- AF_61 candidates before the final AF marker exclusion. One row per person at build date.
--- Currently registered, living patients outside ICS_METABOLIC_LTC and CF_NHSHC2Y.
--- Include current Automatic, Repeat or Repeat Dispensing cardiac glycoside courses,
--- without a course-start lookback. Separately include anticoagulant/protamine issues strictly
--- after six months ago, without a current-course or repeat-prescription restriction.
--- XML course criterion b799351b requires both Drug filters: oral anticoagulants AND
--- digoxin/flecainide/propafenone. No course meets both, so that criterion selects none.
--- Oral anticoagulant issues use the national OPENCODELISTS DOAC and vitamin K antagonist lists.
--- Glycosides (BNF 02.01.01) and protamine (02.08.03) await reviewed dm+d clusters.
+-- Currently registered, living patients outside ICS_METABOLIC_LTC and CF_NHSHC2Y. The QOF v51
+-- AF and HF registers in ICS_METABOLIC_LTC also cover the AF and HF library items the base names.
+-- Include any of these R6 routes (ICB_CF_AF_61_BASE rule 2, criteria A-E):
+--   A. current Automatic, Repeat or Repeat Dispensing oral anticoagulant course
+--   B. current Automatic, Repeat or Repeat Dispensing cardiac glycoside course
+--   C. anticoagulant/protamine issue strictly after six months ago
+--   D. digoxin, flecainide or propafenone issue strictly after six months ago
+--   E. current Automatic, Repeat or Repeat Dispensing digoxin, flecainide or propafenone course
+-- Courses have no course-start lookback. Issues have no current-course or repeat restriction.
+-- R5 put the oral anticoagulant and digoxin/flecainide/propafenone filters on one course
+-- criterion, which no course met; R6 splits them into A and E and adds D.
+-- EMIS drug groups map to BNF sections. Oral anticoagulants (courses A, issues C) use BNF
+-- 02.08.02, with the national OPENCODELISTS DOAC and vitamin K antagonist lists filling
+-- products that carry no BNF code; protamine (C) uses BNF 02.08.03. Cardiac glycosides (B)
+-- record legacy section 2.1 but use 02.01.01, leaving out the other positive inotropes.
 -- The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
 -- including idarucizumab and andexanet, as in the XML.
 -- Exclude ever-recorded thrombosis/antiphospholipid, AF/flutter, Long COVID and
 -- hypoplastic left heart evidence. AF_62 subtracts this whole candidate population.
--- XML authority: ICB_CF_AF_61_BASE / _base_woEX, R5 updated 27 November 2025.
+-- XML authority: ICB_CF_AF_61_BASE / _base_woEX, R6 shared 11 November 2026.
 
 with base as (
     select person_id
@@ -55,8 +62,9 @@ reversal_products as (
 anticoagulant_issues as (
     select mo.person_id, mo.clinical_effective_date as order_date, mo.mapped_concept_code, mo.bnf_code
     from {{ ref('stg_olids_medication_order') }} as mo
-    inner join national_oral_anticoagulant_codes as c
+    left join national_oral_anticoagulant_codes as c
         on mo.mapped_concept_code = c.code
+    where mo.bnf_code like '020802%' or c.code is not null
     union all
     -- Retain the protamine BNF route until a reviewed dm+d cluster is available.
     select person_id, order_date, mapped_concept_code, bnf_code
@@ -64,15 +72,18 @@ anticoagulant_issues as (
 ),
 
 af_medication as (
+    -- A and B: current repeat courses of oral anticoagulants or cardiac glycosides
     select ms.person_id
     from {{ ref('stg_olids_medication_statement') }} as ms
+    left join national_oral_anticoagulant_codes as c
+        on ms.mapped_concept_code = c.code
     where ms.is_active = true
         and ms.authorisation_type_source_code in (
             'Automatic', 'Repeat', 'Repeat Dispensing'
         )
-        and ms.bnf_code like '020101%'
+        and (ms.bnf_code like '020802%' or c.code is not null or ms.bnf_code like '020101%')
     union
-    -- The issue arm is independent of course status and prescription type.
+    -- C: the issue arm is independent of course status and prescription type.
     select person_id
     from anticoagulant_issues as issue
     where issue.order_date > dateadd(month, -6, current_date())
@@ -80,6 +91,20 @@ af_medication as (
         and not exists (
             select 1 from reversal_products as ex
             where ex.concept_code = issue.mapped_concept_code
+        )
+    union
+    -- D: digoxin, flecainide or propafenone issue. The base value set's SCT_CONST list
+    -- (98b8e1d3, friendly name ..._vs2) also serves E.
+    select person_id
+    from ({{ get_ltc_lcs_medication_orders("98b8e1d3-7db0-0653-9412-2fdf795e6f61") }})
+    where order_date > dateadd(month, -6, current_date())
+    union
+    -- E: current repeat digoxin, flecainide or propafenone course
+    select person_id
+    from ({{ get_ltc_lcs_medication_statements("98b8e1d3-7db0-0653-9412-2fdf795e6f61") }})
+    where is_active = true
+        and authorisation_type_source_code in (
+            'Automatic', 'Repeat', 'Repeat Dispensing'
         )
 ),
 

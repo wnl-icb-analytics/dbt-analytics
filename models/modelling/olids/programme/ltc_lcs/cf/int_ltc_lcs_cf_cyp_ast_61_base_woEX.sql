@@ -9,8 +9,8 @@
 -- XML drug groups have no expanded concepts. BNF 03.01/03.02/03.03 approximate
 -- bronchodilators, inhaled corticosteroids and asthma prophylaxis, not all chapter 03.
 -- XML authority: ICB_CF_CYPAST_61_BASE / _woEX, R5 updated 27 November 2025.
--- Library ee5b135f is absent from the export but is already within ICS_RESP_LTC
--- through the XML COPD register. The product and screening sets share a name, so
+-- Library ee5b135f (the COPD register) is absent from the export; ICS_RESP_LTC already
+-- includes the QOF v51 COPD register, which stands in for it. The product and screening sets share a name, so
 -- their warehouse value-set IDs are pinned separately.
 -- The prednisolone constituent excludes the XML's rectal and injectable products
 -- and their descendants. The other prednisolone lists remain independent alternatives.
