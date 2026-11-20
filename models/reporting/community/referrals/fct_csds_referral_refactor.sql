@@ -57,6 +57,48 @@ LEGACY_REFERRALS AS (
     ) = 1
 ),
 
+---------------------------------------------------------------------------------------------------------
+-- 0C. GOVERNED SERVICE/TEAM TYPE
+--
+-- Selects one governed service/team relationship per referral and applies the
+-- legacy-compatible code normalisation required by the reporting output.
+---------------------------------------------------------------------------------------------------------
+REFERRAL_SERVICE_TYPE AS (
+    SELECT
+        UNIQUE_SERVICE_REQUEST_IDENTIFIER,
+
+        LPAD(
+            TRIM(
+                CASE
+                    WHEN LEFT(TRIM(TEAM_TYPE_CODE), 2) = '22'
+                        THEN '58'
+
+                    WHEN LEFT(TRIM(TEAM_TYPE_CODE), 2) = '28'
+                        THEN '57'
+
+                    WHEN TRIM(TEAM_TYPE_CODE) = '4'
+                        THEN '04'
+
+                    WHEN LEFT(TRIM(TEAM_TYPE_CODE), 2) = '99'
+                         AND LEFT(TRIM(ORGANISATION_CODE_PROVIDER), 3) = 'RKE'
+                        THEN '12'
+
+                    ELSE TEAM_TYPE_CODE
+                END
+            ),
+            2,
+            '0'
+        ) AS CLEAN_TEAM_CODE,
+
+        TEAM_TYPE_CODE AS SOURCE_TEAM_TYPE_CODE,
+        CARE_PROFESSIONAL_TEAM_LOCAL_IDENTIFIER,
+        ORGANISATION_CODE_PROVIDER,
+        UNIQUE_SUBMISSION_ID,
+        REPORTING_PERIOD_END_DATE
+
+    FROM {{ ref('int_csds_currency_referral_service_type') }}
+),
+
 PATIENT_DEDUPED AS (
     SELECT * 
     FROM (
@@ -418,8 +460,8 @@ SELECT
     REF.REFERRING_ORGANISATION_NAME AS REFERRING_ORGANISATION_NAME,
     REF.PRIMARY_REASON_FOR_REFERRAL_CODE AS PRIMARY_REASON_FOR_REFERRAL_CODE,
     REF.PRIMARY_REASON_FOR_REFERRAL_NAME AS PRIMARY_REASON_FOR_REFERRAL_DESC,
-    LEGACY.CLEAN_TEAM_CODE AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_CODE,
-    COALESCE(CSLK3.DESCRIPTION, 'Unknown Service') AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_NAME,
+    REF_SERVICE_TYPE.CLEAN_TEAM_CODE AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_CODE,
+    COALESCE(SERVICE_TYPE_LOOKUP.DESCRIPTION,'Unknown Service') AS SERVICE_OR_TEAM_TYPE_REFERRED_TO_NAME,
     REF.PRIORITY_TYPE_CODE AS PRIORITY_TYPE_CODE,
     REF.PRIORITY_TYPE_NAME AS PRIORITY_TYPE_DESC,
     CASE WHEN PAT1."Local_authority_district_unitary_authority" = 'E09000003' THEN 'Barnet'
@@ -481,7 +523,15 @@ REPORTING.MAIN_DATA.DETERMINE_FISCAL_MONTH__CH_TEMP(LEGACY."Referral_to_treatmen
 1 AS ACTIVITY
 
 FROM REFERRALS REF
-    
+
+LEFT JOIN REFERRAL_SERVICE_TYPE REF_SERVICE_TYPE
+    ON REF.REFERRAL_ID
+        = REF_SERVICE_TYPE.UNIQUE_SERVICE_REQUEST_IDENTIFIER
+
+LEFT JOIN {{ ref('csds_service_or_team_type') }} SERVICE_TYPE_LOOKUP
+    ON REF_SERVICE_TYPE.CLEAN_TEAM_CODE
+        = LPAD(TRIM(SERVICE_TYPE_LOOKUP.CODE::VARCHAR), 2, '0')
+
 LEFT JOIN LEGACY_REFERRALS LEGACY ON REF.REFERRAL_ID = LEGACY."Unique_service_request_identifier"
 LEFT JOIN RESOLVED_PATIENT PAT1 ON REF.REFERRAL_ID = PAT1."Unique_service_request_identifier"
 LEFT JOIN PATIENT_DEDUPED PAT ON REF.REFERRAL_ID = PAT."Unique_service_request_identifier"
@@ -491,7 +541,6 @@ LEFT JOIN DIM_PRACTICE_LOOKUP PRAC ON PAT1.GPCODE = PRAC.PRACTICE_CODE
 LEFT JOIN "Dictionary"."dbo"."Ethnicity" ETH ON PAT1.RESOLVED_ETH_CODE = ETH."BK_EthnicityCode"
 LEFT JOIN "Dictionary"."dbo"."Gender" GEN ON PAT1."Person_stated_gender_code" = GEN."GenderCode"
 LEFT JOIN TMP_IMD IMD ON IMD.LSOA_CODE_2021 = PAT1."Lower_super_output_area_(Residence)"
-LEFT JOIN REFERENCE.DATA_DICTIONARY.CSDS_SERVICE_OR_TEAM_TYPE CSLK3 ON LEGACY.CLEAN_TEAM_CODE = CSLK3.CODE
 
 LEFT JOIN {{ ref('csds_contact_code_lookup') }} CSLK4
     ON LPAD(LTRIM(LEGACY."Waiting_time_measurement_type_(Community_Care)", '0#'), 2, '0') = CSLK4.CODE
