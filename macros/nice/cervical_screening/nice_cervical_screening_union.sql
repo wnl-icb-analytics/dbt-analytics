@@ -27,7 +27,6 @@ SELECT
     {{ nice_practice_columns(none, reference) }},
     latest_completed_date,
     latest_screening_date,
-    programme_status,
     latest_record_date,
     is_in_denominator,
     is_in_numerator,

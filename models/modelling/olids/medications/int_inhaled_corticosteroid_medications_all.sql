@@ -26,34 +26,16 @@ SELECT
     base_orders.bnf_code,
     base_orders.bnf_name,
 
-    -- Inhaled corticosteroid type classification
-    CASE
-        WHEN base_orders.bnf_code LIKE '030200%' THEN 'SINGLE_AGENT'      -- Single agent corticosteroids
-        WHEN base_orders.bnf_code LIKE '030201%' THEN 'COMBINATION'       -- Combination preparations
-        ELSE 'OTHER_ICS'
-    END AS ics_type,
-
-
-    -- Preparation type flags
-    CASE WHEN base_orders.bnf_code LIKE '030200%' THEN TRUE ELSE FALSE END AS is_single_agent,
-    CASE WHEN base_orders.bnf_code LIKE '030201%' THEN TRUE ELSE FALSE END AS is_combination_therapy,
-
+    -- A combination has more than one dm+d ingredient (current, or retained for removed products), including triple inhalers.
+    CASE WHEN dmd.ingredient_count = 1 THEN 'SINGLE_AGENT'
+         WHEN dmd.ingredient_count >= 2 THEN 'COMBINATION'
+         ELSE 'OTHER_ICS' END AS ics_type,
+    dmd.ingredient_count = 1 AS is_single_agent,
+    dmd.ingredient_count >= 2 AS is_combination_therapy,
 
     -- Order recency flags (ICS are typically long-term therapy)
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 365 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_12m
+    {{ medication_date_flags('base_orders.order_date') }}
 
 FROM ({{ get_medication_orders(bnf_code='0302') }}) base_orders
+LEFT JOIN {{ ref('dmd_product') }} dmd ON base_orders.mapped_concept_code = dmd.product_code
 ORDER BY base_orders.person_id, base_orders.order_date DESC

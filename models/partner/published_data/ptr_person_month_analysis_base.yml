@@ -1,8 +1,13 @@
 models:
   - name: ptr_person_month_analysis_base
-    description: 'Analysis foundation table providing person-months with demographics and condition flags for population health analytics.'
-
-
+    description: >-
+      Partner demographics and condition flags, one row per person and completed month.
+      Covers registrations overlapping the month with demographics at month end; a full
+      refresh retains 60 completed months. Age is measured at month end, conditions are
+      episodes active or starting that month, and geography uses available address
+      history. PARTNER_POLICY controls access through sk_patient_id and current practice
+      or residence mappings, so access follows current borough membership rather than
+      the historical month.
     config:
       meta:
         owner:
@@ -68,7 +73,7 @@ models:
         description: 'Birth year'
 
       - name: birth_date_approx
-        description: 'Conservative age calculation using end of birth month'
+        description: 'Approximate birth date, set to the midpoint of the birth month (only birth year and month are held)'
         tests:
           - not_null
           

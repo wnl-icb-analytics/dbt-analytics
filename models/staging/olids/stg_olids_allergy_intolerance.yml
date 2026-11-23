@@ -1,6 +1,6 @@
 models:
   - name: stg_olids_allergy_intolerance
-    description: Allergy and intolerance records from GP systems. Deduplicated by id and filtered to exclude deleted records.
+    description: Allergy and intolerance records from GP systems. Excludes deleted records and records without a person_id. One row per allergy intolerance record (id).
     config:
       meta:
         owner:
@@ -69,14 +69,10 @@ models:
         description: Boolean indicating if the record is marked as confidential
       - name: person_id
         description: Foreign key to person.id - person-level identifier
-      - name: lds_id
-        description: LDS system identifier
       - name: publisher_organisation_code
         description: "ODS code of the publisher organisation (post-2026 OLIDS rename — was record_owner_organisation_code)"
-      - name: lds_datetime_first_acquired
-        description: Datetime when data was acquired by LDS
-      - name: lds_start_datetime
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
+      - name: lds_transform_datetime
+        description: Datetime the record was transformed by the LDS
       - name: lds_is_deleted
         description: Deletion flag - records with TRUE are filtered out in this staging layer
       - name: lds_source_record_id

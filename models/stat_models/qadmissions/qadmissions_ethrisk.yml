@@ -2,17 +2,12 @@ version: 2
 
 models:
   - name: qadmissions_ethrisk
-    description: >
-      Ethnicity risk group (1..9) per person for the QAdmissions feature
-      `ethrisk`. Joins dim_person_ethnicity (one row per person with
-      their latest ethnicity_subcategory, COALESCED to "Not Recorded"
-      when no record exists) to the qadmissions_eth2016_to_ethrisk9
-      seed. Defaults unmatched subcategories to 1 (White / NotRecorded)
-      per QResearch convention; the qadmissions_ethnicity_mapping_complete
-      singular test fails when an unmatched subcategory appears so data
-      drift is surfaced.
-
-      Grain: one row per person in dim_person_ethnicity.
+    description: >-
+      QAdmissions ethnicity group, one row per OLIDS person in dim_person_ethnicity
+      using its selected subcategory. Non-deprioritised, more specific records take
+      priority over recency. The qadmissions_eth2016_to_ethrisk9 mapping assigns nine
+      groups; missing, refused, unknown or unmatched subcategories default to group 1,
+      alongside White ethnicity.
     config:
       meta:
         owner:
@@ -28,9 +23,16 @@ models:
         data_tests:
           - not_null
       - name: latest_ethnicity_date
-        description: 'Clinical effective date of the latest ethnicity record. NULL for persons with no usable record.'
+        description: >-
+          Clinical date of the ethnicity selected by dim_person_ethnicity. Specificity and
+          non-deprioritised status take priority over recency, so this need not be the latest
+          overall. Null without usable evidence.
       - name: ethrisk
-        description: 'QAdmissions ethrisk integer (1..9). Defaults to 1 for any subcategory not present in the seed.'
+        description: >-
+          QAdmissions groups: 1 White or not recorded, 2 Indian, 3 Pakistani, 4 Bangladeshi, 5
+          Other Asian, 6 Black Caribbean, 7 Black African, 8 Chinese, 9 Other Ethnic Group.
+          Not stated, refused, recorded-not-known and unmatched subcategories also default to
+          1.
         data_tests:
           - not_null
           - accepted_values:

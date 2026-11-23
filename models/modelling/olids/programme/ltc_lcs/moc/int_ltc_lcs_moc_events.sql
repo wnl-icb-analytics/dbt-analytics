@@ -2,6 +2,7 @@
 
 -- One row per person, programme event code and date. Future events are excluded.
 with local_observations as (
+    -- Events are classified by their exact EMIS-local source code, so match source codes only.
     {{ get_ltc_lcs_observations('06a67476-a82f-8c9e-d328-c0c7c5aea698', match_paths='source') }}
 ),
 local_events as (

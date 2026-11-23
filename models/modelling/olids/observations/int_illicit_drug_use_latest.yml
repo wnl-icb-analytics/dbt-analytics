@@ -1,11 +1,20 @@
 models:
   - name: int_illicit_drug_use_latest
-    description: 'DETERMINE LATEST illicit drug use using PCD Ref ILLSUB_COD'
+    description: >-
+      Latest illicit-drug use or declined assessment from ILLSUB_COD and
+      ILLSUBASSDEC_COD in OLIDS, one row per person up to the build date. Includes
+      inactive and deceased people. Dependence, misuse, remission, overdose and
+      negation records can qualify, so presence does not establish current misuse.
+      Undated evidence uses 1900-01-01.
+      Ties use the latest save time, then the highest observation ID.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ILLSUB_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id]

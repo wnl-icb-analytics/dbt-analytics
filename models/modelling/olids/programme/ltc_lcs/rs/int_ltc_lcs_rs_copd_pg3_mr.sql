@@ -51,10 +51,10 @@ rule_3_mrcbs_grade_1_3 as (
     from ({{ get_ltc_lcs_observations("on_copd_reg_pg3_mr_vs2") }})
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),
--- Rule 4a: EMIS-local one-exacerbation-in-past-year code, matched by source only.
+-- Rule 4a: one-exacerbation-in-past-year code, using the shared equivalence rule.
 rule_4a_copd_exacerbations as (
     select person_id
-    from ({{ get_ltc_lcs_observations("be744271-2fb5-7e10-18f6-041df010ebf7", match_paths='source') }})
+    from ({{ get_ltc_lcs_observations("be744271-2fb5-7e10-18f6-041df010ebf7", match_paths='both') }})
     where clinical_effective_date >= dateadd(month, -12, current_date())
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),
@@ -80,11 +80,13 @@ rule_4d_medication_issues as (
     where order_date >= dateadd(month, -12, current_date())
     qualify row_number() over (partition by person_id order by order_date desc) = 1
 ),
--- Rule 5: Medication issues (Trimbow/Trelegy Ellipta inhalers) within last 6 months
+-- Rule 5: Medication issues (Trimbow/Trelegy Ellipta inhalers) within last 6 months.
+-- The XML names the two brands, so other triple inhalers in the cluster (Trixeo, Enerzair) are excluded.
 rule_5_medication_issues as (
     select person_id
     from ({{ get_medication_orders(cluster_id='COPD_TRIPLE_THERAPY_INHALERS') }})
     where order_date >= dateadd(month, -6, current_date())
+        and mapped_concept_display ilike any ('%trimbow%', '%trelegy%')
     qualify row_number() over (partition by person_id order by order_date desc) = 1
 ),
 -- Rule 6a: Medication issues (steroids) within last 6 months

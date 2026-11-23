@@ -15,7 +15,6 @@ WITH assessed AS (
         population.practice_name,
         screening.latest_completed_date,
         screening.latest_screening_date,
-        screening.programme_status,
         CASE WHEN screening.latest_completed_date >= DATEADD(month, -42, population.reporting_date)
             THEN screening.latest_completed_date END AS latest_record_date,
         COALESCE(screening.latest_completed_date >= DATEADD(month, -42, population.reporting_date), FALSE) AS is_in_numerator
@@ -47,7 +46,6 @@ SELECT
     {{ nice_practice_columns('assessed', reference) }},
     latest_completed_date,
     latest_screening_date,
-    programme_status,
     latest_record_date,
     TRUE AS is_in_denominator,
     is_in_numerator,

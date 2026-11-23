@@ -1,21 +1,23 @@
 models:
   - name: int_egfr_latest
-    description: 'Most recent valid eGFR measurement per person with CKD staging for kidney function assessment.
-
-      One row per person with their latest eGFR including CKD stage classification (stages 1-5) and CKD indicator flags.
-      Validity is filtered before selecting the latest result. Observation ID descending
-      breaks ties on the clinical effective date.'
+    description: >-
+      Latest eligible eGFR, one row per person with a valid result dated on or before
+      the build date, excluding the 1900-01-01 missing-date sentinel. Includes all
+      people regardless of diagnosis, registration or death. Results are ordered by
+      clinical calendar day descending, then source save time descending with nulls
+      last, then observation ID descending. CKD stage labels and indicator flags
+      describe the selected result; they do not establish persistence.
 
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
     columns:
       - name: person_id
-        tests:
+        data_tests:
           - unique
           - not_null

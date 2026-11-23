@@ -1,0 +1,51 @@
+models:
+  - name: int_cwt_pathway__performance_2ww
+    description: >
+      2-week wait performance records for CWT cancer pathways.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: CWT Record ID
+        data_tests:
+          - unique
+          - not_null
+
+      - name: performance__date_full
+        description: Date for the clock end.
+
+      - name: performance__trust_code
+        description: The trust allocated the patient.
+
+      - name: performance__site_code
+        description: The site the activity took place (Note this doesn't imply allocation to site level).
+
+      - name: performance__metric
+        description: Performance metric name.
+
+      - name: performance__pathway_length_days
+        description: Number of days between the clock start and end date.
+        data_tests:
+          - not_null
+
+      - name: performance__numerator
+        description: Indicative of a breach (non-zero) and proportion of blame.
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+                strictly: false
+
+      - name: performance__denominator
+        description: Denominator for the performance metric, represents the patient allocation/blame.
+
+      - name: performance__breach
+        description: For performance metrics, the amount of blame for a breach.
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

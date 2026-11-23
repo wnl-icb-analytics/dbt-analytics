@@ -3,7 +3,7 @@
         materialized='table',
         tags=['qadmissions', 'risk_scores', 'monthly-full'],
         meta={
-            'custom_message': 'QAdmissions scores computed by calling the model registered in the Snowflake Model Registry. Displaying any score produced from QAdmissions requires the ClinRisk disclaimer (see qadmissions_input_features). Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering.'
+            'custom_message': 'QAdmissions scores computed by calling the model registered in the Snowflake Model Registry. Displaying any score produced from QAdmissions requires the ClinRisk disclaimer (see qadmissions_input_features). A missing BMI is imputed before scoring (see is_bmi_imputed). Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering.'
         }
     )
 }}
@@ -18,8 +18,10 @@
 
     Grain
       One row per person in qadmissions_input_features, scored on the build
-      date. Rows the model rejects (for example a NULL bmi or alcohol_cat6)
-      are kept with is_scored = FALSE and the model's error text.
+      date. Rows the model rejects (for example a bmi outside 20-40, recorded
+      or imputed, or a NULL or out-of-range town) are kept with
+      is_scored = FALSE and the model's error text. A missing BMI is imputed
+      in qadmissions_input_features; is_bmi_imputed marks those rows.
 
     The inputs are carried alongside the score so each history row records
     exactly what was scored.
@@ -41,6 +43,9 @@ WITH scored AS (
         {%- for input in qadmissions_model_inputs() %}
         f.{{ input }},
         {%- endfor %}
+        f.bmi_recorded,
+        f.is_bmi_imputed,
+        f.bmi_imputation_group,
         {{ qadmissions_predict('f') }} AS prediction
     FROM {{ ref('qadmissions_input_features') }} f
 )
@@ -55,6 +60,12 @@ SELECT
     prediction:"score_percent"::FLOAT               AS score_percent,
     prediction:"errors"::VARCHAR                    AS scoring_errors,
     {%- for input in qadmissions_model_inputs() %}
-    {{ input }}{{ ',' if not loop.last }}
+    {{ input }},
     {%- endfor %}
+    -- How bmi was filled in. Added after the inputs so the history table
+    -- appends them as new columns; earlier months hold NULL.
+    bmi_recorded,
+    is_bmi_imputed,
+    bmi_imputation_group,
+    '{{ qadmissions_bmi_imputation_method() }}'     AS bmi_imputation_method
 FROM scored

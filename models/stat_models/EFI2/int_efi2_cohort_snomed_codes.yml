@@ -1,14 +1,37 @@
 models:
   - name: int_efi2_cohort_snomed_codes
-    description: >
-      eFI2-relevant observations, joined to the eFI2 codelist
-      and filtered to each code's time-constraint and age-limit windows. One row
-      per (person, code, observation). Port of lds-pipelines stg_efi2__cohort_snomed_codes.
+    description: >-
+      Observations matching eFI2 code rules in OLIDS, one row per distinct person,
+      code-rule entry and retained observation values. Includes living people whose
+      65th birthday could have occurred by scoring, using the first day of their
+      approximate birth month. Code-specific event-age and lookback rules apply;
+      future clinical dates are excluded. Identical values can collapse, and codes can
+      contribute to several deficits.
+      Identical evidence keeps the latest save time, then the highest observation ID.
     config:
       meta:
         owner:
           name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - snomed_code
+              - code_description
+              - deficit
+              - other_instructions
+              - time_constraint_years
+              - age_limit
+              - result_value
+              - result_value_unit
+              - clinical_effective_date
+              - end_date
     columns:
+      - name: observation_id
+        description: Source observation selected within the existing evidence grain.
+      - name: date_recorded
+        description: EMIS save time of that observation; null when unavailable.
       - name: person_id
         description: Person identifier.
         tests:

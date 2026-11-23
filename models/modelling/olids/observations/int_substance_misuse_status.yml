@@ -9,7 +9,8 @@ models:
       One row per person with any ILLSUB_COD record. has_substance_misuse is TRUE
       when the person's most recent record is QUALIFYING, so a later negation,
       abstinence or remission code takes the person out. Same-date ties resolve
-      to QUALIFYING.
+      to QUALIFYING. History counts include each person, concept, clinical
+      calendar date and recorded value once, including value-free events.
     config:
       meta:
         owner:
@@ -65,16 +66,59 @@ models:
         description: Latest date of any QUALIFYING record. NULL if the person has none.
 
       - name: qualifying_record_count
-        description: Count of QUALIFYING records held for the person.
+        description: Distinct QUALIFYING readings by concept, clinical calendar date and recorded value.
         data_tests:
           - not_null
 
       - name: resolving_record_count
-        description: Count of RESOLVING records held for the person.
+        description: Distinct RESOLVING readings by concept, clinical calendar date and recorded value.
         data_tests:
           - not_null
 
       - name: total_record_count
-        description: Count of all ILLSUB_COD records held for the person.
+        description: Distinct ILLSUB_COD readings by concept, clinical calendar date and recorded value.
         data_tests:
           - not_null
+
+unit_tests:
+- name: substance_history_counts_distinct_readings
+  model: int_substance_misuse_status
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS qualifying_record_count, NULL::NUMBER AS resolving_record_count, NULL::NUMBER AS total_record_count, NULL::BOOLEAN AS has_substance_misuse WHERE FALSE
+  given:
+  - input: ref('int_substance_misuse_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::VARCHAR AS concept_code,
+          column5::FLOAT AS result_value, 'SYN_DISPLAY'::VARCHAR AS concept_display, 'QUALIFYING'::VARCHAR AS status, 'SYN_CATEGORY'::VARCHAR AS category
+      FROM VALUES ('SYN_A', -145401, '2024-01-01 09:00:00', 'SYN_C', NULL),
+      ('SYN_B', -145401, '2024-01-01 18:00:00', 'SYN_C', NULL),
+      ('SYN_C', -145401, '2024-01-01', 'SYN_OTHER', NULL),
+      ('SYN_D', -145401, '2024-01-02', 'SYN_C', NULL),
+      ('SYN_E', -145401, '2024-01-01', 'SYN_C', 0),
+      ('SYN_F', -145401, '2024-01-01', 'SYN_C', 1),
+      ('SYN_G', -145402, '2024-01-01', 'SYN_C', NULL)
+      UNION ALL
+      SELECT column1::VARCHAR, -145403::NUMBER, '2024-03-01'::TIMESTAMP_NTZ,
+          'SYN_RESOLVING'::VARCHAR, NULL::FLOAT, 'SYN_DISPLAY'::VARCHAR,
+          'RESOLVING'::VARCHAR, 'SYN_CATEGORY'::VARCHAR
+      FROM VALUES ('SYN_RES_A'), ('SYN_RES_B')
+  expect:
+    rows:
+    - person_id: -145401
+      qualifying_record_count: 5
+      resolving_record_count: 0
+      total_record_count: 5
+      has_substance_misuse: true
+    - person_id: -145402
+      qualifying_record_count: 1
+      resolving_record_count: 0
+      total_record_count: 1
+      has_substance_misuse: true
+    - person_id: -145403
+      qualifying_record_count: 0
+      resolving_record_count: 1
+      total_record_count: 1
+      has_substance_misuse: false

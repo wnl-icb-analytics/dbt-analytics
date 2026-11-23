@@ -1,16 +1,13 @@
 
 models:
   - name: fct_covid_uptake
-    description: 'COVID vaccination uptake fact table focused on core uptake metrics.
-
-      Grain: One row per person per campaign per risk group they qualify for
-
-      Contains: • Eligibility status and reasons • Vaccination status (vaccinated,
-      declined, no record) • Uptake category and timing metrics • Campaign reference
-      dates
-
-      Purpose: Core uptake facts for COVID programme monitoring. Join with dim_person_demographics
-      for demographic analysis.'
+    description: >-
+      COVID vaccination uptake for OLIDS, one row per person, reported campaign,
+      eligible risk group and subcohort. Covers people registered and alive in the
+      campaign population month, including all eligible people and non-eligible people
+      with vaccination or decline evidence. Administration takes precedence over
+      decline and no record; non-eligible people have no risk group. People can appear
+      in several groups, so use distinct-person counts for headcounts.
     config:
       meta:
         indicator:
@@ -96,10 +93,13 @@ models:
         description: Date of vaccination (if vaccinated)
 
       - name: vaccinated
-        description: Whether person received COVID vaccination
+        description: >-
+          True when a COVID vaccination was recorded on or after campaign start.
 
       - name: declined
-        description: Whether person declined COVID vaccination
+        description: >-
+          True when a COVID decline was recorded on or after the campaign's
+          decline-tracking start.
 
       - name: eligible_no_record
         description: Whether eligible person has no vaccination record

@@ -1,7 +1,7 @@
 {{ config(materialized='view', tags=['mhsds']) }}
 
 with accepted as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs515restrictiveinterventtype')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs515restrictiveinterventtype'), 'mhs515_uniq_id') }}
 )
 select
     mhs515_uniq_id

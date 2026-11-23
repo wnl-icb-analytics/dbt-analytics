@@ -20,6 +20,8 @@ select
     , r.referred_to_service_code
     , d.snomed_uk_preferred_term as referred_to_service_desc
     , d.ecds_group1 as referred_to_service_ecds_group1
+    , r.request_date
+    , r.request_time
     , r.assessment_date
     , r.assessment_time
 from {{ ref('stg_sus_ecds_attendance_referred_to') }} as r

@@ -1,6 +1,6 @@
 -- QAdmissions features: history model at its latest index date vs the live model.
 --
--- Sanity check for qadmissions_input_features_history. Run at the latest
+-- Sanity check for qadmissions_input_features_validation. Run at the latest
 -- month-end, the history logic should reproduce qadmissions_input_features
 -- apart from the known, explained differences listed under EXPECTED below.
 -- One query; every row is an aggregate count.
@@ -10,14 +10,14 @@
 -- SET UP FIRST
 --   1. The check uses MAX(end_date), which must be the latest completed
 --      month-end. qadmissions_history_index_dates()
---      (macros/config/qadmissions_index_dates.sql) covers January 2023 to
---      December 2024, so for this check temporarily add the latest month to
+--      (macros/config/qadmissions_index_dates.sql) covers August 2022 to
+--      July 2024, so for this check temporarily add the latest month to
 --      its WHERE clause:
 --        OR month_end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE()))
 --      and remove it afterwards.
 --   2. Build both models from the same DEV inputs in ONE run, so source
 --      refreshes between builds don't show up as differences:
---        dbt build -s qadmissions_input_features qadmissions_input_features_history
+--        dbt build -s qadmissions_input_features qadmissions_input_features_validation
 --      If int_date_spine, int_segmentation_person_month_spine,
 --      int_segmentation_acute_activity_history or the register histories it
 --      reads (fct_person_*_register_by_month) were last built before the
@@ -71,10 +71,22 @@
 --             (encounters, no missing-date imputation).
 --   smoke     Same-day ties: history breaks them with id DESC, live is
 --             arbitrary.
---   town,     Both read the same current-value model, so expect 0
---   ethrisk   disagreements. Any difference here is a bug.
+--   town      Both read the same current-value model, so expect 0
+--             disagreements. Any difference here is a bug.
+--   ethrisk   History takes the record known by the month-end, with the
+--             same selection rule as dim_person_ethnicity, so it differs
+--             only for ethnicity dated or entered after the month-end.
 --   age       Live is age today, history is age at the month-end. Only
 --             birthdays in between differ.
+--   bmi       bmi_recorded behaves like the other as-at features: it differs
+--             only for BMIs dated or entered after the month-end. bmi,
+--             is_bmi_imputed and bmi_imputation_group (NULL, shown as
+--             "(null)", when bmi is recorded) differ for those people too.
+--             The imputation group can also differ when a group sits near the
+--             100-BMI minimum in one model but not the other. The imputed values
+--             can also differ a little for people without a BMI, because each
+--             model's group means come from its own population (today's
+--             against the month-end's) and its own age decades.
 
 {%- set boolean_features = [
     'b_af', 'b_ccf', 'b_anycancer', 'b_asthmacopd', 'b_epilepsy', 'b_renal',
@@ -82,19 +94,20 @@
     'b_anticoagulant', 'b_antidepressant', 'b_antipsychotic',
     'b_corticosteroids', 'b_nsaid',
     'c_hb', 'high_lft', 'high_platelet',
-    'b_falls', 'b_malabsorption', 'b_vte', 'b_liverpancreas'
+    'b_falls', 'b_malabsorption', 'b_vte', 'b_liverpancreas',
+    'is_bmi_imputed'
 ] -%}
-{%- set categorical_features = ['sex', 'smoke_cat', 'hes_admitprior_cat', 'alcohol_cat6', 'ethrisk'] -%}
-{%- set numeric_features = ['age', 'bmi', 'town'] %}
+{%- set categorical_features = ['sex', 'smoke_cat', 'hes_admitprior_cat', 'alcohol_cat6', 'ethrisk', 'bmi_imputation_group'] -%}
+{%- set numeric_features = ['age', 'bmi', 'bmi_recorded', 'town'] %}
 
 WITH check_date AS (
     SELECT MAX(end_date) AS check_date
-    FROM {{ ref('qadmissions_input_features_history') }}
+    FROM {{ ref('qadmissions_input_features_validation') }}
 ),
 
 history AS (
     SELECT h.*
-    FROM {{ ref('qadmissions_input_features_history') }} AS h
+    FROM {{ ref('qadmissions_input_features_validation') }} AS h
     INNER JOIN check_date AS c
         ON h.end_date = c.check_date
 ),

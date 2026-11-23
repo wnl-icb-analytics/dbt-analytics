@@ -28,13 +28,14 @@ SELECT
     is_completed_screening,
     is_unsuitable_screening,
     is_declined_screening,
-    is_non_response_screening
+    is_non_response_screening,
+    is_cervix_removal
 
 FROM {{ ref('int_cervical_screening_all') }}
 
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id 
-    ORDER BY clinical_effective_date DESC, ID DESC
+    ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, ID DESC, source_cluster_id DESC
 ) = 1
 
 ORDER BY person_id

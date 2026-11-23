@@ -17,6 +17,19 @@ models:
       meta:
         owner:
           name: Thomas Shallcross
+    data_tests:
+      # BMI imputation (macros/clinical/qadmissions_impute_bmi.sql). Both hold
+      # with imputation switched off (var qadmissions_impute_bmi), so turning
+      # it off doesn't fail the build.
+      - dbt_utils.expression_is_true:
+          arguments:
+            # Imputed exactly when there is no recorded BMI and a mean was
+            # found, so everyone gets a bmi while imputation is on.
+            expression: "is_bmi_imputed = (bmi_recorded is null and bmi is not null)"
+      - dbt_utils.expression_is_true:
+          arguments:
+            # A recorded BMI is never changed.
+            expression: "is_bmi_imputed or equal_null(bmi, bmi_recorded)"
     columns:
       - name: person_id
         data_type: varchar
@@ -58,7 +71,50 @@ models:
 
       - name: bmi
         data_type: float
-        description: "Latest recorded BMI (kg/m^2) from int_bmi_latest. Raw value - not clipped; NULL when no BMI has been recorded for the person."
+        description: >
+          BMI (kg/m^2) as scored: the latest valid recorded BMI (bmi_recorded)
+          or, when there is none, the mean recorded BMI of eligible people with
+          the same sex, age decade and ethnicity category (dim_person_ethnicity,
+          with Unknown counted as Not Recorded). Falls back to sex and age
+          decade, then sex, when that group has fewer than 100 recorded BMIs.
+          Not clipped: a value outside 20-40, recorded or imputed, is rejected
+          by the model. is_bmi_imputed and bmi_imputation_group show what was
+          imputed. See macros/clinical/qadmissions_impute_bmi.sql.
+        data_tests:
+          # Recorded BMIs are 10-150, so their means are too.
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 10
+                max_value: 150
+                inclusive: true
+
+      - name: bmi_recorded
+        data_type: float
+        description: "Latest valid recorded BMI (kg/m^2) from int_bmi_latest, before imputation. NULL when the person has none."
+        data_tests:
+          # Tripwire: if the BMI feed broke, everyone would be imputed and
+          # scored, and no other test would notice.
+          - dbt_utils.not_null_proportion:
+              arguments:
+                at_least: "{{ var('qadmissions_min_recorded_bmi_share', 0.8) }}"
+
+      - name: is_bmi_imputed
+        data_type: boolean
+        description: "TRUE when bmi is imputed because the person has no recorded BMI."
+        data_tests:
+          - not_null
+
+      - name: bmi_imputation_group
+        data_type: varchar
+        description: >
+          The group whose mean recorded BMI was imputed: sex_age_ethnicity
+          (sex x age decade x ethnicity category), or sex_age or sex when the
+          finer group had fewer than 100 recorded BMIs. NULL when bmi is
+          recorded.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['sex_age_ethnicity', 'sex_age', 'sex']
 
       - name: sha1
         data_type: number
@@ -172,9 +228,11 @@ models:
           Low-haemoglobin flag. TRUE if latest haemoglobin value is below the
           threshold from qadmissions_lab_thresholds seed, FALSE otherwise
           (including NULL haemoglobin). The latest value comes from
-          int_haemoglobin_latest, which excludes negative values and extreme
-          outliers; qadmissions_input_features_history keeps extreme outliers,
-          so the two models can differ.
+          int_haemoglobin_latest, which excludes negative, out-of-range and
+          extreme outlier values. qadmissions_input_features_validation also
+          excludes out-of-range haemoglobin, and under the current
+          observation_value_bounds every extreme outlier is out of range, so
+          both models use the same results.
         data_tests:
           - not_null
           - accepted_values:
@@ -187,7 +245,7 @@ models:
           High liver-function-test flag. TRUE if any of ALT, GGT, or bilirubin
           exceeds its threshold from qadmissions_lab_thresholds seed, FALSE
           otherwise. The latest values come from int_lft_latest, which excludes
-          negative values and extreme outliers; qadmissions_input_features_history
+          negative values and extreme outliers; qadmissions_input_features_validation
           keeps extreme outliers, so the two models can differ.
         data_tests:
           - not_null
@@ -202,7 +260,7 @@ models:
           threshold from qadmissions_lab_thresholds seed, FALSE otherwise
           (including NULL platelets). The latest value comes from
           int_platelets_latest, which excludes negative values and extreme
-          outliers; qadmissions_input_features_history keeps extreme outliers,
+          outliers; qadmissions_input_features_validation keeps extreme outliers,
           so the two models can differ.
         data_tests:
           - not_null

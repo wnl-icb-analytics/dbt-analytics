@@ -42,12 +42,12 @@ rule_1_nyha_class_3_4 as (
     from (
         select person_id, observation_id
         from (
-            select distinct person_id, observation_id, clinical_effective_date
-            from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs1, on_hf_reg_pg2_hr_vs2") }})
+            select distinct person_id, observation_id, clinical_effective_date, date_recorded
+            from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs1, on_hf_reg_pg2_hr_vs2", include_date_recorded=true) }})
         )
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
         ) = 1
     ) latest_nyha
     inner join ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs2") }}) class_3_4
@@ -60,12 +60,12 @@ rule_2_oedema_or_metolazone as (
     from (
         select person_id, observation_id
         from (
-            select distinct person_id, observation_id, clinical_effective_date
-            from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs3, on_hf_reg_pg2_hr_vs4") }})
+            select distinct person_id, observation_id, clinical_effective_date, date_recorded
+            from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs3, on_hf_reg_pg2_hr_vs4", include_date_recorded=true) }})
         )
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc, date_recorded desc nulls last, observation_id desc
         ) = 1
     ) latest_oedema
     inner join ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs4") }}) significant

@@ -1,18 +1,10 @@
 models:
   - name: fct_person_months_active
-    description: 'Monthly active patient spine table providing foundation for temporal analysis.
-
-      Key Features:
-
-      • Monthly grain for last 5 years (60 months)
-
-      • Active registrations only (excludes deducted/left patients)
-
-      • One row per person-month with current practice details
-
-      • Eliminates repetitive spine logic in analysis queries
-
-      Purpose: Foundation for temporal analysis enabling direct joins to demographics, conditions, and clinical data by person-month.'
+    description: >-
+      Registered population per completed calendar month in OLIDS, one row per person
+      and month for the last 60 completed months. Includes anyone whose registration
+      overlaps the month, including people who have since left or died. Registration
+      end dates account for death and deregistration.
     config:
       meta:
         owner:
@@ -36,7 +28,9 @@ models:
           - not_null
 
       - name: current_practice_id
-        description: Practice where person was registered this month (most recent if multiple)
+        description: >-
+          Practice selected for the month. If registrations overlap, prefers one
+          currently marked current, then the latest registration start date.
         tests:
           - not_null
 

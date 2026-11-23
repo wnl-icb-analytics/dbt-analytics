@@ -8,7 +8,7 @@
 Composite liver function test status per person.
 Joins the latest ALT, GGT, and bilirubin observations per person (each sourced from its own
 int_<component>_latest model) and derives a single high_lft flag that is TRUE when any
-component is above its clinical upper reference limit.
+component exceeds its QAdmissions abnormal-LFT threshold, approximately three times the clinical ULN.
 
 Thresholds are sourced from the qadmissions_lab_thresholds seed (direction = 'high').
 */

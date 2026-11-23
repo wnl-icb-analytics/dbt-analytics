@@ -1,11 +1,120 @@
 models:
   - name: int_alcohol_units_all
-    description: 'ALCOHOL CONSUMPTION BY UNITS. Built for SMI 6 Health Checks Monitoring using ALC_COD'
+    description: >-
+      Alcohol consumption from ALC_COD in OLIDS GP records, one row per person and
+      clinical date up to the build date. Includes inactive and deceased people
+      without age or SMI-register restrictions. Same-day records prefer higher risk
+      (Higher, Increasing, Low, Ex-Drinker, Non-Drinker, Unclear), then a numeric
+      reading, then the latest save time and highest observation ID. Weekly-unit variants use U/week;
+      explicit daily readings convert to weekly units before banding. The daily
+      concept 1082631000000102 converts only with blank, alcohol-unit or daily-unit
+      text. Weekly concept 1082641000000106 uses U/week with blank or bare
+      alcohol-unit text. Container, volume, mass and unknown text stay unconverted
+      and Unclear. Recognised weekly labels include explicit units of alcohol,
+      wine, beer or spirits per week.
+      Daily and weekly concepts with the opposite explicit time basis stay
+      unconverted, flagged and Unclear, except zero remains Non-Drinker evidence.
+      Other numeric alcohol-unit concepts convert only with an explicit daily unit
+      label. Source value and source-first unit display remain available.
+      Risk uses coded status or weekly units: low up to 14 units a week; increasing
+      above 14; higher above 35 for women or 50 for men (NHS/OHID), using current
+      gender. Unit matching is case-insensitive. A bare "per week" is read as
+      weekly units for numeric alcohol-unit concepts and preserves zero coded
+      Ex-Drinker or Non-Drinker evidence. Non-zero coded status with bare weekly
+      text stays Unclear. Numbered periods such as "2 weekly" and "4wks", and
+      numbered quantities without an alcohol-unit word, stay Unclear. The observed
+      zero labels "0/week" and "0u/week" remain recognised.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - clinical_effective_date
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD
+    columns:
+      - name: observation_id
+        description: Source observation selected within the model's event grain.
+      - name: date_recorded
+        description: EMIS save time of the selected observation; null when unavailable.
+      - name: original_result_value
+        description: Numeric source result before any daily-to-weekly conversion.
+      - name: source_result_unit_display
+        description: Source unit concept display, falling back to the mapped display when absent.
+      - name: is_converted_from_daily
+        description: Source value was multiplied by seven because the concept or unit explicitly states per day.
+      - name: is_daily_unit_conflict
+        description: Daily or weekly concept contradicts the explicit unit time basis, including a missing value but excluding zero. Value is unconverted and risk is Unclear.
+      - name: conversion_reason
+        description: Daily concept multiplied by 7, Explicit daily unit multiplied by 7, Daily concept with weekly unit; not converted, Weekly concept with daily unit; not converted, or No daily conversion.
+
+unit_tests:
+  - name: alcohol_units_bands_and_normalisation
+    model: int_alcohol_units_all
+    overrides:
+      macros:
+        get_observations: |
+          SELECT '2024-03-01'::TIMESTAMP_NTZ AS date_recorded, column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                 '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+                 column3::VARCHAR AS mapped_concept_code,
+                 'SYN_alcohol observation'::VARCHAR AS mapped_concept_display,
+                 column4::NUMBER(10,2) AS result_value,
+                 column5::VARCHAR AS result_unit_display,
+                 NULL::VARCHAR AS result_units_source_concept_id
+          FROM VALUES
+              ('SYN_a', -9501, '1082641000000106', 10, 'Units/Wk'),
+              ('SYN_b', -9502, '1082641000000106', 14, 'U/week'),
+              ('SYN_c', -9503, '1082641000000106', 14.5, 'U/week'),
+              ('SYN_d', -9504, '1082641000000106', 35, 'U/week'),
+              ('SYN_e', -9505, '1082641000000106', 35.5, 'U/week'),
+              ('SYN_f', -9506, '1082641000000106', 50, 'U/week'),
+              ('SYN_g', -9507, '1082641000000106', 20, 'per week'),
+              ('SYN_h', -9508, '160573003', 20, 'per week'),
+              ('SYN_i1', -9509, '86933000', NULL, NULL),
+              ('SYN_i2', -9509, '160573003', 10, 'U/week'),
+              ('SYN_j', -9510, '1082641000000106', 10, ' units/wk '),
+              ('SYN_k1', -9511, '266917007', NULL, NULL),
+              ('SYN_k2', -9511, '160573003', 10, 'U/week'),
+              ('SYN_l1', -9512, '160573003', 10, 'U/week'),
+              ('SYN_l2', -9512, '1082641000000106', 12, 'U/week'),
+              ('SYN_MALE_HIGH', -18221, '1082641000000106', 50.5, 'U/week'),
+              ('SYN_Z', -18222, '1082641000000106', 20, 'U/week'),
+              ('SYN_A', -18222, '1082641000000106', 10, 'U/week'),
+              ('SYN_Z', -18223, '160582009', NULL, NULL),
+              ('SYN_A', -18223, '783261004', NULL, NULL)
+    given:
+      - input: ref('stg_olids_concept')
+        format: sql
+        rows: |
+          SELECT NULL::VARCHAR AS concept_id, NULL::VARCHAR AS display WHERE FALSE
+      - input: ref('dim_person_demographics')
+        format: sql
+        rows: |
+          SELECT column1::NUMBER AS person_id, column2::VARCHAR AS gender
+          FROM VALUES (-9501, 'Male'), (-9502, 'Male'), (-9503, 'Male'),
+              (-9504, 'Female'), (-9505, 'Female'), (-9506, 'Male'),
+              (-9507, 'Male'), (-9508, 'Male'), (-9509, 'Male'), (-9510, 'Male'),
+              (-9511, 'Male'), (-9512, 'Male'),
+              (-18221, 'Male'), (-18222, 'Male'), (-18223, 'Male')
+    expect:
+      rows:
+        - {person_id: -9501, concept_code: '1082641000000106', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9502, concept_code: '1082641000000106', result_value: 14, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9503, concept_code: '1082641000000106', result_value: 14.5, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -9504, concept_code: '1082641000000106', result_value: 35, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -9505, concept_code: '1082641000000106', result_value: 35.5, alcohol_risk_category: Higher Risk, result_unit_display: U/week}
+        - {person_id: -9506, concept_code: '1082641000000106', result_value: 50, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -9507, concept_code: '1082641000000106', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -9508, concept_code: '160573003', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -9509, concept_code: '86933000', result_value: null, alcohol_risk_category: Higher Risk, result_unit_display: null}
+        - {person_id: -9510, concept_code: '1082641000000106', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9511, concept_code: '160573003', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9512, concept_code: '1082641000000106', result_value: 12, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -18221, concept_code: '1082641000000106', result_value: 50.5, alcohol_risk_category: Higher Risk, result_unit_display: U/week}
+        - {person_id: -18222, concept_code: '1082641000000106', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -18223, concept_code: '160582009', result_value: null, alcohol_risk_category: Ex-Drinker, result_unit_display: null}

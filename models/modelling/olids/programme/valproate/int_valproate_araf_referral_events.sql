@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Intermediate table extracting all ARAF referral-related events for each person, using mapped concepts, observation, and valproate program codes (category REFERRAL).') }}
+    description="Annual risk acknowledgement form (ARAF) referrals in OLIDS, one row per referral request or observation linked to a person. Uses the valproate code list's REFERRAL category; a linked observation and request appear only as the request. Includes inactive and deceased people of any age or sex, whether or not they take valproate. Event dates are unrestricted.") }}
 
 -- The new feed classifies coded referrals into referral_request where the
 -- legacy feed recorded them as observations. Read both so the model is

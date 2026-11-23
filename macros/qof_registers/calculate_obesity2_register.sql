@@ -161,9 +161,7 @@
         SELECT
             bmi.reference_date,
             bmi.person_id,
-            FLOOR(
-                DATEDIFF('month', birth.birth_date_approx, bmi.reference_date) / 12
-            ) AS age
+            {{ ltc_register_age_at('birth', 'bmi.reference_date') }} AS age
         FROM bmi_status AS bmi
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON bmi.person_id = birth.person_id

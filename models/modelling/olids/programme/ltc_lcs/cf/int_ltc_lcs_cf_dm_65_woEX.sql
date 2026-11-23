@@ -1,6 +1,8 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding: ICB_CF_DM_65_woEX population (shared parent)
+-- The HbA1c lookback starts strictly after 2 years before the build date.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-65.md
 --
 -- Pre-Rule-1 DM_65 population. Consumed by int_ltc_lcs_cf_dm_65 and subtracted by DM_66.
@@ -8,7 +10,11 @@
 -- ICB_CF_DM_65_BASE: base (age >= 17, NOT ICS_METABOLIC_LTC, NOT CF_NHSHC2Y), exclude
 --   ICB_CF_DM_64_BASE (higher BMI band), then latest BMI (vs1) Latest 1 where:
 --     numeric value >= 30 and < 35; OR
---     numeric value >= 27.5 and < 32.5 AND BAME (vs3 17-code list, any-time membership).
+--     numeric value >= 27.5 and < 32.5 AND at least one vs2 ethnicity observation not in vs3.
+-- Latest 999 + NOTIN is read as at least one ethnicity record passing. vs3 also holds
+-- uninformative codes (not stated, other, the ethnic category parent), so requiring every
+-- record to pass would drop people recorded as BAME who later have one of those codes.
+-- vs3 is the non-BAME list with BAME exception children already removed by expansion.
 -- ICB_CF_DM_65_woEX: then exclude ICB_CF_DM_61/62/63/64_woEX, and keep patients with NO
 --   HbA1c (3-code IFCC, date-only, pinned woEX id) in the last 2 years.
 
@@ -26,15 +32,25 @@ dm_64_base as (
 
 latest_bmi as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations_latest("obesity_with_latest_bmi_30_35_275_325_bame_population_vs1") }})
+    from ({{ get_ltc_lcs_observations_latest("75b5fe04-32b9-cb6b-1d1d-79b8183e75c4") }})
     where result_value > 0
 ),
 
 bame as (
-    -- canon BAME determinant = vs2 OR vs3 (generic EMIS ethnic-category sets, include_children
-    -- -> all recorded ethnicities; see DM_64 header note -- flagged for clinical review)
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43, obesity_with_latest_bmi_30_35_275_325_bame_population_vs3") }})
+    -- At least one of the latest 999 ethnicity observations must pass the non-BAME test.
+    select eth.person_id
+    from (
+        select *
+        from ({{ get_ltc_lcs_observations("2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43", include_date_recorded=true) }})
+        qualify row_number() over (
+            partition by person_id
+            order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+        ) <= 999
+    ) as eth
+    left join ({{ get_ltc_lcs_observations("396f1048-e18e-908e-b0d3-958d23d46607") }}) as non_bame
+        on non_bame.observation_id = eth.observation_id
+    group by eth.person_id
+    having count(non_bame.observation_id) < count(*)
 ),
 
 base_65 as (
@@ -70,7 +86,7 @@ dm_64_woex as (
 hba1c_last_2y as (
     select person_id
     from ({{ get_ltc_lcs_observations("dd384e6e-92e2-04b5-f1f9-17c119852411") }})
-    where clinical_effective_date >= dateadd(year, -2, current_date())
+    where clinical_effective_date > dateadd(year, -2, current_date())
 )
 
 select distinct person_id

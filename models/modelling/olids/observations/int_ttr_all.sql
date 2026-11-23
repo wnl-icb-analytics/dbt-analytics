@@ -8,6 +8,7 @@ SELECT
     obs.clinical_effective_date_raw,
     obs.date_recorded,
     obs.result_value AS original_result_value,
-    TRY_CAST(obs.result_value AS FLOAT) AS ttr_percentage
+    TRY_CAST(obs.result_value AS FLOAT) AS ttr_percentage,
+    COALESCE(ttr_percentage BETWEEN 0 AND 100, FALSE) AS is_valid
 FROM ({{ get_observations("'TTR_COD'", source='PCD') }}) AS obs
 WHERE obs.clinical_effective_date::DATE <= CURRENT_DATE()
