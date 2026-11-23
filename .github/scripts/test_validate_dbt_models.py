@@ -1,9 +1,11 @@
+import copy
 import json
 import subprocess
 import unittest
 from unittest.mock import patch
 
 from full_refresh_label import pull_numbers
+from indicator_definitions_changed import changes
 from validate_dbt_models import UEC_PARENT, build_selection, main
 
 
@@ -79,6 +81,53 @@ class FullRefreshLabelTests(unittest.TestCase):
             "chore: direct commit without a pull request",
             "fix: mentions (#99) mid-subject",
         ]), [1531, 1532])
+
+
+def manifest(meta=None, columns=None, macro_sql="{% macro extract_indicator_metadata() %}{% endmacro %}"):
+    return {
+        "nodes": {
+            "model.wnl_analytics.fct_x": {
+                "resource_type": "model", "name": "fct_x",
+                "config": {"meta": {"owner": {"name": "Team"}, **(meta or {})}},
+                "columns": columns or {},
+            },
+        },
+        "macros": {
+            "macro.wnl_analytics.extract_indicator_metadata": {"macro_sql": macro_sql},
+            "macro.wnl_analytics.archive_definitions": {"macro_sql": "archive"},
+        },
+    }
+
+
+class IndicatorDefinitionsChangedTests(unittest.TestCase):
+    INDICATOR = {"indicator": {"id": "IND_X", "name_short": "X"}}
+
+    def test_identical_metadata_is_unchanged(self):
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest(self.INDICATOR)), [])
+
+    def test_unrelated_meta_change_is_unchanged(self):
+        current = manifest(self.INDICATOR)
+        current["nodes"]["model.wnl_analytics.fct_x"]["config"]["meta"]["owner"] = {"name": "Other"}
+        self.assertEqual(changes(manifest(self.INDICATOR), current), [])
+
+    def test_model_indicator_change(self):
+        current = copy.deepcopy(self.INDICATOR)
+        current["indicator"]["name_short"] = "Y"
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest(current)), ["fct_x"])
+
+    def test_added_and_removed_indicators(self):
+        self.assertEqual(changes(manifest(), manifest(self.INDICATOR)), ["fct_x"])
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest()), ["fct_x"])
+
+    def test_column_indicator_change(self):
+        columns = {"flag": {"meta": {"indicator": {"id": "IND_C"}}}}
+        changed = {"flag": {"meta": {"indicator": {"id": "IND_D"}}}}
+        self.assertEqual(changes(manifest(columns=columns), manifest(columns=changed)), ["fct_x"])
+
+    def test_macro_change_ignores_line_endings(self):
+        self.assertEqual(changes(manifest(macro_sql="a\nb"), manifest(macro_sql="a\r\nb")), [])
+        self.assertEqual(changes(manifest(macro_sql="a"), manifest(macro_sql="b")),
+                         ["macro extract_indicator_metadata"])
 
 
 if __name__ == "__main__":
