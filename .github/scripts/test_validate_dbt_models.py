@@ -83,7 +83,10 @@ class FullRefreshLabelTests(unittest.TestCase):
         ]), [1531, 1532])
 
 
-def manifest(meta=None, columns=None, macro_sql="{% macro extract_indicator_metadata() %}{% endmacro %}"):
+ARCHIVE = "macros/governance/archive_indicator_definitions.sql"
+
+
+def manifest(meta=None, columns=None, macro_sql="archive", helper_sql="comment"):
     return {
         "nodes": {
             "model.wnl_analytics.fct_x": {
@@ -93,8 +96,15 @@ def manifest(meta=None, columns=None, macro_sql="{% macro extract_indicator_meta
             },
         },
         "macros": {
-            "macro.wnl_analytics.extract_indicator_metadata": {"macro_sql": macro_sql},
-            "macro.wnl_analytics.archive_definitions": {"macro_sql": "archive"},
+            "macro.wnl_analytics.archive_usage": {
+                "original_file_path": ARCHIVE, "macro_sql": macro_sql,
+                "depends_on": {"macros": ["macro.wnl_analytics.generate_history_table_comment"]},
+            },
+            "macro.wnl_analytics.generate_history_table_comment": {
+                "original_file_path": "macros/overrides/generate_history_table_comment.sql",
+                "macro_sql": helper_sql,
+            },
+            "macro.wnl_analytics.unrelated": {"original_file_path": "macros/other.sql", "macro_sql": "x"},
         },
     }
 
@@ -124,11 +134,19 @@ class IndicatorDefinitionsChangedTests(unittest.TestCase):
         changed = {"flag": {"meta": {"indicator": {"id": "IND_D"}}}}
         self.assertEqual(changes(manifest(columns=columns), manifest(columns=changed)), ["fct_x"])
 
-    def test_macro_change_ignores_line_endings(self):
-        self.assertEqual(changes(manifest(macro_sql="a\nb"), manifest(macro_sql="a\r\nb")), [])
-        self.assertEqual(changes(manifest(macro_sql="a"), manifest(macro_sql="b")),
-                         ["macro extract_indicator_metadata"])
+    def test_inherited_column_indicator_is_ignored(self):
+        inherited = {"flag": {"meta": {"indicator": {"id": "IND_X"}}}}
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest(self.INDICATOR, inherited)), [])
 
+    def test_archive_macro_and_helper_changes(self):
+        self.assertEqual(changes(manifest(macro_sql="a"), manifest(macro_sql="b")), ["macro archive_usage"])
+        self.assertEqual(changes(manifest(helper_sql="a"), manifest(helper_sql="b")),
+                         ["macro generate_history_table_comment"])
+
+    def test_macro_line_endings_and_unrelated_macros_are_ignored(self):
+        current = manifest(macro_sql="a\r\nb")
+        current["macros"]["macro.wnl_analytics.unrelated"]["macro_sql"] = "y"
+        self.assertEqual(changes(manifest(macro_sql="a\nb"), current), [])
 
 if __name__ == "__main__":
     unittest.main()

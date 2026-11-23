@@ -13,8 +13,19 @@ import json
 import os
 import sys
 
-PROJECT = "wnl_analytics"
-MACROS = ("extract_indicator_metadata", "archive_definitions")
+# Files holding the extractor and the def_indicator* post-hook archive macros.
+# Their macro dependencies are followed too, as Fusion does not record hook
+# macro dependencies on the models.
+MACRO_FILES = (
+    "macros/governance/extract_indicator_metadata.sql",
+    "macros/governance/archive_indicator_definitions.sql",
+)
+
+
+def indicator_ids(meta):
+    ids = [(meta.get("indicator") or {}).get("id")]
+    ids += [ind.get("id") for ind in meta.get("indicators") or []]
+    return {i for i in ids if i}
 
 
 def column_indicator(column):
@@ -22,40 +33,56 @@ def column_indicator(column):
     return meta.get("indicator")
 
 
-def indicator_metadata(manifest):
+def indicator_models(manifest):
     models = {}
     for unique_id, node in manifest.get("nodes", {}).items():
         if node.get("resource_type") != "model":
             continue
         meta = (node.get("config") or {}).get("meta") or {}
+        # Like the extractor, skip column meta repeating a model indicator,
+        # which Fusion propagates to every column.
+        model_ids = indicator_ids(meta)
         columns = {
             name: column_indicator(column)
             for name, column in (node.get("columns") or {}).items()
-            if column_indicator(column)
+            if column_indicator(column) and column_indicator(column).get("id") not in model_ids
         }
-        if meta.get("indicator") or meta.get("indicators") or columns:
+        if model_ids or meta.get("indicator") or meta.get("indicators") or columns:
             models[unique_id] = {
                 "name": node.get("name"),
                 "indicator": meta.get("indicator"),
                 "indicators": meta.get("indicators"),
                 "columns": columns,
             }
-    macros = {
-        name: ((manifest.get("macros", {}).get(f"macro.{PROJECT}.{name}") or {}).get("macro_sql") or "").replace("\r\n", "\n")
-        for name in MACROS
-    }
-    return models, macros
+    return models
+
+
+def definition_macros(manifest):
+    macros = manifest.get("macros", {})
+    pending = [key for key, macro in macros.items() if macro.get("original_file_path") in MACRO_FILES]
+    found = {}
+    while pending:
+        key = pending.pop()
+        if key in found or key not in macros:
+            continue
+        found[key] = (macros[key].get("macro_sql") or "").replace("\r\n", "\n")
+        pending += (macros[key].get("depends_on") or {}).get("macros") or []
+    return found
 
 
 def changes(state, current):
-    state_models, state_macros = indicator_metadata(state)
-    models, macros = indicator_metadata(current)
+    state_models, models = indicator_models(state), indicator_models(current)
     found = sorted(
         models.get(key, state_models.get(key))["name"]
         for key in state_models.keys() | models.keys()
         if state_models.get(key) != models.get(key)
     )
-    found += [f"macro {name}" for name in MACROS if state_macros[name] != macros[name]]
+    state_macros, macros = definition_macros(state), definition_macros(current)
+    found += sorted(
+        f"macro {key.rsplit('.', 1)[-1]}"
+        for key in state_macros.keys() | macros.keys()
+        if state_macros.get(key) != macros.get(key)
+    )
     return found
 
 
