@@ -24,7 +24,10 @@ models:
               - practice_code
               - breakdown
               - breakdown_value
-    columns: &achievement_columns
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not_achieved = not_recorded_in_period + outside_target + not_treated + not_assessable"
+    columns:
       - name: reporting_date
         description: >-
           Date of assessment: the build date for current results or a completed month-end for
@@ -63,7 +66,8 @@ models:
           not stated, refused and unknown grouped. Age band uses age at the reporting date. Segment, long-term
           condition count, frailty and register membership are taken at the reporting date;
           frailty is scored for people aged 65 and over only. Deprivation, ethnicity, sex and
-          interpreter need use current values for every month. Multimorbidity score bands use
+          interpreter need use current values for every month; interpreter need is 'Unknown'
+          without a demographics record. Multimorbidity score bands use
           the current Cambridge Multimorbidity Score. Housebound or care home uses the latest
           recorded status; care home takes precedence. 'Total' rows use 'All people'.
         data_tests:
@@ -92,8 +96,10 @@ models:
           is the age-adjusted gap.
       - name: variance_at_age_rates
         description: >-
-          Sum of p(1 - p) over the row's people, where p is their age band's rate. Binomial
-          variance of numerator around numerator_at_age_rates, for intervals.
+          Sum of p(1 - p) over the row's people, where p is their age band's rate: the variance
+          of numerator if the row's people achieved at their age-band rates. Use it for z-scores
+          and funnel limits against numerator_at_age_rates, not for an interval around the
+          observed rate.
 
   - name: nice_indicator_explorer_achievement_by_month
     description: >-
@@ -107,7 +113,8 @@ models:
       Results are recalculated with current rules, so later corrections can change past
       months. Breakdown 'Total' holds every person once; each other breakdown splits the same
       people into exhaustive values, so filter to one breakdown before summing. The Cambridge
-      Multimorbidity Score and housebound or care home breakdowns are current only. Practice, PCN,
+      Multimorbidity Score and housebound or care home breakdowns, and the age-standardisation
+      columns, are current only. Practice, PCN,
       neighbourhood and borough use the current mapping.
     config:
       meta:
@@ -122,7 +129,70 @@ models:
               - practice_code
               - breakdown
               - breakdown_value
-    columns: *achievement_columns
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not_achieved = not_recorded_in_period + outside_target + not_treated + not_assessable"
+    columns:
+      - name: reporting_date
+        description: >-
+          Date of assessment: the build date for current results or a completed month-end for
+          monthly results.
+      - name: indicator_id
+        description: NICE indicator identifier; joins to def_indicator.
+      - name: practice_code
+        description: ODS code of the registration practice at the reporting date.
+      - name: practice_name
+        description: Current practice name; null if the practice is not mapped.
+      - name: pcn_code
+        description: Current primary care network ODS code; null if not mapped.
+      - name: pcn_name
+        description: Current primary care network name; null if not mapped.
+      - name: neighbourhood_code
+        description: >-
+          Current integrated neighbourhood team (INT) code of the practice; null if the
+          practice has no neighbourhood.
+      - name: neighbourhood_name
+        description: Current integrated neighbourhood team (INT) name of the practice.
+      - name: borough
+        description: Current borough of the practice registration population.
+      - name: breakdown
+        description: >-
+          Inequality breakdown: Total, Deprivation (IMD 2025), Ethnicity, Ethnicity (detailed),
+          Age band, Sex, Population segment, Long-term conditions, Frailty (eFI2), Learning
+          disability, Severe mental illness, Interpreter needed and, in current results only,
+          Cambridge Multimorbidity Score and Housebound or care home.
+        data_tests:
+          - not_null
+      - name: breakdown_value
+        description: >-
+          Group within the breakdown. Deprivation uses the national IMD 2025 quintile of the
+          resident LSOA (1 most deprived; quintile 1 is the Core20 group). Ethnicity is the
+          latest recorded category; the detailed version uses the census subcategory, with
+          not stated, refused and unknown grouped. Age band uses age at the reporting date. Segment, long-term
+          condition count, frailty and register membership are taken at the reporting date;
+          frailty is scored for people aged 65 and over only. Deprivation, ethnicity, sex and
+          interpreter need use current values for every month; interpreter need is 'Unknown'
+          without a demographics record. Multimorbidity score bands use
+          the current Cambridge Multimorbidity Score. Housebound or care home uses the latest
+          recorded status; care home takes precedence. 'Total' rows use 'All people'.
+        data_tests:
+          - not_null
+      - name: denominator
+        description: People in the indicator denominator, before personalised care adjustments.
+      - name: numerator
+        description: People in the denominator who meet the achievement rule.
+      - name: not_achieved
+        description: Denominator minus numerator.
+      - name: not_recorded_in_period
+        description: Not achieved because no qualifying record was found in the period.
+      - name: outside_target
+        description: Not achieved because the latest reading is above target or out of range.
+      - name: not_treated
+        description: >-
+          Not achieved because the required treatment was not given in the period, was never
+          given, or an anticoagulant choice did not meet the rule.
+      - name: not_assessable
+        description: Not achieved because the latest result could not be assessed.
 
   - name: nice_indicator_explorer_care_gaps
     description: >-

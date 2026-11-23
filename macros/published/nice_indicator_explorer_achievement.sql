@@ -120,7 +120,11 @@ person_breakdowns AS (
         END AS frailty,
         IFF(r.has_learning_disability, 'On register', 'Not on register') AS learning_disability,
         IFF(r.has_severe_mental_illness, 'On register', 'Not on register') AS severe_mental_illness,
-        IFF(d.interpreter_needed, 'Yes', 'No') AS interpreter_needed
+        CASE
+            WHEN d.person_id IS NULL THEN 'Unknown'
+            WHEN d.interpreter_needed THEN 'Yes'
+            ELSE 'No'
+        END AS interpreter_needed
         {%- if not by_month %},
         CASE
             WHEN c.cambridge_comorbidity_score IS NULL THEN 'Not scored'
