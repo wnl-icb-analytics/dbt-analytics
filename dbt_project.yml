@@ -53,7 +53,6 @@ models:
     +post-hook:
       - "{{ grant_ownership_with_copy() }}"
       - "{{ set_managed_by_tag() }}"
-      - "{{ set_external_validation_tag() }}"
     +enabled: true
 
     # Raw layer - source data with minimal transformation
@@ -156,6 +155,11 @@ models:
           +database: "{{ target.database.replace('MODELLING', 'REPORTING') }}"
         risk_stratification:
           +schema: "RISK_STRATIFICATION"
+        measures:
+          nice:
+            # Tags each NICE measure VALIDATED or NOT_VALIDATED from meta.indicator.external_validation.
+            +post-hook:
+              - "{{ set_external_validation_tag() }}"
 
     # Semantic layer - Snowflake Semantic Views for Cortex Analyst
     semantic:
