@@ -34,6 +34,7 @@ SELECT
         'WNL' AS comm_group,
         iap.commissioned_service_category_code,
         iap.point_of_delivery_code,
+        MAX(iap.financial_month) as latest_month,
         SUM(iap.contract_monitoring_planned_activity) AS activity_plan_iap,
         SUM(iap.contract_monitoring_planned_price) AS price_plan_iap
         FROM {{ ref('stg_reference_combined_contract_iap_202627') }} iap
@@ -45,7 +46,7 @@ SELECT
 --FULL OUTER JOIN to account for any differences in POD between the 2 sources.
  SELECT
     COALESCE(s.provider_shorthand, i.provider_shorthand) AS provider_shorthand,
-    s.latest_month,
+      COALESCE(s.latest_month,i.latest_month) as latest_month,
      COALESCE(s.commissioned_service,'Not Assigned') AS commissioned_service,
     COALESCE(
         s.commissioned_service_category_code,
