@@ -1,5 +1,13 @@
 {{ config(tags=['monthly', 'sus']) }}
 
+with spell_encounters as (
+
+    select *
+    from {{ ref('stg_sus_ip_monthly_encounterdenormalised_daterange') }}
+    where dv_is_spell = 1
+
+)
+
 select
      encounters.sk_encounter_id
     ,  encounters.dv_extract_type
@@ -236,7 +244,6 @@ select
     , pbr.tariff_pre_mff_adjusted_national
     , pbr.tariff_service_adjustment_national
     , pbr.tariff_total_payment_national
-from {{ ref('stg_sus_ip_monthly_encounterdenormalised_daterange') }} as encounters
+from spell_encounters as encounters
 left join {{ ref('stg_sus_ip_monthly_pbr_preprocess_sp_daterange') }} as pbr
     on encounters.sk_encounter_id = pbr.sk_encounter_id
-where encounters.dv_is_spell = 1

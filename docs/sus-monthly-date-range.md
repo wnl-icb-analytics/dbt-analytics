@@ -41,7 +41,23 @@ The remaining comparison with the legacy consolidated outputs is deliberately se
 
 Each unmatched legacy field needs classification as a required derivation, a field available from an agreed additional source, or a retired legacy field before it is added.
 
-## Validation
+## Source definitions awaiting confirmation
+
+The source column metadata inspected on 23 November 2026 has no descriptions for the reviewed measures, period fields or spell indicator. The `ENGINEER` role cannot inspect the underlying `SUS` database definitions. Numeric types and observed values do not establish units or business meanings.
+
+The YAML descriptions therefore mark these definitions as unconfirmed rather than assigning guessed units, date formats or code meanings:
+
+| Fields | Evidence required from the source owner |
+|---|---|
+| RTT length, A&E waits and duration, APC lengths of stay | Units, calculation boundaries, adjustments, special values and null meanings for each source field. |
+| Numeric tariff figures | Currency and scaling, adjustment sequence, applicability by year, special values and null meanings. |
+| `dv_is_spell` | The upstream rule for assigning value 1 and the valid meanings of other values or null. The implemented selection remains value 1 only. |
+| `dv_activity_period_date` | Numeric encoding, activity-period basis, special values and null meanings. |
+| PBR `activity_period` | Encoding and period basis, including its relationship to `applicable_date`, `extract_date` and encounter activity dates. |
+
+The [NHS SUS extract specification and guidance](https://digital.nhs.uk/services/secondary-uses-service-sus/payment-by-results-guidance) describe national extracts. A confirmed mapping from those definitions to the local date-range derivations is still needed. Until then, these source values support reconciliation, not an assertion that their measures are approved for threshold or financial analysis.
+
+## Validation results
 
 The models test `sk_encounter_id` as the row key. The PBR staging model tests the same key because the spell enrichment assumes a one-to-one join. `analyses/sus_monthly/sus_monthly_reconciliation.sql` compares monthly source and fact row counts and returns discrepancies only.
 
