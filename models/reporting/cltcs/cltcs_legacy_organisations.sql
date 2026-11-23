@@ -4,25 +4,19 @@
         tags=['cltcs'])
 }}
 
-
-{% set in_scope_borough_list = ['Haringey'] %}
-{% set in_scope_neighbourhood_list = ['East Camden'] %}
+{% set in_scope_borough_list = ['Haringey', 'Camden'] %}
+{% set in_scope_neighbourhood_list = [] %}
 
 with in_scope_practice_list as (
-    select  local_authority, practice_code, neighbourhood_code, neighbourhood_registered
-    from {{ ref('stg_cltcs_emis_cltcs_local_mapping_nh_gp')}}
-    where 
-    local_authority in (
-        {% for b in in_scope_borough_list %}
-            '{{ b }}'{% if not loop.last %}, {% endif %}
-        {% endfor %}
-    )
-    or 
-    neighbourhood_registered in (
-        {% for n in in_scope_neighbourhood_list %}
-            '{{ n }}'{% if not loop.last %}, {% endif %}
-        {% endfor %}
-    )
+    select local_authority, practice_code, neighbourhood_code, neighbourhood_registered
+    from {{ ref('cltcs_practice_neighbourhood') }}
+    where false
+    {% if in_scope_borough_list %}
+        or local_authority in ('{{ in_scope_borough_list | join("', '") }}')
+    {% endif %}
+    {% if in_scope_neighbourhood_list %}
+        or neighbourhood_registered in ('{{ in_scope_neighbourhood_list | join("', '") }}')
+    {% endif %}
 )
 
 select 

@@ -1,0 +1,93 @@
+# All fixture values are synthetic.
+unit_tests:
+  - name: get_observations_date_and_history_rules
+    model: int_obesity2_diagnoses_all
+    given:
+      - input: ref('stg_reference_combined_codesets')
+        format: sql
+        rows: |
+          SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id,
+            'PCD'::VARCHAR AS source, 'Synthetic cluster'::VARCHAR AS cluster_description,
+            'Synthetic code'::VARCHAR AS code_description
+          FROM (VALUES ('SYN_ASCVD_A', 'ASCVD_COD'), ('SYN_ASCVD_B', 'ASCVD_COD'),
+            ('SYN_OSA', 'OBSLPAPNOEA_COD'))
+      - input: ref('stg_nhsd_snomed_sct_history')
+        format: sql
+        rows: |
+          SELECT column1::VARCHAR AS old_concept_id, column2::VARCHAR AS new_concept_id,
+            column3::BOOLEAN AS is_ambiguous
+          FROM (VALUES
+            ('SYN_OLD_PLAIN', 'SYN_ASCVD_A', FALSE),
+            ('SYN_OLD_AMB_FULL', 'SYN_ASCVD_A', TRUE),
+            ('SYN_OLD_AMB_FULL', 'SYN_ASCVD_B', TRUE),
+            ('SYN_OLD_AMB_PART', 'SYN_ASCVD_A', TRUE),
+            ('SYN_OLD_AMB_PART', 'SYN_OUTSIDE', TRUE),
+            ('SYN_OLD_AMB_SPLIT', 'SYN_ASCVD_A', TRUE),
+            ('SYN_OLD_AMB_SPLIT', 'SYN_OSA', TRUE),
+            ('SYN_OLD_MIXED', 'SYN_ASCVD_A', FALSE),
+            ('SYN_OLD_MIXED', 'SYN_OUTSIDE', TRUE),
+            ('SYN_OLD_AMB_SINGLE', 'SYN_ASCVD_A', TRUE),
+            ('SYN_OSA', 'SYN_ASCVD_A', FALSE))
+      - input: ref('stg_olids_observation')
+        format: sql
+        rows: |
+          SELECT CAST(column1 AS DECIMAL(38, 0)) AS id,
+            CAST(column1 AS DECIMAL(38, 0)) AS person_id,
+            CAST(column2 AS VARCHAR) AS mapped_concept_code,
+            column3::DATE AS clinical_effective_date,
+            column4::TIMESTAMP_NTZ AS date_recorded,
+            CAST(NULL AS VARCHAR) AS patient_id,
+            CAST(NULL AS VARCHAR) AS result_value,
+            CAST(NULL AS VARCHAR) AS result_units_source_concept_id,
+            CAST(NULL AS VARCHAR) AS result_unit_code,
+            CAST(NULL AS VARCHAR) AS result_unit_display,
+            CAST(NULL AS VARCHAR) AS result_text,
+            CAST(NULL AS VARCHAR) AS allergy_medication_name,
+            CAST(NULL AS VARCHAR) AS is_problem,
+            CAST(NULL AS VARCHAR) AS is_review,
+            CAST(NULL AS VARCHAR) AS problem_end_date,
+            CAST(NULL AS VARCHAR) AS mapped_concept_id,
+            CAST(NULL AS VARCHAR) AS mapped_concept_display,
+            CAST(NULL AS VARCHAR) AS episodicity_source_concept_id,
+            CAST(NULL AS VARCHAR) AS age_at_event,
+            CAST(NULL AS VARCHAR) AS lds_transform_datetime FROM (VALUES
+            (-101, 'SYN_ASCVD_A', '2005-06-01', '1899-12-31 00:00:00'),
+            (-102, 'SYN_ASCVD_A', '2030-01-01', '2026-01-01 09:30:00'),
+            (-103, 'SYN_ASCVD_A', NULL, '2026-01-01 00:00:00'),
+            (-104, 'SYN_ASCVD_A', '2010-03-01', '2010-03-05 00:00:00'),
+            (-105, 'SYN_ASCVD_A', '2012-01-01', '1860-01-01 00:00:00'),
+            (-18001, 'SYN_ASCVD_A', '2000-01-01', '1900-01-01 00:00:00'),
+            (-18002, 'SYN_ASCVD_A', DATEADD(day, 1, CURRENT_DATE())::VARCHAR, '1899-12-31 00:00:00'),
+            (-18009, 'SYN_ASCVD_A', '2000-01-01', NULL),
+            (-201, 'SYN_OLD_PLAIN', '2020-01-01', '2020-01-01 00:00:00'),
+            (-202, 'SYN_OLD_AMB_FULL', '2020-01-01', '2020-01-01 00:00:00'),
+            (-203, 'SYN_OLD_AMB_PART', '2020-01-01', '2020-01-01 00:00:00'),
+            (-204, 'SYN_OLD_AMB_SPLIT', '2020-01-01', '2020-01-01 00:00:00'),
+            (-205, 'SYN_OSA', '2020-01-01', '2020-01-01 00:00:00'),
+            (-206, 'SYN_OLD_AMB_SINGLE', '2020-01-01', '2020-01-01 00:00:00'),
+            (-207, 'SYN_OLD_MIXED', '2020-01-01', '2020-01-01 00:00:00'))
+    expect:
+      format: sql
+      rows: |
+        SELECT column1::NUMBER AS id, column2::VARCHAR AS source_cluster_id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded
+        FROM (VALUES
+          (-101, 'ASCVD_COD', '2005-06-01 00:00:00', '1899-12-31 00:00:00'),
+          (-102, 'ASCVD_COD', '2026-01-01 09:30:00', '2026-01-01 09:30:00'),
+          (-103, 'ASCVD_COD', '1900-01-01 00:00:00', '2026-01-01 00:00:00'),
+          (-104, 'ASCVD_COD', '2010-03-01 00:00:00', '2010-03-05 00:00:00'),
+          (-105, 'ASCVD_COD', '2012-01-01 00:00:00', '1860-01-01 00:00:00'),
+          (-18001, 'ASCVD_COD', '1900-01-01 00:00:00', '1900-01-01 00:00:00'),
+          (-18002, 'ASCVD_COD', DATEADD(day, 1, CURRENT_DATE())::VARCHAR, '1899-12-31 00:00:00'),
+          (-18009, 'ASCVD_COD', '2000-01-01 00:00:00', NULL),
+          (-201, 'ASCVD_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+          (-202, 'ASCVD_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+          (-205, 'OBSLPAPNOEA_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+          (-206, 'ASCVD_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'))
+    overrides:
+      macros:
+        # Fusion cannot infer UUID metadata; assert only these output columns.
+        get_empty_subquery_sql: >
+          SELECT NULL::NUMBER AS id, NULL::VARCHAR AS source_cluster_id,
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded WHERE FALSE

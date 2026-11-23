@@ -29,7 +29,10 @@ select
 
         -- Feed-specific: service / tariff detail
         s.tariff_code                           as tariff_code,
+        s.tariff_code_description               as tariff_code_description,
+        s.national_tariff_pb_r_flag             as national_tariff_pb_r_flag,
         s.national_tariff_indicator             as national_tariff_indicator,
+        s.main_specialty_code                   as main_specialty_code,
         s.local_sub_specialty_code              as local_sub_specialty_code,
 
         -- Measures (plan vs actual)

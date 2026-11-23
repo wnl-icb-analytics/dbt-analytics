@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: dq_monitoring_config
+    description: >
+      Configuration table used by the Data Quality monitoring framework.
+      Defines which tables are monitored, expected refresh frequencies,
+      freshness thresholds and row-count variance tolerances.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+    columns:
+      - name: table_id
+        description: Unique identifier for the monitored table.
+        tests:
+          - unique
+          - not_null
+
+      - name: database_name
+        description: Database containing the monitored object.
+        tests:
+          - not_null
+
+      - name: schema_name
+        description: Schema containing the monitored object.
+        tests:
+          - not_null
+
+      - name: table_name
+        description: Name of the table or view being monitored.
+        tests:
+          - not_null
+
+      - name: is_active
+        description: Flag indicating whether the object should be monitored.
+        tests:
+          - not_null
+
+      - name: refresh_column
+        description: >
+          Column used to assess data freshness, typically REFRESH_DATE
+          or a load timestamp column.
+
+      - name: frequency_type
+        description: 'Expected refresh frequency of the monitored table. Examples: DAILY, WEEKLY, MONTHLY.'
+          
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['DAILY', 'WEEKLY', 'MONTHLY']
+
+      - name: warn_stale_days
+        description: >
+          Number of days after the latest refresh before the table
+          enters a warning state.
+
+      - name: critical_stale_days
+        description: >
+          Number of days after the latest refresh before the table
+          enters a critical state.
+
+      - name: warn_row_change_pct
+        description: >
+          Percentage variance from the previous measurement that will
+          trigger a warning status.
+
+      - name: critical_row_change_pct
+        description: >
+          Percentage variance from the previous measurement that will
+          trigger a critical status.
+
+      - name: notes
+        description: Free-text notes describing monitoring exceptions or assumptions.
+        

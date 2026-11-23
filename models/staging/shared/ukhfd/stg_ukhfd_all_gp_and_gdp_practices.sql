@@ -10,6 +10,8 @@
 select
     upper(organisation_code) as organisation_code
     , organisation_name
+    , status_code
+    , parent_organisation_code
 from {{ ref('raw_ukhfd_all_gp_and_gdp_practices') }}
 where is_latest = 1
 qualify row_number() over (

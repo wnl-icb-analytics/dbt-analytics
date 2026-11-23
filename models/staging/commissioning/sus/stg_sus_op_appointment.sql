@@ -47,6 +47,15 @@ select  core.primarykey_id,
         then core.appointment_commissioning_service_agreement_provider
         else left(core.appointment_commissioning_service_agreement_provider, 3)
     end as appointment_commissioning_service_agreement_provider,
+    nullif(upper(trim(appointment_commissioning_service_agreement_commissioner)), '')
+        as appointment_commissioning_service_agreement_commissioner,
+    appointment_commissioning_service_agreement_is_commissioner_recognised,
+    nullif(upper(trim(appointment_commissioning_service_agreement_commissioner_derived)), '')
+        as appointment_commissioning_service_agreement_commissioner_derived,
+    nullif(upper(trim(appointment_commissioning_commissioner_assignment_commissioner)), '')
+        as appointment_commissioning_commissioner_assignment_commissioner,
+    nullif(trim(appointment_commissioning_commissioner_assignment_flowchart_reference), '')
+        as appointment_commissioning_commissioner_assignment_flowchart_reference,
     appointment_care_location_site_code_of_treatment,
     appointment_expected_duration::integer as appointment_expected_duration,
     appointment_consultation_medium,
@@ -54,6 +63,12 @@ select  core.primarykey_id,
     appointment_attended_or_dna,
     appointment_first_attendance,
     appointment_administrative_category,
+    case
+        when nullif(trim(appointment_care_professional_consultant), '') is null
+          or lower(trim(appointment_care_professional_consultant)) = 'none'
+            then null
+        else upper(trim(appointment_care_professional_consultant))
+    end as appointment_care_professional_consultant,
     appointment_care_professional_main_specialty,
     appointment_referral_referring_organisation,
     appointment_referral_received_date::date as appointment_referral_received_date,

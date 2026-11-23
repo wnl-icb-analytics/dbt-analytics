@@ -6,7 +6,7 @@
 }}
 -- Ward details join to MHS502 by provider, submission and ward code.
 with accepted_records as (
-    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs903warddetails')) }}
+    {{ select_accepted_mhsds_period_records(ref('raw_mhsds_mhs903warddetails'), 'mhs903_uniq_id') }}
 )
 
 select

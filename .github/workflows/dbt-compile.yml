@@ -30,6 +30,9 @@ on:
 jobs:
   compile:
     name: Fusion compile
+    # Dependabot runs get no repo secrets. The skip satisfies the required check;
+    # the merge queue still compiles the candidate against PROD.
+    if: github.event_name == 'merge_group' || github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:

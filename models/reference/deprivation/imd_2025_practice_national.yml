@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: imd_2025_practice_national
+    description: >
+      2025 IMD Deciles for GP Practices by quarterly snapshot dates. 
+      IMD Deciles are assigned to practices by taking the average LSOA based 
+      IMD Score of it's registered population and assigning deciles based on the
+      profile of IMD scores among practices.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+
+    columns:
+      - name: practice_code
+        description: "GP practice code."
+        tests:
+          - not_null
+      - name: effective_snapshot_date
+        description: "Date of the practice-level IMD snapshot."
+        tests:
+          - not_null
+      - name: is_latest
+        description: "Boolean flag to identify the latest snapshot."
+      - name: is_wnl_practice
+        description: "Boolean flag to identify WNL practices."
+      - name: wnl_sub_icb_code
+        description: "For WNL practices only, the sub ICB code."
+      - name: imd_decile
+        description: "National IMD decile for the practice at the snapshot date, where 1 is most deprived and 10 is least deprived."
+        tests:
+          - not_null
+      - name: imd_rank
+        description: "National rank for the practice within the snapshot date. Lower values indicate greater deprivation."
+        tests:
+          - not_null
+      - name: imd_score
+        description: "Weighted practice IMD score used to generate the rank and decile."
+        tests:
+          - not_null
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 10000
+            
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - effective_snapshot_date

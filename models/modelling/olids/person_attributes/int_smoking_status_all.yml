@@ -43,3 +43,28 @@ models:
         description: >-
           True when the code establishes current or past smoking. False means no
           such evidence in this observation, not proof that the person never smoked.
+
+unit_tests:
+  - name: smoking_status_preserves_placeholder_recorded_date
+    model: int_smoking_status_all
+    given:
+      - input: ref('stg_reference_combined_codesets')
+        format: sql
+        rows: |
+          SELECT 'SYN_SMOK'::VARCHAR AS code, 'LSMOK_COD'::VARCHAR AS cluster_id
+      - input: ref('stg_olids_observation')
+        format: sql
+        rows: |
+          SELECT 'SYN_SMOK'::VARCHAR AS id, -18003::NUMBER AS person_id,
+            'SYN_SMOK'::VARCHAR AS mapped_concept_code,
+            'Synthetic smoking'::VARCHAR AS mapped_concept_display,
+            40::NUMBER AS age_at_event, '2024-09-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+            '1899-12-31'::TIMESTAMP_NTZ AS date_recorded
+    expect:
+      rows:
+        - id: SYN_SMOK
+          clinical_effective_date: '2024-09-01 00:00:00'
+    overrides:
+      macros:
+        get_empty_subquery_sql: >
+          SELECT NULL::VARCHAR AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE

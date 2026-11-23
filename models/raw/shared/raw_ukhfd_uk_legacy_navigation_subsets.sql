@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer: UK legacy navigation subset definitions, including historical revisions. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Read_Data_Migration.dim_Subsets_UK_Legacy_Navigation_SCD \ndbt: source(''ukhfd_read_data_migration'', ''uk_legacy_navigation_subsets'') \nColumns:\n  Subset_ID -> subset_id\n  Subset_Original_ID -> subset_original_id\n  Subset_Version -> subset_version\n  Subset_Name -> subset_name\n  Subset_Type -> subset_type\n  Language_Code -> language_code\n  Subset_Realm_ID -> subset_realm_id\n  Context_ID -> context_id\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
+        description="Raw layer: UK legacy navigation subset definitions, including historical revisions.. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Read_Data_Migration.dim_Subsets_UK_Legacy_Navigation_SCD \ndbt: source(''ukhfd_read_data_migration'', ''uk_legacy_navigation_subsets'') \nColumns:\n  Subset_ID -> subset_id\n  Subset_Original_ID -> subset_original_id\n  Subset_Version -> subset_version\n  Subset_Name -> subset_name\n  Subset_Type -> subset_type\n  Language_Code -> language_code\n  Subset_Realm_ID -> subset_realm_id\n  Context_ID -> context_id\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
     )
 }}
 select

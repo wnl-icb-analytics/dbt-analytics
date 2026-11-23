@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.SDL.META_FILE_REGISTRY \ndbt: source(''sdl_wnl'', ''META_FILE_REGISTRY'') \nColumns:\n  FEED -> feed\n  FILE_ID -> file_id\n  BATCH_ID -> batch_id\n  FILE_NAME -> file_name\n  ORIGINAL_FILE_NAME -> original_file_name\n  CREATED_DATETIME -> created_datetime\n  ROW_COUNT -> row_count\n  LOADER_JOB_NAME -> loader_job_name\n  LAST_REFRESHED_AT -> last_refreshed_at\n  FINANCIAL_YEAR -> financial_year\n  FINANCIAL_MONTH -> financial_month\n  SENT_DATETIME -> sent_datetime"
+        description="Raw layer (ServicesDataLocal canonical-named feeds, WNL footprint). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.SDL.META_FILE_REGISTRY \ndbt: source(''sdl_wnl'', ''META_FILE_REGISTRY'') \nColumns:\n  FEED -> feed\n  FILE_ID -> file_id\n  BATCH_ID -> batch_id\n  FILE_NAME -> file_name\n  ORIGINAL_FILE_NAME -> original_file_name\n  CREATED_DATETIME -> created_datetime\n  ROW_COUNT -> row_count\n  LOADER_JOB_NAME -> loader_job_name\n  LAST_REFRESHED_AT -> last_refreshed_at\n  FINANCIAL_YEAR -> financial_year\n  FINANCIAL_MONTH -> financial_month\n  SENT_DATETIME -> sent_datetime"
     )
 }}
 select

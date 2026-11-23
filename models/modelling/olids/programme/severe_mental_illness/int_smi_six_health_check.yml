@@ -6,14 +6,515 @@ models:
       diagnoses do not qualify. Covers BMI, HbA1c or glucose, cholesterol or QRISK,
       blood pressure, smoking and alcohol. Met, Declined and Not Met reflect evidence
       in 12 months; Met means completion, not clinical control. Includes latest
-      exception in that period and checks met.
+      exception in that period and checks met. A completion in the 12 months wins
+      over a decline in the same period.
     config:
       meta:
         owner:
           name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, check_type]
     columns:
       - name: person_id
         description: Unique identifier for the person
         tests:
           - not_null
 
+      - name: exception_category
+        description: >-
+          Patient unsuitable or informed dissent, from the QOF PCD cluster.
+          Null when no exception is recorded in the window.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Patient Unsuitable, Informed dissent]
+
+unit_tests:
+- name: smi_six_health_check_completion_overrides_decline
+  model: int_smi_six_health_check
+  given:
+  - input: ref('int_smi_quality_check_exception')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, NULL::TEXT AS cluster_id WHERE FALSE
+    format: sql
+  - input: ref('int_smi_population_base')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -9702::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -9703::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18260::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18320::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+    format: sql
+  - input: ref('int_bmi_latest')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=90)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 22::FLOAT AS bmi_value, 'Healthy weight'::TEXT AS bmi_category
+      UNION ALL
+      SELECT -9703::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 22::FLOAT AS bmi_value, 'Healthy weight'::TEXT AS bmi_category
+      UNION ALL
+      SELECT -18260::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 22::FLOAT AS bmi_value, 'Healthy weight'::TEXT AS bmi_category
+    format: sql
+  - input: ref('int_bmi_assessment_declined')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -9703::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18260::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+    format: sql
+  - input: ref('int_hba1c_latest')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_HbA1c'::TEXT AS hba1c_display, 'SYN_HbA1c_category'::TEXT AS hba1c_category
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_HbA1c'::TEXT AS hba1c_display, 'SYN_HbA1c_category'::TEXT AS hba1c_category
+      UNION ALL
+      SELECT -18320::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_HbA1c'::TEXT AS hba1c_display, 'SYN_HbA1c_category'::TEXT AS hba1c_category
+    format: sql
+  - input: ref('int_blood_glucose_latest')
+    rows: |-
+      SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=20)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN'::TEXT AS blood_glucose_display
+      UNION ALL
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_glucose'::TEXT AS blood_glucose_display
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_glucose'::TEXT AS blood_glucose_display
+      UNION ALL
+      SELECT -18320::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_glucose'::TEXT AS blood_glucose_display
+    format: sql
+  - input: ref('int_blood_glucose_declined')
+    rows: |-
+      SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=20)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18320::NUMBER, DATEADD(day, -10, CURRENT_DATE())::TIMESTAMP_NTZ
+    format: sql
+  - input: ref('int_cholesterol_latest')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 5::FLOAT AS cholesterol_value, 'SYN_cholesterol_category'::TEXT AS cholesterol_category
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 5::FLOAT AS cholesterol_value, 'SYN_cholesterol_category'::TEXT AS cholesterol_category
+      UNION ALL
+      SELECT -18320::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 5::FLOAT AS cholesterol_value, 'SYN_cholesterol_category'::TEXT AS cholesterol_category
+    format: sql
+  - input: ref('int_qrisk_latest')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 15::FLOAT AS qrisk_score, 'SYN_QRISK_category'::TEXT AS cvd_risk_category
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 15::FLOAT AS qrisk_score, 'SYN_QRISK_category'::TEXT AS cvd_risk_category
+      UNION ALL
+      SELECT -18320::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 15::FLOAT AS qrisk_score, 'SYN_QRISK_category'::TEXT AS cvd_risk_category
+    format: sql
+  - input: ref('int_cholesterol_declined')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18320::NUMBER, DATEADD(day, -10, CURRENT_DATE())::TIMESTAMP_NTZ
+    format: sql
+  - input: ref('fct_person_bp_control')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_bp_date, 120::FLOAT AS latest_systolic_value, 80::FLOAT AS latest_diastolic_value, NULL::TEXT AS is_overall_bp_controlled
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_bp_date, 120::FLOAT AS latest_systolic_value, 80::FLOAT AS latest_diastolic_value, NULL::TEXT AS is_overall_bp_controlled
+      UNION ALL
+      SELECT -18320::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_bp_date, 120::FLOAT AS latest_systolic_value, 80::FLOAT AS latest_diastolic_value, NULL::TEXT AS is_overall_bp_controlled
+    format: sql
+  - input: ref('int_blood_pressure_declined')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18320::NUMBER, DATEADD(day, -10, CURRENT_DATE())::TIMESTAMP_NTZ
+    format: sql
+  - input: ref('fct_person_smoking_status')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, 'Current Smoker'::TEXT AS smoking_status, '{{ (run_started_at - modules.datetime.timedelta(days=90)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_smoking_date
+      UNION ALL
+      SELECT -18260::NUMBER(38,0) AS person_id, 'Current Smoker'::TEXT AS smoking_status, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_smoking_date
+    format: sql
+  - input: ref('int_smoking_assessment_declined')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18260::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+    format: sql
+  - input: ref('fct_person_alcohol_status')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_audit_date, column2::TEXT AS audit_risk_category FROM VALUES (-9701, 'Increasing Risk'), (-9702, 'Unclear')
+      UNION ALL
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_audit_date, column2::TEXT AS audit_risk_category FROM VALUES (-18260, 'Increasing Risk')
+      UNION ALL
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_audit_date, column2::TEXT AS audit_risk_category FROM VALUES (-18320, 'Increasing Risk')
+    format: sql
+  - input: ref('int_alcohol_units_latest')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ::DATE AS clinical_effective_date, 5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display, column2::TEXT AS alcohol_risk_category FROM VALUES (-9701, 'Higher Risk'), (-9702, 'Low Risk')
+      UNION ALL
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ::DATE AS clinical_effective_date, 5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display, column2::TEXT AS alcohol_risk_category FROM VALUES (-18260, 'Higher Risk')
+      UNION ALL
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ::DATE AS clinical_effective_date, 5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display, column2::TEXT AS alcohol_risk_category FROM VALUES (-18320, 'Higher Risk')
+    format: sql
+  - input: ref('int_alcohol_assessment_declined')
+    rows: |-
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18260::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -18320::NUMBER, DATEADD(day, -10, CURRENT_DATE())::TIMESTAMP_NTZ
+    format: sql
+  expect:
+    rows:
+    - person_id: -9701
+      check_type: BMI
+      check_status: Met
+      test_type: BMI
+      result_category: Healthy weight
+    - person_id: -9701
+      check_type: HBA1C
+      check_status: Met
+      test_type: HbA1c
+      result_category: SYN_HbA1c_category
+    - person_id: -9701
+      check_type: Cholesterol
+      check_status: Met
+      test_type: Cholesterol
+      result_category: SYN_cholesterol_category
+    - person_id: -9701
+      check_type: Blood Pressure
+      check_status: Met
+      test_type: Blood Pressure
+      result_category: null
+    - person_id: -9701
+      check_type: Smoking
+      check_status: Met
+      test_type: Smoking status
+      result_category: Current Smoker
+    - person_id: -9701
+      check_type: Alcohol
+      check_status: Met
+      test_type: AUDIT
+      result_category: Increasing Risk
+    - person_id: -9702
+      check_type: BMI
+      check_status: Declined
+      test_type: BMI
+      result_category: BMI Declined
+    - person_id: -9702
+      check_type: HBA1C
+      check_status: Met
+      test_type: Blood Glucose
+      result_category: null
+    - person_id: -9702
+      check_type: Cholesterol
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9702
+      check_type: Blood Pressure
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9702
+      check_type: Smoking
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9702
+      check_type: Alcohol
+      check_status: Met
+      test_type: Units per week
+      result_category: Low Risk
+    - person_id: -9703
+      check_type: BMI
+      check_status: Met
+      test_type: BMI
+      result_category: Healthy weight
+    - person_id: -9703
+      check_type: HBA1C
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9703
+      check_type: Cholesterol
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9703
+      check_type: Blood Pressure
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9703
+      check_type: Smoking
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -9703
+      check_type: Alcohol
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -18260
+      check_type: BMI
+      check_status: Met
+      test_type: BMI
+      result_category: Healthy weight
+    - person_id: -18260
+      check_type: HBA1C
+      check_status: Met
+      test_type: HbA1c
+      result_category: SYN_HbA1c_category
+    - person_id: -18260
+      check_type: Cholesterol
+      check_status: Met
+      test_type: Cholesterol
+      result_category: SYN_cholesterol_category
+    - person_id: -18260
+      check_type: Blood Pressure
+      check_status: Met
+      test_type: Blood Pressure
+      result_category: null
+    - person_id: -18260
+      check_type: Smoking
+      check_status: Met
+      test_type: Smoking status
+      result_category: Current Smoker
+    - person_id: -18260
+      check_type: Alcohol
+      check_status: Met
+      test_type: AUDIT
+      result_category: Increasing Risk
+    - person_id: -18320
+      check_type: BMI
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -18320
+      check_type: HBA1C
+      check_status: Met
+      test_type: HbA1c
+      result_category: SYN_HbA1c_category
+    - person_id: -18320
+      check_type: Cholesterol
+      check_status: Met
+      test_type: Cholesterol
+      result_category: SYN_cholesterol_category
+    - person_id: -18320
+      check_type: Blood Pressure
+      check_status: Met
+      test_type: Blood Pressure
+      result_category: null
+    - person_id: -18320
+      check_type: Smoking
+      check_status: Not Met
+      test_type: null
+      result_category: null
+    - person_id: -18320
+      check_type: Alcohol
+      check_status: Met
+      test_type: AUDIT
+      result_category: Increasing Risk
+- name: smi_six_health_check_exception_uses_cluster
+  model: int_smi_six_health_check
+  given:
+  - input: ref('int_smi_quality_check_exception')
+    rows: |-
+      SELECT -9301::NUMBER AS person_id, CURRENT_DATE()::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_unrelated display'::VARCHAR AS concept_display, 'MHPCAPU_COD'::VARCHAR AS cluster_id
+      UNION ALL
+      SELECT -9302::NUMBER AS person_id, CURRENT_DATE()::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_unrelated display'::VARCHAR AS concept_display, 'MHPCADEC_COD'::VARCHAR AS cluster_id
+      UNION ALL
+      SELECT -18219::NUMBER, DATEADD(day, -2, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_unrelated_display'::VARCHAR, 'MHPCAPU_COD'::VARCHAR
+      UNION ALL
+      SELECT -18219::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_unrelated_display'::VARCHAR, 'MHPCADEC_COD'::VARCHAR
+      UNION ALL
+      SELECT -18220::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_unrelated_display'::VARCHAR, 'MHPCAPU_COD'::VARCHAR
+      UNION ALL
+      SELECT -18220::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_unrelated_display'::VARCHAR, 'MHPCADEC_COD'::VARCHAR
+      UNION ALL
+      SELECT -18261::NUMBER, DATEADD(day, -2, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_unrelated_display'::VARCHAR, 'MHPCADEC_COD'::VARCHAR
+      UNION ALL
+      SELECT -18261::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_unrelated_display'::VARCHAR, 'MHPCAPU_COD'::VARCHAR
+    format: sql
+  - input: ref('int_smi_population_base')
+    rows: |-
+      SELECT -9301::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -9302::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18219::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18220::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18261::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS age_band_5y, NULL::TEXT AS age_band_nhs, NULL::NUMBER(1,0) AS age_nhs_order, NULL::TEXT AS gender, NULL::TEXT AS ethnicity_category, NULL::NUMBER(1,0) AS ethcat_order, NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER(2,0) AS ethsubcat_order, NULL::TEXT AS imd_quintile, NULL::NUMBER(1,0) AS imdquintile_order, NULL::TEXT AS main_language, NULL::TEXT AS practice_borough, NULL::TEXT AS practice_neighbourhood, NULL::TEXT AS primary_care_network, NULL::TEXT AS practice_name, NULL::TEXT AS practice_code, NULL::TEXT AS residential_borough, NULL::TEXT AS residential_neighbourhood, NULL::TEXT AS ward_code, NULL::TEXT AS ward_name, NULL::TEXT AS residential_loc, TRUE::BOOLEAN AS has_active_smi_diagnosis
+    format: sql
+  - input: ref('int_bmi_latest')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=90)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 22::FLOAT AS bmi_value, 'Healthy weight'::TEXT AS bmi_category WHERE FALSE
+    format: sql
+  - input: ref('int_bmi_assessment_declined')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  - input: ref('int_hba1c_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS hba1c_display, NULL::TEXT AS hba1c_category WHERE FALSE
+    format: sql
+  - input: ref('int_blood_glucose_latest')
+    rows: |-
+      SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=20)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN'::TEXT AS blood_glucose_display WHERE FALSE
+    format: sql
+  - input: ref('int_blood_glucose_declined')
+    rows: |-
+      SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=20)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  - input: ref('int_cholesterol_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::TEXT AS cholesterol_category WHERE FALSE
+    format: sql
+  - input: ref('int_qrisk_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS qrisk_score, NULL::TEXT AS cvd_risk_category WHERE FALSE
+    format: sql
+  - input: ref('int_cholesterol_declined')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  - input: ref('fct_person_bp_control')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS latest_bp_date, NULL::FLOAT AS latest_systolic_value, NULL::FLOAT AS latest_diastolic_value, NULL::BOOLEAN AS is_overall_bp_controlled WHERE FALSE
+    format: sql
+  - input: ref('int_blood_pressure_declined')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  - input: ref('fct_person_smoking_status')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, 'Current Smoker'::TEXT AS smoking_status, '{{ (run_started_at - modules.datetime.timedelta(days=90)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_smoking_date WHERE FALSE
+    format: sql
+  - input: ref('int_smoking_assessment_declined')
+    rows: |-
+      SELECT -9701::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  - input: ref('fct_person_alcohol_status')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS latest_audit_date, NULL::TEXT AS audit_risk_category WHERE FALSE
+    format: sql
+  - input: ref('int_alcohol_units_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS result_value, NULL::TEXT AS result_unit_display, NULL::TEXT AS alcohol_risk_category WHERE FALSE
+    format: sql
+  - input: ref('int_alcohol_assessment_declined')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  expect:
+    rows:
+    - person_id: -9301
+      check_type: BMI
+      exception_category: Patient Unsuitable
+    - person_id: -9301
+      check_type: HBA1C
+      exception_category: Patient Unsuitable
+    - person_id: -9301
+      check_type: Cholesterol
+      exception_category: Patient Unsuitable
+    - person_id: -9301
+      check_type: Blood Pressure
+      exception_category: Patient Unsuitable
+    - person_id: -9301
+      check_type: Smoking
+      exception_category: Patient Unsuitable
+    - person_id: -9301
+      check_type: Alcohol
+      exception_category: Patient Unsuitable
+    - person_id: -9302
+      check_type: BMI
+      exception_category: Informed dissent
+    - person_id: -9302
+      check_type: HBA1C
+      exception_category: Informed dissent
+    - person_id: -9302
+      check_type: Cholesterol
+      exception_category: Informed dissent
+    - person_id: -9302
+      check_type: Blood Pressure
+      exception_category: Informed dissent
+    - person_id: -9302
+      check_type: Smoking
+      exception_category: Informed dissent
+    - person_id: -9302
+      check_type: Alcohol
+      exception_category: Informed dissent
+    - person_id: -18219
+      check_type: BMI
+      exception_category: Informed dissent
+    - person_id: -18219
+      check_type: HBA1C
+      exception_category: Informed dissent
+    - person_id: -18219
+      check_type: Cholesterol
+      exception_category: Informed dissent
+    - person_id: -18219
+      check_type: Blood Pressure
+      exception_category: Informed dissent
+    - person_id: -18219
+      check_type: Smoking
+      exception_category: Informed dissent
+    - person_id: -18219
+      check_type: Alcohol
+      exception_category: Informed dissent
+    - person_id: -18220
+      check_type: BMI
+      exception_category: Informed dissent
+    - person_id: -18220
+      check_type: HBA1C
+      exception_category: Informed dissent
+    - person_id: -18220
+      check_type: Cholesterol
+      exception_category: Informed dissent
+    - person_id: -18220
+      check_type: Blood Pressure
+      exception_category: Informed dissent
+    - person_id: -18220
+      check_type: Smoking
+      exception_category: Informed dissent
+    - person_id: -18220
+      check_type: Alcohol
+      exception_category: Informed dissent
+    - person_id: -18261
+      check_type: BMI
+      exception_category: Patient Unsuitable
+    - person_id: -18261
+      check_type: HBA1C
+      exception_category: Patient Unsuitable
+    - person_id: -18261
+      check_type: Cholesterol
+      exception_category: Patient Unsuitable
+    - person_id: -18261
+      check_type: Blood Pressure
+      exception_category: Patient Unsuitable
+    - person_id: -18261
+      check_type: Smoking
+      exception_category: Patient Unsuitable
+    - person_id: -18261
+      check_type: Alcohol
+      exception_category: Patient Unsuitable

@@ -3,6 +3,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
+from full_refresh_label import pull_numbers
 from validate_dbt_models import UEC_PARENT, build_selection, main
 
 
@@ -27,7 +28,7 @@ class BuildSelectionTests(unittest.TestCase):
         self.assertEqual(build_selection([]), [])
 
 class BuildCommandTests(unittest.TestCase):
-    def run_build(self, target):
+    def run_build(self, target, *flags):
         nodes = [
             {"name": "int_sus_uec_diagnosis", "resource_type": "model"},
             {"name": "original_relationship_test", "resource_type": "test"},
@@ -37,7 +38,7 @@ class BuildCommandTests(unittest.TestCase):
         )
         with patch("sys.argv", [
             "validate_dbt_models.py", "--target", target, "--state", "state",
-            "--select", "state:modified+", "tag:indicator_definitions+",
+            "--select", "state:modified+", "tag:indicator_definitions+", *flags,
         ]), patch("validate_dbt_models.subprocess.run", return_value=listed) as run:
             main()
         self.assertEqual(run.call_count, 2)
@@ -62,6 +63,22 @@ class BuildCommandTests(unittest.TestCase):
         command = self.run_build("dev")
         self.assertIn("--defer", command)
         self.assertIn("--favor-state", command)
+
+    def test_full_refresh_is_opt_in(self):
+        for target in ("dev", "prod"):
+            with self.subTest(target=target):
+                self.assertNotIn("--full-refresh", self.run_build(target))
+                self.assertIn("--full-refresh", self.run_build(target, "--full-refresh"))
+
+
+class FullRefreshLabelTests(unittest.TestCase):
+    def test_reads_trailing_pull_request_number(self):
+        self.assertEqual(pull_numbers([
+            "feat: add columns to stg_lsacm (#1531)",
+            "fix: follow up on issue (#12) (#1532)",
+            "chore: direct commit without a pull request",
+            "fix: mentions (#99) mid-subject",
+        ]), [1531, 1532])
 
 
 if __name__ == "__main__":

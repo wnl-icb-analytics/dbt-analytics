@@ -144,7 +144,7 @@ A missing BMI is filled in before scoring. The QAdmissions paper used multiple i
   - `bmi_recorded` keeps the recorded value
   - `is_bmi_imputed` and `bmi_imputation_group` show what was imputed and from which group
   - `qadmissions_predictions` carries all of them, plus `bmi_imputation_method`
-- **History:** `qadmissions_input_features_history` imputes the same way, with the means computed separately for each index date from that date's population and the BMIs known by then. Ethnicity is today's category at every index date, like `ethrisk`.
+- **History:** `qadmissions_input_features_validation` imputes the same way, with the means computed separately for each index date from that date's population and the BMIs known by then. The ethnicity category is the one known by the index date, like `ethrisk`.
 - **Code and tests:**
   - the logic is in `macros/clinical/qadmissions_impute_bmi.sql`
   - `tests/qadmissions_impute_bmi_synthetic.sql` checks it on made-up rows

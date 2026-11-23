@@ -7,6 +7,19 @@ models:
       case-finding cohort. Scores range from 0 to 100 and are relative to the patient's
       neighbourhood and cohort, with a separate percentile. These programme scores
       differ from eFI2 and frailty-register severity.
+
+      The clinical frailty domain uses tiered evidence. The latest clinician
+      assessment (Rockwood Clinical Frailty Scale or a coded frailty severity from
+      MILDFRAIL_COD, MODFRAIL_COD or SEVFRAIL_COD) is used as recorded when it is
+      within 24 months of the build date. An older assessment is kept as a minimum
+      that a higher eFI2 band can raise. eFI2 alone is used only when there is no
+      clinician assessment, and covers ages 65 and over. eFI2-based severity is
+      discounted relative to clinician assessment.
+
+      The emergency use domain combines recent A&E and emergency admission
+      history with QAdmissions predicted one-year emergency admission risk
+      (qadmissions_predictions). People QAdmissions does not score are given the
+      median QAdmissions term for their neighbourhood and cohort.
     config:
       meta:
         owner:
@@ -49,7 +62,42 @@ models:
           scores for the other cohort, kept for comparison between cohorts.
       - name: neighbourhood_code
         data_type: varchar
-        description: "Neighbourhood code (from stg_cltcs_emis_cltcs_local_mapping_nh_gp) used as the z-score scaling group. Null for practices outside the Haringey/Camden local mapping."
+        description: "Neighbourhood code (from cltcs_practice_neighbourhood) used as the z-score scaling group."
+
+      - name: frailty_severity
+        data_type: number
+        description: >
+          Combined frailty severity used in the clinical frailty domain: 0 fit or
+          robust, 1 mild (Clinical Frailty Scale 4-5), 2 moderate (CFS 6), 3 severe
+          (CFS 7-9). Null when the patient has no clinician assessment and no eFI2
+          score, for example under-65s never assessed; null is not the same as fit.
+
+      - name: frailty_evidence_source
+        data_type: varchar
+        description: >
+          Which evidence set frailty_severity. 'clinical_current': clinician
+          assessment within 24 months, used as recorded (weight 1.0).
+          'clinical_stale': older clinician assessment (weight 0.85).
+          'clinical_stale_efi2_higher': older clinician assessment raised by a
+          higher eFI2 band (weight 0.6). 'efi2_fallback': eFI2 only (weight 0.6).
+          'not_assessed': no evidence.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - clinical_current
+                  - clinical_stale
+                  - clinical_stale_efi2_higher
+                  - efi2_fallback
+                  - not_assessed
+
+      - name: clinical_frailty_assessed_date
+        data_type: date
+        description: >
+          Date of the latest clinician frailty assessment (Rockwood or coded
+          severity). Null when there is none. Assessments older than 24 months may
+          need repeating.
 
       - name: score_frailty
         data_type: number

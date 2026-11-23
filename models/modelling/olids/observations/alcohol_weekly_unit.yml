@@ -1,0 +1,109 @@
+unit_tests:
+- name: alcohol_weekly_allow_list_and_zero_provenance
+  model: int_alcohol_units_all
+  overrides:
+    macros:
+      get_observations: |-
+        select column1::varchar id,column2::number person_id,'2024-03-01'::timestamp_ntz clinical_effective_date,
+         '2024-03-01 09:00:00'::timestamp_ntz date_recorded,
+         column3::varchar mapped_concept_code,'Synthetic alcohol'::varchar mapped_concept_display,
+         column4::number(10,2) result_value,column5::varchar result_unit_display,
+         case when column1='SYN_WEEK_33' then 'SYN_UNKNOWN' end::varchar result_units_source_concept_id
+        from values
+          ('SYN_WEEK_1',-19901,'1082641000000106',10,'l/week'),
+          ('SYN_WEEK_2',-19902,'1082641000000106',10,'mg/week'),
+          ('SYN_WEEK_3',-19903,'160573003',10,'cl/week'),
+          ('SYN_WEEK_4',-19904,'160573003',10,'IU/week'),
+          ('SYN_WEEK_5',-19905,'160573003',10,'cups/week'),
+          ('SYN_WEEK_6',-19906,'160573003',10,'days/week'),
+          ('SYN_WEEK_7',-19907,'160573003',10,'times/week'),
+          ('SYN_WEEK_8',-19908,'1082641000000106',10,'units/weekend'),
+          ('SYN_WEEK_9',-19909,'1082641000000106',10,'units/2weeks'),
+          ('SYN_WEEK_10',-19910,'1082641000000106',10,'units of wine per week'),
+          ('SYN_WEEK_11',-19911,'1082641000000106',10,'units of beer/week'),
+          ('SYN_WEEK_12',-19912,'1082641000000106',10,'unit of spirits per week'),
+          ('SYN_WEEK_13',-19913,'1082641000000106',10,NULL),
+          ('SYN_WEEK_14',-19914,'1082641000000106',10,'units'),
+          ('SYN_WEEK_15',-19915,'1082641000000106',10,'u'),
+          ('SYN_WEEK_16',-19916,'1082641000000106',10,'{units}'),
+          ('SYN_WEEK_17',-19917,'783261004',0,'per week'),
+          ('SYN_WEEK_18',-19918,'783261004',0,'/week'),
+          ('SYN_WEEK_19',-19919,'783261004',0,'week'),
+          ('SYN_WEEK_20',-19920,'1082641000000106',10,'/week'),
+          ('SYN_WEEK_21',-19921,'1082641000000106',0,'units/day'),
+          ('SYN_WEEK_22',-19922,'1082631000000102',0,'units/week'),
+          ('SYN_WEEK_23',-19923,'1082641000000106',10,'units/perweek'),
+          ('SYN_WEEK_24',-19924,'1082641000000106',10,'u(nits)/we'),
+          ('SYN_WEEK_25',-19925,'1082641000000106',10,'u/wee0'),
+          ('SYN_WEEK_26',-19926,'1082641000000106',10,'unitspw'),
+          ('SYN_WEEK_27',-19927,'1082641000000106',10,'upw'),
+          ('SYN_WEEK_28',-19928,'1082641000000106',10,'[arb''u]/wk'),
+          ('SYN_WEEK_29',-19929,'1082641000000106',10,'{units}/wk'),
+          ('SYN_WEEK_30',-19930,'1082641000000106',10,'u/w'),
+          ('SYN_WEEK_31',-19931,'1082641000000106',10,'units/w'),
+          ('SYN_WEEK_32',-19932,'1082631000000102',10,'l/week'),
+          ('SYN_WEEK_33',-19933,'160573003',10,'U/week'),
+          ('SYN_WEEK_34',-19934,'1082641000000106',10,'2 weekly'),
+          ('SYN_WEEK_35',-19935,'1082641000000106',10,'4wks'),
+          ('SYN_WEEK_36',-19936,'1082641000000106',10,'2weeks'),
+          ('SYN_WEEK_37',-19937,'1082641000000106',10,'1w'),
+          ('SYN_WEEK_38',-19938,'1082641000000106',10,'12/week'),
+          ('SYN_WEEK_39',-19939,'1082641000000106',0,'0/week'),
+          ('SYN_WEEK_40',-19940,'1082641000000106',0,'0u/week'),
+          ('SYN_WEEK_41',-19941,'160582009',0,'/wk'),
+          ('SYN_WEEK_42',-19942,'160582009',1,'per week'),
+          ('SYN_WEEK_43',-19943,'783261004',1,'/wk'),
+          ('SYN_WEEK_44',-19944,'1082641000000106',10,'10 units/week')
+  given:
+  - input: ref('stg_olids_concept')
+    format: sql
+    rows: select 'SYN_UNKNOWN'::varchar concept_id,'unknown'::varchar display
+  - input: ref('dim_person_demographics')
+    format: sql
+    rows: select -19900-seq4()-1 as person_id,'Male'::varchar gender from table(generator(rowcount=>44))
+  expect:
+    rows:
+    - {person_id: -19901, result_value: 10, result_unit_display: 'l/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19902, result_value: 10, result_unit_display: 'mg/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19903, result_value: 10, result_unit_display: 'cl/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19904, result_value: 10, result_unit_display: 'IU/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19905, result_value: 10, result_unit_display: 'cups/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19906, result_value: 10, result_unit_display: 'days/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19907, result_value: 10, result_unit_display: 'times/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19908, result_value: 10, result_unit_display: 'units/weekend', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19909, result_value: 10, result_unit_display: 'units/2weeks', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19910, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19911, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19912, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19913, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19914, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19915, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19916, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19917, result_value: 0, result_unit_display: 'per week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19918, result_value: 0, result_unit_display: '/week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19919, result_value: 0, result_unit_display: 'week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19920, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19921, result_value: 0, result_unit_display: 'U/week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19922, result_value: 0, result_unit_display: 'U/week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19923, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19924, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19925, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19926, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19927, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19928, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19929, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19930, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19931, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19932, result_value: 10, result_unit_display: 'l/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19933, result_value: 10, result_unit_display: 'unknown', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19934, result_value: 10, result_unit_display: '2 weekly', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19935, result_value: 10, result_unit_display: '4wks', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19936, result_value: 10, result_unit_display: '2weeks', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19937, result_value: 10, result_unit_display: '1w', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19938, result_value: 10, result_unit_display: '12/week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19939, result_value: 0, result_unit_display: 'U/week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19940, result_value: 0, result_unit_display: 'U/week', alcohol_risk_category: 'Non-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19941, result_value: 0, result_unit_display: '/wk', alcohol_risk_category: 'Ex-Drinker', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19942, result_value: 1, result_unit_display: 'per week', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19943, result_value: 1, result_unit_display: '/wk', alcohol_risk_category: 'Unclear', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}
+    - {person_id: -19944, result_value: 10, result_unit_display: 'U/week', alcohol_risk_category: 'Low Risk', is_converted_from_daily: false, is_daily_unit_conflict: false, conversion_reason: 'No daily conversion'}

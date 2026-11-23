@@ -66,7 +66,7 @@ One row per retained occupancy interval. Its main steps are:
 
 - `base` consumes `int_mhsds_inpatient_occupancy`. That shared model retains one spell per person and admission date, removes strictly contained spells and truncates an earlier interval at a later admission. The classification model does not repeat interval selection.
 - `latest_ward_stay` picks the ward with the latest end date, treating a missing end as open, then latest start date. Equal dates use reporting period, source-file receipt, submission identifier and ward-stay identifier, all descending. This makes ties repeatable; it does not establish which of two simultaneous ward records is clinically correct. The admitted-patient class supplies the bed-type category and inpatient setting (98A–D).
-- **`latest_diagnosis`** takes the latest primary diagnosis on or before the spell's derived end date, categorised by ICD-10 range.
+- **`latest_diagnosis`** takes the latest primary diagnosis on or before the spell's derived end date, or the run date for an open spell, including any time on that date, categorised by ICD-10 range. The NHS England grouper drops same-day diagnoses recorded after midnight; see section 4.
 - **`classified`** runs the NHSE cascade: **diagnosis → bed type → referral reason**, each tier consulted only when earlier tiers cannot classify. Children (under 18 at admission) can only land in the all-age groups (MBC/MBY); a child whose diagnosis says an adult-only group goes to `MCG`, not through the cascade. Unclassifiable adults go to `MBU`.
 - Currency code = group + `98` + ward setting (`Z` if unknown). The national grouper keeps cross-cutting crisis spells in `MAZ99`, so those retain family `99`. They publish as `MAZ99Z`: the `MAZ99A–D` suffixes name crisis service settings, not inpatient bed types, so a bed setting must not be carried into them. The bed setting stays in `setting_code`. `winning_tier` and the per-tier categories are kept on every row so each classification is explainable.
 
@@ -74,6 +74,7 @@ One row per retained occupancy interval. Its main steps are:
 
 One row per (referral, contact), excluding contacts inside an inpatient spell window for the same referral. Same cascade with team type as the middle tier, plus:
 
+- The latest primary diagnosis on or before the contact date includes any time on that date. This deliberately differs from the NHS England grouper, which compares the diagnosis timestamp with the date and so drops diagnoses recorded after midnight; there, a same-day diagnosis counts only when the provider records no time.
 - CYP contacts on MH Support Teams classify to `MCS` first.
 - The crisis flag: crisis-team referrals count as crisis; A18 (single point of access) only for urgent/emergency priority.
 - Family + setting: community teams → `96A–D`, crisis teams → `97A–D`, MAZ → `99A–D` by crisis setting, MHSTs → `MCS99Z`; teams with no setting fall to `96Z`/`97Z` by the crisis flag.

@@ -103,7 +103,7 @@ SELECT
     CASE
     WHEN e.provider_shorthand = 'MEH' AND e.dataset = 'LSDePLCM' THEN 'Exempt'
     WHEN e.provider_shorthand = 'LNWH' AND e.dataset = 'LSREF' THEN 'Not onboarded'
-    WHEN s.fy_month_submitted < l.max_fy_month_submitted THEN 'Missed'
+    --WHEN s.fy_month_submitted < l.max_fy_month_submitted THEN 'Missed'
     WHEN s.date_submitted > due_date then 'Submitted late'  
     WHEN s.date_submitted <= due_date then 'Submitted on time' 
     ELSE 'Not Submitted' END AS submission_status

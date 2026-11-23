@@ -2,8 +2,9 @@ models:
 - name: int_ttr_all
   description: Time in therapeutic range observations from PCD TTR_COD. One row per observation, including
     inactive and deceased people. Retains value-free and non-numeric records; the AF profile selects the
-    latest record with a non-null original result in six calendar months. Numeric percentages are not
-    range-filtered, preserving the reviewed definition.
+    latest record with a non-null original result in six calendar months. Values are retained for audit;
+    only percentages from 0 to 100 can support its DOAC exception. An invalid latest valued record
+    does not fall back to an earlier valid result.
   config:
     meta:
       owner:
@@ -32,3 +33,28 @@ models:
     description: Original result text; null means no recorded value.
   - name: ttr_percentage
     description: Numeric time in therapeutic range percentage; null when absent or non-numeric.
+  - name: is_valid
+    description: Whether the numeric percentage is between 0 and 100 inclusive. False for missing or non-numeric results.
+
+unit_tests:
+- name: ttr_percentage_validity
+  model: int_ttr_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -98100::NUMBER person_id,
+            '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+            '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date_raw,
+            '2026-01-01'::TIMESTAMP_NTZ date_recorded, column2::VARCHAR result_value
+        FROM VALUES ('SYN_NEGATIVE', '-1'), ('SYN_ZERO', '0'), ('SYN_65', '65'),
+            ('SYN_100', '100'), ('SYN_HIGH', '101'), ('SYN_TEXT', 'synthetic'), ('SYN_NULL', NULL)
+  given: []
+  expect:
+    rows:
+    - {id: SYN_NEGATIVE, ttr_percentage: -1, is_valid: false}
+    - {id: SYN_ZERO, ttr_percentage: 0, is_valid: true}
+    - {id: SYN_65, ttr_percentage: 65, is_valid: true}
+    - {id: SYN_100, ttr_percentage: 100, is_valid: true}
+    - {id: SYN_HIGH, ttr_percentage: 101, is_valid: false}
+    - {id: SYN_TEXT, ttr_percentage: null, is_valid: false}
+    - {id: SYN_NULL, ttr_percentage: null, is_valid: false}

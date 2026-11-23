@@ -35,7 +35,7 @@ FROM {{ ref('int_bowel_screening_all') }}
 
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id 
-    ORDER BY clinical_effective_date DESC, ID DESC
+    ORDER BY clinical_effective_date::DATE DESC, date_recorded DESC NULLS LAST, ID DESC, source_cluster_id DESC
 ) = 1
 
 ORDER BY person_id

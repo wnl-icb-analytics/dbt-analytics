@@ -8,6 +8,8 @@
 
 -- Keep each event type: a same-day invitation must not erase a referral or decline.
 SELECT
+    obs.id AS observation_id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date::DATE AS clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -17,5 +19,5 @@ WHERE obs.clinical_effective_date IS NOT NULL
     AND obs.clinical_effective_date::DATE <= CURRENT_DATE()
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY obs.person_id, obs.mapped_concept_code, obs.clinical_effective_date::DATE
-    ORDER BY obs.id
+    ORDER BY obs.date_recorded DESC NULLS LAST, obs.id DESC
 ) = 1

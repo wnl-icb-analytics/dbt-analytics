@@ -10,12 +10,12 @@ GP appointment unit-cost fact table.
 
 Grain: one row per practice per month per practitioner_role_group.
 
-Scope: built from int_appointment_gp_clean_recent which is restricted
+Scope: built from int_appointment_gp_clinical_recent which is restricted
 to the rolling last 60 months of appointment data. This matches OLIDS
-retention — see int_appointment_gp_clean_recent for the rationale.
+retention — see int_appointment_gp_clinical_recent for the rationale.
 
 Aggregates the recent appointment view to workforce-mix cost totals.
-See models/modelling/olids/appointments/int_appointment_gp_clean.yml
+See models/modelling/olids/appointments/int_appointment_gp_clinical.yml
 for the full cost derivation methodology — this model only aggregates,
 it does not transform the underlying cost values.
 

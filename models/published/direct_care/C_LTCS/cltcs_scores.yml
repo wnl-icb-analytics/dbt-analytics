@@ -1,6 +1,12 @@
 models:
   - name: cltcs_scores
-    description: "Combined C-LTCS scores per patient. One row per patient with activation, coordination and treatment sub-scores (final composite score to be added)."
+    description: >
+      Combined C-LTCS scores per patient in cltcs_patient_list. One row per patient with activation and
+      coordination sub-scores, and treatment and frailty sub-scores for each inclusion route
+      (original criteria and Adults with Complexity). Treatment and frailty scores are z-scored within
+      the patient's neighbourhood and inclusion route, so scores from different routes are not directly
+      comparable. A route score is null when the patient was not scored in that route. Final composite
+      score to be added.
     config:
       meta:
         owner:
@@ -19,14 +25,34 @@ models:
         data_tests:
           - not_null
 
+      - name: meets_original_criteria
+        data_type: boolean
+        description: "Whether the patient meets the original C-LTCS inclusion criteria, from cltcs_patient_list. Null means not assessed (shortlist row)."
+
+      - name: meets_adults_with_complexity
+        data_type: boolean
+        description: "Whether the patient is in the Adults with Complexity cohort, from cltcs_patient_list. Null means not assessed (shortlist row)."
+
       - name: score_activation
         data_type: number
-        description: "Activation sub-score from cltcs_score_activation"
+        description: "Activation sub-score from cltcs_score_activation. Null when the patient is not scored there (scored population is is_case_finding_eligible patients in cltcs_adult_population)."
 
       - name: score_coordination
         data_type: number
-        description: "Coordination sub-score from cltcs_score_coordination"
+        description: "Coordination sub-score from cltcs_score_coordination. Null when the patient is not scored there (scored population is is_case_finding_eligible patients in cltcs_adult_population)."
 
-      - name: score_treatment
+      - name: score_treatment_original_criteria
         data_type: number
-        description: "Treatment sub-score from cltcs_score_treatment"
+        description: "Treatment sub-score from cltcs_score_treatment for the original criteria route, scored against neighbourhood peers who meet the original criteria. Present whenever the patient meets the original criteria, including at non-legacy practices. Null when not scored in this route."
+
+      - name: score_treatment_adults_with_complexity
+        data_type: number
+        description: "Treatment sub-score from cltcs_score_treatment for the Adults with Complexity route, scored against neighbourhood peers in that cohort. Null when not scored in this route."
+
+      - name: score_frailty_original_criteria
+        data_type: number
+        description: "Frailty sub-score (0-100) from cltcs_score_frailty for the original criteria route, scored against neighbourhood peers who meet the original criteria. Present whenever the patient meets the original criteria, including at non-legacy practices. Null when not scored in this route."
+
+      - name: score_frailty_adults_with_complexity
+        data_type: number
+        description: "Frailty sub-score (0-100) from cltcs_score_frailty for the Adults with Complexity route, scored against neighbourhood peers in that cohort. Null when not scored in this route."

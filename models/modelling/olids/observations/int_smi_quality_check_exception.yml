@@ -9,7 +9,38 @@ models:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, concept_code, clinical_effective_date]
       - cluster_ids_exist:
           arguments:
             cluster_ids: MHPCADEC_COD, MHPCAPU_COD
+    columns:
+      - name: cluster_id
+        description: >-
+          QOF PCD cluster for the adjustment. MHPCAPU_COD means patient unsuitable;
+          MHPCADEC_COD means informed dissent.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [MHPCADEC_COD, MHPCAPU_COD]
+
+unit_tests:
+  - name: smi_exception_same_concept_prefers_declined_cluster
+    model: int_smi_quality_check_exception
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR AS id, -18218::NUMBER AS person_id,
+              DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ AS clinical_effective_date,
+              'SYN_EXCEPTION'::VARCHAR AS mapped_concept_code,
+              column2::VARCHAR AS cluster_id, column3::VARCHAR AS mapped_concept_display
+          FROM VALUES
+              ('SYN_Z', 'MHPCADEC_COD', 'SYN_selected_display'),
+              ('SYN_A', 'MHPCAPU_COD', 'SYN_other_display')
+    given: []
+    expect:
+      rows:
+        - {person_id: -18218, concept_code: SYN_EXCEPTION, cluster_id: MHPCADEC_COD, concept_display: SYN_selected_display}

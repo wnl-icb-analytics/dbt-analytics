@@ -1,6 +1,9 @@
 models:
   - name: stg_olids_medication_statement
-    description: Medication statements representing current or historical medication use. Deduplicated by id and filtered to exclude deleted records.
+    description: Medication statements representing current or historical medication use. Deduplicated by id and
+      filtered to exclude deleted records and GP2GP transfer copies. A copy is the second version of a
+      transferred patient history, held on the patient record at the new practice. The original on the
+      earlier record is kept, so each event is counted once.
     config:
       meta:
         owner:
@@ -107,6 +110,10 @@ models:
         description: Datetime when data was acquired by LDS
       - name: lds_start_datetime
         description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
+      - name: is_gp2gp_import
+        description: True when dbt-OLIDS infers the record arrived by GP2GP transfer. The event is dated before the
+          latest Regular registration start and was recorded within 30 days of it. This is a timing
+          signature, so a small share may be entries made by the new practice, such as new-patient checks.
       - name: lds_is_deleted
         description: Deletion flag - records with TRUE are filtered out in this staging layer
       - name: lds_source_record_id

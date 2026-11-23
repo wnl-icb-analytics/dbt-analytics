@@ -292,9 +292,9 @@ WITH schema_metadata AS (
   WHERE table_schema = 'IP'
   
   UNION ALL
-
+  
     -- dictionary_geo: NHS organisation boundary geometry used for geographic assignment
-  SELECT
+  SELECT 
     'Dictionary' as database_name,
     'Geo' as schema_name,
     table_name,
@@ -305,7 +305,7 @@ WITH schema_metadata AS (
     ordinal_position
   FROM "Dictionary".INFORMATION_SCHEMA.COLUMNS
   WHERE table_schema = 'Geo'
-
+  
   UNION ALL
   
     -- dictionary_eRS: Primary care referrals lookups
@@ -518,7 +518,7 @@ WITH schema_metadata AS (
   
   UNION ALL
   
-    -- reference_terminology_curated: Curated Primary Care Domain terminology releases
+    -- reference_terminology_curated: Curated terminology releases and combined clinical code sets
   SELECT 
     'REFERENCE' as database_name,
     'TERMINOLOGY' as schema_name,
@@ -593,7 +593,22 @@ WITH schema_metadata AS (
   
   UNION ALL
   
-    -- sdl_wnl: ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)
+    -- ukhfd_lsoa_to_sub_icb_plus: Mapping between LSOA and Sub-ICB including higher NHSE geographies
+  SELECT 
+    'UKHFD' as database_name,
+    'LSOA_Sub_ICB_ICB_NHSER_LAD' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "UKHFD".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'LSOA_Sub_ICB_ICB_NHSER_LAD'
+  
+  UNION ALL
+  
+    -- sdl_wnl: ServicesDataLocal canonical-named feeds, WNL footprint
   SELECT 
     'DATA_LAKE' as database_name,
     'SDL' as schema_name,
@@ -635,6 +650,21 @@ WITH schema_metadata AS (
     ordinal_position
   FROM "DATA_LAKE__NCL".INFORMATION_SCHEMA.COLUMNS
   WHERE table_schema = 'POD_GROUP_MANAGER'
+  
+  UNION ALL
+  
+    -- snomed_cluster_manager: SNOMED Cluster Manager app - expanded ECL code clusters
+  SELECT 
+    'APPLICATIONS' as database_name,
+    'SNOMED_CLUSTER_MANAGER' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "APPLICATIONS".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'SNOMED_CLUSTER_MANAGER'
   
   UNION ALL
   

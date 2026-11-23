@@ -41,7 +41,7 @@ with base as (
     -- later-recorded diagnoses cannot reclassify them; open spells fall to today
     left join {{ ref('int_mhsds_currency_primary_diagnosis') }} as d
         on b.uniq_serv_req_id = d.uniq_serv_req_id
-        and d.coded_diag_timestamp <= coalesce(b.end_date, current_date)
+        and d.coded_diag_timestamp < dateadd(day, 1, coalesce(b.end_date, current_date))
     qualify row_number() over (
         partition by b.uniq_hosp_prov_spell_num
         order by d.coded_diag_timestamp desc nulls last
