@@ -7,7 +7,8 @@
 # DBT_ARTIFACTS stage. Metadata-derived definitions have no ref() dependencies,
 # so state selection misses their YAML changes: tag:indicator_definitions+ is
 # added only when indicator_definitions_changed.py finds a meta.indicator(s)
-# block or definitions macro that differs from the state manifest. Its
+# block or definitions macro that differs from the state manifest, or when the
+# previous deploy did not succeed (its manifest is still the baseline). Its
 # downstream includes the CLTCS treatment pathway (~8 min), so it is not run on
 # every deploy; scheduled builds refresh it regardless.
 # UEC diagnosis/procedure builds also refresh their encounter parent, as in DEV.
@@ -206,13 +207,16 @@ jobs:
         env:
           FULL_REFRESH: ${{ steps.refresh.outputs.full_refresh }}
           DEFINITIONS_CHANGED: ${{ steps.definitions.outputs.changed }}
+          PREVIOUS_BUILD_STATUS: ${{ steps.state.outputs.previous_build_status }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ steps.state.outputs.has_state }}" != "true" ]; then
             command=(dbt build --target prod --profiles-dir .)
             echo "Full build (manual trigger or no state manifest)"
           else
             command=(python3 .github/scripts/validate_dbt_models.py --target prod --state state --select "state:modified+")
-            if [ "$DEFINITIONS_CHANGED" != "false" ]; then
+            # A failed deploy still becomes the baseline, so retry the
+            # definitions until a deploy succeeds.
+            if [ "$DEFINITIONS_CHANGED" != "false" ] || [ "$PREVIOUS_BUILD_STATUS" != "success" ]; then
               command+=("tag:indicator_definitions+")
               echo "State-based build: modified + downstream and indicator definitions + downstream"
             else
