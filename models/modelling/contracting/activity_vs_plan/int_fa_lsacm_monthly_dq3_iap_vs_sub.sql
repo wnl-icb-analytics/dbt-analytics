@@ -40,7 +40,7 @@ SELECT
         FROM {{ ref('stg_reference_combined_contract_iap_202627') }} iap
         --FROM STAGING.REFERENCE.STG_REFERENCE_COMBINED_CONTRACT_IAP_202627 iap
        INNER JOIN latestmonth l on iap.provider_code = l.provider_code and iap.financial_month <= l.financial_month
-        WHERE iap.commissioner_code IN ('07X','07M','07P','07W','07Y','07R','08H','08D','08C','08E','08G','08Y','09A','W2U3Z','Z9B2Z','Y05','T04','93C','QMJ','QRV')
+        WHERE iap.commissioner_code IN ('07X','07M','07P','07W','07Y','07R','08H','08D','08C','08E','08G','08Y','09A','W2U3Z','Z9B2Z','Y05','T04','93C','QMJ','QRV','QWL')
         GROUP BY ALL
 )
 --FULL OUTER JOIN to account for any differences in POD between the 2 sources.
