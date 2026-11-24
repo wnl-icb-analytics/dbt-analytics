@@ -12,6 +12,7 @@ FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 --get POD activity and plan from LSACM YTD.
 ,sub_plan as (
     SELECT
+        'SUB' AS sub_record,
         fa.provider_shorthand,
         fa.meta_file_id,
         l.financial_month as Latest_month,
@@ -30,6 +31,7 @@ FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 ---get POD activity and plan from IAP plans submitted 202627 YTD.
 ,iap_plan as (
 SELECT
+        'IAP' AS iap_record,
         iap.provider_code,
         iap.source_provider as provider_shorthand,
         'WNL' AS comm_group,
@@ -37,7 +39,7 @@ SELECT
         CONCAT(iap.commissioned_service_category_code, ' - ', REGEXP_REPLACE(
     INITCAP(LOWER(cs.short_description)),
     '\\bNhs\\b','NHS')) as commissioned_service,
-        iap.point_of_delivery_code,
+        UPPER(iap.point_of_delivery_code) as point_of_delivery_code,
         max(iap.financial_month) as latest_month,
         SUM(iap.contract_monitoring_planned_activity) AS activity_plan_iap,
         SUM(iap.contract_monitoring_planned_price) AS price_plan_iap
@@ -63,10 +65,10 @@ SELECT
         i.point_of_delivery_code
     ) AS point_of_delivery_code,
    CASE
-        WHEN s.meta_file_id IS NULL THEN 'Missing in SUB'
-        WHEN s.point_of_delivery_code IS NULL AND i.point_of_delivery_code IS NULL THEN 'Null POD'
-        WHEN i.point_of_delivery_code IS NULL THEN 'Missing in IAP'
-        ELSE 'Matched' END AS pod_match,
+    WHEN s.sub_record IS NULL THEN 'Missing in SUB'
+    WHEN i.iap_record IS NULL THEN 'Missing in IAP'
+    WHEN s.point_of_delivery_code = i.point_of_delivery_code THEN 'Matched'
+    ELSE 'POD Mismatch' END AS pod_match,
     s.activity_plan_sub,
     i.activity_plan_iap,
     s.activity_plan_sub-i.activity_plan_iap as diff_activity,
