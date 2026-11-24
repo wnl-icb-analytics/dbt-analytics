@@ -340,12 +340,14 @@ reviewers must still confirm that it covers the stated key or key combination.
   stakeholder or group accountable for the model's meaning and use, not a
   repository maintainer or code author merely because they made the change.
 - Declare the grain key as `config.meta.primary_key: [column, ...]` when tests
-  enforce it: `not_null` on every column, plus `unique` for one column or
-  `dbt_utils.unique_combination_of_columns` on exactly those columns, all at
-  error severity with no `where` or `error_if` threshold. CI fails a declared
-  key without those tests. The key becomes a `PRIMARY_KEY` tag in Snowflake and,
-  on tables, a `NORELY` primary key constraint. It is optional; a bot suggests
-  it on changed models whose tests already enforce one key.
+  enforce it. Each key column needs `not_null`, and the key needs `unique` (one
+  column) or `dbt_utils.unique_combination_of_columns` on exactly its columns.
+  The tests must be enabled, at error severity, with no `where` filter and the
+  default failure calculation and threshold. Spell columns as listed under
+  `columns`. CI fails a declared key without these tests. When the model builds,
+  it gets a `PRIMARY_KEY` tag in Snowflake; tables and incremental models also
+  get a `NORELY` primary key constraint. Declaring a key is optional; a bot
+  suggests it on changed models whose tests already enforce one key.
 - Document columns when units, code systems, dates, null
   meaning, derivation or relationships affect interpretation.
 - New and changed test blocks use `data_tests`. Do not require an enhancement to

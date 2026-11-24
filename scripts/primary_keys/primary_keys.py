@@ -41,6 +41,7 @@ CONFIG_KEYS = {
 }
 NON_ARGUMENT_KEYS = CONFIG_KEYS | {'config', 'arguments', 'name', 'test_name', 'description'}
 ENFORCING = 'enabled, error severity, no where filter and the default error_if'
+TAG_VALUE_LIMIT = 256  # Snowflake's maximum tag value length
 
 
 # --- Reading model YAML ---------------------------------------------------------
@@ -89,7 +90,7 @@ def is_enforcing(config: dict) -> bool:
         return False
     if str(config.get('severity', 'error')).lower() != 'error':
         return False
-    if config.get('where') or config.get('fail_calc'):
+    if config.get('where') or config.get('fail_calc') or str(config.get('limit')) == '0':
         return False
     error_if = config.get('error_if')
     return error_if is None or str(error_if).replace(' ', '') in DEFAULT_ERROR_IF
@@ -131,19 +132,23 @@ def enforced_tests(model: dict) -> tuple[set[str], set[str], list[list[str]]]:
     return unique, not_null, combinations
 
 
+def documented_columns(model: dict) -> dict[str, str]:
+    """Column names listed under columns, keyed by their lower-case form."""
+    return {c['name'].lower(): c['name'] for c in model.get('columns') or []
+            if isinstance(c, dict) and isinstance(c.get('name'), str)}
+
+
 def candidate_keys(model: dict) -> list[list[str]]:
-    """Keys the model's tests already enforce, in YAML order."""
+    """Keys the model's tests already enforce, in YAML order and spelled as under columns."""
     unique, not_null, combinations = enforced_tests(model)
-    keys = []
-    for column in model.get('columns') or []:
-        name = column.get('name') if isinstance(column, dict) else None
-        if isinstance(name, str) and name.lower() in unique and name.lower() in not_null:
-            keys.append([name])
+    documented = documented_columns(model)
+    keys = [[name] for lower, name in documented.items() if lower in unique and lower in not_null]
     for columns in combinations:
         lowered = [c.lower() for c in columns]
-        if len(set(lowered)) == len(lowered) and set(lowered) <= not_null:
-            if not any({k.lower() for k in key} == set(lowered) for key in keys):
-                keys.append(columns)
+        if (len(set(lowered)) == len(lowered) and set(lowered) <= not_null
+                and all(c in documented for c in lowered)
+                and not any({k.lower() for k in key} == set(lowered) for key in keys)):
+            keys.append([documented[c] for c in lowered])
     return keys
 
 
@@ -170,11 +175,14 @@ def check_model(model: dict) -> list[str]:
         return errors + ['primary_key lists a column more than once']
 
     unique, not_null, combinations = enforced_tests(model)
-    documented = {c['name'].lower() for c in model.get('columns') or []
-                  if isinstance(c, dict) and isinstance(c.get('name'), str)}
+    documented = documented_columns(model)
+    if len(', '.join(key)) > TAG_VALUE_LIMIT:
+        errors.append(f'the key columns joined by ", " exceed the {TAG_VALUE_LIMIT}-character Snowflake tag limit')
     for column in key:
         if column.lower() not in documented:
             errors.append(f'{column} is not listed under columns')
+        elif column != documented[column.lower()]:
+            errors.append(f'{column} must be spelled as under columns ({documented[column.lower()]})')
         elif column.lower() not in not_null:
             errors.append(f'{column} needs a not_null test ({ENFORCING})')
     combined = any({c.lower() for c in combo} == set(lowered) for combo in combinations)
@@ -322,8 +330,11 @@ def without_key(document, name: str, before_model: dict):
     return document
 
 
-def declare_key(path: Path, name: str, key: list[str]) -> str | None:
-    """Add primary_key to a model's YAML. Returns a reason when the file is left unchanged."""
+def propose_edit(path: Path, name: str, key: list[str]) -> tuple[str, list[str], tuple] | str:
+    """(updated text, original lines, plan) adding primary_key to one model, or a reason not to.
+
+    The edit is accepted only when the parsed file is unchanged apart from that model's key.
+    """
     raw = path.read_bytes().decode('utf-8')
     # Keep each line's own ending: some files mix CRLF and LF
     parts = re.split(r'(\r\n|\n)', raw)
@@ -341,14 +352,25 @@ def declare_key(path: Path, name: str, key: list[str]) -> str | None:
 
     # Via JSON so YAML aliases become copies: a key leaking to models that share an anchor shows
     plain = lambda text: json.loads(json.dumps(yaml.safe_load(text), default=str))
-    before, after = plain(raw), plain(updated)
+    try:
+        before, after = plain(raw), plain(updated)
+    except yaml.YAMLError:
+        return 'edit would break YAML anchors or aliases; add it by hand'
     model_before = next(m for m in before['models'] if isinstance(m, dict) and m.get('name') == name)
     model_after = next(m for m in after['models'] if isinstance(m, dict) and m.get('name') == name)
     if declared_key(model_after) != key:
         return 'edit did not round-trip; add it by hand'
     if without_key(after, name, model_before) != before:
         return 'config is a YAML anchor other models share; add it by hand'
-    path.write_bytes(updated.encode('utf-8'))
+    return updated, lines, plan
+
+
+def declare_key(path: Path, name: str, key: list[str]) -> str | None:
+    """Add primary_key to a model's YAML. Returns a reason when the file is left unchanged."""
+    proposal = propose_edit(path, name, key)
+    if isinstance(proposal, str):
+        return proposal
+    path.write_bytes(proposal[0].encode('utf-8'))
     return None
 
 
@@ -453,6 +475,7 @@ def command_suggest(args) -> int:
     yaml_paths = {p for p in changed if p.suffix in ('.yml', '.yaml')}
     for sql in (p for p in changed if p.suffix == '.sql'):
         yaml_paths.update(sql.parent.glob('*.yml'))
+        yaml_paths.update(sql.parent.glob('*.yaml'))
 
     inline, summary = [], []
     for path in sorted(yaml_paths):
@@ -473,13 +496,13 @@ def command_suggest(args) -> int:
             if name in added_sql and not owner:
                 print(f'{name}: waiting for owner metadata before suggesting a key')
                 continue
-            lines = path.read_text(encoding='utf-8').splitlines()
-            plan = plan_insert(lines, model, keys[0])
+            proposal = propose_edit(path, name, keys[0])
             flow = f'[{", ".join(keys[0])}]'
-            if isinstance(plan, str):
+            if isinstance(proposal, str):
                 summary.append({'model': name, 'text': f'`{name}`: add `primary_key: {flow}` under '
-                                f'`config.meta` ({plan}).'})
+                                f'`config.meta` ({proposal}).'})
                 continue
+            _, lines, plan = proposal
             line = plan[0] + 1
             if any(start <= line <= end for start, end in diff_line_ranges(args.base, path)):
                 inline.append({'model': name, 'file': path.as_posix(), 'line': line,
