@@ -59,6 +59,15 @@ reviews:
           existing models. Also warn when another open PR adds a raw or staging
           model with the same name. Pass when the PR adds no reporting model,
           or when it states a distinct subject, grain, scope or consumer.
+      - name: "No person-level detail in PR text"
+        mode: warning
+        instructions: |
+          The PR title and description become the squash commit message on
+          main in a public repository. Warn when they describe one person's
+          case in a way that could identify them, such as dates of birth or
+          death, an age and a condition for one individual, even without an
+          identifier. Broad aggregates and descriptions of a mechanism are
+          fine. Do not repeat the values; name the section that contains them.
   finishing_touches:
     docstrings:
       enabled: false
@@ -79,7 +88,9 @@ reviews:
         be resolved before merge.
         Check seeds, test data, examples, logs, exports, screenshots, comments,
         documentation and hardcoded SQL values. Column names and clearly
-        synthetic examples are not patient data by themselves. High-level
+        synthetic examples are not patient data by themselves. Names in
+        config.meta.owner and maintainer or author attribution are not
+        person-level data. High-level
         aggregates such as broad counts, rates, distributions and validation
         totals are not person-level data and must not be flagged merely because
         they were calculated from patient data. Flag aggregates only when small
@@ -271,6 +282,23 @@ reviews:
           identify the contradiction and ask which contract is authoritative.
           Do not prescribe a population-changing fix without evidence of the
           intended business rule.
+        - Clinical and programme rules are often not written down anywhere you
+          can read, and you cannot check external specifications. Propose a
+          change to who or what a model includes only when the rule is stated
+          in the PR, the model's description or a file in this repository.
+          Otherwise say which records the code would include or drop and ask
+          the author which rule applies. The model's previous behaviour is not
+          evidence of the intended rule.
+        - When a change adds or alters a selection that keeps one row, such as
+          ROW_NUMBER or QUALIFY, check what happens with tied and null sort
+          keys. Where the winner affects results, ask for a final tie-break
+          that always gives the same row. When it changes a date cut-off or
+          as-at date, check a case just before, on and after the boundary:
+          a timestamp later on an inclusive cut-off day compared with a date,
+          and evidence dated after the as-at date.
+        - Flag a filter on an optional enrichment field, such as a patient key
+          or a looked-up code, that drops otherwise valid activity rows, unless
+          the description says those rows are out of scope.
         - Folder configuration in dbt_project.yml supplies database, schema,
           materialisation, tags and hooks. Request a model override only for a
           stated exception.
@@ -280,7 +308,11 @@ reviews:
           tag:monthly-full from the daily and weekly builds. Flag a model tag
           meant to change when a model builds that no scheduled run uses, such
           as monthly on a model in a daily-tagged folder. Point to monthly-full
-          when the model should build only in the run on the 1st.
+          when the model should build only in the run on the 1st. That run
+          uses --full-refresh, so an incremental model whose history cannot be
+          rebuilt from source needs full_refresh=false. A test that reads
+          models built on different schedules fails between builds; ask for
+          the schedules to match or for the test to be tagged reconciliation.
 
         From staging onward, every output column name must be unquoted
         snake_case except in published models. Flag quoted output aliases or
@@ -383,6 +415,10 @@ reviews:
         programme prefix when the repository already has a family to follow.
         Disease registers use fct_person_{condition}_register and their
         established indicator metadata.
+        Partner models under models/partner/ often select * from a reporting
+        model, so a column added here reaches partner tables too. When a PR adds
+        a column, check those partner models. Ask for identifiers to be
+        excluded there unless the PR says the partner agreement covers them.
 
     # Published layer
     - path: "models/published/**"
