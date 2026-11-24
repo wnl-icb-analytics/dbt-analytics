@@ -70,14 +70,24 @@ def definition_macros(manifest):
     return found
 
 
+def check_shape(manifest, models, macros):
+    # A Fusion manifest change that hid meta or macro fields would make both
+    # manifests compare empty and equal; fail so the caller refreshes instead.
+    paths = {manifest["macros"][key].get("original_file_path") for key in macros}
+    if not models or not set(MACRO_FILES) <= paths:
+        raise ValueError("manifest has no indicator models or definitions macros")
+
+
 def changes(state, current):
     state_models, models = indicator_models(state), indicator_models(current)
+    state_macros, macros = definition_macros(state), definition_macros(current)
+    check_shape(state, state_models, state_macros)
+    check_shape(current, models, macros)
     found = sorted(
         models.get(key, state_models.get(key))["name"]
         for key in state_models.keys() | models.keys()
         if state_models.get(key) != models.get(key)
     )
-    state_macros, macros = definition_macros(state), definition_macros(current)
     found += sorted(
         f"macro {key.rsplit('.', 1)[-1]}"
         for key in state_macros.keys() | macros.keys()

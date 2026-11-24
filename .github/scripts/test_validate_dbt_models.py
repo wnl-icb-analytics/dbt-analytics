@@ -1,11 +1,15 @@
 import copy
+import io
 import json
+import os
 import subprocess
+import tempfile
 import unittest
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 from full_refresh_label import pull_numbers
-from indicator_definitions_changed import changes
+from indicator_definitions_changed import changes, main as check_definitions
 from validate_dbt_models import UEC_PARENT, build_selection, main
 
 
@@ -89,6 +93,10 @@ ARCHIVE = "macros/governance/archive_indicator_definitions.sql"
 def manifest(meta=None, columns=None, macro_sql="archive", helper_sql="comment"):
     return {
         "nodes": {
+            "model.wnl_analytics.fct_base": {
+                "resource_type": "model", "name": "fct_base",
+                "config": {"meta": {"indicator": {"id": "IND_BASE"}}},
+            },
             "model.wnl_analytics.fct_x": {
                 "resource_type": "model", "name": "fct_x",
                 "config": {"meta": {"owner": {"name": "Team"}, **(meta or {})}},
@@ -96,6 +104,10 @@ def manifest(meta=None, columns=None, macro_sql="archive", helper_sql="comment")
             },
         },
         "macros": {
+            "macro.wnl_analytics.extract_indicator_metadata": {
+                "original_file_path": "macros/governance/extract_indicator_metadata.sql",
+                "macro_sql": "extract",
+            },
             "macro.wnl_analytics.archive_usage": {
                 "original_file_path": ARCHIVE, "macro_sql": macro_sql,
                 "depends_on": {"macros": ["macro.wnl_analytics.generate_history_table_comment"]},
@@ -147,6 +159,28 @@ class IndicatorDefinitionsChangedTests(unittest.TestCase):
         current = manifest(macro_sql="a\r\nb")
         current["macros"]["macro.wnl_analytics.unrelated"]["macro_sql"] = "y"
         self.assertEqual(changes(manifest(macro_sql="a\nb"), current), [])
+
+    def test_indicator_list_change(self):
+        indicators = {"indicators": [{"id": "IND_A"}, {"id": "IND_B"}]}
+        changed = {"indicators": [{"id": "IND_A"}, {"id": "IND_C"}]}
+        self.assertEqual(changes(manifest(indicators), manifest(changed)), ["fct_x"])
+
+    def test_unexpected_manifest_shape_fails(self):
+        for drop in ("nodes", "macros"):
+            with self.subTest(drop=drop):
+                current = manifest(self.INDICATOR)
+                current[drop] = {}
+                with self.assertRaises(ValueError):
+                    changes(manifest(self.INDICATOR), current)
+
+    def test_main_reports_changed_when_comparison_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = os.path.join(tmp, "output")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": output}), redirect_stdout(io.StringIO()):
+                self.assertTrue(check_definitions(os.path.join(tmp, "missing.json"), output))
+            with open(output, encoding="utf-8") as f:
+                self.assertEqual(f.read(), "changed=true\n")
+
 
 if __name__ == "__main__":
     unittest.main()
