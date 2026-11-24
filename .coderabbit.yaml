@@ -42,6 +42,23 @@ reviews:
           explaining why the change is being made or what problem it solves is
           enough. Do not require headings, templates, test details or a
           file-by-file summary. Allow draft descriptions to remain incomplete.
+      - name: "New reporting model overlap"
+        mode: warning
+        instructions: |
+          Apply only when the PR adds a model under models/reporting/. For each
+          new model, read the existing models in the same folder and name any
+          that cover the same subject and grain. For example, obt_encounter_op,
+          obt_appointment_op, obt_encounter_apc and obt_encounter_uec already
+          hold SUS activity in models/reporting/acute/. Warn when the PR does
+          not say what the new model gives analysts that the existing one
+          cannot, or why the existing model cannot be extended. Two tables for
+          the same activity with different column names, rules or refresh lag
+          give analysts different answers, and analysts choose tables by name.
+          Matching a legacy output column by column or table by table is not a
+          reason on its own; ask what analysts need and where it belongs in the
+          existing models. Also warn when another open PR adds a raw or staging
+          model with the same name. Pass when the PR adds no reporting model,
+          or when it states a distinct subject, grain, scope or consumer.
   finishing_touches:
     docstrings:
       enabled: false
@@ -257,6 +274,13 @@ reviews:
         - Folder configuration in dbt_project.yml supplies database, schema,
           materialisation, tags and hooks. Request a model override only for a
           stated exception.
+        - Model tags add to the folder's tags; they do not replace them. The
+          scheduled runs in .github/workflows/dbt-scheduled.yml select
+          +tag:daily, +staging+ and tag:indicator_definitions+, and exclude
+          tag:monthly-full from the daily and weekly builds. Flag a model tag
+          meant to change when a model builds that no scheduled run uses, such
+          as monthly on a model in a daily-tagged folder. Point to monthly-full
+          when the model should build only in the run on the 1st.
 
         From staging onward, every output column name must be unquoted
         snake_case except in published models. Flag quoted output aliases or
@@ -431,6 +455,10 @@ reviews:
         - Column descriptions should explain units, code systems, selection
           rules, dates, null meaning, derivation or non-obvious relationships;
           do not require prose that merely repeats a column name.
+        - In reporting models, flag column descriptions that only restate the
+          source field name, such as "As supplied in source field X". They are
+          published as Snowflake comments, so they should give the business
+          meaning, or say plainly that the meaning is not yet confirmed.
         - A semantic change must update the affected SQL, descriptions and
           existing contract tests together. Ask for a new test only under the
           rules above.
@@ -449,6 +477,12 @@ reviews:
         auto_ files are generated. Manual source declarations are the editable
         registry for opted-in tables and must match live identifiers and column
         types. Snowflake database, schema and identifiers are quoted.
+        scripts/sources/2_generate_sources.py writes one
+        auto_<database>_<schema>.yml file per database and schema. Flag a new
+        auto_ file that combines several schemas or whose name does not follow
+        that pattern: it was made by hand, and the next regeneration would
+        declare the same sources again in a second file. Ask for the file to be
+        regenerated from scripts/sources/source_mappings.yml.
 
     # Seeds
     - path: "seeds/**"
