@@ -91,6 +91,11 @@ person_conditions AS (
         COALESCE(MAX(CASE WHEN ltc.condition_code = 'CLD' THEN TRUE END), FALSE) AS has_chronic_liver_disease,
         COALESCE(MAX(CASE WHEN ltc.condition_code = 'SCD' THEN TRUE END), FALSE) AS has_sickle_cell,
         COALESCE(MAX(CASE WHEN ltc.condition_code = 'THAL' THEN TRUE END), FALSE) AS has_thalassaemia,
+        COALESCE(MAX(CASE WHEN ltc.condition_code = 'LCOVID' THEN TRUE END), FALSE) AS has_long_covid,
+        COALESCE(MAX(CASE WHEN ltc.condition_code = 'MECFS' THEN TRUE END), FALSE) AS has_me_cfs,
+        COALESCE(MAX(CASE WHEN ltc.condition_code = 'PVFS' THEN TRUE END), FALSE) AS has_post_viral_fatigue,
+        COALESCE(MAX(CASE WHEN ltc.condition_code = 'FIBRO' THEN TRUE END), FALSE) AS has_fibromyalgia,
+        COALESCE(MAX(CASE WHEN ltc.condition_code = 'POTS' THEN TRUE END), FALSE) AS has_pots,
 
         -- Summary counts (0 for persons with no conditions)
         -- Counts use canonical_condition_code so subset registers (LD_U14, CYP_AST)
@@ -107,6 +112,7 @@ person_conditions AS (
         COALESCE(COUNT(DISTINCT CASE WHEN ltc.clinical_domain = 'Musculoskeletal' THEN ltc.canonical_condition_code END), 0) AS musculoskeletal_conditions,
         COALESCE(COUNT(DISTINCT CASE WHEN ltc.clinical_domain = 'Neurology' THEN ltc.canonical_condition_code END), 0) AS neurology_conditions,
         COALESCE(COUNT(DISTINCT CASE WHEN ltc.clinical_domain = 'Geriatric' THEN ltc.canonical_condition_code END), 0) AS geriatric_conditions,
+        COALESCE(COUNT(DISTINCT CASE WHEN ltc.clinical_domain = 'Post Acute Infection Syndromes' THEN ltc.canonical_condition_code END), 0) AS post_acute_infection_syndrome_conditions,
         
         -- Earliest and latest diagnosis dates across all conditions (NULL for no conditions)
         MIN(ltc.earliest_diagnosis_date) AS earliest_condition_diagnosis,

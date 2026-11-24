@@ -596,3 +596,118 @@ unit_tests:
       total_diagnoses: 3
     - person_id: -145442
       total_diagnoses: 1
+- name: long_covid_register_counts_distinct_readings
+  model: fct_person_long_covid_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_long_covid_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_long_covid_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_long_covid_diagnoses: 3
+    - person_id: -145442
+      total_long_covid_diagnoses: 1
+- name: me_cfs_register_counts_distinct_readings
+  model: fct_person_me_cfs_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_me_cfs_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_me_cfs_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_me_cfs_diagnoses: 3
+    - person_id: -145442
+      total_me_cfs_diagnoses: 1
+- name: post_viral_fatigue_register_counts_distinct_readings
+  model: fct_person_post_viral_fatigue_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_post_viral_fatigue_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_post_viral_fatigue_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_post_viral_fatigue_diagnoses: 3
+    - person_id: -145442
+      total_post_viral_fatigue_diagnoses: 1
+- name: fibromyalgia_register_counts_distinct_readings
+  model: fct_person_fibromyalgia_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_fibromyalgia_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_fibromyalgia_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_fibromyalgia_diagnoses: 3
+    - person_id: -145442
+      total_fibromyalgia_diagnoses: 1
+- name: pots_register_counts_distinct_readings
+  model: fct_person_pots_register
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::NUMBER AS total_pots_diagnoses WHERE FALSE
+  given:
+  - input: ref('int_pots_diagnoses_all')
+    format: sql
+    fixture: value_free_reentered_observation_readings
+  - input: ref('dim_person')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, 55::NUMBER AS age, 'Female'::VARCHAR AS gender, '1970-01-01'::DATE
+      AS birth_date_approx FROM VALUES (-145441), (-145442)
+  expect:
+    rows:
+    - person_id: -145441
+      total_pots_diagnoses: 3
+    - person_id: -145442
+      total_pots_diagnoses: 1

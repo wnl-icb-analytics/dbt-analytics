@@ -1,0 +1,40 @@
+models:
+  - name: int_fibromyalgia_diagnoses_all
+    description: >-
+      Fibromyalgia diagnosis observations in OLIDS GP
+      records, one row per observation. Post acute infection syndromes. FIBROMYALGIA_COD covers
+      fibromyalgia, primary or secondary. SNOMED CT has no resolution code for this condition. Clusters come from the SNOMED Cluster Manager (ECL_CACHE)
+      and include retired SNOMED CT predecessors. Includes inactive and deceased people
+      without age or reporting-period restrictions.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: FIBROMYALGIA_COD
+            source: ECL_CACHE
+    columns:
+      - name: id
+        description: Unique identifier for the clinical observation
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Unique identifier for the person
+      - name: clinical_effective_date
+        description: Date the observation was clinically effective; 1900-01-01 marks a missing date
+      - name: date_recorded
+        description: Date the observation was entered in the record; null when the source gives none.
+      - name: concept_code
+        description: SNOMED CT concept code
+      - name: concept_display
+        description: SNOMED CT concept description
+      - name: source_cluster_id
+        description: Source cluster (FIBROMYALGIA_COD)
+      - name: is_diagnosis_code
+        description: True for a fibromyalgia diagnosis (FIBROMYALGIA_COD)

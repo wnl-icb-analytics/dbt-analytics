@@ -1,0 +1,57 @@
+models:
+  - name: fct_person_pots_register
+    description: >
+      POTS register: one row per person with a recorded POTS diagnosis
+      (POTS_COD ever recorded). Post acute infection syndromes, non-QOF. POTS_COD covers postural orthostatic tachycardia syndrome, excluding BASCULE syndrome, which SNOMED CT places under POTS but which occurs with and without it.
+      No age restriction. Counts recorded diagnosis, not current symptoms or the
+      triggering infection.
+
+      Observation counts include each person, concept and clinical calendar date once.
+      Missing clinical days keep separate observation ids.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "POTS"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Post Acute Infection Syndromes"
+          name_short: "POTS"
+          description_short: "POTS register (non-QOF)"
+          description_long: >
+            Persons with a recorded POTS diagnosis (POTS_COD ever recorded). POTS_COD: << 371073003 |Postural orthostatic tachycardia syndrome| MINUS << 1290892007 |Bier anaemic spots, cyanosis, and urticaria-like eruption syndrome|.
+            Grouped under post acute infection syndromes (NIHR umbrella term). No age restriction.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_PAIS_POTS"
+          code_clusters:
+            - cluster_id: "POTS_COD"
+              category: "INCLUSION"
+
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in years
+      - name: is_on_register
+        description: Always true; only people on the register are included
+      - name: earliest_diagnosis_date
+        description: Earliest POTS diagnosis
+      - name: latest_diagnosis_date
+        description: Latest POTS diagnosis
+      - name: total_pots_diagnoses
+        description: Distinct POTS diagnosis readings (person, concept, clinical date)
+      - name: all_pots_concept_codes
+        description: Distinct POTS diagnosis concept codes recorded
+      - name: all_pots_concept_displays
+        description: Distinct POTS diagnosis concept descriptions recorded

@@ -1,0 +1,57 @@
+models:
+  - name: fct_person_fibromyalgia_register
+    description: >
+      Fibromyalgia register: one row per person with a recorded fibromyalgia diagnosis
+      (FIBROMYALGIA_COD ever recorded). Post acute infection syndromes, non-QOF. FIBROMYALGIA_COD covers fibromyalgia, primary or secondary.
+      No age restriction. Counts recorded diagnosis, not current symptoms or the
+      triggering infection.
+
+      Observation counts include each person, concept and clinical calendar date once.
+      Missing clinical days keep separate observation ids.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "FIBROMYALGIA"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Post Acute Infection Syndromes"
+          name_short: "Fibromyalgia"
+          description_short: "Fibromyalgia register (non-QOF)"
+          description_long: >
+            Persons with a recorded fibromyalgia diagnosis (FIBROMYALGIA_COD ever recorded). FIBROMYALGIA_COD: << 203082005 |Fibromyalgia|.
+            Grouped under post acute infection syndromes (NIHR umbrella term). No age restriction.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_PAIS_FIBROMYALGIA"
+          code_clusters:
+            - cluster_id: "FIBROMYALGIA_COD"
+              category: "INCLUSION"
+
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in years
+      - name: is_on_register
+        description: Always true; only people on the register are included
+      - name: earliest_diagnosis_date
+        description: Earliest fibromyalgia diagnosis
+      - name: latest_diagnosis_date
+        description: Latest fibromyalgia diagnosis
+      - name: total_fibromyalgia_diagnoses
+        description: Distinct fibromyalgia diagnosis readings (person, concept, clinical date)
+      - name: all_fibromyalgia_concept_codes
+        description: Distinct fibromyalgia diagnosis concept codes recorded
+      - name: all_fibromyalgia_concept_displays
+        description: Distinct fibromyalgia diagnosis concept descriptions recorded

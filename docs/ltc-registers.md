@@ -7,9 +7,11 @@ The [monthly history reference](ltc-register-history.md) covers past month-ends 
 ## What's in the family
 
 Reporting paths below start at `models/reporting/olids/disease_registers/`.
-There are 42 live register facts: 23 QOF facts in `qof/` and 19 others.
-The seed, `fct_person_ltc_summary` and the monthly history cover 39 condition codes; the seed labels 21 of them QOF.
+There are 47 live register facts: 23 QOF facts in `qof/` and 24 others.
+The seed, `fct_person_ltc_summary` and the monthly history cover 44 condition codes; the seed labels 21 of them QOF.
 CVD, obesity2 and QOF NDH/GDM have live facts and PIT views but sit outside the summary and history.
+Five of the local codes (LCOVID, MECFS, PVFS, FIBRO, POTS) form the post acute infection syndromes domain;
+their clusters are ECL clusters in the SNOMED Cluster Manager.
 The summary's `NDH` is the clinical NDH cohort, not QOF NDH/GDM. HF3 is a flag in the HF model, not a separate code.
 
 | Object | Grain | Path | Purpose |
@@ -18,7 +20,7 @@ The summary's `NDH` is the clinical NDH cohort, not QOF NDH/GDM. HF3 is a flag i
 | QOF PIT view | One person with returned evidence at the configured date | `qof_pit/pit_*_register.sql` | Evaluate the macro at one date; filter `is_on_register = TRUE` when counting members |
 | Rule macro | One person and reference date with returned evidence | `macros/qof_registers/calculate_*_register.sql`, `macros/ltc_registers/calculate_*_register.sql` | Rules used by PIT views, monthly history and reconciliation |
 | Monthly register | One member and month-end | `history/fct_person_*_by_month.sql` | Membership for people alive and registered at each month-end |
-| LTC summaries | One member and condition; history adds month-end | `fct_person_ltc_summary.sql`, `history/fct_person_ltc_summary_by_month.sql` | Union of the 39 registers with seed labels |
+| LTC summaries | One member and condition; history adds month-end | `fct_person_ltc_summary.sql`, `history/fct_person_ltc_summary_by_month.sql` | Union of the 44 registers with seed labels |
 | Register status | One person and seed condition | `fct_person_ltc_register_status.sql` | Membership and separate age-based denominator eligibility |
 | Conditions dimension | One person in `dim_person_demographics` | `dim_person_conditions.sql` | Flags and counts; collapses `CYP_AST` into `AST` and `LD_U14` into `LD` for counts |
 | Condition episodes | One person, condition and episode number | `fct_person_condition_episodes.sql` | Event-based episodes without register age, medication and other QOF restrictions |
@@ -128,6 +130,8 @@ Models in `qof/` have macros in `macros/qof_registers/`; others in `macros/ltc_r
 | THY | `fct_person_hypothyroidism_register` | No | Local | `HYPOTHY_COD` or legacy `THY_COD` |
 | NAFLD | `fct_person_nafld_register` | No | Local | Any `MASLD_DX_CODES` diagnosis |
 | GESTDIAB, PD, CEREBRALP, MND, MS, AUTISM, OA, SCD, THAL | `fct_person_<condition>_register` | No | Local | Any diagnosis |
+| LCOVID | `fct_person_long_covid_register` | No | Local | Latest diagnosis later than any resolved code |
+| MECFS, PVFS, FIBRO, POTS | `fct_person_me_cfs_register`, `fct_person_post_viral_fatigue_register`, `fct_person_fibromyalgia_register`, `fct_person_pots_register` | No | Local | Any diagnosis |
 
 ### Reading the spec in SQL
 
@@ -193,7 +197,7 @@ Where the spec cannot be applied literally:
 
 ## Validation
 
-`tests/ltc_register_fct_pit_reconciliation.sql` compares all 42 live facts with their macros, plus the HF3 flag, in both directions.
+`tests/ltc_register_fct_pit_reconciliation.sql` compares all 47 live facts with their macros, plus the HF3 flag, in both directions.
 It evaluates the macros at the date the live table was built (the earlier of its build date and `dim_person_age`'s, via `ltc_live_register_as_of`).
 It excuses people with evidence in that register's own sources dated or entered after that date, and aligns the macro population to the live demographic joins.
 It checks membership only, not descriptive fields or past months.

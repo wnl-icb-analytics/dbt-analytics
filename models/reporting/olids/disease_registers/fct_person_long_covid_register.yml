@@ -1,0 +1,63 @@
+models:
+  - name: fct_person_long_covid_register
+    description: >
+      Long COVID register: one row per person with a recorded long COVID diagnosis
+      (latest LONGCOVID_COD later than any LONGCOVIDRES_COD). Post acute infection syndromes, non-QOF. LONGCOVID_COD covers findings SNOMED CT defines as occurring after COVID-19: ongoing symptomatic COVID-19 (4 to 12 weeks), post-COVID-19 syndrome and chronic post-COVID-19 syndrome (over 12 weeks), and post-acute COVID-19 (NICE NG188). A Post-COVID-19 syndrome resolved code (LONGCOVIDRES_COD) later than the latest diagnosis removes the person.
+      No age restriction. Counts recorded diagnosis, not current symptoms or the
+      triggering infection.
+
+      Observation counts include each person, concept and clinical calendar date once.
+      Missing clinical days keep separate observation ids.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "LONG_COVID"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Post Acute Infection Syndromes"
+          name_short: "Long COVID"
+          description_short: "Long COVID register (non-QOF)"
+          description_long: >
+            Persons with a recorded long COVID diagnosis (latest LONGCOVID_COD later than any LONGCOVIDRES_COD). LONGCOVID_COD: << 404684003 |Clinical finding| : 255234002 |After| = << 840539006 |COVID-19|.
+            Grouped under post acute infection syndromes (NIHR umbrella term). No age restriction.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_PAIS_LONG_COVID"
+          code_clusters:
+            - cluster_id: "LONGCOVID_COD"
+              category: "INCLUSION"
+            - cluster_id: "LONGCOVIDRES_COD"
+              category: "RESOLUTION"
+
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in years
+      - name: is_on_register
+        description: Always true; only people on the register are included
+      - name: earliest_diagnosis_date
+        description: Earliest long COVID diagnosis
+      - name: latest_diagnosis_date
+        description: Latest long COVID diagnosis
+      - name: latest_resolved_date
+        description: Latest Post-COVID-19 syndrome resolved code; null or earlier than the latest diagnosis
+      - name: total_long_covid_diagnoses
+        description: Distinct long COVID diagnosis readings (person, concept, clinical date)
+      - name: all_long_covid_concept_codes
+        description: Distinct long COVID diagnosis concept codes recorded
+      - name: all_long_covid_concept_displays
+        description: Distinct long COVID diagnosis concept descriptions recorded
+      - name: all_long_covid_resolved_concept_codes
+        description: Distinct resolution concept codes recorded

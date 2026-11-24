@@ -43,6 +43,11 @@
     ('ADHD', 'fct_person_adhd_register_by_month'),
     ('CLD', 'fct_person_chronic_liver_disease_register_by_month'),
     ('SCD', 'fct_person_sickle_cell_register_by_month'),
-    ('THAL', 'fct_person_thalassaemia_register_by_month')
+    ('THAL', 'fct_person_thalassaemia_register_by_month'),
+    ('LCOVID', 'fct_person_long_covid_register_by_month'),
+    ('MECFS', 'fct_person_me_cfs_register_by_month'),
+    ('PVFS', 'fct_person_post_viral_fatigue_register_by_month'),
+    ('FIBRO', 'fct_person_fibromyalgia_register_by_month'),
+    ('POTS', 'fct_person_pots_register_by_month')
 ]) }}
 {% endmacro %}

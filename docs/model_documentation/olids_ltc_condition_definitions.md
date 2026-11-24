@@ -1,6 +1,6 @@
 # OLIDS LTC condition register definitions
 
-Membership reference for the 39 condition codes in `fct_person_ltc_summary`: what each register means, which code clusters drive it and where each cluster comes from.
+Membership reference for the 44 condition codes in `fct_person_ltc_summary`: what each register means, which code clusters drive it and where each cluster comes from.
 
 ## How the registers work
 
@@ -19,13 +19,13 @@ Checked against `COMBINED_CODESETS.SOURCE` on 2 October 2026, every cluster belo
 
 | Mark | Source | Clusters |
 |---|---|---|
-| `(ECL)` | `ECL_CACHE`: ECL definitions refreshed weekly with `REFRESH_ECL_CLUSTER`. `ASTTRT_COD` and `EPILDRUG_COD` are the QOF v51 dm+d drug refsets; the others are local | `ASTTRT_COD`, `EPILDRUG_COD`, `LIT_COD`, `HYPOTHY_COD`, `MASLD_DX_CODES`, `OA_COD` |
+| `(ECL)` | `ECL_CACHE`: ECL definitions refreshed weekly with `REFRESH_ECL_CLUSTER`. `ASTTRT_COD` and `EPILDRUG_COD` are the QOF v51 dm+d drug refsets; the others are local | `ASTTRT_COD`, `EPILDRUG_COD`, `LIT_COD`, `HYPOTHY_COD`, `MASLD_DX_CODES`, `OA_COD`, and the post acute infection syndrome clusters below |
 | `(LTC_LCS)` | `LTC_LCS`: LTC LCS value sets | `SYSBP_COD`, `DIASBP_COD` (hypertension BP staging only) |
 
 QOF register inputs pass `source='PCD'` for every PCD cluster. This matters because `AST_COD`, `CHD_COD`, `CKD_COD` and `DMRES_COD` also exist under UKHSA sources with different content.
 Some inputs use `include_history=true` to add retired SNOMED predecessors.
 
-## Conditions (39)
+## Conditions (44)
 
 Rules were checked against the SQL. See the [spec version table](../ltc-registers.md#spec-versions) for the QOF version each register follows.
 
@@ -70,6 +70,23 @@ Rules were checked against the SQL. See the [spec version table](../ltc-register
 | Parkinson's (PD) | false | - | Any Parkinson's diagnosis; no age or resolution rule | `PD_COD` (diagnosis) | PCD |
 | Sickle Cell Disease (SCD) | false | - | Any sickle cell diagnosis | `SICKLE_COD` (diagnosis) | PCD |
 | Thalassaemia (THAL) | false | - | Any thalassaemia diagnosis | `THAL_COD` (diagnosis) | PCD |
+
+### Post acute infection syndromes
+
+Five local registers grouped under the NIHR umbrella term post acute infection syndromes (seed domain
+`Post Acute Infection Syndromes`). No national code lists exist for these conditions, so each uses an ECL
+cluster from the SNOMED Cluster Manager, with retired SNOMED CT predecessors. Each counts a recorded
+diagnosis at any age; none counts referrals, service contacts, assessment scales or outcome scores.
+A diagnosis code does not record the triggering infection, so POTS, fibromyalgia and ME/CFS members
+are not all post-infectious. A person can be on several of these registers.
+
+| Condition | is_qof | QOF ind. | Definition | Clusters (role) and ECL | Cluster source |
+|---|---|---|---|---|---|
+| Long COVID (LCOVID) | false | - | Latest diagnosis later than any resolved code. Includes ongoing symptomatic COVID-19 (4 to 12 weeks), post-COVID-19 syndrome and chronic post-COVID-19 syndrome (over 12 weeks) and post-acute COVID-19 (NICE NG188) | `LONGCOVID_COD` (ECL) (diagnosis): `<< 404684003 \|Clinical finding\| : 255234002 \|After\| = << 840539006 \|COVID-19\|`, the findings SNOMED CT defines as occurring after COVID-19, so new post-COVID concepts join automatically. `LONGCOVIDRES_COD` (ECL) (resolved): `<< 1326351000000108 \|Post-COVID-19 syndrome resolved\|` | Local ECL |
+| ME/CFS (MECFS) | false | - | Any ME/CFS diagnosis at any severity (mild, moderate, severe, very severe; NICE NG206). SNOMED CT has no resolution code | `MECFS_COD` (ECL) (diagnosis): `<< 52702003 \|Chronic fatigue syndrome\|` | Local ECL |
+| Post-viral fatigue syndrome (PVFS) | false | - | Any post-viral fatigue syndrome diagnosis. Held separately from ME/CFS, as in SNOMED CT since 2015; ICD-10 G93.3 groups them. No resolution code | `PVFS_COD` (ECL) (diagnosis): `<< 51771007 \|Postviral fatigue syndrome\|` | Local ECL |
+| Fibromyalgia (FIBRO) | false | - | Any fibromyalgia diagnosis, primary or secondary. No resolution code | `FIBROMYALGIA_COD` (ECL) (diagnosis): `<< 203082005 \|Fibromyalgia\|` | Local ECL |
+| POTS (POTS) | false | - | Any postural orthostatic tachycardia syndrome diagnosis. Excludes BASCULE syndrome, which SNOMED CT places under POTS but which occurs with and without POTS. No resolution code | `POTS_COD` (ECL) (diagnosis): `<< 371073003 \|Postural orthostatic tachycardia syndrome\| MINUS << 1290892007 \|Bier anaemic spots, cyanosis, and urticaria-like eruption syndrome\|` | Local ECL |
 
 ## Known discrepancies (YAML metadata vs SQL)
 

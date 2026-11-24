@@ -1,0 +1,32 @@
+models:
+  - name: fct_person_long_covid_register_by_month
+    description: >
+      Long COVID register at each completed month-end, on the rules of
+      fct_person_long_covid_register: a LONGCOVID_COD diagnosis whose latest code is later than any LONGCOVIDRES_COD resolution code. No age restriction.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest long COVID diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest long COVID diagnosis known by the month-end.
+      - name: latest_resolved_date
+        description: Latest Post-COVID-19 syndrome resolved code known by the month-end; earlier than the latest diagnosis.
