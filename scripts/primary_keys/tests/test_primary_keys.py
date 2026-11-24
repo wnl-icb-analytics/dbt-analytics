@@ -107,13 +107,36 @@ class DeclareKeyTest(unittest.TestCase):
         self.assertIn('primary_key: [example_id]\r\n', updated)
         self.assertIn('fct_other', updated)
 
-    def test_inline_meta_is_left_alone(self):
+    def test_inline_meta_is_rewritten_as_a_block(self):
         text = SINGLE.replace('    columns:', '    config:\n      meta: {owner: {name: Example team}}\n    columns:')
+        updated = self.declare(text, ['example_id'])
+        self.assertIn('      meta:\n        primary_key: [example_id]\n        owner:\n          name: Example team\n',
+                      updated)
+
+    def test_alias_is_expanded_and_shared_anchor_left_alone(self):
+        text = (
+            'models:\n  - name: dim_a\n    config: &owner\n      meta:\n        owner:\n          name: Team\n'
+            '    columns:\n      - name: code\n  - name: fct_example\n    config: *owner\n    columns:\n'
+            '      - name: example_id\n'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'shared.yml'
+            path.write_bytes(text.encode('utf-8'))
+            self.assertEqual(PK.declare_key(path, 'dim_a', ['code']), 'config is a YAML anchor other models share; add it by hand')
+            self.assertIsNone(PK.declare_key(path, 'fct_example', ['example_id']))
+            models = yaml.safe_load(path.read_bytes().decode('utf-8'))['models']
+        self.assertIsNone(PK.declared_key(models[0]))
+        self.assertEqual(PK.declared_key(models[1]), ['example_id'])
+        self.assertEqual(models[1]['config']['meta']['owner'], {'name': 'Team'})
+
+    def test_mixed_line_endings_are_kept(self):
+        text = SINGLE.replace('\n', '\r\n', 3)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'fct_example.yml'
-            path.write_text(text, encoding='utf-8')
-            self.assertEqual(PK.declare_key(path, 'fct_example', ['example_id']), 'config.meta is written inline')
-            self.assertEqual(path.read_text(encoding='utf-8'), text)
+            path.write_bytes(text.encode('utf-8'))
+            self.assertIsNone(PK.declare_key(path, 'fct_example', ['example_id']))
+            updated = path.read_bytes().decode('utf-8')
+        self.assertEqual(updated.replace('    config:\n      meta:\n        primary_key: [example_id]\n', ''), text)
 
 
 if __name__ == '__main__':

@@ -177,10 +177,11 @@ def check_model(model: dict) -> list[str]:
             errors.append(f'{column} is not listed under columns')
         elif column.lower() not in not_null:
             errors.append(f'{column} needs a not_null test ({ENFORCING})')
+    combined = any({c.lower() for c in combo} == set(lowered) for combo in combinations)
     if len(key) == 1:
-        if key[0].lower() not in unique:
+        if lowered[0] not in unique and not combined:
             errors.append(f'{key[0]} needs a unique test ({ENFORCING})')
-    elif not any({c.lower() for c in combo} == set(lowered) for combo in combinations):
+    elif not combined:
         errors.append(
             f'needs a dbt_utils.{COMBINATION_TEST} test on exactly {", ".join(key)} ({ENFORCING})'
         )
@@ -215,15 +216,39 @@ def child_indent(lines: list[str], start: int, end: int, parent_indent: int) -> 
     return parent_indent + 2
 
 
-def find_key(lines: list[str], start: int, end: int, indent: int, key: str) -> int | str | None:
-    """Line index of a block mapping key at an indent, 'inline' when it has a value, or None."""
+def find_key(lines: list[str], start: int, end: int, indent: int, key: str) -> tuple[int, str] | None:
+    """(line index, value after the colon) of a mapping key at an indent, or None."""
     pattern = re.compile(rf'^ {{{indent}}}{key}:(.*)$')
     for i in range(start, end):
         match = pattern.match(lines[i])
         if match:
-            rest = match.group(1).split('#', 1)[0].strip()
-            return 'inline' if rest else i
+            return i, match.group(1).split(' #', 1)[0].strip()
     return None
+
+
+def is_block(value: str) -> bool:
+    """True when a key's value is an indented block, optionally defining an anchor."""
+    return not value or re.fullmatch(r'&\S+', value) is not None
+
+
+class FlowList(list):
+    """A list YAML writes on one line, as in primary_key: [a, b]."""
+
+
+yaml.add_representer(
+    FlowList, lambda dumper, value: dumper.represent_sequence('tag:yaml.org,2002:seq', value, flow_style=True),
+    Dumper=yaml.SafeDumper,
+)
+
+
+def block_lines(indent: int, key: str, value: dict) -> list[str]:
+    dumped = yaml.safe_dump({key: value}, sort_keys=False, default_flow_style=False,
+                            allow_unicode=True, width=10_000)
+    return [' ' * indent + line for line in dumped.splitlines()]
+
+
+def with_key(meta, key: list[str]) -> dict:
+    return {'primary_key': FlowList(key), **(meta if isinstance(meta, dict) else {})}
 
 
 def model_block(lines: list[str], name: str) -> tuple[int, int, int] | None:
@@ -236,38 +261,50 @@ def model_block(lines: list[str], name: str) -> tuple[int, int, int] | None:
     return start, key_indent, block_end(lines, start, indent_of(lines[start]), len(lines))
 
 
-def plan_insert(lines: list[str], name: str, key: list[str]) -> tuple[int, str, list[str]] | str:
-    """Where to add primary_key: (anchor line, 'after' or 'before', new lines), or a reason not to."""
-    block = model_block(lines, name)
+def plan_insert(lines: list[str], model: dict, key: list[str]) -> tuple[int, str, list[str]] | str:
+    """Where to add primary_key: (anchor line, 'after', 'before' or 'replace', new lines), or a reason not to.
+
+    A config or meta written inline or as an alias is rewritten as a block for this model only.
+    """
+    block = model_block(lines, model['name'])
     if block is None:
         return 'model entry not found'
     start, key_indent, end = block
-    entry = f'primary_key: {yaml.safe_dump(key, default_flow_style=True, width=10_000).strip()}'
+    entry = f'primary_key: {yaml.safe_dump(FlowList(key), width=10_000).strip()}'
+    config = model.get('config') if isinstance(model.get('config'), dict) else {}
 
-    config = find_key(lines, start + 1, end, key_indent, 'config')
-    if config == 'inline':
-        return 'config is written inline'
-    if config is not None:
-        config_end = block_end(lines, config, key_indent, end)
-        config_indent = child_indent(lines, config, config_end, key_indent)
-        meta = find_key(lines, config + 1, config_end, config_indent, 'meta')
-        if meta == 'inline':
-            return 'config.meta is written inline'
-        if meta is not None:
-            meta_end = block_end(lines, meta, config_indent, config_end)
-            meta_indent = child_indent(lines, meta, meta_end, config_indent)
-            return meta, 'after', [' ' * meta_indent + entry]
-        return config, 'after', [' ' * config_indent + 'meta:', ' ' * (config_indent + 2) + entry]
+    found = find_key(lines, start + 1, end, key_indent, 'config')
+    if found is not None:
+        config_line, value = found
+        if not is_block(value):
+            if value.count('{') != value.count('}') or value.count('[') != value.count(']'):
+                return 'config spans several lines inline'
+            return config_line, 'replace', block_lines(key_indent, 'config', {
+                **config, 'meta': with_key(config.get('meta'), key)})
+        config_end = block_end(lines, config_line, key_indent, end)
+        config_indent = child_indent(lines, config_line, config_end, key_indent)
+        found = find_key(lines, config_line + 1, config_end, config_indent, 'meta')
+        if found is None:
+            return config_line, 'after', [' ' * config_indent + 'meta:', ' ' * (config_indent + 2) + entry]
+        meta_line, value = found
+        if not is_block(value):
+            if value.count('{') != value.count('}'):
+                return 'config.meta spans several lines inline'
+            return meta_line, 'replace', block_lines(config_indent, 'meta', with_key(config.get('meta'), key))
+        meta_end = block_end(lines, meta_line, config_indent, config_end)
+        return meta_line, 'after', [' ' * child_indent(lines, meta_line, meta_end, config_indent) + entry]
 
     new = [' ' * key_indent + 'config:', ' ' * (key_indent + 2) + 'meta:', ' ' * (key_indent + 4) + entry]
-    columns = find_key(lines, start + 1, end, key_indent, 'columns')
-    if isinstance(columns, int):
-        return columns, 'before', new
+    found = find_key(lines, start + 1, end, key_indent, 'columns')
+    if found is not None:
+        return found[0], 'before', new
     return end - 1, 'after', new
 
 
 def apply_plan(lines: list[str], plan: tuple[int, str, list[str]]) -> list[str]:
     anchor, position, new = plan
+    if position == 'replace':
+        return lines[:anchor] + new + lines[anchor + 1:]
     at = anchor + 1 if position == 'after' else anchor
     return lines[:at] + new + lines[at:]
 
@@ -288,24 +325,37 @@ def without_key(document, name: str, before_model: dict):
 def declare_key(path: Path, name: str, key: list[str]) -> str | None:
     """Add primary_key to a model's YAML. Returns a reason when the file is left unchanged."""
     raw = path.read_bytes().decode('utf-8')
-    newline = '\r\n' if '\r\n' in raw else '\n'
-    lines = raw.split(newline)
-    plan = plan_insert(lines, name, key)
+    # Keep each line's own ending: some files mix CRLF and LF
+    parts = re.split(r'(\r\n|\n)', raw)
+    lines, endings = parts[0::2], parts[1::2] + ['']
+    newline = max(('\r\n', '\n'), key=endings.count)
+    model = next(m for m in load_models(path) if m['name'] == name)
+    plan = plan_insert(lines, model, key)
     if isinstance(plan, str):
         return plan
-    updated = newline.join(apply_plan(lines, plan))
+    anchor, position, new = plan
+    if not endings[anchor]:
+        endings[anchor] = newline
+    marked = apply_plan(list(zip(lines, endings)), (anchor, position, [(line, newline) for line in new]))
+    updated = ''.join(line + ending for line, ending in marked)
 
-    before, after = yaml.safe_load(raw), yaml.safe_load(updated)
+    # Via JSON so YAML aliases become copies: a key leaking to models that share an anchor shows
+    plain = lambda text: json.loads(json.dumps(yaml.safe_load(text), default=str))
+    before, after = plain(raw), plain(updated)
     model_before = next(m for m in before['models'] if isinstance(m, dict) and m.get('name') == name)
     model_after = next(m for m in after['models'] if isinstance(m, dict) and m.get('name') == name)
-    if declared_key(model_after) != key or without_key(after, name, model_before) != before:
+    if declared_key(model_after) != key:
         return 'edit did not round-trip; add it by hand'
+    if without_key(after, name, model_before) != before:
+        return 'config is a YAML anchor other models share; add it by hand'
     path.write_bytes(updated.encode('utf-8'))
     return None
 
 
 def suggestion_text(lines: list[str], plan: tuple[int, str, list[str]]) -> str:
     anchor, position, new = plan
+    if position == 'replace':
+        return '\n'.join(new)
     return '\n'.join(([lines[anchor]] + new) if position == 'after' else (new + [lines[anchor]]))
 
 
@@ -337,34 +387,41 @@ def command_check(_args) -> int:
 
 def command_backfill(args) -> int:
     paths = [Path(p) for p in args.paths] if args.paths else model_yaml_files()
-    counts = {'declared': 0, 'already declared': 0, 'no enforced key': 0, 'several enforced keys': 0}
-    skipped = []
-    for path in paths:
-        for model in load_models(path):
-            if declared_key(model) is not None:
-                counts['already declared'] += 1
-                continue
-            keys = candidate_keys(model)
-            if not keys:
-                counts['no enforced key'] += 1
-                continue
-            if len(keys) > 1:
-                counts['several enforced keys'] += 1
-                skipped.append((path, model['name'], 'several enforced keys: '
-                                + '; '.join(', '.join(k) for k in keys)))
-                continue
-            if args.dry_run:
-                print(f'{path.as_posix()}: {model["name"]}: {keys[0]}')
-                counts['declared'] += 1
-                continue
-            reason = declare_key(path, model['name'], keys[0])
-            if reason:
-                skipped.append((path, model['name'], reason))
-            else:
-                counts['declared'] += 1
+    declared_total = 0
+    # Repeat while keys are added: a model holding a shared YAML anchor can take its key
+    # once the models aliasing it have been given their own blocks.
+    for _ in range(5):
+        counts = {'already declared': 0, 'no enforced key': 0, 'several enforced keys': 0}
+        declared, skipped = 0, []
+        for path in paths:
+            for model in load_models(path):
+                if declared_key(model) is not None:
+                    counts['already declared'] += 1
+                    continue
+                keys = candidate_keys(model)
+                if not keys:
+                    counts['no enforced key'] += 1
+                    continue
+                if len(keys) > 1:
+                    counts['several enforced keys'] += 1
+                    skipped.append((path, model['name'], 'several enforced keys: '
+                                    + '; '.join(', '.join(k) for k in keys)))
+                    continue
+                if args.dry_run:
+                    print(f'{path.as_posix()}: {model["name"]}: {keys[0]}')
+                    declared += 1
+                    continue
+                reason = declare_key(path, model['name'], keys[0])
+                if reason:
+                    skipped.append((path, model['name'], reason))
+                else:
+                    declared += 1
+        declared_total += declared
+        if args.dry_run or not declared:
+            break
     for path, name, reason in skipped:
         print(f'skipped {path.as_posix()}: {name}: {reason}')
-    print(', '.join(f'{label}: {count}' for label, count in counts.items()))
+    print(f'declared: {declared_total}, ' + ', '.join(f'{label}: {count}' for label, count in counts.items()))
     return 0
 
 
@@ -416,7 +473,7 @@ def command_suggest(args) -> int:
                 print(f'{name}: waiting for owner metadata before suggesting a key')
                 continue
             lines = path.read_text(encoding='utf-8').splitlines()
-            plan = plan_insert(lines, name, keys[0])
+            plan = plan_insert(lines, model, keys[0])
             flow = f'[{", ".join(keys[0])}]'
             if isinstance(plan, str):
                 summary.append({'model': name, 'text': f'`{name}`: add `primary_key: {flow}` under '
