@@ -18,7 +18,7 @@ sex. score_percent is NULL and errors is set when the model rejects a row,
 for example because an input is NULL or out of range.
 #}
 
-{% macro qadmissions_model_version() %}V1{% endmacro %}
+{% macro qadmissions_model_version() %}V5{% endmacro %}
 
 {% macro qadmissions_model_inputs() %}
     {{ return([
