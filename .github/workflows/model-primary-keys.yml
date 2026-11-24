@@ -1,0 +1,78 @@
+name: Model Primary Keys
+
+on:
+  # No branch filter: stacked PRs target feature branches. Static check, no secrets.
+  pull_request:
+    paths:
+      - 'models/**/*.sql'
+      - 'models/**/*.yml'
+      - 'models/**/*.yaml'
+
+jobs:
+  suggest-primary-keys:
+    name: Suggest Primary Keys
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Find undeclared keys
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          uv run --with pyyaml scripts/primary_keys/primary_keys.py suggest \
+            --base "origin/$BASE_REF" --output suggestions.json
+
+      - name: Post suggestions
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const { inline, summary } = JSON.parse(fs.readFileSync('suggestions.json', 'utf8'));
+            const repo = { owner: context.repo.owner, repo: context.repo.repo };
+            const pull_number = context.issue.number;
+            const isBot = c => c.user.login === 'github-actions[bot]';
+            const marker = model => `<!-- primary-key-suggestion:${model} -->`;
+
+            // One inline suggestion per model, however often the PR is pushed
+            const existing = await github.paginate(github.rest.pulls.listReviewComments, { ...repo, pull_number });
+            const fresh = inline.filter(s => !existing.some(c => isBot(c) && c.body.includes(marker(s.model))));
+            if (fresh.length) {
+              await github.rest.pulls.createReview({
+                ...repo, pull_number,
+                commit_id: context.payload.pull_request.head.sha,
+                event: 'COMMENT',
+                comments: fresh.map(s => ({
+                  path: s.file,
+                  line: s.line,
+                  body: `${marker(s.model)}\n### Primary key\n\n` +
+                    `The tests on \`${s.model}\` enforce one key. Declaring it shows the key in the docs ` +
+                    `and in Snowflake (\`PRIMARY_KEY\` tag, and a primary key constraint on tables).\n\n` +
+                    `\`\`\`suggestion\n${s.suggestion}\n\`\`\``,
+                })),
+              });
+            }
+
+            // Models whose key cannot be suggested inline share one comment, kept up to date
+            const summaryMarker = '<!-- primary-key-suggestions -->';
+            const comments = await github.paginate(github.rest.issues.listComments, { ...repo, issue_number: pull_number });
+            const previous = comments.find(c => isBot(c) && c.body.includes(summaryMarker));
+            if (!summary.length && !previous) return;
+            const body = summary.length
+              ? `${summaryMarker}\n### Primary keys\n\nThese changed models have a key enforced by their tests ` +
+                `but none declared:\n\n${summary.map(s => `- ${s.text}`).join('\n')}`
+              : `${summaryMarker}\n### Primary keys\n\nNo undeclared keys remain on the changed models.`;
+            if (previous) {
+              await github.rest.issues.updateComment({ ...repo, comment_id: previous.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...repo, issue_number: pull_number, body });
+            }
