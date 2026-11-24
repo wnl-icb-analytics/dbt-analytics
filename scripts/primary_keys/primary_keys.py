@@ -387,7 +387,7 @@ def command_check(_args) -> int:
 
 def command_backfill(args) -> int:
     paths = [Path(p) for p in args.paths] if args.paths else model_yaml_files()
-    declared_total = 0
+    declared_total, first_counts = 0, None
     # Repeat while keys are added: a model holding a shared YAML anchor can take its key
     # once the models aliasing it have been given their own blocks.
     for _ in range(5):
@@ -417,11 +417,12 @@ def command_backfill(args) -> int:
                 else:
                     declared += 1
         declared_total += declared
+        first_counts = first_counts or counts
         if args.dry_run or not declared:
             break
     for path, name, reason in skipped:
         print(f'skipped {path.as_posix()}: {name}: {reason}')
-    print(f'declared: {declared_total}, ' + ', '.join(f'{label}: {count}' for label, count in counts.items()))
+    print(f'declared: {declared_total}, ' + ', '.join(f'{label}: {count}' for label, count in first_counts.items()))
     return 0
 
 
