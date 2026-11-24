@@ -30,16 +30,22 @@ FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 ---get POD activity and plan from IAP plans submitted 202627 YTD.
 ,iap_plan as (
 SELECT
+        iap.provider_code,
         iap.source_provider as provider_shorthand,
         'WNL' AS comm_group,
         iap.commissioned_service_category_code,
+        CONCAT(iap.commissioned_service_category_code, ' - ', REGEXP_REPLACE(
+    INITCAP(LOWER(cs.short_description)),
+    '\\bNhs\\b','NHS')) as commissioned_service,
         iap.point_of_delivery_code,
-        MAX(iap.financial_month) as latest_month,
+        max(iap.financial_month) as latest_month,
         SUM(iap.contract_monitoring_planned_activity) AS activity_plan_iap,
         SUM(iap.contract_monitoring_planned_price) AS price_plan_iap
         FROM {{ ref('stg_reference_combined_contract_iap_202627') }} iap
         --FROM STAGING.REFERENCE.STG_REFERENCE_COMBINED_CONTRACT_IAP_202627 iap
-       INNER JOIN latestmonth l on iap.provider_code = l.provider_code and iap.financial_month <= l.financial_month
+        INNER JOIN latestmonth l on iap.provider_code = l.provider_code and iap.financial_month <= l.financial_month
+        LEFT JOIN {{ ref('nhs_dd_commissioned_service_category') }} cs on iap.commissioned_service_category_code = cs.code
+        --LEFT JOIN REFERENCE.DATA_DICTIONARY.NHS_DD_COMMISSIONED_SERVICE_CATEGORY cs on iap.commissioned_service_category_code = cs.code
         WHERE iap.commissioner_code IN ('07X','07M','07P','07W','07Y','07R','08H','08D','08C','08E','08G','08Y','09A','W2U3Z','Z9B2Z','Y05','T04','93C','QMJ','QRV','QWL')
         GROUP BY ALL
 )
@@ -56,10 +62,11 @@ SELECT
         s.point_of_delivery_code,
         i.point_of_delivery_code
     ) AS point_of_delivery_code,
-    CASE
-    WHEN s.point_of_delivery_code IS NULL THEN 'Missing in SUB'
-    WHEN i.point_of_delivery_code IS NULL THEN 'Missing in IAP'
-    ELSE 'Matched' END AS pod_match,
+   CASE
+        WHEN s.meta_file_id IS NULL THEN 'Missing in SUB'
+        WHEN s.point_of_delivery_code IS NULL AND i.point_of_delivery_code IS NULL THEN 'Null POD'
+        WHEN i.point_of_delivery_code IS NULL THEN 'Missing in IAP'
+        ELSE 'Matched' END AS pod_match,
     s.activity_plan_sub,
     i.activity_plan_iap,
     s.activity_plan_sub-i.activity_plan_iap as diff_activity,
@@ -71,7 +78,13 @@ SELECT
 FROM sub_plan s
 FULL OUTER JOIN iap_plan i
     ON s.provider_shorthand = i.provider_shorthand
-   AND s.point_of_delivery_code = i.point_of_delivery_code
+   --allows for NULL POD Codes in SUB
+   AND (s.point_of_delivery_code = i.point_of_delivery_code
+    OR (
+        s.point_of_delivery_code IS NULL
+        AND i.point_of_delivery_code IS NULL
+    )
+)
    --allows for LNWH where there is no commissioned_service_category_code
    AND (
         s.commissioned_service_category_code = i.commissioned_service_category_code
