@@ -29,7 +29,7 @@ SELECT
         (SUM(fa.price_actual)-SUM(fa.price_plan))/NULLIF(SUM(fa.price_plan), 0)* 100 AS variance_cost
         FROM {{ ref('int_fa_lsacm_activity_plan_ytd') }} fa
         --FROM MODELLING.CONTRACTING.INT_FA_LSACM_ACTIVITY_PLAN_YTD fa
-        LEFT JOIN latestmonth l on fa.provider_code = l.provider_code
+        INNER JOIN latestmonth l on fa.provider_code = l.provider_code and fa.financial_month <= l.financial_month
         GROUP BY ALL
 )
 SELECT
