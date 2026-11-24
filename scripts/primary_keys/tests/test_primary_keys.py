@@ -55,6 +55,28 @@ class EnforcementTest(unittest.TestCase):
                                   f'                {config}\n')
             self.assertEqual(PK.candidate_keys(model(text)), [], config)
 
+    def test_limit_zero_does_not_enforce(self):
+        text = SINGLE.replace('          - unique\n', '          - unique:\n              config:\n'
+                              '                limit: 0\n')
+        self.assertEqual(PK.candidate_keys(model(text)), [])
+
+    def test_composite_columns_must_be_documented(self):
+        text = COMPOSITE.replace('    columns:\n', '    data_tests_extra: []\n    columns:\n').replace(
+            '      - name: reporting_date\n        data_tests: [not_null]\n', '')
+        text = text.replace('    data_tests:\n', '    data_tests:\n      - not_null:\n'
+                            '          arguments:\n            column_name: reporting_date\n', 1)
+        self.assertEqual(PK.candidate_keys(model(text)), [])
+
+    def test_declared_spelling_and_tag_length(self):
+        declared = SINGLE.replace('    columns:', '    config:\n      meta:\n        primary_key: [Example_ID]\n'
+                                  '    columns:')
+        self.assertTrue(any('must be spelled as under columns' in e for e in PK.check_model(model(declared))))
+        long_name = 'c' * 130
+        text = COMPOSITE.replace('person_id', long_name).replace('reporting_date', long_name + 'x')
+        text = text.replace('    columns:', f'    config:\n      meta:\n        primary_key: [{long_name}, {long_name}x]\n'
+                            '    columns:', 1)
+        self.assertTrue(any('tag limit' in e for e in PK.check_model(model(text))))
+
     def test_composite_needs_not_null_on_every_column(self):
         text = COMPOSITE.replace('        data_tests: [not_null]\n      - name: reporting_date', '      - name: reporting_date', 1)
         self.assertEqual(PK.candidate_keys(model(text)), [])
@@ -128,6 +150,18 @@ class DeclareKeyTest(unittest.TestCase):
         self.assertIsNone(PK.declared_key(models[0]))
         self.assertEqual(PK.declared_key(models[1]), ['example_id'])
         self.assertEqual(models[1]['config']['meta']['owner'], {'name': 'Team'})
+
+    def test_inline_anchor_with_aliases_is_skipped(self):
+        text = (
+            'models:\n  - name: fct_example\n    config: &shared {meta: {owner: {name: Team}}}\n    columns:\n'
+            '      - name: example_id\n  - name: dim_b\n    config: *shared\n'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'shared.yml'
+            path.write_bytes(text.encode('utf-8'))
+            reason = PK.declare_key(path, 'fct_example', ['example_id'])
+            self.assertEqual(reason, 'edit would break YAML anchors or aliases; add it by hand')
+            self.assertEqual(path.read_bytes().decode('utf-8'), text)
 
     def test_mixed_line_endings_are_kept(self):
         text = SINGLE.replace('\n', '\r\n', 3)

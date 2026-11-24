@@ -19,6 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # The PR head, not the merge ref: suggestion lines must match the commit they are posted on
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -33,6 +35,8 @@ jobs:
             --base "origin/$BASE_REF" --output suggestions.json
 
       - name: Post suggestions
+        # Fork PRs get a read-only token, so comments cannot be posted
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
