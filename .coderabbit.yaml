@@ -312,7 +312,10 @@ reviews:
           uses --full-refresh, so an incremental model whose history cannot be
           rebuilt from source needs full_refresh=false. A test that reads
           models built on different schedules fails between builds; ask for
-          the schedules to match or for the test to be tagged reconciliation.
+          the schedules to match. If one side is monthly-full, the test can
+          carry monthly-full too, so it runs only in the build on the 1st,
+          which rebuilds both sides. The reconciliation tag does not help here:
+          it only keeps tests out of partial deploys and PR validation.
 
         From staging onward, every output column name must be unquoted
         snake_case except in published models. Flag quoted output aliases or
