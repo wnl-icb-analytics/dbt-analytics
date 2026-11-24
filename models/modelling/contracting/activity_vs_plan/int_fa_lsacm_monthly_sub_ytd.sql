@@ -18,7 +18,7 @@ s.financial_year,
 r.file_version,
 s.submission_date as required_submission_date,
 DATE(r.created_datetime) AS date_received,
-DATE(r.sent_datetime) AS date_submitted,
+COALESCE(DATE(r.sent_datetime),DATE(r.created_datetime)) AS date_submitted,
 r.row_count as submitted_row_count
 FROM {{ ref('stg_sdl_meta_file_registry') }} r
 --FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY r
