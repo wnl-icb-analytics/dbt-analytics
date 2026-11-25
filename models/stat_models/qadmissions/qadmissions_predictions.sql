@@ -3,7 +3,7 @@
         materialized='table',
         tags=['qadmissions', 'risk_scores', 'monthly-full'],
         meta={
-            'custom_message': 'QAdmissions scores computed by calling the model registered in the Snowflake Model Registry. Displaying any score produced from QAdmissions requires the ClinRisk disclaimer (see qadmissions_input_features). A missing BMI is imputed before scoring (see is_bmi_imputed). Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering.'
+            'custom_message': 'QAdmissions scores computed by calling the model registered in the Snowflake Model Registry. From model version V5 the scores are recalibrated on WNL data, so they are not QAdmissions as published; V1 to V3 give the published score (see model_version). Displaying any score produced from QAdmissions requires the ClinRisk disclaimer (see qadmissions_input_features). A missing BMI is imputed before scoring (see is_bmi_imputed). Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering.'
         }
     )
 }}
@@ -15,6 +15,11 @@
     calls the model registered in the Snowflake Model Registry from SQL,
     through the qadmissions_predict macro. The model is registered from the
     qadmission_review repository.
+
+    From V5 the registered model recalibrates each score on WNL data. It
+    takes the published 2-year score and returns the recalibrated risk at
+    the row's horizon (surv), with a baseline survival and slope fitted for
+    each sex. V1 to V3 return the published QAdmissions score.
 
     Grain
       One row per person in qadmissions_input_features, scored on the build

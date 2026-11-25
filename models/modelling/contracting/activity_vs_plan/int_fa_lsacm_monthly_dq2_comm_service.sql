@@ -20,7 +20,7 @@ SELECT
     CASE 
         WHEN service_code_dq = 'Valid' AND cscc_funding_status <> spec_comm_flag THEN 'CSCC Allocation'
         WHEN cscc_funding_status = spec_comm_flag AND cscc_dq <> 'Valid' THEN 'CSCC Code Invalid'
-        WHEN cscc_funding_status <> spec_comm_flag AND service_code_dq in ('Missing Code','Invalid Code') THEN 'Service Code Missing/Invalid' 
+        WHEN service_code_dq IN ('Missing Code','Invalid Code') THEN 'Service Code Missing/Invalid'
         WHEN cscc_funding_status = spec_comm_flag AND service_code_dq = 'Code fix required' THEN 'Service Code Incorrect Case'
     ELSE 'No issues' END AS dq_issue,
     --commissioned_service_category
@@ -43,7 +43,7 @@ SELECT
     SUM(fa.price_actual)-SUM(fa.price_plan) as diff_cost,
     (SUM(fa.price_actual)-SUM(fa.price_plan))/NULLIF(SUM(fa.price_plan), 0)* 100 AS variance_cost
 FROM {{ ref('int_fa_lsacm_activity_plan_ytd') }} fa
---FROM DEV__MODELLING.CONTRACTING.INT_FA_LSACM_activity_plan_YTD fa
-LEFT JOIN latestmonth l on fa.provider_code = l.provider_code
+--FROM MODELLING.CONTRACTING.INT_FA_LSACM_activity_plan_YTD fa
+INNER JOIN latestmonth l on fa.provider_code = l.provider_code and fa.financial_month <= l.financial_month
 group by all
 order by provider_shorthand

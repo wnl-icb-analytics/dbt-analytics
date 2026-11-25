@@ -1,9 +1,15 @@
+import copy
+import io
 import json
+import os
 import subprocess
+import tempfile
 import unittest
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 from full_refresh_label import pull_numbers
+from indicator_definitions_changed import changes, main as check_definitions
 from validate_dbt_models import UEC_PARENT, build_selection, main
 
 
@@ -79,6 +85,101 @@ class FullRefreshLabelTests(unittest.TestCase):
             "chore: direct commit without a pull request",
             "fix: mentions (#99) mid-subject",
         ]), [1531, 1532])
+
+
+ARCHIVE = "macros/governance/archive_indicator_definitions.sql"
+
+
+def manifest(meta=None, columns=None, macro_sql="archive", helper_sql="comment"):
+    return {
+        "nodes": {
+            "model.wnl_analytics.fct_base": {
+                "resource_type": "model", "name": "fct_base",
+                "config": {"meta": {"indicator": {"id": "IND_BASE"}}},
+            },
+            "model.wnl_analytics.fct_x": {
+                "resource_type": "model", "name": "fct_x",
+                "config": {"meta": {"owner": {"name": "Team"}, **(meta or {})}},
+                "columns": columns or {},
+            },
+        },
+        "macros": {
+            "macro.wnl_analytics.extract_indicator_metadata": {
+                "original_file_path": "macros/governance/extract_indicator_metadata.sql",
+                "macro_sql": "extract",
+            },
+            "macro.wnl_analytics.archive_usage": {
+                "original_file_path": ARCHIVE, "macro_sql": macro_sql,
+                "depends_on": {"macros": ["macro.wnl_analytics.generate_history_table_comment"]},
+            },
+            "macro.wnl_analytics.generate_history_table_comment": {
+                "original_file_path": "macros/overrides/generate_history_table_comment.sql",
+                "macro_sql": helper_sql,
+            },
+            "macro.wnl_analytics.unrelated": {"original_file_path": "macros/other.sql", "macro_sql": "x"},
+        },
+    }
+
+
+class IndicatorDefinitionsChangedTests(unittest.TestCase):
+    INDICATOR = {"indicator": {"id": "IND_X", "name_short": "X"}}
+
+    def test_identical_metadata_is_unchanged(self):
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest(self.INDICATOR)), [])
+
+    def test_unrelated_meta_change_is_unchanged(self):
+        current = manifest(self.INDICATOR)
+        current["nodes"]["model.wnl_analytics.fct_x"]["config"]["meta"]["owner"] = {"name": "Other"}
+        self.assertEqual(changes(manifest(self.INDICATOR), current), [])
+
+    def test_model_indicator_change(self):
+        current = copy.deepcopy(self.INDICATOR)
+        current["indicator"]["name_short"] = "Y"
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest(current)), ["fct_x"])
+
+    def test_added_and_removed_indicators(self):
+        self.assertEqual(changes(manifest(), manifest(self.INDICATOR)), ["fct_x"])
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest()), ["fct_x"])
+
+    def test_column_indicator_change(self):
+        columns = {"flag": {"meta": {"indicator": {"id": "IND_C"}}}}
+        changed = {"flag": {"meta": {"indicator": {"id": "IND_D"}}}}
+        self.assertEqual(changes(manifest(columns=columns), manifest(columns=changed)), ["fct_x"])
+
+    def test_inherited_column_indicator_is_ignored(self):
+        inherited = {"flag": {"meta": {"indicator": {"id": "IND_X"}}}}
+        self.assertEqual(changes(manifest(self.INDICATOR), manifest(self.INDICATOR, inherited)), [])
+
+    def test_archive_macro_and_helper_changes(self):
+        self.assertEqual(changes(manifest(macro_sql="a"), manifest(macro_sql="b")), ["macro archive_usage"])
+        self.assertEqual(changes(manifest(helper_sql="a"), manifest(helper_sql="b")),
+                         ["macro generate_history_table_comment"])
+
+    def test_macro_line_endings_and_unrelated_macros_are_ignored(self):
+        current = manifest(macro_sql="a\r\nb")
+        current["macros"]["macro.wnl_analytics.unrelated"]["macro_sql"] = "y"
+        self.assertEqual(changes(manifest(macro_sql="a\nb"), current), [])
+
+    def test_indicator_list_change(self):
+        indicators = {"indicators": [{"id": "IND_A"}, {"id": "IND_B"}]}
+        changed = {"indicators": [{"id": "IND_A"}, {"id": "IND_C"}]}
+        self.assertEqual(changes(manifest(indicators), manifest(changed)), ["fct_x"])
+
+    def test_unexpected_manifest_shape_fails(self):
+        for drop in ("nodes", "macros"):
+            with self.subTest(drop=drop):
+                current = manifest(self.INDICATOR)
+                current[drop] = {}
+                with self.assertRaises(ValueError):
+                    changes(manifest(self.INDICATOR), current)
+
+    def test_main_reports_changed_when_comparison_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = os.path.join(tmp, "output")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": output}), redirect_stdout(io.StringIO()):
+                self.assertTrue(check_definitions(os.path.join(tmp, "missing.json"), output))
+            with open(output, encoding="utf-8") as f:
+                self.assertEqual(f.read(), "changed=true\n")
 
 
 if __name__ == "__main__":
