@@ -234,6 +234,14 @@ LEFT JOIN {{ ref('stg_dictionary_dbo_hrg')}} hrg
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_HRG HRG
     on left(acm.tariff_code,5) = hrg.hrg_code
 
+--simplfied join for TFC
+LEFT JOIN {{ ref('stg_dictionary_dbo_specialties')}} sp
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_SPECIALTIES SP
+    ON COALESCE(
+        ACM.ACTIVITY_TREATMENT_FUNCTION_CODE,
+        LEFT(ACM.LOCAL_SUB_SPECIALTY_CODE, 3)
+    ) = SP.BK_SPECIALTY_CODE
+
 LEFT JOIN {{ ref('stg_dictionary_dbo_specialties')}} sp
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_SPECIALTIES SP
     on cASe
