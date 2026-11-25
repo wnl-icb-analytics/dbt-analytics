@@ -42,7 +42,7 @@ with expected as (
 ), actual as (
 
     select 'OP' as dataset, dv_fin_year, dv_fin_month, count(*) as row_count
-    from {{ ref('fct_sus_op_monthly_attendance') }}
+    from {{ ref('fct_sus_op_monthly_appointment') }}
     group by all
 
     union all

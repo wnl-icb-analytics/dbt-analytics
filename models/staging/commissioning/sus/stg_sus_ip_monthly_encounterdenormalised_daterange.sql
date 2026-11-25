@@ -45,7 +45,7 @@ select
     , dv_number_diagnoses
     , dv_number_procedures
     , dv_number_unbundled_hr_gs
-    , sk_patient_id
+    , {{ consistent_sk_patient_id_format('sk_patient_id') }} as sk_patient_id
     , dw_nhs_number
     , ccg_nhs_number
     , local_patient_identifier

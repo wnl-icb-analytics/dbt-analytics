@@ -2,7 +2,7 @@
 
 select
     sk_encounter_id
-    , sk_patient_id
+    , {{ consistent_sk_patient_id_format('sk_patient_id') }} as sk_patient_id
     , sus_version
     , spell_identifier
     , reason_access_provided

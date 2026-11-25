@@ -1,6 +1,6 @@
 models:
   - name: fct_sus_apc_monthly_spell
-    description: 'One row per source-selected admitted-patient spell representative record in the monthly SUS date-range feed. Rows satisfy dv_is_spell = 1. All administrative categories are retained. PBR enrichment is left joined and does not remove unmatched spells.'
+    description: "One row per supplied admitted-patient spell selected by dv_is_spell = 1. Retains all administrative categories and full available source history. Published separately in ACUTE_MONTHLY for monthly-feed analysis and reconciliation; not interchangeable with established ACUTE OBTs. This is activity-level data, not monthly aggregates. Refreshes on the monthly-full schedule and may lag daily/weekly data by about two months. Local derived fields with unconfirmed definitions are identified in their descriptions."
     config:
       meta:
         owner:
@@ -142,14 +142,8 @@ models:
         data_type: NUMBER
         description: 'As supplied in source field dv_NumberUnbundledHRGs.'
       - name: sk_patient_id
-        data_type: NUMBER
-        description: 'As supplied in source field SK_PatientID.'
-      - name: dw_nhs_number
-        data_type: TEXT
-        description: 'As supplied in source field DW_NHS_Number.'
-      - name: ccg_nhs_number
-        data_type: TEXT
-        description: 'As supplied in source field CCG_NHS_Number.'
+        data_type: VARCHAR
+        description: "Pseudonymised NHS-number key shared with the established SUS OBTs. Blank and unknown-patient placeholder 1 values are null; leading zeroes are preserved. It is the supported patient key for this model."
       - name: local_patient_identifier
         data_type: TEXT
         description: 'As supplied in source field Local_Patient_Identifier.'
@@ -159,7 +153,7 @@ models:
       - name: ethnic_category_code
         data_type: TEXT
         description: 'As supplied in source field Ethnic_Category_Code.'
-      - name: age_at_cds_activity_date
+      - name: age_at_event
         data_type: NUMBER
         description: 'As supplied in source field Age_At_CDS_Activity_Date.'
       - name: birth_date
@@ -240,24 +234,24 @@ models:
       - name: dv_spec_com_service_code_local_spell
         data_type: TEXT
         description: 'As supplied in source field dv_SpecCom_ServiceCode_Local_Spell.'
-      - name: organisation_code_code_of_provider
+      - name: organisation_id
         data_type: TEXT
-        description: 'As supplied in source field Organisation_Code_Code_of_Provider.'
-      - name: organisation_code_code_of_commissioner
+        description: "Provider or site code supplied in the monthly source. No parent-provider roll-up or retrospective provider-merger mapping is applied."
+      - name: submitted_commissioner_code
         data_type: TEXT
-        description: 'As supplied in source field Organisation_Code_Code_of_Commissioner.'
+        description: "Commissioner code supplied in the monthly source. This does not apply the CAM-first assignment used by established OBTs; a filter on this field can select a different population."
       - name: site_code_of_treatment_at_start_of_episode
         data_type: TEXT
         description: 'As supplied in source field Site_code_of_Treatment_at_start_of_episode.'
-      - name: organisation_code_pct_of_residence
+      - name: residence_commissioning_area_code
         data_type: TEXT
-        description: 'As supplied in source field Organisation_Code_PCT_of_Residence.'
+        description: "Commissioning geography/type value supplied in source field organisation_code_pct_of_residence. The legacy source name does not establish a current PCT or SHA: code systems and meanings vary with source year and organisation changes. Retained for source reconciliation, not CAM assignment or a current organisational hierarchy."
       - name: commissioner_code_original_data
         data_type: TEXT
         description: 'As supplied in source field Commissioner_Code_Original_Data.'
-      - name: pct_derived_from_gp_practice
+      - name: practice_commissioning_area_code
         data_type: TEXT
-        description: 'As supplied in source field PCT_Derived_from_GP_Practice.'
+        description: "Commissioning geography/type value supplied in source field pct_derived_from_gp_practice. The legacy source name does not establish a current PCT or SHA: code systems and meanings vary with source year and organisation changes. Retained for source reconciliation, not CAM assignment or a current organisational hierarchy."
       - name: patient_postcode_derived_pct
         data_type: TEXT
         description: 'As supplied in source field Patient_Postcode_Derived_PCT.'
@@ -347,7 +341,7 @@ models:
         description: 'As supplied in source field dv_MFF_Index_Applied.'
       - name: pbr_final_tariff
         data_type: FLOAT
-        description: "Source-provided tariff figure (Pbr_Final_Tariff). Currency, scaling, adjustment basis and special or null meanings are not yet confirmed for this feed. Retained unchanged for source reconciliation; do not assume it is an agreed or payable amount."
+        description: "Final national price, including applicable unbundled components and MFF and, for APC, excess-bed-day payment. This is a calculated price, not actual provider cost or proof of payment. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: dv_total_cost_inc_mff
         data_type: NUMBER
         description: 'As supplied in source field dv_Total_Cost_Inc_MFF.'
@@ -536,10 +530,10 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: applicable_costing_period
         data_type: TEXT
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Formatted national costing period, for example M01 - Apr 2016. It is derived from the activity date: spell discharge for APC, delivery for Other Delivery, appointment for OP and arrival for EM. It is distinct from the separate numeric ActivityPeriod field. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: applicable_date
         data_type: TIMESTAMP_NTZ
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "CDS applicable date: the update event, or nearest equivalent, that caused the need to exchange the CDS record. It is not the activity date used for period reconciliation. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: applied_mff_elective
         data_type: NUMBER
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -563,13 +557,13 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: duration_of_elective_wait
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Elective waiting duration in days from the original decision to admit to admission at the treating provider. National values are 0-8887; 9998 means not applicable and 9999 means not known/decision date unavailable. These special values are not ordinary durations. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: excluded_episodes_in_hospital_provider_spell
         data_type: NUMBER
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: extract_date
         data_type: TIMESTAMP_NTZ
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "CDS extract date supplied with the record. Do not assume it is the Snowflake load timestamp or the activity date. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: final_tariff_applied
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -584,7 +578,7 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: length_of_stay_hospital_provider_spell
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Unadjusted hospital-provider spell duration in days between admission and discharge, spanning the constituent episodes. The national extract does not populate this for Other Birth or Other Delivery records. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: marital_status
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -615,9 +609,9 @@ models:
       - name: org_code_local_patient_identifier
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
-      - name: patient_postcode_derived_pct_type
+      - name: patient_postcode_commissioning_area_type
         data_type: TEXT
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Commissioning geography/type value supplied in source field patient_postcode_derived_pct_type. The legacy source name does not establish a current PCT or SHA: code systems and meanings vary with source year and organisation changes. Retained for source reconciliation, not CAM assignment or a current organisational hierarchy."
       - name: patient_type
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -626,7 +620,7 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: pb_r_final_adjusted_length_of_stay
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "PbR grouping duration in days: sum the adjusted durations of non-excluded episodes in the spell, subtracting rehabilitation, specialist palliative care and derived critical-care days from each episode. Each adjusted episode duration is floored at zero. This differs from unadjusted spell duration. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: pb_r_spell_error_status
         data_type: NUMBER
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -645,12 +639,12 @@ models:
       - name: reason_access_provided
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
-      - name: sha_commissioner
+      - name: commissioner_area_code
         data_type: TEXT
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
-      - name: sha_provider
+        description: "Commissioning geography/type value supplied in source field sha_commissioner. The legacy source name does not establish a current PCT or SHA: code systems and meanings vary with source year and organisation changes. Retained for source reconciliation, not CAM assignment or a current organisational hierarchy."
+      - name: provider_area_code
         data_type: TEXT
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Commissioning geography/type value supplied in source field sha_provider. The legacy source name does not establish a current PCT or SHA: code systems and meanings vary with source year and organisation changes. Retained for source reconciliation, not CAM assignment or a current organisational hierarchy."
       - name: significant_specialised_service_code
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -665,7 +659,7 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: spell_acc_length_of_stay
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Critical-care duration counted as distinct calendar days across included spell episodes for this care type. Overlap across care types is possible, so do not sum ACC, NCC and PCC values to derive the adjustment; use the final adjusted length of stay instead. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: spell_age
         data_type: NUMBER
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -677,13 +671,13 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: spell_ncc_length_of_stay
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Critical-care duration counted as distinct calendar days across included spell episodes for this care type. Overlap across care types is possible, so do not sum ACC, NCC and PCC values to derive the adjustment; use the final adjusted length of stay instead. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: spell_npoc
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: spell_pcc_length_of_stay
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Critical-care duration counted as distinct calendar days across included spell episodes for this care type. Overlap across care types is possible, so do not sum ACC, NCC and PCC values to derive the adjustment; use the final adjusted length of stay instead. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: spell_primary_diagnosis
         data_type: TEXT
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
@@ -698,19 +692,31 @@ models:
         description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
       - name: tariff_initial_amount_national
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Initial national tariff amount for the activity, before subsequent price adjustments. It depends on HRG and relevant admission/spell, short-stay and best-practice rules. This is a national price component, not actual provider cost. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_long_stay_payment_national
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "National excess-bed-day payment component calculated from excess days and the applicable per-day rate. It is part of the overall price, not an additional count of bed days. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_long_stay_rate_national
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "National excess-bed-day price per day from the applicable tariff reference data. A rate rather than a duration or total payment. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_pre_mff_adjusted_national
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "National price subtotal after applicable adjustments and before multiplication by the market forces factor (MFF). Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_service_adjustment_national
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "National price adjustment for specialised services, added before MFF. From 2017-18 it reflects PSS Grouper output; through 2016-17 it uses the specialised-service adjustment factor associated with the most significant service code. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_total_payment_national
         data_type: NUMBER
-        description: 'As supplied by the PBR spell preprocessing date-range source when a matching encounter exists.'
+        description: "Final calculated national payment including applicable top-ups, adjustments and MFF. It is a calculated national price, not actual provider cost or evidence of an agreed local invoice. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
+      - name: activity_date
+        data_type: DATE
+        description: "Date used to group this activity: AE arrival, OP appointment, APC episode end or APC spell discharge, according to the model."
+      - name: financial_year
+        data_type: VARCHAR
+        description: "NHS financial year derived from activity_date using the established fin_year_from_date macro, in YYYY plus two-digit end-year format, for example 202526, consistent with established SUS reporting."
+      - name: organisation_name
+        data_type: VARCHAR
+        description: "Latest available provider/site name from the maintained organisation reference using an exact normalised code match. Not an event-time name; null where no match exists."
+      - name: submitted_commissioner_name
+        data_type: VARCHAR
+        description: "Latest available name for the submitted commissioner using an exact normalised code match. Not CAM-assigned or an event-time name; null where no match exists."

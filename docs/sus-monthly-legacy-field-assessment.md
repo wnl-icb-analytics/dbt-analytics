@@ -1,5 +1,7 @@
 # SUS monthly legacy field assessment
 
+This is the original field-discovery assessment. The agreed release now uses a separate `ACUTE_MONTHLY` schema and clearer analyst-facing names. These historical counts are not the final column inventory and do not require ERNI to be recreated column by column.
+
 This assessment compares the 1,259 non-`z` fields in the four legacy SQL Server consolidated tables with the monthly SUS dbt facts. The field-level working report was generated from the legacy schema, Snowflake metadata and the implemented model YAML.
 
 The legacy evidence proves that the final consolidation views copied fields from Current, Reconciliation or Post-Reconciliation fact tables. It does not show how the upstream loads populated most fields. A name match therefore proves availability, not identical meaning.

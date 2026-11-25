@@ -1,5 +1,3 @@
-{{ config(tags=['monthly', 'sus']) }}
-
 with spell_encounters as (
 
     select *
@@ -54,12 +52,10 @@ select
     ,  encounters.dv_number_procedures
     ,  encounters.dv_number_unbundled_hr_gs
     ,  encounters.sk_patient_id
-    ,  encounters.dw_nhs_number
-    ,  encounters.ccg_nhs_number
     ,  encounters.local_patient_identifier
     ,  encounters.carer_support_indicator
     ,  encounters.ethnic_category_code
-    ,  encounters.age_at_cds_activity_date
+    ,  encounters.age_at_cds_activity_date as age_at_event
     ,  encounters.birth_date
     ,  encounters.dv_year_of_birth
     ,  encounters.gender_code
@@ -86,12 +82,12 @@ select
     ,  encounters.dv_spec_com_service_code_national_spell
     ,  encounters.dv_spec_com_service_code_local_episode
     ,  encounters.dv_spec_com_service_code_local_spell
-    ,  encounters.organisation_code_code_of_provider
-    ,  encounters.organisation_code_code_of_commissioner
+    ,  encounters.organisation_code_code_of_provider as organisation_id
+    ,  encounters.organisation_code_code_of_commissioner as submitted_commissioner_code
     ,  encounters.site_code_of_treatment_at_start_of_episode
-    ,  encounters.organisation_code_pct_of_residence
+    ,  encounters.organisation_code_pct_of_residence as residence_commissioning_area_code
     ,  encounters.commissioner_code_original_data
-    ,  encounters.pct_derived_from_gp_practice
+    ,  encounters.pct_derived_from_gp_practice as practice_commissioning_area_code
     ,  encounters.patient_postcode_derived_pct
     ,  encounters.dv_ccam_sel
     ,  encounters.dv_ccam_swl
@@ -211,7 +207,7 @@ select
     , pbr.number_unbundled_non_priced_hr_gs
     , pbr.number_unbundled_priced_hr_gs
     , pbr.org_code_local_patient_identifier
-    , pbr.patient_postcode_derived_pct_type
+    , pbr.patient_postcode_derived_pct_type as patient_postcode_commissioning_area_type
     , pbr.patient_type
     , pbr.pb_r_days_beyond_trimpoint
     , pbr.pb_r_final_adjusted_length_of_stay
@@ -221,8 +217,8 @@ select
     , pbr.provider_code_original_data
     , pbr.provider_site_code
     , pbr.reason_access_provided
-    , pbr.sha_commissioner
-    , pbr.sha_provider
+    , pbr.sha_commissioner as commissioner_area_code
+    , pbr.sha_provider as provider_area_code
     , pbr.significant_specialised_service_code
     , pbr.specialised_service_code_1
     , pbr.specialised_service_code_2
@@ -244,6 +240,14 @@ select
     , pbr.tariff_pre_mff_adjusted_national
     , pbr.tariff_service_adjustment_national
     , pbr.tariff_total_payment_national
+    , encounters.end_date_hospital_provider_spell::date as activity_date
+    , {{ fin_year_from_date('encounters.end_date_hospital_provider_spell') }} as financial_year
+    , provider.organisation_name as organisation_name
+    , commissioner.organisation_name as submitted_commissioner_name
 from spell_encounters as encounters
 left join {{ ref('stg_sus_ip_monthly_pbr_preprocess_sp_daterange') }} as pbr
     on encounters.sk_encounter_id = pbr.sk_encounter_id
+left join {{ ref('organisation') }} as provider
+    on upper(trim(encounters.organisation_code_code_of_provider)) = provider.organisation_code
+left join {{ ref('organisation') }} as commissioner
+    on upper(trim(encounters.organisation_code_code_of_commissioner)) = commissioner.organisation_code

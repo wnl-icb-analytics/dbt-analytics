@@ -115,8 +115,8 @@ models:
         data_type: TEXT
         description: 'As supplied in source field Location_Type_Code.'
       - name: sk_patient_id
-        data_type: NUMBER
-        description: 'As supplied in source field SK_PatientID.'
+        data_type: VARCHAR
+        description: "Pseudonymised NHS-number key shared with the established SUS OBTs. Normalised to trimmed text; blank values and the unknown-patient placeholder 1 become null. Leading zeroes are preserved."
       - name: dw_nhs_number
         data_type: TEXT
         description: 'As supplied in source field DW_NHS_Number.'
@@ -257,16 +257,16 @@ models:
         description: 'As supplied in source field dv_MFF_Index_Applied.'
       - name: tariff_initial_amount_national
         data_type: NUMBER
-        description: "Source-provided tariff figure (Tariff_Initial_Amount_National). Currency, scaling, adjustment basis and special or null meanings are not yet confirmed for this feed. Retained unchanged for source reconciliation; do not assume it is an agreed or payable amount."
+        description: "Initial national tariff amount for the activity, before subsequent price adjustments. It depends on HRG and relevant admission/spell, short-stay and best-practice rules. This is a national price component, not actual provider cost. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_pre_mff_adjusted_national
         data_type: NUMBER
-        description: "Source-provided tariff figure (Tariff_Pre_MFF_Adjusted_National). Currency, scaling, adjustment basis and special or null meanings are not yet confirmed for this feed. Retained unchanged for source reconciliation; do not assume it is an agreed or payable amount."
+        description: "National price subtotal after applicable adjustments and before multiplication by the market forces factor (MFF). Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: tariff_total_payment_national
         data_type: NUMBER
-        description: "Source-provided tariff figure (Tariff_Total_Payment_National). Currency, scaling, adjustment basis and special or null meanings are not yet confirmed for this feed. Retained unchanged for source reconciliation; do not assume it is an agreed or payable amount."
+        description: "Final calculated national payment including applicable top-ups, adjustments and MFF. It is a calculated national price, not actual provider cost or evidence of an agreed local invoice. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: pbr_final_tariff
         data_type: FLOAT
-        description: "Source-provided tariff figure (Pbr_Final_Tariff). Currency, scaling, adjustment basis and special or null meanings are not yet confirmed for this feed. Retained unchanged for source reconciliation; do not assume it is an agreed or payable amount."
+        description: "Final national price, including applicable unbundled components and MFF and, for APC, excess-bed-day payment. This is a calculated price, not actual provider cost or proof of payment. Definition: NHS SUS+ extract specification v3.12; source values are retained without recalculation or monetary rescaling."
       - name: dv_total_cost_inc_mff
         data_type: FLOAT
         description: 'As supplied in source field dv_Total_Cost_Inc_MFF.'

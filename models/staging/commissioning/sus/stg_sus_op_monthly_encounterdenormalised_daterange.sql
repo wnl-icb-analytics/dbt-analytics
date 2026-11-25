@@ -36,7 +36,7 @@ select
     , consultant_code
     , medical_staff_type_seeing_patient
     , location_type_code
-    , sk_patient_id
+    , {{ consistent_sk_patient_id_format('sk_patient_id') }} as sk_patient_id
     , dw_nhs_number
     , ccg_nhs_number
     , local_patient_identifier
