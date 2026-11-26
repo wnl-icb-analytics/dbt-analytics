@@ -224,7 +224,6 @@ select il.patient_id
     ,bp.latest_diastolic_value 
     ,bp.latest_bp_date
     ,coalesce(dcp.care_processes_completed, 0) as care_processes_completed
-    , coalesce(dcp9.care_processes_9_completed, 0) as care_processes_9_completed
     , case when dcp.hba1c_completed_in_last_12m = true then dcp.latest_hba1c_value else null end as latest_hba1c_value
     ,dcp.latest_hba1c_date
     -- care pathway gaps from cltcs_gap_summary: per domain, per domain group and per item.
@@ -322,8 +321,6 @@ left join {{ref('fct_person_bp_control')}} bp
     on il.olids_id = bp.person_id 
 left join {{ref('fct_person_diabetes_8_care_processes')}} dcp
     on il.olids_id = dcp.person_id
-left join {{ ref('fct_person_diabetes_9_care_processes') }} dcp9
-    on il.olids_id = dcp9.person_id
 left join {{ ref('cltcs_gap_summary') }} gs
     on il.olids_id = gs.person_id
 --left join {{ref('fct_person_diabetes_register')}} dpr
