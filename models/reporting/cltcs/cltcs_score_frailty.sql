@@ -165,8 +165,8 @@ encoding_features as (
         case when ps.is_housebound = true then 1 else 0 end as is_housebound_flag,
         case when pc.has_learning_disability = true then 1 else 0 end as has_learning_disability_flag,
         case when pc.has_severe_mental_illness = true then 1 else 0 end as has_severe_mental_illness_flag,
-        case when id.illicit_drug_pattern is not null
-                  and id.illicit_drug_pattern <> 'Does not misuse drugs' then 1 else 0 end as substance_misuse_flag,
+        -- latest ILLSUB_COD record is QUALIFYING (int_substance_misuse_status)
+        case when sub.has_substance_misuse then 1 else 0 end as substance_misuse_flag,
         -- wider care engagement
         asc_cld.primary_support_reason_category_count,
         case when asc_cld.has_physical_support_personal_care = true then 1 else 0 end as has_physical_support_personal_care_flag,
@@ -193,8 +193,8 @@ encoding_features as (
         on il.person_id =cf.person_id
     left join {{ ref('fct_person_polypharmacy_current') }} polyp
         on il.person_id =polyp.person_id
-    left join {{ ref('int_illicit_drug_use_latest') }} id
-        on il.person_id =id.person_id
+    left join {{ ref('int_substance_misuse_status') }} sub
+        on il.person_id =sub.person_id
     left join {{ ref('dim_person_care_home') }} ch
         on il.person_id =ch.person_id
     left join {{ref('fct_person_asc_service_recent')}} asc_cld
