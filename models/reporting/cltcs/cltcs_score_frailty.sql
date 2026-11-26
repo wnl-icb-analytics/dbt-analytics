@@ -1,5 +1,7 @@
-{{ config(materialized='table', tags=['cltcs']) }}
-
+{{ config(
+    materialized='table', 
+    tags=['cltcs', 'daily']) 
+    }}
 
 with spine as (
     select sk_patient_id
