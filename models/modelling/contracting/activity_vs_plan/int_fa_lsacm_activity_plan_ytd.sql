@@ -116,7 +116,7 @@ LEFT JOIN {{ ref('stg_reference_pod_group_mapping')}} pod
         coalesce(acm.local_point_of_delivery_code, '?'),
         coalesce(acm.local_point_of_delivery_description, '?')
     ) = pod.pod_lookup
-LEFT JOIN {{ ref('stg_dictionary_dbo_hrg')}} hrg
+LEFT JOIN {{ ref('stg_dictionary_dbo_hrg')}} hrg on left(acm.tariff_code,5) = hrg.hrg_code
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_HRG HRG on left(acm.tariff_code,5) = hrg.hrg_code
 )
 select *
