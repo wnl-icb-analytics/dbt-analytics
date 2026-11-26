@@ -24,7 +24,7 @@ patient_deceased_status AS (
     SELECT
         patient_id,
         is_deceased,
-        death_date_approx
+        final_date_of_death AS death_date
     FROM {{ ref('int_patient_deceased_status') }}
 ),
 
@@ -45,7 +45,7 @@ raw_registrations AS (
         -- Get patient details
         p.sk_patient_id,
         pds.is_deceased,
-        pds.death_date_approx
+        pds.death_date
     FROM {{ ref('stg_olids_episode_of_care') }} AS eoc
     INNER JOIN patient_to_person AS ptp
         ON eoc.patient_id = ptp.patient_id
@@ -86,8 +86,8 @@ cleaned_registrations AS (
             )
             AND (
                 NOT rr.is_deceased
-                OR rr.death_date_approx IS NULL
-                OR rr.death_date_approx > CURRENT_DATE()
+                OR rr.death_date IS NULL
+                OR rr.death_date > CURRENT_DATE()
             )
         ) AS is_current_registration,
 
@@ -102,18 +102,18 @@ cleaned_registrations AS (
         CASE
             -- If deceased, use death date as effective end if earlier
             WHEN rr.is_deceased
-                AND rr.death_date_approx IS NOT NULL
-                AND rr.death_date_approx >= rr.registration_start_datetime
-                AND rr.death_date_approx <= CURRENT_DATE()
+                AND rr.death_date IS NOT NULL
+                AND rr.death_date >= rr.registration_start_datetime
+                AND rr.death_date <= CURRENT_DATE()
                 AND (
                     rr.registration_end_datetime IS NULL
-                    OR rr.death_date_approx < rr.registration_end_datetime
+                    OR rr.death_date < rr.registration_end_datetime
                 )
-                THEN rr.death_date_approx
-            -- Registration starting after death (approximate, mid-month) closes at its start
+                THEN rr.death_date
+            -- Registration starting after death closes at its start
             WHEN rr.is_deceased
-                AND rr.death_date_approx IS NOT NULL
-                AND rr.death_date_approx < rr.registration_start_datetime
+                AND rr.death_date IS NOT NULL
+                AND rr.death_date < rr.registration_start_datetime
                 THEN rr.registration_start_datetime
             -- If registration ended validly, use registration end date
             WHEN rr.registration_end_datetime IS NOT NULL
@@ -126,8 +126,8 @@ cleaned_registrations AS (
         -- Registration status classification
         CASE
             WHEN rr.is_deceased
-                AND rr.death_date_approx IS NOT NULL
-                AND rr.death_date_approx <= CURRENT_DATE()
+                AND rr.death_date IS NOT NULL
+                AND rr.death_date <= CURRENT_DATE()
                 THEN 'Historical - Deceased'
             WHEN (
                 rr.registration_end_datetime IS NULL
