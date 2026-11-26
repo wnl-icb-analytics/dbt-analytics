@@ -1,4 +1,7 @@
-{{ config(materialized='table', tags=['cltcs']) }}
+{{ config(
+    materialized='table', 
+    tags=['cltcs', 'daily']) 
+    }}
 
 -- Care pathway gap items for the C-LTCS population: one row per person and assessable item.
 -- NICE indicators come from cltcs_treatment_nice_indicators. A disease control result that

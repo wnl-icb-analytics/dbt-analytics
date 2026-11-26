@@ -1,5 +1,8 @@
-{{ config(materialized='table', tags=['cltcs']) }}
-
+{{ config(
+    materialized='table', 
+    tags=['cltcs', 'daily']) 
+    }}
+    
 -- Person-level summary of cltcs_gap_items: one row per person in the C-LTCS population with
 -- a column per item, per domain group and per domain. The item and group column lists come
 -- from the cltcs_gap_item_ids and cltcs_gap_domains macros.
