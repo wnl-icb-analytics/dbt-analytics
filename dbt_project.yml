@@ -51,8 +51,10 @@ models:
     +persist_docs:
       columns: true
     +post-hook:
+      # Constraint first: adding one needs ownership, which then moves to ANALYST.
+      - "{{ set_primary_key_constraint() }}"
       - "{{ grant_ownership_with_copy() }}"
-      - "{{ set_managed_by_tag() }}"
+      - "{{ set_governance_tags() }}"
     +enabled: true
 
     # Raw layer - source data with minimal transformation
