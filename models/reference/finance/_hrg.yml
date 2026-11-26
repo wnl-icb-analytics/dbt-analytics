@@ -8,6 +8,7 @@ models:
       codes no longer listed are kept for historical joins. HRG3.5 codes are not included.
     config: &owner
       meta:
+        primary_key: [hrg_code]
         owner:
           name: Eddie Davison
     columns:
@@ -41,7 +42,11 @@ models:
       HRG name and payment-list revisions from UKHFD. One row per HRG code and revision, where a
       revision starts on 1 April when the name, source list or listing status changes. Join on
       activity date between valid_from_date and valid_to_date for the name in use at the time.
-    config: *owner
+    config:
+      meta:
+        primary_key: [hrg_code, valid_from_date]
+        owner:
+          name: Eddie Davison
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
