@@ -233,28 +233,14 @@ LEFT JOIN {{ ref('stg_reference_pod_group_mapping')}} pod
 LEFT JOIN {{ ref('stg_dictionary_dbo_hrg')}} hrg
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_HRG HRG
     on left(acm.tariff_code,5) = hrg.hrg_code
-
+    
+--simplified join for TFC because main_specialty_code is not populated in LSACM
 LEFT JOIN {{ ref('stg_dictionary_dbo_specialties')}} sp
 --LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_SPECIALTIES SP
-    on cASe
-           WHEN acm.dv_provider_code = 'RAP'
-               then left(
-                   coalesce(
-                       acm.main_specialty_code,
-                       acm.activity_treatment_function_code,
-                       acm.local_sub_specialty_code
-                   ),
-                   3
-               )
-           ELSE left(
-                   coalesce(
-                      acm.main_specialty_code,
-                       acm.local_sub_specialty_code,
-                       acm.activity_treatment_function_code
-                   ),
-                   3
-               )
-       END = sp.bk_specialty_code
+    ON COALESCE(
+        ACM.ACTIVITY_TREATMENT_FUNCTION_CODE,
+        LEFT(ACM.LOCAL_SUB_SPECIALTY_CODE, 3)
+    ) = SP.BK_SPECIALTY_CODE
 LEFT JOIN {{ ref('stg_reference_wnl_reporting_names') }} prov
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES prov
     on IFF(

@@ -1,4 +1,6 @@
-{{ config(materialized='table', tags=['cltcs']) }}
+{{ config(
+    materialized='table', 
+    tags=['cltcs',  'daily']) }}
 
 -- Domain weights for the treatment score (each default 1 = equal weighting).
 {% set weight_biomarker_gaps = 1 %}
@@ -69,8 +71,8 @@ encoding_features as (
             when zeroifnull(br.alcohol_risk_sort_key) < 7 and zeroifnull(br.alcohol_risk_sort_key) >=3 then 2
             when zeroifnull(br.alcohol_risk_sort_key) < 3 and zeroifnull(br.alcohol_risk_sort_key) > 1 then 1
             else 0 end as alcohol_flag
-        , case when id.illicit_drug_pattern is not null
-                  and id.illicit_drug_pattern <> 'Does not misuse drugs' then 3 else 0 end as substance_misuse_flag
+        -- latest ILLSUB_COD record is QUALIFYING (int_substance_misuse_status)
+        , case when sub.has_substance_misuse then 3 else 0 end as substance_misuse_flag
 
         -- medication burden
         , zeroifnull(rm.unique_active_ingredient_count_12mo) as unique_active_ingredient_count_12mo
@@ -152,8 +154,8 @@ encoding_features as (
         on il.person_id =dt.person_id
     left join {{ref('int_hba1c_latest')}} hba1c
         on il.person_id =hba1c.person_id
-    left join {{ref('int_smi_lifestyle')}} id
-        on il.person_id =id.person_id
+    left join {{ ref('int_substance_misuse_status') }} sub
+        on il.person_id =sub.person_id
     left join {{ ref('int_egfr_latest') }} eg
         on il.person_id =eg.person_id
     left join {{ref('dim_person_status_summary')}} ps

@@ -1,9 +1,10 @@
---get all latest data for plan activity checking every month by joining to latest data meta_file_id
+
 {{
     config(
         materialized='table',
         tags=['fa_checks'])
 }}
+--get all latest data for plan activity checking every month by joining to latest data meta_file_id
 WITH wnl_reporting_names AS (
     SELECT DISTINCT
         provider_code,
@@ -27,6 +28,29 @@ acm.commissioner_code,
 o.organisation_name as commissioner_name,
 acm.point_of_delivery_code,
 acm.local_point_of_delivery_description,
+--POD GROUP
+CASE --outpatients
+    WHEN acm.tariff_code ILIKE any ('WF01B%','WF02B%','WF01D%','WF02D%') then 'Outpatient Firsts'
+    WHEN acm.tariff_code ILIKE any ('WF01A%','WF02A%','WF01C%','WF02C%') then 'Outpatient Follow-ups'
+    WHEN pod.pod_group = 'Outpatients' then iff(hrg.hrg_code is not null,'Outpatient Procedures','Outpatient Other')
+    --maternity/NELNE
+    WHEN left(acm.tariff_code,4) in ('NZ01','NZ02','NZ03','NZ11','NZ12','NZ13','NZ14','NZ15','NZ25'
+                                 ,'NZ30','NZ31','NZ32','NZ33','NZ34','NZ40','NZ41','NZ42','NZ43'
+                                 ,'NZ44','NZ50','NZ51')
+                                 then 'Maternity - Deliveries'
+    WHEN acm.tariff_code ILIKE 'NZ%' then 'Maternity - Non-deliveries'
+    WHEN acm.point_of_delivery_code in ('NELNE','NELNEXBD') or acm.point_of_delivery_code = 'NEL' AND acm.tariff_code ILIKE 'PB%' then 'Neonates AND Transfers'
+    WHEN pod.pod_group = 'Maternity' then 'Maternity - Pathways'
+    --ambulatory AND SDEC
+    WHEN acm.dv_provider_code = 'RKE' AND acm.local_sub_specialty_code in ('100AMB','300AMB') then 'Ambulatory Care'
+    WHEN acm.dv_provider_code = 'RRV' AND acm.point_of_delivery_further_detail_code in ('SDEC','CYPSDEC') then 'Same Day Emergency Care'
+    WHEN acm.dv_provider_code = 'RYJ' AND acm.tariff_code = 'AEC' then 'Same Day Emergency Care'
+    WHEN acm.dv_provider_code = 'RAL' AND acm.tariff_code = 'SDECED' then 'Same Day Emergency Care'
+    WHEN acm.dv_provider_code = 'RAS' AND acm.tariff_code = 'SDEC' then 'Same Day Emergency Care'
+    --ICH PTS
+    WHEN acm.dv_provider_code = 'RYJ' AND acm.point_of_delivery_further_detail_code LIKE '%PTS%' THEN 'Patient Transport Service'
+    ELSE pod.pod_group
+END AS pod_group,
 --commissioned service category codes
 acm.commissioned_service_category_code,
 CASE 
@@ -85,6 +109,15 @@ LEFT JOIN {{ ref('pss_service_code') }} ser on UPPER(acm.service_code) = ser.ser
 LEFT JOIN {{ ref('nhs_dd_commissioned_service_category') }} cs on acm.commissioned_service_category_code = cs.code
 --LEFT JOIN REFERENCE.DATA_DICTIONARY.NHS_DD_COMMISSIONED_SERVICE_CATEGORY cs on acm.commissioned_service_category_code = cs.code
 LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
+LEFT JOIN {{ ref('stg_reference_pod_group_mapping')}} pod
+--LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_POD_GROUP_MAPPING POD
+    on CONCAT(
+        coalesce(acm.point_of_delivery_code, '?'),
+        coalesce(acm.local_point_of_delivery_code, '?'),
+        coalesce(acm.local_point_of_delivery_description, '?')
+    ) = pod.pod_lookup
+LEFT JOIN {{ ref('stg_dictionary_dbo_hrg')}} hrg on left(acm.tariff_code,5) = hrg.hrg_code
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_HRG HRG on left(acm.tariff_code,5) = hrg.hrg_code
 )
 select *
 from latest_submissions
