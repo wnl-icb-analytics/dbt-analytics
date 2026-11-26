@@ -110,6 +110,11 @@ cleaned_registrations AS (
                     OR rr.death_date_approx < rr.registration_end_datetime
                 )
                 THEN rr.death_date_approx
+            -- Registration starting after death (approximate, mid-month) closes at its start
+            WHEN rr.is_deceased
+                AND rr.death_date_approx IS NOT NULL
+                AND rr.death_date_approx < rr.registration_start_datetime
+                THEN rr.registration_start_datetime
             -- If registration ended validly, use registration end date
             WHEN rr.registration_end_datetime IS NOT NULL
                 AND rr.registration_end_datetime >= rr.registration_start_datetime
