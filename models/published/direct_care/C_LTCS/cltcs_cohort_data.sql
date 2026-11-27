@@ -222,7 +222,8 @@ select il.patient_id
     ,bp.latest_diastolic_value 
     ,bp.latest_bp_date
     ,coalesce(dcp.care_processes_completed, 0) as care_processes_completed
-    , case when dcp.hba1c_completed_in_last_12m = true then dcp.latest_hba1c_value else null end as latest_hba1c_value
+    -- Gate on the valid result's date: completion also counts invalid or value-free tests.
+    , case when dcp.latest_hba1c_date >= dateadd(month, -12, current_date()) then dcp.latest_hba1c_value else null end as latest_hba1c_value
     ,dcp.latest_hba1c_date
     -- care pathway gaps from cltcs_gap_summary: per domain, per domain group and per item.
     -- Null for patients outside the cltcs_adult_population cohorts (shortlist only).
