@@ -116,13 +116,12 @@ SELECT
     -- Clinical categorisation (mg/mmol) for ACR results
     CASE
         WHEN acr_value IS NULL AND is_acr_ratio AND is_result_recorded THEN 'Invalid'
-        WHEN acr_value < 3 THEN 'Normal (<3)'
-        WHEN acr_value < 30 THEN 'Mildly Increased (3-30)'
-        WHEN acr_value < 300 THEN 'Moderately Increased (30-300)'
-        WHEN acr_value >= 300 THEN 'Severely Increased (≥300)'
+        WHEN acr_value < 3 THEN 'A1 normal to mildly increased (<3)'
+        WHEN acr_value <= 30 THEN 'A2 moderately increased (3-30)'
+        WHEN acr_value > 30 THEN 'A3 severely increased (>30)'
     END AS acr_category,
     COALESCE(acr_value >= 3, FALSE) AS is_acr_elevated,
-    COALESCE(acr_value >= 3 AND acr_value < 30, FALSE) AS is_microalbuminuria,
-    COALESCE(acr_value >= 30, FALSE) AS is_macroalbuminuria
+    COALESCE(acr_value >= 3 AND acr_value <= 30, FALSE) AS is_microalbuminuria,
+    COALESCE(acr_value > 30, FALSE) AS is_macroalbuminuria
 
 FROM valued

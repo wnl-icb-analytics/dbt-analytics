@@ -127,10 +127,9 @@ urine_acr_measurements as(
         acr.acr_value as value,
         acr.acr_category as category,
         case
-            when acr.acr_category = 'Normal (<3)' then 0
-            when acr.acr_category = 'Mildly Increased (3-30)' then 1
-            when acr.acr_category = 'Moderately Increased (30-300)' then 2
-            when acr.acr_category = 'Severely Increased (≥300)' then 3
+            when acr.acr_category = 'A1 normal to mildly increased (<3)' then 0
+            when acr.acr_category = 'A2 moderately increased (3-30)' then 1
+            when acr.acr_category = 'A3 severely increased (>30)' then 2
             else 10
         end as colour_mapping,
         'urine_acr' as measurement_type,
