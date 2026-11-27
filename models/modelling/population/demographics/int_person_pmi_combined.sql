@@ -11,6 +11,19 @@ with combined as (
     select * from {{ref('int_person_pmi_dataset_ethnicity_national_data_sets')}}
 ),
 
+last_known_wnl_residence as (
+    -- Latest PDS residence, including ended records and deceased patients.
+    -- Do not infer additional WNL residents from SUS or an older WNL address.
+    select
+        pds.sk_patient_id,
+        geo.lsoa_2021_code as last_known_wnl_lsoa21_code
+    from combined as pds
+    inner join {{ref('stg_reference_lookup_ncl_lsoa_2021_ward_2025_local_authority_2025')}} geo
+        on pds.lsoa21_code = geo.lsoa_2021_code
+        and geo.resident_flag in ('NCL', 'NWL')
+    where pds.dataset_source = 'pds'
+),
+
 ids as (
     select distinct sk_patient_id
     from combined
@@ -204,6 +217,7 @@ select
     lsoa_field.lsoa_source,
     lsoa_field.lsoa21_code,
     lsoa_field.lsoa_event_date,
+    last_known_wnl_residence.last_known_wnl_lsoa21_code,
     practice_code_field.practice_source,
     practice_code_field.practice_code,
     practice_code_field.registered_event_date,
@@ -234,6 +248,9 @@ on ids.sk_patient_id = interpreter_required_field.sk_patient_id
 
 left join lsoa_field
 on ids.sk_patient_id = lsoa_field.sk_patient_id
+
+left join last_known_wnl_residence
+on ids.sk_patient_id = last_known_wnl_residence.sk_patient_id
 
 left join practice_code_field
 on ids.sk_patient_id = practice_code_field.sk_patient_id
