@@ -15,6 +15,7 @@ WITH population AS (
 ), hospital_daily AS (
     SELECT person_id, therapy_date, coverage_months
     FROM {{ ref('int_bone_sparing_hospital_therapy_all') }}
+    WHERE NOT is_authorisation_only
     GROUP BY person_id, therapy_date, coverage_months
 ), hospital AS (
     SELECT p.person_id, p.reporting_date,

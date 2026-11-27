@@ -3,9 +3,11 @@ models:
     description: >-
       Alcohol education, interventions and declined interventions in OLIDS GP records,
       using SMI_LONGER_LIVES_ALCOHOL_EDUCATION, ALCOHOLINT_COD, ALCSPADVDEC_COD and
-      ALCBRINTDEC_COD. One row per person, concept and clinical date up to the build
+      ALCBRINTDEC_COD. One row per person, concept and calendar date up to the build
       date. Includes inactive and deceased people, without age or SMI-register
-      restrictions.
+      restrictions. The selected clinical timestamp is retained. Within a calendar
+      day, completion takes priority over decline, then the latest save time
+      and highest observation ID decide the selected record.
     config:
       meta:
         owner:
@@ -16,7 +18,7 @@ models:
             combination_of_columns:
               - person_id
               - concept_code
-              - clinical_effective_date
+              - "DATE(clinical_effective_date)"
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALCBRINTDEC_COD, ALCOHOLINT_COD, ALCSPADVDEC_COD, SMI_LONGER_LIVES_ALCOHOL_EDUCATION
@@ -24,6 +26,32 @@ models:
           arguments:
             min_value: 1
     columns:
+      - name: observation_id
+        description: Source observation selected within the model's event grain.
+      - name: date_recorded
+        description: EMIS save time of the selected observation; null when unavailable.
       - name: person_id
         tests:
           - not_null
+
+unit_tests:
+  - name: alcohol_intervention_calendar_day_and_save_time
+    model: int_alcohol_intervention
+    given: []
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR AS id, -144521::NUMBER AS person_id,
+              column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              column3::TIMESTAMP_NTZ AS date_recorded,
+              'SYN_ALCOHOL'::VARCHAR AS mapped_concept_code,
+              column1::VARCHAR AS mapped_concept_display, 'ALCOHOLINT_COD'::VARCHAR AS cluster_id
+          FROM VALUES ('SYN_MORNING', '2024-03-01 09:00', '2024-03-04'),
+              ('SYN_Z', '2024-03-01 15:00', '2024-03-02'),
+              ('SYN_A', '2024-03-01 15:00', '2024-03-03'),
+              ('SYN_NEXT', '2024-03-02 09:00', NULL),
+              ('SYN_FUTURE', '2999-01-01', NULL)
+    expect:
+      rows:
+        - {person_id: -144521, observation_id: SYN_MORNING, clinical_effective_date: '2024-03-01 09:00:00', alcohol_advice_services: 'Yes'}
+        - {person_id: -144521, observation_id: SYN_NEXT, clinical_effective_date: '2024-03-02 09:00:00', alcohol_advice_services: 'Yes'}

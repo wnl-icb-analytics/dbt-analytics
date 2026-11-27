@@ -1,13 +1,16 @@
 models:
 - name: int_bone_sparing_hospital_therapy_all
   description: >-
-    Bone-sparing therapy recorded outside practice medication orders, one row per source record.
-    Includes PCD BSA_COD observations and NHS_DRUG_REFSETS/BSADRUG_COD medication statements for
-    zoledronic acid or denosumab, including branded products identified by BNF ingredient prefixes.
-    Retains inactive and deceased people and all dated records. Zoledronic acid and explicitly
-    intravenous bisphosphonates cover twelve months; denosumab and other therapy cover six months.
-    An unspecified ibandronic acid therapy observation does not establish intravenous administration.
-    Coverage is measured backwards from the reporting date, with an exclusive lower boundary.
+    Bone-sparing treatment evidence and statement-only authorisations, one row per source record.
+    Includes PCD BSA_COD therapy codes and national BSADRUG_COD zoledronic acid/denosumab orders
+    of any issue method. Uncancelled statements without a dated linked order are authorisation
+    only and supply no coverage. Cancelled statements are excluded; a later authorisation stop
+    does not erase an issued prescription. Retains inactive and deceased people and all dated
+    records. Coverage is a local definition agreed for IND91/IND92: six calendar months, extended
+    to twelve only for a dm+d zoledronic acid 5 mg unit dose. Unstrengthened therapy codes and
+    unknown strengths receive six months. Oncology strengths count for six months and are flagged.
+    Prescriptions approximate treatment dates and do not prove administration. The lower coverage
+    boundary is exclusive. Sources: issue 1442, Aclasta/Prolia SPC section 4.2 and retired QOF OST rules.
   config:
     meta:
       owner:
@@ -28,16 +31,33 @@ models:
   - name: person_id
     description: Person identifier.
   - name: record_id
-    description: Source observation or medication statement identifier; unique with therapy_source.
+    description: Source observation, order or medication statement identifier; unique with therapy_source.
   - name: therapy_date
-    description: Corrected clinical observation date or medication statement date.
+    description: Corrected therapy observation date, prescription issue date or authorisation start date.
   - name: therapy_source
-    description: PCD_OBSERVATION or MEDICATION_STATEMENT.
+    description: PCD_OBSERVATION, MEDICATION_ORDER or MEDICATION_STATEMENT.
   - name: therapy_type
     description: Zoledronic acid, explicitly intravenous bisphosphonate, denosumab or other bone-sparing therapy.
   - name: coverage_months
-    description: Months of treatment coverage used by NICE bone-health measures, twelve or six.
+    description: Six months, or twelve for a confirmed zoledronic acid 5 mg unit dose. Null for authorisation-only evidence.
   - name: mapped_concept_code
     description: SNOMED CT concept code.
   - name: mapped_concept_display
     description: Authoritative concept display.
+  - name: date_recorded
+    description: Source save time, used after clinical date for same-day ties.
+  - name: evidence_type
+    description: THERAPY_CODE, PRESCRIPTION or AUTHORISATION_ONLY. Only the first two provide treatment coverage.
+  - name: is_authorisation_only
+    description: True for an uncancelled statement without a dated linked prescription. It cannot establish treatment.
+  - name: has_administration_evidence
+    description: True for a BSA_COD therapy observation. A prescription or authorisation alone does not prove administration.
+  - name: is_outside_prescription
+    description: True for an order with an issue method beginning Outside. Null for missing issue methods, observations and authorisations.
+  - name: unit_dose_strength_mg
+    description: dm+d ingredient amount in mg per unit-dose form. Null for therapy codes or unknown product attributes.
+  - name: is_oncology_regimen
+    description: >-
+      True for zoledronic acid 4 mg or denosumab 120 mg unit doses, including the rounded dm+d
+      119 mg presentation. This identifies a product strength, not a cancer diagnosis. Null for
+      unknown strength. Oncology strengths still count as bone-sparing treatment for six months.

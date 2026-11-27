@@ -4,11 +4,6 @@
         cluster_by=['person_id'])
 }}
 
-/*
-Latest valid eGFR measurement per person.
-Uses the comprehensive int_egfr_all model and filters to most recent valid eGFR.
-*/
-
 SELECT
     person_id,
     ID,
@@ -23,8 +18,10 @@ SELECT
 
 FROM {{ ref('int_egfr_all') }}
 
-WHERE is_valid_egfr = TRUE
+WHERE is_eligible_egfr = TRUE
+-- Ordering must match previous_egfr in int_ckd_lab_classification.
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC, id DESC
+    ORDER BY clinical_effective_date::DATE DESC,
+        date_recorded DESC NULLS LAST, id DESC
 ) = 1

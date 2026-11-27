@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: dq_monitoring_current
+    description: >
+      Current monitoring status for each monitored object.
+      Returns the latest measurement and status for each
+      configured table. Intended as the primary datasource
+      for Streamlit dashboards and alert generation.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: table_id
+        description: Monitored object identifier.
+        tests:
+          - not_null
+          - unique
+
+      - name: measurement_date
+        description: Date of the latest monitoring measurement.
+        tests:
+          - not_null
+
+      - name: measured_at
+        description: Timestamp of the latest monitoring measurement.
+        tests:
+          - not_null
+
+      - name: freshness_status
+        description: Latest freshness status.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: variance_status
+        description: Latest row count variance status.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: overall_status
+        description: Latest overall monitoring status.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['GREEN', 'AMBER', 'RED', 'GREY']
+
+      - name: status_reason
+        description: Human readable description of the status.
