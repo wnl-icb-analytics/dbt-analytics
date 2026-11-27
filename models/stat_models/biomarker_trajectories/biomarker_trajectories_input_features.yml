@@ -6,15 +6,18 @@ models:
       HbA1c readings for the biomarker trajectories model, which fits a Gaussian
       process to each person's series to estimate their underlying HbA1c trajectory,
       change points, rate of change and days above clinical thresholds. One row per
-      person, clinical effective date and IFCC value.
+      person, clinical calendar date and IFCC value.
 
       The population is currently registered, living people, excluding test
       patient records (dim_person_active_patients), with a valid HbA1c
       (is_valid_hba1c in int_hba1c_all) in the 5 years up to the build date. Values are in IFCC
       mmol/mol. Where a person has both IFCC and DCCT results on one date, only the
-      IFCC results are kept. Repeated identical values on one date are kept once.
-      The model applies the HbA1c rules used for C-LTCS in cltcs_measurements to
-      this wider population.
+      IFCC results are kept. Repeated identical values on one calendar date are kept once,
+      including entries with different times. The latest clinical timestamp, recorded
+      timestamp and observation id select among results on the same scale.
+      The rules derive from cltcs_measurements and apply to this wider population.
+      Calendar-day deduplication with latest-timestamp tie-breaks means the series
+      can differ from C-LTCS for same-day entries saved at different times.
 
       No opt-out filter applies; secondary-use consumers must apply
       dim_person_secondary_use_allowed.
@@ -27,7 +30,7 @@ models:
           arguments:
             combination_of_columns:
               - person_id
-              - clinical_effective_date
+              - "clinical_effective_date::DATE"
               - hba1c_ifcc
       # The biomarker trajectories job treats a person missing from this model as having no
       # readings left and deletes their outputs, so an empty build would clear
@@ -56,4 +59,59 @@ models:
         description: >
           OLIDS observation id of the retained result. Where the same value was
           recorded more than once on a date, the IFCC result is kept, then the
-          lowest id.
+          latest clinical timestamp, recorded timestamp and highest id.
+
+unit_tests:
+- name: hba1c_trajectory_deduplicates_calendar_days
+  model: biomarker_trajectories_input_features
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS observation_id, NULL::FLOAT
+        AS hba1c_ifcc WHERE FALSE
+  given:
+  - input: ref('int_hba1c_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+          DATEADD(year, YEAR(CURRENT_DATE()) - 2025, column3::TIMESTAMP_NTZ) AS clinical_effective_date, column4::FLOAT AS hba1c_ifcc,
+          column5::BOOLEAN AS is_ifcc, IFF(column5, 'IFCC','DCCT')::VARCHAR AS measurement_type,
+          TRUE::BOOLEAN AS is_valid_hba1c,
+          CASE column1 WHEN 'SYN_SAVE_A' THEN '2024-02-03'
+              WHEN 'SYN_SAVE_Z' THEN '2024-02-02' ELSE '2024-03-02' END::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES
+          ('SYN_EARLY', -145421, '2024-01-01 09:00:00', 50, TRUE),
+          ('SYN_LATE', -145421, '2024-01-01 18:00:00', 50, TRUE),
+          ('SYN_OTHER_VALUE', -145421, '2024-01-01', 51, TRUE),
+          ('SYN_DCCT_DAY', -145421, '2024-01-01 20:00:00', 52, FALSE),
+          ('SYN_NEXT_DAY', -145421, '2024-01-02', 50, TRUE),
+          ('SYN_SAVE_Z', -145421, '2024-02-01', 60, TRUE),
+          ('SYN_SAVE_A', -145421, '2024-02-01', 60, TRUE),
+          ('SYN_ID_A', -145421, '2024-03-01', 70, FALSE),
+          ('SYN_ID_Z', -145421, '2024-03-01', 70, FALSE),
+          ('SYN_OTHER_PERSON', -145422, '2024-01-01', 50, TRUE),
+          ('SYN_INACTIVE', -145423, '2024-01-01', 50, TRUE)
+      UNION ALL
+      SELECT 'SYN_BOUNDARY', -145421, DATEADD(year,-5,CURRENT_DATE())::TIMESTAMP_NTZ,
+          80, TRUE, 'IFCC', TRUE, NULL::TIMESTAMP_NTZ
+      UNION ALL
+      SELECT 'SYN_BEFORE_BOUNDARY', -145421, DATEADD(day,-1,DATEADD(year,-5,CURRENT_DATE()))::TIMESTAMP_NTZ,
+          81, TRUE, 'IFCC', TRUE, NULL::TIMESTAMP_NTZ
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id FROM VALUES (-145421), (-145422)
+  expect:
+    rows:
+    - observation_id: SYN_LATE
+      hba1c_ifcc: 50
+    - observation_id: SYN_OTHER_VALUE
+      hba1c_ifcc: 51
+    - observation_id: SYN_NEXT_DAY
+      hba1c_ifcc: 50
+    - observation_id: SYN_SAVE_A
+      hba1c_ifcc: 60
+    - observation_id: SYN_ID_Z
+      hba1c_ifcc: 70
+    - observation_id: SYN_OTHER_PERSON
+      hba1c_ifcc: 50
+    - observation_id: SYN_BOUNDARY
+      hba1c_ifcc: 80

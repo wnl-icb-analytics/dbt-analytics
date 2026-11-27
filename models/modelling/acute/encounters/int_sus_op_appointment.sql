@@ -64,9 +64,9 @@ select
         when core.appointment_commissioning_grouping_core_hrg in ('WF01C','WF02C') then 'OPFUP-NFTF'
         when core.appointment_commissioning_grouping_core_hrg in ('WF01D','WF02D') then 'OPFA-NFTF'
         when left(core.appointment_commissioning_grouping_core_hrg, 1) not in ('W', 'U')
-            and dict_att_t.attendant_type_desc = 'First' then 'OPPROC-FA'
+            and dict_att_t.attendant_type = 'First' then 'OPPROC-FA'
         when left(core.appointment_commissioning_grouping_core_hrg, 1) not in ('W', 'U')
-            and dict_att_t.attendant_type_desc = 'Follow-up' then 'OPPROC-FU'
+            and dict_att_t.attendant_type = 'Follow-up' then 'OPPROC-FU'
         when core.appointment_commissioning_grouping_core_hrg is null then 'UNKNOWN'
         else 'OPPROC'
         end as pod

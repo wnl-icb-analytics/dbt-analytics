@@ -1,15 +1,20 @@
 models:
   - name: int_breast_screening_latest
     description: >-
-      Latest breast screening event per person in OLIDS. Includes completion and
-      decline records, regardless of age, sex, registration or death. Future events
-      can be selected; a recorded event does not establish current screening
-      eligibility.
+      Last recorded breast screening event per person in OLIDS. Includes completion and
+      decline records, regardless of age, sex, registration or death. Future events can
+      be selected; a recorded event does not establish current screening eligibility.
+      Selects the last recorded event in the input without a further validity filter.
+      Ties use the latest save time, then the highest observation ID. A matched cluster
+      ID breaks ties within the same source observation.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id]
       - cluster_ids_exist:
           arguments:
             cluster_ids: BRCANSCR_COD, BRCANSCRDEC_COD

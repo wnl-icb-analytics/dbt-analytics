@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: dq_monitoring_variance
+    description: >
+      Calculates row count movement between successive monitoring
+      measurements for each monitored object. Used to identify
+      unexpected volume increases or decreases.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: Date the monitoring measurement was recorded.
+        tests:
+          - not_null
+
+      - name: measured_at
+        description: Timestamp the monitoring measurement was recorded.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Monitored object identifier.
+        tests:
+          - not_null
+
+      - name: row_count
+        description: Current observed row count.
+        tests:
+          - not_null
+
+      - name: previous_row_count
+        description: Row count from the previous monitoring measurement.
+
+      - name: row_count_change
+        description: Difference between current and previous row count.
+
+      - name: row_count_change_pct
+        description: Percentage change between current and previous row count.
+
+      - name: refresh_date
+        description: Most recent refresh date recorded for the monitored object.
+
+      - name: days_since_refresh
+        description: Number of days between the refresh date and the measurement date.
+
+      - name: frequency_type
+        description: Expected refresh frequency of the monitored object.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['DAILY', 'WEEKLY', 'MONTHLY']

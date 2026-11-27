@@ -3,9 +3,14 @@
 # Runs dbt (Fusion) directly on the runner against Snowflake PROD - no dbt
 # project object, no ADD VERSION, no 20k file limit.
 #
-# Selection: state:modified+ plus tag:indicator_definitions+ against the latest
-# deploy-state manifest in the DBT_ARTIFACTS stage. Metadata-derived definitions
-# have no ref() dependencies, so state selection can miss their YAML changes.
+# Selection: state:modified+ against the latest deploy-state manifest in the
+# DBT_ARTIFACTS stage. Metadata-derived definitions have no ref() dependencies,
+# so state selection misses their YAML changes: tag:indicator_definitions+ is
+# added only when indicator_definitions_changed.py finds a meta.indicator(s)
+# block or definitions macro that differs from the state manifest, or when the
+# previous deploy did not succeed (its manifest is still the baseline). Its
+# downstream includes the CLTCS treatment pathway (~8 min), so it is not run on
+# every deploy; scheduled builds refresh it regardless.
 # UEC diagnosis/procedure builds also refresh their encounter parent, as in DEV.
 # State-based deploys exclude tests tagged reconciliation: a partial build mixes
 # fresh and stale relations. The full-build fallback and scheduled builds run them.
@@ -46,6 +51,7 @@ on:
       - 'dbt_project.yml'
       - '.github/workflows/dbt-deploy.yml'
       - '.github/scripts/validate_dbt_models.py'
+      - '.github/scripts/indicator_definitions_changed.py'
 
 jobs:
   deploy-decision:
@@ -158,7 +164,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/dbt" --version
 
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.9.x"
 
@@ -191,17 +197,31 @@ jobs:
         if: github.event_name == 'push'
         run: uv run --with snowflake-connector-python python .github/scripts/fetch_dbt_state.py
 
+      - name: Check indicator definitions
+        id: definitions
+        if: steps.state.outputs.has_state == 'true'
+        run: python3 .github/scripts/indicator_definitions_changed.py state/manifest.json target/manifest.json
+
       - name: dbt build
         id: build
         env:
           FULL_REFRESH: ${{ steps.refresh.outputs.full_refresh }}
+          DEFINITIONS_CHANGED: ${{ steps.definitions.outputs.changed }}
+          PREVIOUS_BUILD_STATUS: ${{ steps.state.outputs.previous_build_status }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ steps.state.outputs.has_state }}" != "true" ]; then
             command=(dbt build --target prod --profiles-dir .)
             echo "Full build (manual trigger or no state manifest)"
           else
-            command=(python3 .github/scripts/validate_dbt_models.py --target prod --state state --select "state:modified+" "tag:indicator_definitions+")
-            echo "State-based build: modified + downstream and indicator definitions + downstream"
+            command=(python3 .github/scripts/validate_dbt_models.py --target prod --state state --select "state:modified+")
+            # A failed deploy still becomes the baseline, so retry the
+            # definitions until a deploy succeeds.
+            if [ "$DEFINITIONS_CHANGED" != "false" ] || [ "$PREVIOUS_BUILD_STATUS" != "success" ]; then
+              command+=("tag:indicator_definitions+")
+              echo "State-based build: modified + downstream and indicator definitions + downstream"
+            else
+              echo "State-based build: modified + downstream"
+            fi
             if [ "$FULL_REFRESH" = "true" ]; then
               command+=(--full-refresh)
               echo "Full refresh requested by the 🔄full-refresh label"

@@ -4,6 +4,8 @@ models:
     description: >
       Latest valid haemoglobin observation per person. Filters to observations with a non-null inferred
       value in the plausible g/L range after conversion, excluding negative values and extreme outliers.
+      The existing _latest name retains this latest-valid behaviour.
+      Ties use the latest save time, then the highest observation ID.
     config:
       meta:
         owner:
@@ -63,9 +65,9 @@ unit_tests:
   - input: ref('int_haemoglobin_all')
     format: sql
     rows: |-
-      SELECT 'SYN_VALID'::VARCHAR AS id, -9301::FLOAT AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS code_description, NULL::VARCHAR AS source_cluster_id, NULL::FLOAT AS original_result_value, NULL::VARCHAR AS original_result_unit_display, NULL::VARCHAR AS original_result_unit_code, NULL::VARCHAR AS expected_measurement_type, NULL::VARCHAR AS inferred_unit, 120::FLOAT AS inferred_value, NULL::BOOLEAN AS value_was_converted, NULL::BOOLEAN AS unit_was_changed, NULL::VARCHAR AS conversion_reason, NULL::VARCHAR AS confidence, NULL::VARCHAR AS haemoglobin_category, FALSE::BOOLEAN AS is_negative, FALSE::BOOLEAN AS is_extreme_outlier, FALSE::BOOLEAN AS is_out_of_range
+      SELECT 'SYN_VALID'::VARCHAR AS id, -9301::FLOAT AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS code_description, NULL::VARCHAR AS source_cluster_id, NULL::FLOAT AS original_result_value, NULL::VARCHAR AS original_result_unit_display, NULL::VARCHAR AS original_result_unit_code, NULL::VARCHAR AS expected_measurement_type, NULL::VARCHAR AS inferred_unit, 120::FLOAT AS inferred_value, NULL::BOOLEAN AS value_was_converted, NULL::BOOLEAN AS unit_was_changed, NULL::VARCHAR AS conversion_reason, NULL::VARCHAR AS confidence, NULL::VARCHAR AS haemoglobin_category, FALSE::BOOLEAN AS is_negative, FALSE::BOOLEAN AS is_extreme_outlier, FALSE::BOOLEAN AS is_out_of_range
       UNION ALL
-      SELECT 'SYN_INVALID'::VARCHAR AS id, -9301::FLOAT AS person_id, '2026-02-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS code_description, NULL::VARCHAR AS source_cluster_id, NULL::FLOAT AS original_result_value, NULL::VARCHAR AS original_result_unit_display, NULL::VARCHAR AS original_result_unit_code, NULL::VARCHAR AS expected_measurement_type, NULL::VARCHAR AS inferred_unit, 1.5::FLOAT AS inferred_value, NULL::BOOLEAN AS value_was_converted, NULL::BOOLEAN AS unit_was_changed, NULL::VARCHAR AS conversion_reason, NULL::VARCHAR AS confidence, NULL::VARCHAR AS haemoglobin_category, FALSE::BOOLEAN AS is_negative, FALSE::BOOLEAN AS is_extreme_outlier, TRUE::BOOLEAN AS is_out_of_range
+      SELECT 'SYN_INVALID'::VARCHAR AS id, -9301::FLOAT AS person_id, '2026-02-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS code_description, NULL::VARCHAR AS source_cluster_id, NULL::FLOAT AS original_result_value, NULL::VARCHAR AS original_result_unit_display, NULL::VARCHAR AS original_result_unit_code, NULL::VARCHAR AS expected_measurement_type, NULL::VARCHAR AS inferred_unit, 1.5::FLOAT AS inferred_value, NULL::BOOLEAN AS value_was_converted, NULL::BOOLEAN AS unit_was_changed, NULL::VARCHAR AS conversion_reason, NULL::VARCHAR AS confidence, NULL::VARCHAR AS haemoglobin_category, FALSE::BOOLEAN AS is_negative, FALSE::BOOLEAN AS is_extreme_outlier, TRUE::BOOLEAN AS is_out_of_range
   expect:
     rows:
     - id: SYN_VALID

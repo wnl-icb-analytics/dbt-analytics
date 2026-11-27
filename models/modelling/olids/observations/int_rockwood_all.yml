@@ -2,13 +2,13 @@ models:
   - name: int_rockwood_all
     description: 'Rockwood Clinical Frailty Scale assessments with clinical categorisation.
 
-      One row per Rockwood observation using ROCKWOOD_SCORES cluster with scores 1-9 mapped to frailty categories.'
+      One row per Rockwood observation using ROCKWOOD_SCORES cluster with scores 1-9 mapped to categories. CFS 9 is Terminally Ill, separate from frailty.'
 
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ROCKWOOD_SCORES
@@ -29,17 +29,17 @@ models:
     columns:
       - name: person_id
         description: Unique identifier for the person
-        tests:
+        data_tests:
           - not_null
 
       - name: id
         description: Identifier for the observation
-        tests:
+        data_tests:
           - not_null
 
       - name: clinical_effective_date
         description: Date when the Rockwood assessment was performed
-        tests:
+        data_tests:
           - not_null
 
       - name: concept_code
@@ -61,13 +61,13 @@ models:
         description: Specific Rockwood frailty level (Level 1-9 with description)
 
       - name: frailty_category
-        description: Grouped frailty categories (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty)
+        description: Grouped frailty categories (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty, Terminally Ill)
 
       - name: is_valid_rockwood_code
         description: Flag indicating if concept code is a valid Rockwood score
 
       - name: is_frail
-        description: Flag for frailty presence (Rockwood score 5+)
+        description: Flag for frailty presence (Rockwood scores 5-8; CFS 9 is terminal illness, separate from frailty)
 
       - name: is_severely_frail
-        description: Flag for severe frailty (Rockwood score 7+)
+        description: Flag for severe frailty (Rockwood scores 7-8; excludes terminal illness at CFS 9)

@@ -11,25 +11,40 @@ FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 )
 
 SELECT
-    fa.provider_shorthand,
+   fa.provider_shorthand,
+   fa.provider_type,
     fa.meta_file_id,
     l.financial_month as Latest_month,
+    fa.comm_group,
     fa.spec_comm_flag,
-    --fa.commissioner_code,
-    fa.commissioned_service_category_code,
-    fa.cscc_funding_status,
-    fa.cscc_dq,
-    fa.service_code,
+      -- DQ issue
+    CASE 
+        WHEN service_code_dq = 'Valid' AND cscc_funding_status <> spec_comm_flag THEN 'CSCC Allocation'
+        WHEN cscc_funding_status = spec_comm_flag AND cscc_dq <> 'Valid' THEN 'CSCC Code Invalid'
+        WHEN service_code_dq IN ('Missing Code','Invalid Code') THEN 'Service Code Missing/Invalid'
+        WHEN cscc_funding_status = spec_comm_flag AND service_code_dq = 'Code fix required' THEN 'Service Code Incorrect Case'
+    ELSE 'No issues' END AS dq_issue,
+    --commissioned_service_category
+    CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as acm_commissioned_service,
+    fa.cscc_funding_status as acm_funding_status,
+    fa.cscc_dq as cscc_code_dq,
+    --service_code
     fa.service_code_funding_status,
+    CONCAT(fa.icb_delegation_26_27, ' - ', fa.service_code_funding_status) as service_delegation2627,
+    CONCAT(fa.service_code, ' - ', COALESCE(fa.service_code_desc, 'NULL')) as acm_service_code,
     fa.service_code_dq,
-    CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as commissioned_service,
-    CONCAT(fa.service_code, ' - ', COALESCE(fa.service_code_desc, 'NULL')) as service_category,
     SUM(fa.activity_actual) AS activity_actual,
     SUM(fa.activity_plan) AS activity_plan,
+     --variance activity
+    SUM(fa.activity_actual)-SUM(fa.activity_plan) as diff_activity,
+    (SUM(fa.activity_actual)-SUM(fa.activity_plan))/NULLIF(SUM(fa.activity_plan), 0)* 100 AS variance_activity,
     SUM(fa.price_actual) AS price_actual,
-    SUM(fa.price_plan) AS price_plan
+    SUM(fa.price_plan) AS price_plan,
+     --variance cost
+    SUM(fa.price_actual)-SUM(fa.price_plan) as diff_cost,
+    (SUM(fa.price_actual)-SUM(fa.price_plan))/NULLIF(SUM(fa.price_plan), 0)* 100 AS variance_cost
 FROM {{ ref('int_fa_lsacm_activity_plan_ytd') }} fa
---FROM DEV__MODELLING.CONTRACTING.INT_FA_LSACM_activity_plan_YTD fa
-LEFT JOIN latestmonth l on fa.provider_code = l.provider_code
+--FROM MODELLING.CONTRACTING.INT_FA_LSACM_activity_plan_YTD fa
+INNER JOIN latestmonth l on fa.provider_code = l.provider_code and fa.financial_month <= l.financial_month
 group by all
-order by provider_shorthand, spec_comm_flag, commissioned_service
+order by provider_shorthand

@@ -4,14 +4,14 @@
     Args: reference is current or by_month.
     Returns: one row per register member and reporting_date.
 -#}
--- NDA treatment targets: latest HbA1c <= 58 mmol/mol and latest BP <= 140/80 in the
--- audit period, plus a statin prescribed in the period where indicated.
--- Audit period: the 15 calendar months ending in the reporting month (01 Jan to 31 Mar at March).
+-- NDA treatment targets (2024-25 definition): latest HbA1c <= 58 mmol/mol and latest BP <= 140/90
+-- in the audit period, plus a statin prescribed in the period where indicated.
+-- Audit period: the 12 calendar months ending in the reporting month (01 Apr to 31 Mar at March).
 WITH population AS (
     SELECT
         population.person_id,
         population.reporting_date,
-        DATE_TRUNC('month', DATEADD(month, -14, population.reporting_date))::DATE AS measurement_period_start,
+        DATE_TRUNC('month', DATEADD(month, -11, population.reporting_date))::DATE AS measurement_period_start,
         population.age,
         population.practice_code,
         population.practice_name,
@@ -69,8 +69,10 @@ targets AS (
     SELECT
         *,
         COALESCE(is_latest_hba1c_valid AND latest_hba1c_value <= 58, FALSE) AS hba1c_in_target_range,
-        COALESCE(is_valid_bp AND latest_systolic_value <= 140 AND latest_diastolic_value <= 80, FALSE)
+        COALESCE(is_valid_bp AND latest_systolic_value <= 140 AND latest_diastolic_value <= 90, FALSE)
             AS bp_in_target_range,
+        -- The NDA excludes people without a valid HbA1c or BP reading in the period from the denominator.
+        is_latest_hba1c_valid AND is_valid_bp AS is_in_nda_denominator,
         -- Null when a statin is not indicated, so not applicable stays distinct from not met.
         CASE WHEN is_statin_indicated THEN is_statin_prescribed_in_period END AS is_statin_target_met
     FROM assessed
@@ -100,6 +102,7 @@ SELECT
     latest_statin_order_date,
     is_statin_prescribed_in_period,
     is_statin_target_met,
+    is_in_nda_denominator,
     hba1c_in_target_range
         AND bp_in_target_range
         AND COALESCE(is_statin_target_met, TRUE) AS all_three_targets_met

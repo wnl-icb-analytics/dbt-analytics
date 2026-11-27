@@ -32,5 +32,5 @@ SELECT
                 VACCINATION_DATE DESC) as rownum
     FROM {{ ref('int_adult_imms_vaccination_status_current') }}
     --FROM MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_VACCINATION_STATUS_CURRENT
-    WHERE VACCINE_ID in ('RSV_1','RSV_1B','RSV_1C', 'RSV_1D') and VACCINATION_STATUS in ('Completed', 'OutofSchedule') 
+    WHERE VACCINE_ID LIKE ('RSV_1%') and VACCINATION_STATUS in ('Completed', 'OutofSchedule') 
     QUALIFY rownum = 1  

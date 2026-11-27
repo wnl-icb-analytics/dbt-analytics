@@ -22,12 +22,18 @@
     Content:
     - 8 care processes (HbA1c, BP, cholesterol, creatinine, urine ACR,
       foot exam, BMI, smoking) + retinal screening = 9 care processes
-    - Triple target (NDA: HbA1c <=58, BP <=140/80, statin where indicated)
+    - Triple target (NDA 2024-25: HbA1c <=58, BP <=140/90, statin where indicated)
     - Foot check detail (Townson risk, per-foot status, exemptions)
 
     12-month completion windows are relative to the build date, not a
-    fixed QOF year end. Register includes inactive/deceased persons —
-    filter is_active = TRUE.
+    fixed QOF year end.
+
+    Populations differ by table, so denominators differ:
+    - cp and foot come from the diabetes register and include inactive
+      and deceased people; filter is_active = TRUE for current cohorts.
+    - triple covers register members who are currently registered,
+      living and not test patients (nice_reference_population, built on
+      dim_person_active_patients).
 #}
 
 TABLES(
@@ -37,15 +43,15 @@ TABLES(
 
     cp AS {{ ref('fct_person_diabetes_9_care_processes') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Diabetes 8 + 9 care-process completion (rolling 12 months from build date). One row per person on the diabetes register.',
+        COMMENT = 'Diabetes 8 + 9 care-process completion (rolling 12 months from build date). One row per person on the diabetes register, including inactive and deceased people.',
 
     triple AS {{ ref('fct_person_diabetes_triple_target') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'National Diabetes Audit treatment targets: latest HbA1c <=58 mmol/mol and BP <=140/80 in the 15 calendar months ending this month, plus a statin where indicated. One row per registered person on the diabetes register.',
+        COMMENT = 'National Diabetes Audit treatment targets: latest HbA1c <=58 mmol/mol and BP <=140/90 in the 12 calendar months ending this month, plus a statin where indicated. One row per person on the diabetes register who is currently registered, living and not a test patient. Inactive and deceased people are not in this table.',
 
     foot AS {{ ref('fct_person_diabetes_foot_check') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Foot check detail: Townson risk level, per-foot status, exemptions, declines'
+        COMMENT = 'Foot check detail: Townson risk level, per-foot status, exemptions, declines. One row per person on the diabetes register, including inactive and deceased people.'
 )
 
 RELATIONSHIPS(
@@ -82,7 +88,7 @@ DIMENSIONS(
     triple.latest_hba1c_date AS latest_hba1c_date COMMENT = 'Date of the latest HbA1c in the triple-target audit period',
     cp.latest_retinal_screening_date AS latest_retinal_screening_date COMMENT = 'Date of latest retinal screening',
 
-    -- Triple target (National Diabetes Audit; audit period = 15 calendar months ending this month)
+    -- Triple target (National Diabetes Audit; audit period = 12 calendar months ending this month)
     triple.diabetes_type AS diabetes_type COMMENT = 'Diabetes type (Type 1, Type 2, Unknown)',
     triple.nda_diabetes_type AS nda_diabetes_type COMMENT = 'NDA reporting group: Type 1, or Type 2 and other',
     triple.is_hba1c_recorded_in_period AS is_hba1c_recorded_in_period COMMENT = 'HbA1c recorded in the audit period',
@@ -90,11 +96,12 @@ DIMENSIONS(
     triple.hba1c_in_target_range AS hba1c_in_target_range COMMENT = 'Latest HbA1c in the audit period <=58 mmol/mol (FALSE if none)',
     triple.latest_bp_date AS latest_bp_date COMMENT = 'Date of the latest paired BP in the audit period',
     triple.is_bp_recorded_in_period AS is_bp_recorded_in_period COMMENT = 'Paired BP recorded in the audit period',
-    triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP in the audit period <=140/80 mmHg (FALSE if none)',
+    triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP in the audit period <=140/90 mmHg (FALSE if none)',
     triple.has_cvd AS has_cvd COMMENT = 'On the CHD, stroke/TIA or PAD register',
     triple.is_statin_indicated AS is_statin_indicated COMMENT = 'Statin indicated: aged 40-80, or any age with CVD',
     triple.is_statin_prescribed_in_period AS is_statin_prescribed_in_period COMMENT = 'Statin prescribed in the audit period',
     triple.is_statin_target_met AS is_statin_target_met COMMENT = 'Statin prescribed where indicated; NULL when not indicated',
+    triple.is_in_nda_denominator AS is_in_nda_denominator COMMENT = 'Valid latest HbA1c and BP in the audit period; the NDA all-three treatment-target denominator',
     triple.all_three_targets_met AS all_three_targets_met WITH SYNONYMS = ('triple target', 'NDA treatment targets') COMMENT = 'HbA1c and BP targets met and statin prescribed where indicated',
 
     -- Foot check detail
@@ -137,9 +144,9 @@ DIMENSIONS(
 
 METRICS(
     -- Denominators
-    cp.dm_register_count AS COUNT(DISTINCT cp.person_id) COMMENT = 'People on the diabetes register (care-process model)',
-    triple.patients_with_triple_target AS COUNT(DISTINCT triple.person_id) COMMENT = 'People on the diabetes register (triple-target model)',
-    foot.patients_with_foot_model AS COUNT(DISTINCT foot.person_id) COMMENT = 'People on the diabetes register (foot-check model)',
+    cp.dm_register_count AS COUNT(DISTINCT cp.person_id) COMMENT = 'People on the diabetes register (care-process model), including inactive and deceased people',
+    triple.patients_with_triple_target AS COUNT(DISTINCT triple.person_id) COMMENT = 'People in the triple-target table: on the diabetes register, currently registered, living and not test patients',
+    foot.patients_with_foot_model AS COUNT(DISTINCT foot.person_id) COMMENT = 'People on the diabetes register (foot-check model), including inactive and deceased people',
 
     -- Care-process completion
     cp.all_8_count AS COUNT(DISTINCT CASE WHEN cp.all_8_processes_completed THEN cp.person_id END) COMMENT = 'People with all 8 care processes completed in last 12m',
@@ -152,9 +159,12 @@ METRICS(
     cp.retinal_done_count AS COUNT(DISTINCT CASE WHEN cp.retinal_screening_completed_in_last_12m THEN cp.person_id END) COMMENT = 'People with retinal screening in last 12m',
 
     -- Treatment targets
+    triple.nda_denominator_count AS COUNT(DISTINCT CASE WHEN triple.is_in_nda_denominator THEN triple.person_id END) COMMENT = 'People with a valid HbA1c and BP in the audit period; denominator for the combined all-three rate only',
+    triple.hba1c_valid_count AS COUNT(DISTINCT CASE WHEN triple.is_latest_hba1c_valid THEN triple.person_id END) COMMENT = 'People whose latest HbA1c in the audit period is valid; denominator for the HbA1c target rate',
+    triple.bp_valid_count AS COUNT(DISTINCT CASE WHEN triple.is_valid_bp THEN triple.person_id END) COMMENT = 'People whose latest BP in the audit period is valid; denominator for the BP target rate',
     triple.triple_target_met_count AS COUNT(DISTINCT CASE WHEN triple.all_three_targets_met THEN triple.person_id END) COMMENT = 'People meeting all three treatment targets',
     triple.hba1c_target_met_count AS COUNT(DISTINCT CASE WHEN triple.hba1c_in_target_range THEN triple.person_id END) COMMENT = 'People with HbA1c <=58',
-    triple.bp_target_met_count AS COUNT(DISTINCT CASE WHEN triple.bp_in_target_range THEN triple.person_id END) COMMENT = 'People with BP <=140/80',
+    triple.bp_target_met_count AS COUNT(DISTINCT CASE WHEN triple.bp_in_target_range THEN triple.person_id END) COMMENT = 'People with BP <=140/90',
     triple.statin_indicated_count AS COUNT(DISTINCT CASE WHEN triple.is_statin_indicated THEN triple.person_id END) COMMENT = 'People with a statin indicated',
     triple.statin_target_met_count AS COUNT(DISTINCT CASE WHEN triple.is_statin_target_met THEN triple.person_id END) COMMENT = 'People with a statin indicated and prescribed in the audit period',
 
@@ -162,6 +172,6 @@ METRICS(
     foot.permanently_exempt_count AS COUNT(DISTINCT CASE WHEN foot.is_permanently_exempt THEN foot.person_id END) COMMENT = 'People permanently exempt from foot checks'
 )
 
-COMMENT = 'OLIDS Diabetes Care Semantic View - care-process completion (8 + 9 with retinal), triple treatment targets with their matching latest measurement evidence, and foot-check detail for the diabetes register. Grain: one row per person on the diabetes register (QOF, age >=17). 12-month windows are rolling from build date. Register includes inactive/deceased persons — filter is_active = TRUE. Broader biomarker history and clinical categories live in sem_olids_observations and sem_olids_observations_history.'
-AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person grain; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(dm_register_count), AGG(all_8_count) FROM SEM_OLIDS_DIABETES_CARE WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce the diabetes cohort here and appointments in sem_olids_appointments before joining. Completion rate is AGG(all_8_count) / AGG(dm_register_count) (per-process AGG(*_done_count) over AGG(dm_register_count)). Triple-target flags follow the National Diabetes Audit and use the latest readings in the 15 calendar months ending this month. latest_hba1c_value is IFCC mmol/mol; read it with is_latest_hba1c_valid. is_statin_target_met is NULL when a statin is not indicated, so use statin_indicated_count as its denominator. The triple-target table holds registered people only. For foot-check care-process reporting prefer the cp foot_check_completed_in_last_12m flag; use the foot model only for risk-level and exemption detail (its recency window uses month-boundary arithmetic and can differ slightly). The 12-month windows are relative to the build date, not the QOF year end.'
+COMMENT = 'OLIDS Diabetes Care Semantic View - care-process completion (8 + 9 with retinal), triple treatment targets with their matching latest measurement evidence, and foot-check detail for the diabetes register. Grain: one row per person on the diabetes register (QOF, age >=17). 12-month windows are rolling from build date. Populations differ by table: care-process and foot data cover the whole register, including inactive and deceased people (filter is_active = TRUE for current cohorts); triple-target data covers only people who are currently registered, living and not test patients, so its denominator is smaller. Broader biomarker history and clinical categories live in sem_olids_observations and sem_olids_observations_history.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person grain; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(dm_register_count), AGG(all_8_count) FROM SEM_OLIDS_DIABETES_CARE WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce the diabetes cohort here and appointments in sem_olids_appointments before joining. Completion rate is AGG(all_8_count) / AGG(dm_register_count) (per-process AGG(*_done_count) over AGG(dm_register_count)). Triple-target flags follow the National Diabetes Audit 2024-25 definition and use the latest readings in the 12 calendar months ending this month. latest_hba1c_value is IFCC mmol/mol; read it with is_latest_hba1c_valid. is_statin_target_met is NULL when a statin is not indicated, so use statin_indicated_count as its denominator. Denominators differ across tables: the care-process and foot tables include inactive and deceased people, while the triple-target table holds only people who are currently registered, living and not test patients. For NDA-aligned rates use AGG(triple_target_met_count) / AGG(nda_denominator_count), AGG(hba1c_target_met_count) / AGG(hba1c_valid_count), AGG(bp_target_met_count) / AGG(bp_valid_count) and AGG(statin_target_met_count) / AGG(statin_indicated_count); report Type 1 and Type 2 and other separately by nda_diabetes_type. Use patients_with_triple_target, not dm_register_count, for whole-register triple-target rates, and filter is_active = TRUE and is_deceased = FALSE before comparing care-process or foot rates with triple-target rates. This approximates the triple-target population; test patients are not flagged in this view. For foot-check care-process reporting prefer the cp foot_check_completed_in_last_12m flag; use the foot model only for risk-level and exemption detail (its recency window uses month-boundary arithmetic and can differ slightly). The 12-month windows are relative to the build date, not the QOF year end.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: diabetes 8/9 care processes, care-process gaps, retinal screening, foot checks and foot risk (Townson), National Diabetes Audit triple target status (HbA1c, BP, statin) and its matching evidence, and diabetes care quality by practice/PCN/deprivation/ethnicity. For broader latest biomarker analysis use sem_olids_observations; for serial readings use sem_olids_observations_history. For diabetes prevalence and type use sem_olids_population. For diabetes medications use sem_olids_prescribing.'

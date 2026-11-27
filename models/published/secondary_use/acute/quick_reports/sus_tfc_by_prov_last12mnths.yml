@@ -1,0 +1,25 @@
+models:
+  - name: sus_tfc_by_prov_last12mnths
+    description: >
+      Base table AE Encounters for rolling 12m view from OBT_ENCOUNTER_UEC reporting table with missing demographics imputed from PDS Demographics and COMM GROUP is WNL.
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised patient identifier used to link to person-level demographics and other patient records.
+      - name: APPOINTMENT_DATE_MNTH
+        description: Year and month of appointment (YYYY-MM).
+      - name: TREATMENT_FUNCTION_CODE
+        description: Treatment function code
+      - name: Treatment_Function
+        description: Treatment function description with TFC code
+      - name: PROVIDER_CODE
+        description: Provider code
+      - name: TOTAL_TFC
+        description: Aggregated total for each patient for each TFC by provider by Year/Month over the past year
+    config:
+      meta:
+        owner:
+          name: Eamon
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
