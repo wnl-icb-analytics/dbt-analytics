@@ -1,9 +1,9 @@
 {% docs diabetes_triple_target_rules %}
-Diabetes treatment targets aligned with the National Diabetes Audit (NDA). The population is people registered and alive at the reporting date on the QOF diabetes register (aged 17 or over). The audit period is the 15 calendar months ending in the reporting month, matching the NDA's 1 January to 31 March period at a March reporting date. All three targets are met when the latest HbA1c in the period is valid and at or below 58 mmol/mol, the latest blood pressure in the period is valid with systolic at or below 140 and diastolic at or below 80 mmHg, and, where a statin is indicated, a statin is prescribed in the period. A statin is indicated for people aged 40 to 80, or of any age with CVD. People with no reading in the period do not meet that target, and an invalid latest reading is not replaced by an older one. HbA1c validity follows int_hba1c_all.is_valid_hba1c, which applies NDA cleaning limits before rounding. Local differences from the NDA: CVD comes from the GP CHD, stroke/TIA and PAD registers rather than hospital admissions; a same-day HbA1c tie prefers a valid result, then the highest observation id, rather than the lowest value; blood pressure validity uses the project's shared plausibility ranges rather than the NDA cleaning limits (systolic 70 to 300, diastolic 20 to 150 mmHg); blood pressure also accepts separately coded systolic and diastolic readings, pairing each day's highest plausible components before the lowest same-day pair is chosen; the NDA's under-12 HbA1c-only rule does not apply because the register starts at 17.
+Diabetes treatment targets aligned with the National Diabetes Audit (NDA) definition used from 2024-25 (OHID Fingertips indicators 94256 and 94257). The population is people registered and alive at the reporting date on the QOF diabetes register (aged 17 or over). The audit period is the 12 calendar months ending in the reporting month, matching the NDA's 1 April to 31 March period at a March reporting date. All three targets are met when the latest HbA1c in the period is valid and at or below 58 mmol/mol, the latest blood pressure in the period is valid with systolic at or below 140 and diastolic at or below 90 mmHg, and, where a statin is indicated, a statin is prescribed in the period. A statin is indicated for people aged 40 to 80, or of any age with CVD. The NDA excludes people without a valid HbA1c or blood pressure reading in the period from the all-three denominator; filtering on is_in_nda_denominator gives an NDA-aligned local rate, which can differ from the published rate because of the local differences below. Component rates use their own denominators: a valid latest HbA1c, a valid latest blood pressure, or a statin indicated. People with no reading in the period do not meet that target, and an invalid latest reading is not replaced by an older one, so a person whose latest reading is invalid is outside the NDA denominator. HbA1c validity follows int_hba1c_all.is_valid_hba1c, which applies NDA cleaning limits before rounding. Local differences from the NDA: CVD comes from the GP CHD, stroke/TIA and PAD registers rather than hospital admissions; a same-day HbA1c tie prefers a valid result, then the highest observation id, rather than the lowest value; blood pressure validity uses the project's shared plausibility ranges rather than the NDA cleaning limits (systolic 70 to 300, diastolic 20 to 150 mmHg); blood pressure also accepts separately coded systolic and diastolic readings, pairing each day's highest plausible components before the lowest same-day pair is chosen; the NDA's under-12 HbA1c-only rule does not apply because the register starts at 17.
 {% enddocs %}
 
 {% docs diabetes_triple_target_measurement_period_start %}
-Inclusive start of the audit period: the first day of the month 14 months before the reporting month.
+Inclusive start of the audit period: the first day of the month 11 months before the reporting month, so the period covers 12 calendar months (1 April at a March reporting date).
 {% enddocs %}
 
 {% docs diabetes_triple_target_nda_diabetes_type %}
@@ -27,7 +27,7 @@ Date of the latest complete blood pressure pair in the audit period; null when n
 {% enddocs %}
 
 {% docs diabetes_triple_target_bp_in_target_range %}
-Latest blood pressure in the audit period is valid with systolic at or below 140 and diastolic at or below 80 mmHg. False when none is recorded.
+Latest blood pressure in the audit period is valid with systolic at or below 140 and diastolic at or below 90 mmHg. False when none is recorded.
 {% enddocs %}
 
 {% docs diabetes_triple_target_has_cvd %}
@@ -43,5 +43,9 @@ Statin prescribed in the audit period for people with a statin indicated; null w
 {% enddocs %}
 
 {% docs diabetes_triple_target_all_three_targets_met %}
-HbA1c and blood pressure targets met and, where a statin is indicated, a statin prescribed in the audit period.
+HbA1c and blood pressure targets met and, where a statin is indicated, a statin prescribed in the audit period. False for people outside the NDA denominator; divide by people with is_in_nda_denominator for an NDA-aligned local rate.
+{% enddocs %}
+
+{% docs diabetes_triple_target_is_in_nda_denominator %}
+Latest HbA1c and latest blood pressure in the audit period are both valid. The NDA all-three treatment-target denominator excludes people without a valid HbA1c or blood pressure reading in the period.
 {% enddocs %}
