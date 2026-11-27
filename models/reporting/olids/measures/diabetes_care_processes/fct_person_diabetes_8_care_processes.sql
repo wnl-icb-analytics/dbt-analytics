@@ -32,6 +32,14 @@ bmi_recording AS (
     GROUP BY person_id
 ),
 
+hba1c_recording AS (
+    -- NDA completion uses the test date even when the result fails cleaning.
+    SELECT person_id, MAX(clinical_effective_date) AS latest_test_date
+    FROM {{ ref('int_hba1c_all') }}
+    WHERE clinical_effective_date <= CURRENT_DATE()
+    GROUP BY person_id
+),
+
 care_process_data AS (
     SELECT
         dr.person_id,
@@ -55,7 +63,7 @@ care_process_data AS (
 
         -- Urine ACR
         COALESCE(
-            hba.clinical_effective_date >= t.twelve_months_ago,
+            hba_record.latest_test_date >= t.twelve_months_ago,
             FALSE
         ) AS hba1c_completed_in_last_12m,
         COALESCE(
@@ -109,6 +117,8 @@ care_process_data AS (
 
     FROM diabetes_register AS dr
     CROSS JOIN twelve_months_ago AS t
+    LEFT JOIN hba1c_recording AS hba_record
+        ON dr.person_id = hba_record.person_id
     LEFT JOIN {{ ref('int_hba1c_latest') }} AS hba
         ON dr.person_id = hba.person_id
     LEFT JOIN {{ ref('int_blood_pressure_latest') }} AS bp
