@@ -33,6 +33,8 @@ clinical_assessments as (
         , r.clinical_effective_date as assessed_date
         , 1 as source_priority
         , case r.frailty_category
+            -- CFS 9 (Terminally Ill) keeps the severe tier.
+            when 'Terminally Ill' then 3
             when 'Severe Frailty' then 3
             when 'Moderate Frailty' then 2
             when 'Mild Frailty' then 1
