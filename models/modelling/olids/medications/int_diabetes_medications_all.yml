@@ -6,6 +6,7 @@ models:
       int_sglt2_medications_all / int_dpp4_medications_all (SNOMED clusters).'
     config:
       meta:
+        primary_key: [medication_order_id]
         owner:
           name: EddieDavison92
     columns:
@@ -68,6 +69,9 @@ models:
       - name: is_dpp4_inhibitor
         description: 'Flag for DPP-4 inhibitor medications'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.
+    data_tests: []

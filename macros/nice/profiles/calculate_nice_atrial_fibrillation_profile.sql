@@ -324,7 +324,7 @@ SELECT
         OR exceptions.latest_doac_declined_date >= DATEADD(month, -12, population.reporting_date), FALSE)
         OR COALESCE(exceptions.latest_doac_not_indicated_date >= DATEADD(month, -12, population.reporting_date)
             AND ttr.event_date >= DATEADD(month, -6, population.reporting_date)
-            AND ttr.latest_ttr_percentage >= 65, FALSE) AS has_doac_exception,
+            AND ttr.latest_ttr_percentage BETWEEN 65 AND 100, FALSE) AS has_doac_exception,
     review.latest_anticoagulant_review_date,
     population.reporting_date
 FROM population

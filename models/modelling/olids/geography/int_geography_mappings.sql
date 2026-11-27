@@ -7,7 +7,7 @@
 /*
 Geographic Code to Name Mappings
 Provides a single source of truth for all geography code-to-name mappings.
-Includes ICBs, local authorities, LSOAs, MSOAs and their hierarchies.
+Includes primary care organisations, local authorities, 2011 and 2021 LSOAs and LSOA to neighbourhood mappings.
 */
 
 WITH postcode_geography AS (

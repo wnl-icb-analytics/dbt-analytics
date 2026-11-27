@@ -5,16 +5,11 @@
 }}
 
 /*
-Person-level alcohol status combining AUDIT scores and disorder diagnoses.
-Provides comprehensive alcohol risk assessment for population health management.
-
-Business Logic:
-1. Uses most recent AUDIT/AUDIT-C score as primary indicator
-2. Considers alcohol disorder diagnoses for additional context
-3. Recent AUDIT scores override older disorder codes (unless disorder is more recent)
-4. Applies 12-month recency window for conflicting assessments
-
-This is PERSON-LEVEL data - one row per person with any alcohol-related data.
+One row per person with valid AUDIT evidence or an alcohol disorder record.
+Select the latest AUDIT calendar date, then prefer full AUDIT, higher risk,
+AUDIT-PC over AUDIT-C and the highest score. Active disorders take priority over
+historical disorders, then AUDIT risk, regardless of assessment age. Recency
+fields describe evidence age.
 */
 
 WITH latest_audit_scores AS (
@@ -35,8 +30,22 @@ WITH latest_audit_scores AS (
             *,
             ROW_NUMBER() OVER (
                 PARTITION BY person_id 
-                ORDER BY clinical_effective_date DESC, 
-                         CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END -- Prefer full AUDIT if same date
+                ORDER BY clinical_effective_date::date DESC,
+                         CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END,
+                         -- Local rule: preserve the higher instrument-specific risk before comparing totals.
+                         CASE risk_category
+                             WHEN 'Possible Dependence' THEN 5
+                             WHEN 'Higher Risk' THEN 4
+                             WHEN 'Increasing Risk' THEN 3
+                             WHEN 'Lower Risk' THEN 2
+                             WHEN 'Occasional Drinker' THEN 1
+                             WHEN 'Non-Drinker' THEN 0
+                             ELSE -1
+                         END DESC,
+                         CASE WHEN audit_type = 'AUDIT-PC' THEN 0 ELSE 1 END,
+                         audit_score DESC,
+                         date_recorded DESC NULLS LAST,
+                         id
             ) AS rn
         FROM {{ ref('int_alcohol_audit_scores') }}
         WHERE is_valid_score = TRUE
@@ -55,7 +64,7 @@ alcohol_disorders AS (
         -- Basic flags without interpretation
         BOOLOR_AGG(is_problem = TRUE AND (problem_end_date IS NULL OR problem_end_date > CURRENT_DATE())) AS has_active_disorder,
         
-        COUNT(DISTINCT ID) AS disorder_record_count
+        COUNT(DISTINCT {{ observation_reading_key() }}) AS disorder_record_count
     FROM {{ ref('int_alcohol_misuse_disorders') }}
     GROUP BY person_id
 ),
@@ -139,7 +148,9 @@ SELECT
     
     -- Intervention flag
     CASE
-        WHEN brief_intervention_indicated = TRUE OR has_active_disorder = TRUE THEN TRUE
+        WHEN brief_intervention_indicated = TRUE
+          OR audit_requires_intervention = TRUE
+          OR has_active_disorder = TRUE THEN TRUE
         ELSE FALSE
     END AS requires_intervention,
     

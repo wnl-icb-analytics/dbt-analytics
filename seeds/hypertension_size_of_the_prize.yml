@@ -1,0 +1,64 @@
+version: 2
+
+seeds:
+  - name: hypertension_size_of_the_prize
+    description: |
+      Rates and costs for estimating what better hypertension control prevents, one row per outcome (heart attack, stroke, death), following the UCLPartners Size of the Prize method.
+
+      Treating high blood pressure for treatment_years prevents one event for every
+      people_treated_per_event_prevented people (theNNT.com, as used by UCLPartners and the
+      CVDPREVENT data packs). The rates come from placebo-controlled trials, so applying
+      them to people already on treatment who move just under target probably overstates
+      the benefit. Use through the hypertension_size_of_the_prize macro.
+
+      cost_per_event_gbp is the cost attributable to the event in its first year: NHS cost for a
+      heart attack (no social care figure was available) and NHS plus social care for a stroke.
+      The two come from different studies and price years (2011/12 and 2014/15) and are not
+      inflated. uclp_cost_per_event_gbp is the acute treatment cost implied by UCLPartners'
+      published figures, kept for comparison with their slides. Deaths carry no cost.
+    config:
+      column_types:
+        outcome: varchar(16)
+        people_treated_per_event_prevented: integer
+        treatment_years: integer
+        cost_per_event_gbp: integer
+        uclp_cost_per_event_gbp: integer
+        cost_basis: varchar(255)
+        effect_source_url: varchar(255)
+        cost_source_url: varchar(255)
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: outcome
+        description: Event prevented by better blood pressure control (heart_attack, stroke or death).
+        data_tests:
+          - unique
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['heart_attack', 'stroke', 'death']
+      - name: people_treated_per_event_prevented
+        description: Number needed to treat. People treated for treatment_years to prevent one event.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: treatment_years
+        description: Years of treatment the number needed to treat refers to.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: cost_per_event_gbp
+        description: Cost attributable to one event in its first year (GBP); NHS only for heart attack, NHS and social care for stroke. Null for deaths.
+      - name: uclp_cost_per_event_gbp
+        description: Acute NHS treatment cost of one event implied by UCLPartners' Size of the Prize slides (GBP). Null for deaths.
+      - name: cost_basis
+        description: Where cost_per_event_gbp comes from.
+      - name: effect_source_url
+        description: Source of the number needed to treat.
+      - name: cost_source_url
+        description: Source of cost_per_event_gbp.

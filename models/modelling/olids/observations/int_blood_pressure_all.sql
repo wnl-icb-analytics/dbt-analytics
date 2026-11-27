@@ -18,7 +18,7 @@ Pairing (within-reading, not by date):
   diastolic) pair from two different readings on multi-reading days (~13% of
   person-dates), which pessimistically overstated uncontrolled BP downstream.
 - Rows without a parent_observation_id (~7%) fall back to a single date-level
-  pseudo-reading (max systolic / max diastolic for that date).
+  pseudo-reading per context group (max systolic / max diastolic within that group).
 
 Representative reading per date (lowest-of-day):
 - clinical_effective_date carries no usable time-of-day (all OLIDS observations
@@ -38,7 +38,7 @@ Flags:
 
 Clinical validation:
 - Both systolic and diastolic values present
-- Systolic: 40-350 mmHg, Diastolic: 20-200 mmHg
+- Systolic: 40-350 mmHg, Diastolic: 20-200 mmHg; systolic must exceed diastolic
 */
 
 WITH valid_observations AS (
@@ -53,13 +53,13 @@ WITH valid_observations AS (
 ),
 
 -- Reading grain: parent_observation_id links the systolic + diastolic of one
--- reading; unparented rows collapse to a single date-level pseudo-reading.
+-- reading; unparented rows form a pseudo-reading per date and context group.
 reading_rows AS (
     SELECT
         *,
         COALESCE(
             parent_observation_id::VARCHAR,
-            'NOPARENT:' || person_id::VARCHAR || ':' || effective_date::VARCHAR
+            'NOPARENT:' || person_id::VARCHAR || ':' || effective_date::VARCHAR || ':' || bp_context_group
         ) AS reading_id
     FROM valid_observations
 ),
@@ -69,6 +69,10 @@ readings AS (
         person_id,
         effective_date,
         reading_id,
+        CASE WHEN BOOLOR_AGG(bp_context_group = 'ABPM') THEN 'ABPM'
+            WHEN BOOLOR_AGG(bp_context_group = 'HOME') THEN 'HOME'
+            ELSE 'CLINIC'
+        END AS bp_context_group,
         MAX(CASE WHEN is_systolic_row THEN result_value END) AS systolic_value,
         MAX(CASE WHEN is_diastolic_row THEN result_value END) AS diastolic_value,
         BOOLOR_AGG(is_home_bp_row) AS is_home_bp_reading,
@@ -84,6 +88,7 @@ readings AS (
        AND MAX(CASE WHEN is_systolic_row THEN result_value END) <= 350
        AND MAX(CASE WHEN is_diastolic_row THEN result_value END) >= 20
        AND MAX(CASE WHEN is_diastolic_row THEN result_value END) <= 200
+       AND MAX(CASE WHEN is_systolic_row THEN result_value END) > MAX(CASE WHEN is_diastolic_row THEN result_value END)
 ),
 
 readings_flagged AS (
@@ -139,6 +144,7 @@ SELECT
     -- Measurement context of the representative reading
     r.is_home_bp_reading AS is_home_bp_event,
     r.is_abpm_bp_reading AS is_abpm_bp_event,
+    r.bp_context_group,
 
     -- Date-level hypertensive flag (any reading in range), unchanged semantics
     r.is_hypertensive_range,

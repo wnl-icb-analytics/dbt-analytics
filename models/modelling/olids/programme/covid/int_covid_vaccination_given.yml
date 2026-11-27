@@ -1,12 +1,11 @@
 models:
   - name: int_covid_vaccination_given
-    description: 'COVID vaccination administration tracking.
-
-      Grain: One row per person per campaign who received vaccination
-
-      Identifies people: • Vaccination administration codes (COVADM_COD) • OR medication orders (COVRX_COD) • Within campaign tracking period • All ages eligible
-
-      Used by: Mart models for uptake and status determination'
+    description: >-
+      Recorded COVID vaccination in OLIDS, one row per person and campaign with
+      COVADM_COD administration or COVRX_COD medication evidence within its inclusive
+      tracking dates. Uses the latest evidence and the campaign's UKHSA_COVID code
+      version. A known approximate birth date is required, without an age or
+      vaccination-eligibility restriction.
     data_tests:
       - cluster_ids_exist:
           arguments:
@@ -69,4 +68,4 @@ models:
       - name: age_years_at_ref_date
         description: 'Age in years at campaign reference date'
       - name: created_at
-        description: 'Audit timestamp for record creation (campaign audit end date)'
+        description: 'Timestamp when the row was built; not the campaign audit end date'

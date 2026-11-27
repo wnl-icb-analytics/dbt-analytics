@@ -15,6 +15,31 @@ diabetes_register AS (
     -- No WHERE clause needed - this table already filters to people on the register
 ),
 
+bmi_recording AS (
+    -- BMI recording is a care process from age 12 (QOF, NDA), so recorded BMI values of
+    -- any age count alongside the adult BMI model, which also covers calculated BMI.
+    SELECT person_id, MAX(clinical_effective_date) AS clinical_effective_date
+    FROM (
+        SELECT person_id, clinical_effective_date
+        FROM {{ ref('int_bmi_qof_all') }}
+        WHERE source_cluster_id = 'BMIVAL_COD'
+            AND is_plausible_bmi
+            AND clinical_effective_date <= CURRENT_DATE()
+        UNION ALL
+        SELECT person_id, clinical_effective_date
+        FROM {{ ref('int_bmi_latest') }}
+    )
+    GROUP BY person_id
+),
+
+hba1c_recording AS (
+    -- NDA completion uses the test date even when the result fails cleaning.
+    SELECT person_id, MAX(clinical_effective_date) AS latest_test_date
+    FROM {{ ref('int_hba1c_all') }}
+    WHERE clinical_effective_date <= CURRENT_DATE()
+    GROUP BY person_id
+),
+
 care_process_data AS (
     SELECT
         dr.person_id,
@@ -38,7 +63,7 @@ care_process_data AS (
 
         -- Urine ACR
         COALESCE(
-            hba.clinical_effective_date >= t.twelve_months_ago,
+            hba_record.latest_test_date >= t.twelve_months_ago,
             FALSE
         ) AS hba1c_completed_in_last_12m,
         COALESCE(
@@ -92,6 +117,8 @@ care_process_data AS (
 
     FROM diabetes_register AS dr
     CROSS JOIN twelve_months_ago AS t
+    LEFT JOIN hba1c_recording AS hba_record
+        ON dr.person_id = hba_record.person_id
     LEFT JOIN {{ ref('int_hba1c_latest') }} AS hba
         ON dr.person_id = hba.person_id
     LEFT JOIN {{ ref('int_blood_pressure_latest') }} AS bp
@@ -104,7 +131,7 @@ care_process_data AS (
         ON dr.person_id = acr.person_id
     LEFT JOIN {{ ref('int_foot_examination_latest') }} AS fc
         ON dr.person_id = fc.person_id
-    LEFT JOIN {{ ref('int_bmi_latest') }} AS bmi
+    LEFT JOIN bmi_recording AS bmi
         ON dr.person_id = bmi.person_id
     LEFT JOIN {{ ref('int_smoking_status_latest') }} AS smok
         ON dr.person_id = smok.person_id

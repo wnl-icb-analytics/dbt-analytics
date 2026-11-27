@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['cltcs_secure_source'])
+        tags=['cltcs_secure_source', 'cltcs', 'daily'])
 }}
 
 
@@ -17,8 +17,17 @@ Testing:
 
 */
 
+-- Care pathway gap items already published here under their own names
+-- (asthma_salbutamol_only, asthma_salbutamol_repeats); left out of the is_gap_ columns.
+{% set gap_items_already_published = ['ASTHMA_SALBUTAMOL_ONLY', 'ASTHMA_SALBUTAMOL_OVERUSE'] %}
+
 with inclusion_list as (
-    select patient_id, area_code, olids_id
+    select patient_id
+        , area_code
+        , olids_id
+        , source
+        , meets_original_criteria
+        , meets_adults_with_complexity
     from {{ ref('cltcs_patient_list')}}
     )
 
@@ -51,13 +60,34 @@ with inclusion_list as (
     from {{ ref('fct_person_ltc_lcs_risk_summary') }}
     )
 
+-- Combined frailty evidence is per person and repeats on each inclusion-rule row.
+, combined_frailty as (
+    select sk_patient_id
+        , frailty_severity
+        , frailty_evidence_source
+        , clinical_frailty_assessed_date
+    from {{ ref('cltcs_score_frailty') }}
+    qualify row_number() over (partition by sk_patient_id order by is_applicable_rule desc) = 1
+    )
+
 select il.patient_id
       ,{{ hxflake_pseudo_generation('il.patient_id') }} AS re_id_key
     -- , il.fragmented_sk_patient_id_flag -- include as DQ check 
     -- , il.fragmented_person_id_flag  -- include as DQ check 
     , il.area_code
-    , coalesce(pd.practice_code, 'Unknown') as practice_code
+    , il.source
+    , il.meets_original_criteria
+    , il.meets_adults_with_complexity
+    , case
+        when il.meets_original_criteria and il.meets_adults_with_complexity then 'both'
+        when il.meets_original_criteria and not il.meets_adults_with_complexity then 'original only'
+        when not il.meets_original_criteria and il.meets_adults_with_complexity then 'w/ complexity only'
+        when il.meets_original_criteria is null or il.meets_adults_with_complexity is null then 'not assessed'
+        else 'neither'
+      end as route_summary
+      , coalesce(pd.practice_code, 'Unknown') as practice_code
     , coalesce(pd.practice_name, 'Unknown') as practice_name
+    , pd.local_authority_name
     , pd.age 
     , coalesce(pd.main_language, 'Unknown') as main_language
     , coalesce(pd.gender, 'Unknown') as gender
@@ -96,6 +126,9 @@ select il.patient_id
     , coalesce(pc.has_rheumatoid_arthritis, false) as has_rheumatoid_arthritis
     , coalesce(pc.has_severe_mental_illness, false) as has_severe_mental_illness
     , coalesce(pc.has_stroke_tia, false) as has_stroke_tia
+    , coalesce(pc.has_multiple_sclerosis, false) as has_multiple_sclerosis
+    , coalesce(pc.has_osteoarthritis, false) as has_osteoarthritis
+    , coalesce(pc.has_parkinsons, false) as has_parkinsons
     , coalesce(pc.total_conditions, 0) as total_conditions
     , coalesce(pc.total_qof_conditions, 0) as total_qof_conditions 
     , coalesce(pc.total_non_qof_conditions, 0) as total_non_qof_conditions
@@ -109,8 +142,22 @@ select il.patient_id
     -- frailty flags: NULL = not assessed, which is clinically distinct from a genuine low/zero score. Do not COALESCE to 0.
     , fr.efi_score
     , coalesce(fr.category, 'Unknown') as efi_category
+    , fr.end_date as efi_date
     , coalesce(rockwood.frailty_level, 'Unknown') as frailty_level
     , coalesce(rockwood.frailty_category, 'Unknown') as frailty_category
+    , rockwood.clinical_effective_date as rockwood_latest_date
+    , frr.latest_frailty_severity as frailty_register_latest_severity
+    , frr.latest_diagnosis_date as frailty_register_latest_date
+    -- combined frailty evidence used by the C-LTCS frailty score
+    , cf.frailty_severity
+    , cf.frailty_evidence_source
+    , cf.clinical_frailty_assessed_date
+    -- eFI2 moderate/severe with no clinician frailty assessment in the last 24 months:
+    -- a prompt to record a Clinical Frailty Scale. Null when the patient was not scored.
+    , iff(cf.frailty_evidence_source is null, null
+        , cf.frailty_evidence_source <> 'clinical_current'
+            and coalesce(fr.category in ('MODERATE FRAILTY', 'SEVERE FRAILTY'), false)
+        ) as has_unassessed_frailty_signal
 
     -- mulimorb flags: NULL = not computed.
     , ccms.cambridge_comorbidity_score
@@ -120,6 +167,9 @@ select il.patient_id
     , qrk.qrisk_type
     , qrk.cvd_risk_category
     , qrk.warrants_statin_consideration -- add actionable flag cross referencing statin prescription
+    -- QAdmissions: displaying the score requires the ClinRisk disclaimer (see qadmissions_input_features). NULL = not scored, do not COALESCE to 0.
+    , iff(qa.is_scored, qa.score_percent, null) as qadmissions_score_percent
+    , qa.is_scored as qadmissions_is_scored
        
       -- Lifestyle and behavioural factors
     , coalesce(br.smoking_status, 'Not Recorded') as smoking_status
@@ -147,11 +197,15 @@ select il.patient_id
     , coalesce(asc_cld.has_sensory_support_dual_impairment, false) as has_sensory_support_dual_impairment
     , coalesce(asc_cld.has_social_support_asylum_seeker, false) as has_social_support_asylum_seeker
     , coalesce(asc_cld.has_asc_service, 0) as has_asc_service
+    , coalesce(ss.is_housebound, false) as is_housebound
     , coalesce(ch.is_care_home_resident, false) as is_care_home_resident
     , coalesce(ch.is_nursing_home_resident, false) as is_nursing_home_resident
     , coalesce(ch.is_temporary_resident, false) as is_temporary_resident
     , ch.residence_type 
-    , ch.residence_status 
+    , ch.residence_status
+    -- barriers to care (as used in the treatment and frailty score barrier domains):
+    -- latest ILLSUB_COD record is QUALIFYING, as in fct_person_complex_adults
+    , coalesce(sub.has_substance_misuse, false) as has_substance_misuse
     -- current status to consider
     , coalesce(ps.is_currently_pregnant, false) as is_currently_pregnant
     -- dim_person_is_carer?
@@ -168,8 +222,23 @@ select il.patient_id
     ,bp.latest_diastolic_value 
     ,bp.latest_bp_date
     ,coalesce(dcp.care_processes_completed, 0) as care_processes_completed
-    , case when dcp.hba1c_completed_in_last_12m = true then dcp.latest_hba1c_value else null end as latest_hba1c_value
+    -- Gate on the valid result's date: completion also counts invalid or value-free tests.
+    , case when dcp.latest_hba1c_date >= dateadd(month, -12, current_date()) then dcp.latest_hba1c_value else null end as latest_hba1c_value
     ,dcp.latest_hba1c_date
+    -- care pathway gaps from cltcs_gap_summary: per domain, per domain group and per item.
+    -- Null for patients outside the cltcs_adult_population cohorts (shortlist only).
+    {%- for d in cltcs_gap_domains() %}
+    , gs.{{ d.stem }}_groups_with_gap
+    , gs.{{ d.stem }}_groups_assessed
+    , gs.{{ d.stem }}_items_with_gap
+    , gs.{{ d.stem }}_items_assessed
+    {%- for group in d.groups %}
+    , gs.has_gap_{{ d.stem }}_{{ group }}
+    {%- endfor %}
+    {%- endfor %}
+    {%- for item_id in cltcs_gap_item_ids() if item_id not in gap_items_already_published %}
+    , gs.is_gap_{{ item_id | lower }}
+    {%- endfor %}
    -- ,dpr.earliest_type2_date
     -- Annual activity (OP, APC, UEC, MH, ASC, Community, GP appts, 111?)
     ,zeroifnull(opa.op_att_tot_12mo) as op_att_tot_12mo
@@ -182,6 +251,7 @@ select il.patient_id
     ,zeroifnull(aea.ae_t1_12mo) as ae_t1_12mo
     ,zeroifnull(aea.ae_inj_12mo) as ae_inj_12mo
     ,zeroifnull(aea.ae_tot_12mo) as ae_tot_12mo
+    ,zeroifnull(aea.ae_tot_3mo) as ae_tot_3mo
     ,zeroifnull(gpa.gp_att_tot_12mo) as gp_att_tot_12mo
     ,zeroifnull(gpa.gp_app_tot_12mo) as gp_app_tot_12mo
     ,zeroifnull(gpa.gp_dna_tot_12mo) as gp_dna_tot_12mo
@@ -223,10 +293,14 @@ select il.patient_id
 
     -- Current risk scores?
     -- scores from cltcs_scores model
-    ,coalesce(cs.score_activation, 0) as score_activation
-    ,coalesce(cs.score_coordination, 0) as score_coordination
-    ,coalesce(cs.score_treatment, 0) as score_treatment
-    ,coalesce(cs.score_frailty, 0) as score_frailty
+    ,cs.score_activation
+    ,cs.score_coordination
+    ,cs.score_treatment_original_criteria
+    ,cs.score_treatment_adults_with_complexity
+    ,cs.score_treatment_nice_original_criteria
+    ,cs.score_treatment_nice_adults_with_complexity
+    ,cs.score_frailty_original_criteria
+    ,cs.score_frailty_adults_with_complexity
     -- Other relevant annual activity (LTC LCS, C-LTCS review)
 
 from inclusion_list il
@@ -246,6 +320,8 @@ left join {{ref('fct_person_bp_control')}} bp
     on il.olids_id = bp.person_id 
 left join {{ref('fct_person_diabetes_8_care_processes')}} dcp
     on il.olids_id = dcp.person_id
+left join {{ ref('cltcs_gap_summary') }} gs
+    on il.olids_id = gs.person_id
 --left join {{ref('fct_person_diabetes_register')}} dpr
 --    on il.olids_id  = dpr.person_id
 left join {{ref('int_asthma_management')}} am
@@ -276,5 +352,15 @@ left join {{ref('fct_person_asc_service_recent')}} asc_cld
     on il.patient_id = asc_cld.sk_patient_id
 LEFT JOIN {{ref('dim_person_care_home')}} ch
     on il.olids_id = ch.person_id
+left join {{ ref('int_substance_misuse_status') }} sub
+    on il.olids_id = sub.person_id
 left join {{ref('int_qrisk_latest')}} qrk
     on il.olids_id = qrk.person_id
+left join {{ref('qadmissions_predictions')}} qa
+    on il.olids_id = qa.person_id
+left join {{ref('fct_person_frailty_register')}} frr
+    on il.olids_id = frr.person_id
+left join combined_frailty cf
+    on il.patient_id = cf.sk_patient_id
+left join {{ref('dim_person_status_summary')}} ss
+    on il.olids_id = ss.person_id

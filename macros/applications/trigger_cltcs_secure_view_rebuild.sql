@@ -3,13 +3,15 @@
     Fire the app-domain secure-view rebuild iff this build materialised at
     least one model tagged 'cltcs_secure_source' (i.e. a published C_LTCS
     source a secure view reads). Runs only on real run/build invocations,
-    never on parse/seed/docs/test-only runs.
+    never on parse/seed/docs/test-only runs. Fusion reports a model that built
+    but raised a warning (e.g. a persist_docs column mismatch) as 'warn'; the
+    table was still replaced, so 'warn' counts as materialised.
   #}
   {% if execute and flags.WHICH in ['run', 'build'] %}
     {% set touched = [] %}
     {% for res in results %}
       {% if res.node.resource_type == 'model'
-            and res.status == 'success'
+            and res.status in ['success', 'warn']
             and 'cltcs_secure_source' in res.node.tags %}
         {% do touched.append(res.node.name) %}
       {% endif %}

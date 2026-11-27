@@ -1,0 +1,87 @@
+version: 2
+models:
+  - name: stg_ukhfd_dsc_sc_commissioned_service_category
+    description: >-
+      UKHFD Commissioned Service Category Code history. One row per code and UKHFD
+      snapshot in which its definition changed.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [commissioned_service_category_code, source_snapshot_date]
+    columns:
+      - name: commissioned_service_category_code
+        description: Commissioned Service Category Code, for example 12 for an Integrated Care Board.
+        data_tests: [not_null]
+      - name: commissioned_service_category_description
+        description: Published description, including any usage note in brackets.
+      - name: is_in_latest_source
+        description: TRUE when the code is in the latest UKHFD extract.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code.
+      - name: source_snapshot_date
+        description: Date of the UKHFD snapshot that introduced this definition.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition applies; null for the first load.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition applies; null for its newest definition.
+
+  - name: stg_ukhfd_dsc_sc_service_code
+    description: >-
+      UKHFD history of the NHS England specialised service code workbook. One row per
+      service code and UKHFD snapshot in which its definition changed.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [service_code, source_snapshot_date]
+    columns:
+      - name: service_code
+        description: NHS England service code, for example NCBPS01A.
+        data_tests: [not_null]
+      - name: service_code_description
+        description: Service code description.
+      - name: service_code_including_description
+        description: Service code and description joined for display.
+      - name: service_category_description
+        description: Commissioner category for the service, for example NHS England - Specialised Services.
+      - name: npoc_category_and_crg
+        description: National Programme of Care category and Clinical Reference Group.
+      - name: highly_specialised_service
+        description: YES, NO or NOT APPLICABLE as published.
+      - name: identified_by_ps_operational_tool
+        description: Whether the Prescribed Specialised Services operational tool identifies the service.
+      - name: identified_by_ps_operational_tool_year_end_date
+        description: Financial year end of the operational tool version referred to.
+      - name: notes
+        description: Workbook notes for the code.
+      - name: effective_from_date
+        description: Date the code became effective, from the workbook.
+      - name: effective_to_date
+        description: Date the code ceased, from the workbook; null while it remains in use.
+      - name: is_current
+        description: TRUE when the workbook marks the code as current.
+      - name: icb_delegation_status
+        description: >-
+          ICB delegation status from the workbook UKHFD loaded. Holds one year only; in
+          October 2026 it matched the 2024/25 column of the v38 workbook.
+      - name: service_grouping
+        description: ACUTE, MENTAL HEALTH, BOTH or NOT APPLICABLE.
+      - name: amended_record_indicator
+        description: Workbook flag for a code amended in the release.
+      - name: is_in_latest_source
+        description: TRUE when the code is in the latest UKHFD extract.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code.
+      - name: source_snapshot_date
+        description: Date of the UKHFD snapshot that introduced this definition.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition applies; null for the first load.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition applies; null for its newest definition.

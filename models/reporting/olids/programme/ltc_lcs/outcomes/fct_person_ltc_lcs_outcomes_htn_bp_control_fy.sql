@@ -6,7 +6,7 @@
 }}
 
 -- LTC LCS Outcomes: Hypertension good blood pressure control - CURRENT FINANCIAL YEAR.
--- Window: last known paired BP since 1 April of the current (in-progress) FY, pinned to the
+-- Window: latest date-linked BP since 1 April of the current (in-progress) FY, pinned to the
 -- FY end (31 March of next year). Matches the QOF-style "FY year-to-date since 1st April"
 -- denominator; no future readings exist, so the numerator is effectively YTD.
 -- FY bounds are computed inline from current_date() (project convention: month >= 4 = new FY)

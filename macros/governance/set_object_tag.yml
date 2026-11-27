@@ -1,4 +1,13 @@
 macros:
+  - name: set_object_tags
+    description: >
+      Sets several DATA_LAKE.CONTROL tags on the model's object in one statement. Use as a post-hook;
+      tags are lost when dbt replaces the object, so it must run on every build. ANALYST needs READ
+      and APPLY on each tag.
+    arguments:
+      - name: tags
+        type: list
+        description: List of [tag name, value] pairs. Values must be allowed by each tag.
   - name: set_object_tag
     description: >
       Sets a DATA_LAKE.CONTROL tag on the model's object. Use as a post-hook; the tag is lost when dbt
@@ -18,7 +27,17 @@ macros:
       - name: status
         type: string
         description: Tag value. Only 'LEGACY' is allowed by the tag.
+  - name: set_external_validation_tag
+    description: >
+      Sets EXTERNAL_VALIDATION to VALIDATED or NOT_VALIDATED on models whose meta.indicator has an
+      external_validation block, so Snowsight shows whether the indicator lines up with a published
+      figure (see docs/nice-benchmarks.md). Does nothing on other models. Applied to every model.
   - name: set_managed_by_tag
     description: >
       Sets MANAGED_BY = 'dbt-analytics' so analysts can see the object is built by this project and
-      that manual changes are overwritten on the next build. Applied to every model, seed and snapshot.
+      that manual changes are overwritten on the next build. Applied to every seed and snapshot;
+      models use set_governance_tags.
+  - name: set_governance_tags
+    description: >
+      Sets MANAGED_BY = 'dbt-analytics' on every model and, where config.meta.primary_key is declared,
+      PRIMARY_KEY to the key columns separated by ', ', in one statement. Applied to every model.

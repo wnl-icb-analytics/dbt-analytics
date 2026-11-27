@@ -23,6 +23,6 @@ FROM (
     {{ get_latest_events(
         ref('int_blood_glucose_all'),
         partition_by=['person_id'],
-        order_by='clinical_effective_date'
+        order_by=['clinical_effective_date::DATE', 'date_recorded DESC NULLS LAST', 'observation_id']
     ) }}
 ) latest_blood_glucose

@@ -22,7 +22,7 @@
        ,ROW_NUMBER() OVER (PARTITION BY PERSON_ID ORDER BY VACCINATION_DATE DESC) as rownum
     FROM {{ ref('int_adult_imms_vaccination_status_current') }}  v1
     --FROM MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_VACCINATION_STATUS_CURRENT 
-    WHERE VACCINE_ID in ('SHING_1','SHING_1B','SHING_1C') and VACCINATION_STATUS in ('Declined')  
+    WHERE VACCINE_ID LIKE ('SHING_1%') and VACCINATION_STATUS in ('Declined')  
     QUALIFY rownum = 1
     )
     --Second Shingles

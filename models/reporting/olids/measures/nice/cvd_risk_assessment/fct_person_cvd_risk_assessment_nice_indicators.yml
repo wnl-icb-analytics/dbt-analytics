@@ -14,8 +14,13 @@ models:
       Based on NICE NG238. Code lists: CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD,
       CHD_COD, STRK_COD, TIA_COD, PAD_COD, HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD,
       DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, FHYP_COD (PCD); 0212 (BNF).
+
+
+      External validation: matches Network DES CVD-07 (Mar 2025, by practice) once a known
+      difference is allowed for. The national figure uses different ages and exclusions.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind269-cardiovascular-disease-prevention-risk-assessment-general-population
@@ -43,6 +48,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND269"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "Network DES CVD-07 (Mar 2025, by practice)"
+            note: "The national figure uses different ages and exclusions"
+            reference: docs/nice-benchmarks.md
     columns: &risk_assessment_columns
       - name: person_id
         description: "Identifier of the person in the indicator denominator."
@@ -98,8 +109,12 @@ models:
       STRK_COD, TIA_COD, PAD_COD, HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, DM_COD,
       DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, FHYP_COD, FNFHYP_COD, HYP_COD, HYPRES_COD,
       LSMOK_COD, EXSMOK_COD, NSMOK_COD (PCD); BMIVAL_COD; 0212 (BNF).
+
+
+      External validation: matches NICE testing report (Mar 2023, England).
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind270-cardiovascular-disease-prevention-risk-assessment-modifiable-risk-factors
@@ -129,6 +144,11 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND270"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "NICE testing report (Mar 2023, England)"
+            reference: docs/nice-benchmarks.md
     columns: *risk_assessment_columns
 
   - name: fct_person_cvd_risk_assessment_ind181
@@ -138,16 +158,22 @@ models:
 
 
       People registered on the build date aged 25 to 84 on the type 2 diabetes register
-      without moderate or severe coded frailty or a statin prescription in the last 6 months.
+      without a statin prescription in the last 6 months.
       Achieved with cardiovascular risk assessment in the last 3 years; no numeric score or
       separate consultation record is needed. Excludes established cardiovascular disease,
       including haemorrhagic stroke, familial hypercholesterolaemia and CKD stage 3 to 5. No
       personalised care adjustments are applied. Based on NICE NG238. Code lists:
       CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD, CHD_COD, STRK_COD, TIA_COD, PAD_COD,
       HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD,
-      DMRES_COD, FHYP_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD); 0212 (BNF).
+      DMRES_COD, FHYP_COD (PCD); 0212 (BNF).
+
+
+      Not externally validated: only a related published figure exists (NICE CPRD testing
+      report comorbidity group (Mar 2023, England)). Only a related group in NICE's own
+      testing report exists.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind181-diabetes-cvd-risk-assessment
@@ -160,20 +186,25 @@ models:
           description_short: "Cardiovascular risk assessment in type 2 diabetes in the last 3 years"
           description_long: >-
             People registered on the build date aged 25 to 84 on the type 2 diabetes register
-            without moderate or severe coded frailty or a statin prescription in the last 6
-            months. Achieved with cardiovascular risk assessment in the last 3 years; no
-            numeric score or separate consultation record is needed. Excludes established
-            cardiovascular disease, including haemorrhagic stroke, familial
-            hypercholesterolaemia and CKD stage 3 to 5. No personalised care adjustments are
-            applied. Based on NICE NG238. Code lists: CVDRISKASS_COD, CVDASS2_COD,
-            QRISKSCORE_COD, CHD_COD, STRK_COD, TIA_COD, PAD_COD, HSTRK_COD, CKD_COD,
-            CKD1AND2_COD, CKDRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, FHYP_COD,
-            MODFRAIL_COD, SEVFRAIL_COD (PCD); 0212 (BNF).
+            without a statin prescription in the last 6 months. Achieved with cardiovascular
+            risk assessment in the last 3 years; no numeric score or separate consultation
+            record is needed. Excludes established cardiovascular disease, including
+            haemorrhagic stroke, familial hypercholesterolaemia and CKD stage 3 to 5. No
+            personalised care adjustments are applied. Based on NICE NG238. Code lists:
+            CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD, CHD_COD, STRK_COD, TIA_COD, PAD_COD,
+            HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD,
+            DMRES_COD, FHYP_COD (PCD); 0212 (BNF).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND181"
+          external_validation:
+            status: not_validated
+            result: related_figure_only
+            comparator: "NICE CPRD testing report comorbidity group (Mar 2023, England)"
+            note: "Only a related group in NICE's own testing report exists"
+            reference: docs/nice-benchmarks.md
     columns: *risk_assessment_columns
 
   - name: fct_person_cvd_risk_assessment_ind161
@@ -192,8 +223,14 @@ models:
       lists: CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD, CHD_COD, STRK_COD, TIA_COD, PAD_COD,
       HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD,
       DMRES_COD, FHYP_COD, HYP_COD, HYPRES_COD (PCD).
+
+
+      Not externally validated: only a related published figure exists (Network DES CVD-07
+      (Mar 2025, NCL)). The national figure covers a wider group, not just people newly
+      diagnosed with hypertension or type 2 diabetes.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind161-cardiovascular-disease-prevention-cardiovascular-risk-assessment-for-people-newly-diagnosed-with-hypertension-or-t2-dm
@@ -221,6 +258,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND161"
+          external_validation:
+            status: not_validated
+            result: related_figure_only
+            comparator: "Network DES CVD-07 (Mar 2025, NCL)"
+            note: "The national figure covers a wider group, not just people newly diagnosed with hypertension or type 2 diabetes"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Identifier of the person in the indicator denominator."
@@ -322,6 +365,7 @@ models:
       Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
+        primary_key: [person_id, indicator_id]
         owner:
           name: EddieDavison92
     data_tests:

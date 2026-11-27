@@ -19,8 +19,9 @@ WITH valproate_from_prog_codes AS (
     SELECT DISTINCT
         mo.id AS medication_order_id,
         NULL AS medication_statement_id,
-        pp.person_id,
+        mo.person_id,
         mo.clinical_effective_date::DATE AS order_date,
+        mo.date_recorded,
         mo.medication_name AS order_medication_name,
         mo.dose AS order_dose,
         mo.quantity_value AS order_quantity_value,
@@ -35,8 +36,6 @@ WITH valproate_from_prog_codes AS (
         NULL AS bnf_name,
         'PROG_CODES' AS source_method
     FROM {{ ref('stg_olids_medication_order') }} AS mo
-    INNER JOIN {{ ref('int_patient_person_unique') }} AS pp
-        ON mo.patient_id = pp.patient_id
     LEFT JOIN {{ ref('stg_reference_valproate_prog_codes') }} AS vp
         ON
             mo.mapped_concept_code = vp.code
@@ -59,6 +58,7 @@ valproate_from_cluster AS (
         medication_statement_id,
         person_id,
         order_date::DATE AS order_date,
+        date_recorded,
         order_medication_name,
         order_dose,
         order_quantity_value,
@@ -82,6 +82,7 @@ base_medication_orders AS (
         COALESCE(pc.medication_statement_id, cl.medication_statement_id) AS medication_statement_id,
         COALESCE(pc.person_id, cl.person_id) AS person_id,
         COALESCE(pc.order_date, cl.order_date) AS order_date,
+        COALESCE(pc.date_recorded, cl.date_recorded) AS date_recorded,
         COALESCE(pc.order_medication_name, cl.order_medication_name) AS order_medication_name,
         COALESCE(pc.order_dose, cl.order_dose) AS order_dose,
         COALESCE(pc.order_quantity_value, cl.order_quantity_value) AS order_quantity_value,
@@ -145,56 +146,28 @@ valproate_enhanced AS (
         -- Clinical risk assessment flags
         TRUE AS is_high_teratogenic_risk,
 
-        -- Pregnancy risk assessment
+        -- Keep the published label vocabulary; exact dm+d form is available separately.
         CASE
-            WHEN
-                vo.valproate_product_type IN ('SODIUM_VALPROATE', 'EPILIM')
-                THEN 'ANTI_EPILEPTIC'
-            WHEN
-                vo.valproate_product_type IN ('DEPAKOTE')
-                THEN 'MOOD_STABILISER'
-            ELSE 'UNSPECIFIED'
-        END AS clinical_indication,
-
-        -- Dosage categorisation for monitoring
-        CASE
-            WHEN vo.order_dose ILIKE '%MG%'
-                THEN
-                    CASE
-                        WHEN
-                            REGEXP_SUBSTR(vo.order_dose, '[0-9]+')::INT <= 500
-                            THEN 'LOW_DOSE'
-                        WHEN
-                            REGEXP_SUBSTR(vo.order_dose, '[0-9]+')::INT <= 1000
-                            THEN 'MODERATE_DOSE'
-                        ELSE 'HIGH_DOSE'
-                    END
-            ELSE 'UNKNOWN_DOSE'
-        END AS dose_category,
-
-        -- Formulation type for bioequivalence monitoring
-        CASE
-            WHEN
-                vo.order_medication_name ILIKE '%TABLET%' THEN 'TABLET'
-            WHEN
-                vo.order_medication_name ILIKE '%CAPSULE%' THEN 'CAPSULE'
-            WHEN
-                vo.order_medication_name ILIKE '%LIQUID%'
-                OR vo.order_medication_name ILIKE '%SYRUP%'
-                THEN 'LIQUID'
-            WHEN
-                vo.order_medication_name ILIKE '%MODIFIED RELEASE%'
-                OR vo.order_medication_name ILIKE '%MR%'
-                THEN 'MODIFIED_RELEASE'
+            WHEN dmd.form_description ILIKE 'Modified-release%'
+                OR dmd.form_description ILIKE 'Prolonged-release%' THEN 'MODIFIED_RELEASE'
+            WHEN dmd.form_description ILIKE '%tablet%' THEN 'TABLET'
+            WHEN dmd.form_description ILIKE '%capsule%' THEN 'CAPSULE'
+            WHEN dmd.form_description ILIKE '%solution%'
+                OR dmd.form_description ILIKE '%suspension%'
+                OR dmd.form_description ILIKE '%liquid%'
+                OR dmd.form_description ILIKE '%syrup%' THEN 'LIQUID'
             ELSE 'UNKNOWN_FORMULATION'
         END AS formulation_type,
+        coalesce(dmd.form_description, 'UNKNOWN') AS dmd_formulation_type,
+        CASE WHEN dmd.form_description IS NULL THEN NULL
+             ELSE dmd.form_description ILIKE 'Modified-release%'
+                OR dmd.form_description ILIKE 'Prolonged-release%' END AS is_modified_release,
 
         -- Recency flags for clinical monitoring
-        vo.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        vo.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        vo.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('vo.order_date') }}
 
     FROM valproate_orders AS vo
+    LEFT JOIN {{ ref('dmd_product') }} dmd ON vo.mapped_concept_code = dmd.product_code
 )
 
 -- Final selection with ALL persons - no filtering by active status
@@ -204,6 +177,7 @@ SELECT
     ve.medication_statement_id,
     ve.person_id,
     ve.order_date,
+    ve.date_recorded,
     ve.order_medication_name,
     ve.order_dose,
     ve.order_quantity_value,
@@ -221,16 +195,17 @@ SELECT
     ve.matched_on_concept_id,
     ve.valproate_product_type,
     ve.is_high_teratogenic_risk,
-    ve.clinical_indication,
-    ve.dose_category,
     ve.formulation_type,
     ve.is_recent_3m,
     ve.is_recent_6m,
     ve.is_recent_12m,
+    ve.is_future_dated,
 
     -- Add person demographics for reference
     p.current_practice_id,
-    p.total_patients
+    p.total_patients,
+    ve.dmd_formulation_type,
+    ve.is_modified_release
 
 FROM valproate_enhanced AS ve
 -- Join to main person dimension (includes ALL persons)

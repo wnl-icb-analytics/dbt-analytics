@@ -8,6 +8,7 @@
   with QCHECK as (
 SELECT
     obs.id,
+    obs.cluster_id,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -22,5 +23,6 @@ select person_id
 ,clinical_effective_date
 ,concept_code
 ,concept_display
+,cluster_id
 from QCHECK
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY PERSON_ID) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY cluster_id, id) = 1

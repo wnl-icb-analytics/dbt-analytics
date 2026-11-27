@@ -11,6 +11,10 @@ models:
     do not. Recent asthma treatment is not required. No personalised care adjustments are
     applied. Based on NICE NG245. Code lists: AST_COD, ASTRES_COD (PCD); SMOK_COD (PCD);
     SMOKE_EXPOSURE_COD (ECL cache).
+
+
+    External validation: matches QOF AST008 (2025/26, by practice) once a known difference is
+    allowed for. NICE includes everyone with asthma; QOF only those treated in the last year.
   config:
     meta:
       owner:
@@ -36,6 +40,12 @@ models:
         usage_contexts:
         - NICE_GUIDANCE
         sort_order: NICE_IND189
+        external_validation:
+          status: validated
+          result: difference_explained
+          comparator: "QOF AST008 (2025/26, by practice)"
+          note: "NICE includes everyone with asthma; QOF only those treated in the last year"
+          reference: docs/nice-benchmarks.md
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

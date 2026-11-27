@@ -2,36 +2,14 @@ version: 2
 
 models:
   - name: sem_olids_population
-    description: |
-      OLIDS Population Health semantic view. OLIDS is the One London
-      Integrated Data Set — primary care data from system suppliers,
-      unified by the One London team.
-
-      Semantic model for NCL population health analysis combining
-      demographics, QOF v51 condition registers, non-QOF conditions
-      (CYP asthma, anxiety, osteoarthritis, Parkinson's, cerebral palsy,
-      MND, MS, learning disability under 14, autism, ADHD, hypothyroidism,
-      NAFLD, chronic liver disease, sickle cell disease, thalassaemia,
-      familial hypercholesterolaemia, frailty and gestational diabetes),
-      diabetes type classification, and person status into a unified
-      semantic layer for Cortex Analyst and governed metric definitions.
-
-      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion —
-      denormalised onto dim_person_demographics) for age-standardised rate
-      calculation across areas.
-
-      Exposes person_id as a pseudonymised linkage dimension for cross-view
-      cohort intersection (CTE joins to the other sem_olids_* views);
-      aggregate-only output.
-
-      Grain: One row per person (current state)
-
-      Tables Included:
-      - dim_person_demographics: Core demographics, registration, geography
-      - dim_person_conditions: Boolean flags for all 38 conditions + diabetes type + summary counts
-      - dim_person_status_summary: Vulnerability, risk behaviours, polypharmacy, data sharing
-      - dim_person_ccms: Cambridge Comorbidity Score (continuous weighted score, 16+ only)
-
+    description: >-
+      Current population health measures for OLIDS, one row per person in
+      dim_person_demographics with linked conditions, statuses and Cambridge
+      Comorbidity Scores. Includes inactive and deceased people; is_active identifies
+      current registrants. Conditions use QOF v51 and project non-QOF definitions.
+      Cambridge scores apply from age 16; ESP 2013 groups and weights support
+      standardisation. person_id supports cohort linkage; final results must be
+      aggregate-only.
     config:
       materialized: semantic_view
       schema: SEMANTIC

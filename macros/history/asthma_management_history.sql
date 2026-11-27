@@ -91,12 +91,11 @@
         having count(*) >= 3
     ) sr on p.id = sr.person_id
 
-    -- antibacterial order in the 365 days to as_of (matches int_antibacterial_medications_all
-    -- is_recent_12m = datediff(day, order_date, CURRENT_DATE) <= 365, re-anchored on as_of)
+    -- Matches the 12-calendar-month antibacterial recency rule, re-anchored on as_of.
     left join (
         select distinct person_id
         from {{ ref('int_antibacterial_medications_all') }}
-        where order_date between dateadd(day, -365, {{ as_of }}) and {{ as_of }}
+        where order_date > dateadd(month, -12, {{ as_of }}) and order_date <= {{ as_of }}
     ) rabm on p.id = rabm.person_id
 
     -- prednisolone order in the 12 months to as_of

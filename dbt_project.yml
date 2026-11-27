@@ -22,10 +22,10 @@ clean-targets:
 
 model-paths: ["models"]
 
-# Configuration moved to macros/config/ - see macros/config/README.md
 vars:
   dbt_audit_schema: "test_audit"
-  auto_schema_domains: ['olids']
+  auto_schema_domains: ['cancer', 'olids']
+  auto_schema_domains_double_underscores: ['cancer']
   qof_reference_date: "2025-11-04"  # EMIS QOF extract date, override via --vars
   # Elementary observability
   disable_dbt_artifacts_autoupload: "{{ target.name not in ['prod', 'snowflake-prod'] }}"
@@ -51,8 +51,10 @@ models:
     +persist_docs:
       columns: true
     +post-hook:
+      # Constraint first: adding one needs ownership, which then moves to ANALYST.
+      - "{{ set_primary_key_constraint() }}"
       - "{{ grant_ownership_with_copy() }}"
-      - "{{ set_managed_by_tag() }}"
+      - "{{ set_governance_tags() }}"
     +enabled: true
 
     # Raw layer - source data with minimal transformation
@@ -125,6 +127,8 @@ models:
         +schema: "CCMS"
       EFI2:
         +schema: "EFI2"
+      biomarker_trajectories:
+        +schema: "BIOMARKER_TRAJECTORIES"
       qadmissions:
         +schema: "QADMISSIONS"
 
@@ -153,6 +157,11 @@ models:
           +database: "{{ target.database.replace('MODELLING', 'REPORTING') }}"
         risk_stratification:
           +schema: "RISK_STRATIFICATION"
+        measures:
+          nice:
+            # Tags each NICE measure VALIDATED or NOT_VALIDATED from meta.indicator.external_validation.
+            +post-hook:
+              - "{{ set_external_validation_tag() }}"
 
     # Semantic layer - Snowflake Semantic Views for Cortex Analyst
     semantic:
@@ -187,6 +196,9 @@ models:
           {%- else -%}
           DEV__PUBLISHED_REPORTING__PARTNER.SECURITY.PARTNER_POLICY on (sk_patient_id)
           {%- endif -%}
+      # PARTNER_POLICY reads SECURITY.PARTNER_MAPPING by name.
+      security:
+        +schema: "SECURITY"
 
     # Published layer - production-ready datasets for end users
     published:
@@ -249,12 +261,6 @@ seeds:
         predecessor_name: varchar(200)
         successor_name: varchar(200)
         note: varchar(500)
-
-    bnf_polypharmacy_exclusions:
-      +column_types:
-        bnf_chapter_code: varchar(10)
-        chapter_name: varchar(200)
-        is_excluded: boolean
 
     ethnicity_snomed_ONS_NHS:
       +column_types:

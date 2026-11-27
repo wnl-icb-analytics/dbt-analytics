@@ -1,3 +1,9 @@
+{{
+    config(
+        materialized='table',
+        tags=['cltcs', 'daily'])
+}}
+
 select patient_id
     , area_code
     , intervention_date

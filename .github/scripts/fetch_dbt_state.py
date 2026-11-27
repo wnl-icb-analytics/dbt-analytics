@@ -2,10 +2,13 @@
 
 Writes state/manifest.json for use with --select state:modified+ --state state.
 Sets has_state=true/false in GITHUB_OUTPUT; false (missing stage, missing file,
-or any error) means the caller should fall back to a full build.
+or any error) means the caller should fall back to a full build. Also sets
+previous_build_status from latest/meta.json (unknown when absent), so a failed
+deploy's work can be retried although its manifest became the baseline.
 """
 
 import gzip
+import json
 import os
 import re
 import shutil
@@ -20,9 +23,10 @@ if not re.match(r"^[A-Za-z0-9_.]+$", STAGE) or not re.match(r"^[A-Za-z0-9_-]+$",
     sys.exit(f"Invalid stage/target: {STAGE} / {TARGET}")
 
 
-def set_output(has_state: bool) -> None:
+def set_output(has_state: bool, build_status: str = "unknown") -> None:
     with open(os.environ["GITHUB_OUTPUT"], "a") as f:
         f.write(f"has_state={'true' if has_state else 'false'}\n")
+        f.write(f"previous_build_status={build_status}\n")
 
 
 state_dir = os.path.abspath("state")
@@ -45,6 +49,10 @@ try:
         )
         rows = cur.fetchall()
         print(f"GET result: {rows}")
+        cur.execute(
+            f"GET '@{STAGE}/{TARGET}/latest/meta.json' "
+            f"'file://{state_dir.replace(chr(92), '/')}/'"
+        )
     finally:
         conn.close()
 
@@ -58,7 +66,16 @@ try:
         shutil.copyfileobj(src, dst)
     os.remove(gz_path)
     print(f"State manifest ready ({os.path.getsize(os.path.join(state_dir, 'manifest.json'))} bytes)")
-    set_output(True)
+    build_status = "unknown"
+    try:
+        with open(os.path.join(state_dir, "meta.json"), encoding="utf-8") as f:
+            build_status = json.load(f).get("build_status") or "unknown"
+    except (OSError, ValueError):
+        pass
+    if not re.match(r"^[a-z_]+$", build_status):
+        build_status = "unknown"
+    print(f"Previous deploy build status: {build_status}")
+    set_output(True, build_status)
 except Exception as e:
     # State is an optimisation, not a requirement - never fail the deploy here.
     print(f"State fetch failed ({e}) - full build", file=sys.stderr)

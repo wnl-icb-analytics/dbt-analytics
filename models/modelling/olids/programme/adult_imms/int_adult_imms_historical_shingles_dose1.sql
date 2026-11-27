@@ -27,6 +27,6 @@
         FROM {{ ref('int_adult_imms_dose_base') }} v
          --FROM DEV__MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_DOSE_BASE v
         --restrict to administered doses only
-       WHERE v.VACCINE_ID in ('SHING_1','SHING_1B') AND v.EVENT_TYPE LIKE 'Admin%'
+       WHERE v.VACCINE_ID LIKE ('SHING_1%') AND v.EVENT_TYPE LIKE 'Admin%'
         --select latest Shingles event for each person.
        QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID ORDER BY EVENT_DATE DESC) = 1

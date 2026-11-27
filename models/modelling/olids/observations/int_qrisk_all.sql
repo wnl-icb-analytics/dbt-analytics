@@ -14,13 +14,7 @@ WITH base_observations AS (
         obs.id,
         obs.person_id,
         obs.clinical_effective_date,
-        -- Handle potential large/invalid values and cap at 999.99 for valid range
-        CASE 
-            WHEN TRY_CAST(obs.result_value AS FLOAT) > 999.99 THEN 999.99
-            WHEN TRY_CAST(obs.result_value AS FLOAT) < 0 THEN 0
-            WHEN TRY_CAST(obs.result_value AS FLOAT) IS NULL THEN NULL
-            ELSE TRY_CAST(obs.result_value AS FLOAT)
-        END AS qrisk_score,
+        TRY_CAST(obs.result_value AS FLOAT) AS qrisk_score,
         obs.result_unit_display,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
@@ -60,12 +54,12 @@ SELECT
 
     -- Clinical risk categorisation (%) - CVD prevention guidelines
     CASE
-        WHEN qrisk_score NOT BETWEEN 0 AND 100 THEN 'Invalid'
+        WHEN NOT is_valid_qrisk THEN NULL
         WHEN qrisk_score < 10 THEN 'Low Risk (<10%)'
         WHEN qrisk_score < 20 THEN 'Moderate Risk (10-20%)'
         WHEN qrisk_score >= 20 THEN 'High Risk (≥20%)'
-        ELSE 'Unknown'
-    END AS cvd_risk_category,
+        ELSE NULL
+    END::VARCHAR(22) AS cvd_risk_category,
 
     -- High CVD risk indicator (≥10% 10-year risk)
     CASE

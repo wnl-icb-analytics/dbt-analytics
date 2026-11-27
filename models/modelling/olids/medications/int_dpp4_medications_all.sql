@@ -78,9 +78,7 @@ dpp4_enhanced AS (
         END AS dpp4_drug,
 
         -- Order recency flags (DPP-4 inhibitors are typically long-term therapy)
-        dob.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        dob.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        dob.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('dob.order_date') }}
     FROM dpp4_orders_base dob
     LEFT JOIN drug_clusters dc
         ON dob.mapped_concept_code = dc.mapped_concept_code
