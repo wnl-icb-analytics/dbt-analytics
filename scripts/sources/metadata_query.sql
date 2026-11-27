@@ -38,6 +38,21 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- iapt: NHS Talking Therapies (IAPT) dataset
+  SELECT
+    'DATA_LAKE' as database_name,
+    'IAPT' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'IAPT'
+
+  UNION ALL
+
     -- wl: Waiting lists and patient pathway data
   SELECT 
     'DATA_LAKE' as database_name,

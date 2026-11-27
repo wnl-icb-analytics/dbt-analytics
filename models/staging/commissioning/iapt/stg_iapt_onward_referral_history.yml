@@ -1,0 +1,29 @@
+version: 2
+models:
+- name: stg_iapt_onward_referral_history
+  description: One submitted NHS Talking Therapies onward referral row from an accepted submission. Onward referrals
+    have no source identifier. The ETOS says a repeated referral, date, time, reason and receiving organisation is
+    rejected within a submission, but accepted submissions contain a small number of such repeats, so every source
+    row is kept. onward_referral_id groups rows that describe the same onward referral; fct_iapt_onward_referral keeps
+    one per identifier.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_row_id
+    description: Submitted row identifier (UniqueID_IDS105), unique per accepted source row.
+    data_tests:
+    - unique
+    - not_null
+  - name: onward_referral_id
+    description: Hash of referral_id, onward_refer_date, onward_refer_time, onward_refer_reason and org_id_receiving.
+      Not unique within a submission when the provider repeats a row. A correction to any of these fields creates a
+      new identifier.
+    data_tests:
+    - not_null
+  - name: submission_id
+    data_tests:
+    - not_null
+  - name: referral_id
+    description: Provider-qualified referral identifier (Unique_ServiceRequestID).

@@ -103,20 +103,7 @@
     END AS age_band_10y,
 
     -- NHS age bands
-    CASE
-        WHEN {{ birth_date_field }} IS NULL THEN 'Unknown'
-        WHEN ({{ age_calc }}) < 0 THEN 'Unknown'
-        WHEN ({{ age_calc }}) < 5 THEN '0-4'
-        WHEN ({{ age_calc }}) < 15 THEN '5-14'
-        WHEN ({{ age_calc }}) < 25 THEN '15-24'
-        WHEN ({{ age_calc }}) < 35 THEN '25-34'
-        WHEN ({{ age_calc }}) < 45 THEN '35-44'
-        WHEN ({{ age_calc }}) < 55 THEN '45-54'
-        WHEN ({{ age_calc }}) < 65 THEN '55-64'
-        WHEN ({{ age_calc }}) < 75 THEN '65-74'
-        WHEN ({{ age_calc }}) < 85 THEN '75-84'
-        ELSE '85+'
-    END AS age_band_nhs,
+    {{ age_band_nhs('(' ~ age_calc ~ ')') }} AS age_band_nhs,
 
     -- ONS age bands
     CASE
