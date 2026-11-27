@@ -59,7 +59,7 @@ Readable milestone label. e-RS preserves the recorded action label, including au
 {% enddocs %}
 
 {% docs navigation_event_code %}
-Recorded code associated with the milestone. For an e-RS slot this is its latest recorded appointment-state action, not evidence of attendance. MHSDS legal-status, restrictive-intervention, discharge-readiness and onward-referral milestones carry the record's status or reason; end milestones of community treatment orders and leave carry their end reason. ECDS onward referrals carry the referred-to service. SUS APC admission and discharge carry their recorded admission and discharge methods; decision-to-admit and discharge-ready milestones have null event codes.
+Prepared code associated with the milestone. OLIDS referrals carry the upstream SNOMED referral-inclusion code, not their original EMIS code. For an e-RS slot this is its latest recorded appointment-state action, not evidence of attendance. MHSDS legal-status, restrictive-intervention, discharge-readiness and onward-referral milestones carry the record's status or reason; end milestones of community treatment orders and leave carry their end reason. ECDS onward referrals carry the referred-to service. SUS APC admission and discharge carry their recorded admission and discharge methods; decision-to-admit and discharge-ready milestones have null event codes.
 {% enddocs %}
 
 {% docs navigation_event_code_name %}
@@ -93,7 +93,7 @@ OLIDS uses its national mapping. A mapped DNA category can include incomplete wr
 {% enddocs %}
 
 {% docs navigation_attendance_name %}
-Authoritative reference label for attendance_code.
+Authoritative reference label for attendance_code. The shared event view replaces non-breaking spaces and trims outer spaces without changing wording or codes.
 {% enddocs %}
 
 {% docs navigation_outcome_code %}
@@ -105,7 +105,7 @@ Retained source or reference label for outcome_code.
 {% enddocs %}
 
 {% docs navigation_priority_code %}
-Recorded referral priority, interpreted within source_dataset. e-RS uses e-RS priority codes (765 two week wait, 766 urgent, 767 routine); CSDS and SUS OP use NHS DD Priority Type (1 routine, 2 urgent, 3 two week wait). Codes are not mapped across lists; priority_name supplies the readable value. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. SUS OP slots retain the appointment's referral priority. MHSDS clinical response priority uses a different code list and is not mapped here.
+Recorded referral priority, interpreted within source_dataset. e-RS uses e-RS priority codes (765 two week wait, 766 urgent, 767 routine); CSDS uses NHS DD Priority Type and SUS OP uses its legacy priority dictionary (1 routine, 2 urgent, 3 two week wait). Codes are not mapped across lists; priority_name supplies the readable value. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. SUS OP slots retain the appointment's referral priority. MHSDS clinical response priority uses a different code list and is not mapped here.
 {% enddocs %}
 
 {% docs navigation_priority_name %}
@@ -246,11 +246,11 @@ Coding system of the source code, or its source-supplied label. Keep source and 
 {% enddocs %}
 
 {% docs navigation_mapped_code %}
-SNOMED CT code for analysis. A recognised source SNOMED code is used directly, including inactive historical concepts. MHSDS, CSDS and ECDS validate candidates against the NHS Digital concept reference when loaded; supported Read mappings can supply a target. OLIDS retains its prepared EMIS mapping, including targets not recognised in that reference. ICD-10 and OPCS-4 reverse-map candidates are not assigned as clinical equivalents. Null means no mapping was resolved; the source code remains available. Monthly full refreshes apply reference changes to older deliveries.
+SNOMED CT code for analysis, called snomed_code in the shared clinical view. A recognised source SNOMED code is used directly, including inactive historical concepts. CSDS and MHSDS resolve targets in their domain facts. An eligible MHSDS supplied target takes precedence over national preferred-term Read maps, which take precedence over the legacy Read dictionary. ECDS validates its recorded concept when loaded. OLIDS retains its prepared concept map, including targets not recognised in the shared reference. ICD-10 and OPCS-4 remain unmapped. Null means no target was resolved; the source code remains available. Monthly full refreshes apply reference changes to older deliveries.
 {% enddocs %}
 
 {% docs navigation_mapped_code_name %}
-Preferred reference label for mapped_code. MHSDS, CSDS and ECDS use the latest retained NHS Digital term, including for historical concepts. OLIDS retains its prepared mapping label.
+Preferred reference label for mapped_code (snomed_code in the shared clinical view). MHSDS, CSDS and ECDS use the latest retained NHS Digital term, including for historical concepts. OLIDS retains its prepared mapping label.
 {% enddocs %}
 
 {% docs navigation_mapped_coding_system %}
@@ -270,7 +270,7 @@ Numeric representation at precision 38 and scale 9. Check result_value_parse_sta
 {% enddocs %}
 
 {% docs navigation_result_value_parse_status %}
-Source numeric parsing assessment. Rounded or out-of-range values remain identifiable, and the original result_value is retained. value_unknown marks a submitted placeholder meaning unknown, such as the CSDS 99.9 length; its numeric value is null.
+Source numeric parsing assessment. Rounded or out-of-range values remain identifiable, and the original result_value is retained. unknown value marks a submitted placeholder meaning unknown, such as the CSDS 99.9 length; its numeric value is null.
 {% enddocs %}
 
 {% docs navigation_result_date %}
@@ -323,4 +323,52 @@ Recorded ECDS diagnosis qualifier, such as confirmed or suspected, in SNOMED CT.
 
 {% docs navigation_qualifier_name %}
 Retained SNOMED CT label for the recorded diagnosis qualifier.
+{% enddocs %}
+
+{% docs navigation_clinical_original_code %}
+Code supplied for the clinical item, with the source model's documented normalisation. Interpret it with original_coding_system; it is never replaced by a SNOMED target.
+{% enddocs %}
+
+{% docs navigation_clinical_original_code_name %}
+Supported original-system label for original_code, or null when unavailable. Read labels are not replaced by mapped SNOMED labels. Latest reference labels are not verbatim submitted descriptions.
+{% enddocs %}
+
+{% docs navigation_clinical_original_coding_system %}
+Readable system for original_code. CSDS retains the evidence-corrected Read scheme used by its domain fact; submitted scheme and correction evidence remain in fct_csds_clinical_record. OLIDS EMIS_CodeID_cs is displayed as EMIS and snomed_info_sct as SNOMED CT. Other source namespaces are retained.
+{% enddocs %}
+
+{% docs navigation_snomed_code %}
+Selected SNOMED CT concept identifier. CSDS and MHSDS resolve it in their domain facts: recognised recorded SNOMED first, then the eligible MHSDS supplied target, then national preferred-term Read maps, then the legacy Read dictionary. National maps include assured and unassured entries and inactive concepts. Candidates absent from snomed_concept are skipped. CTV3 synonym-only and term-ID matches are excluded. ECDS uses recognised recorded SNOMED. OLIDS retains its prepared concept map, including targets absent from snomed_concept. ICD-10 and OPCS-4 remain unmapped. Null means unresolved; original_code is retained.
+{% enddocs %}
+
+{% docs navigation_snomed_code_name %}
+Preferred term belonging to snomed_code. CSDS, MHSDS and ECDS use the latest retained SNOMED reference label; OLIDS retains its prepared target label.
+{% enddocs %}
+
+{% docs navigation_snomed_mapping_method %}
+Route supplying the selected SNOMED code: Recorded as SNOMED CT, OLIDS concept map, MHSDS supplied SNOMED, National CTV3 map, National Read v2 map or Legacy Read dictionary. Null exactly when no SNOMED code is selected. A method does not establish national assurance.
+{% enddocs %}
+
+{% docs navigation_is_snomed_mapping_assured %}
+Assurance flag supplied by the selected national Read map. False means explicitly unassured. Null means assurance is unavailable or not applicable, including a selected national map without a supplied flag. Use snomed_mapping_method to identify the mapping route.
+{% enddocs %}
+
+{% docs navigation_event_original_code %}
+Original event code in its recorded namespace. ECDS referred-service milestones retain their recorded SNOMED code here and in snomed_code. OLIDS referral original codes are unavailable in the event interface and remain null pending an upstream change. Data Dictionary and e-RS codes stay in their original namespaces.
+{% enddocs %}
+
+{% docs navigation_event_original_code_name %}
+Supported original-system label for original_code. Null for OLIDS events until their upstream event interface supplies original terminology.
+{% enddocs %}
+
+{% docs navigation_event_original_coding_system %}
+Namespace defining original_code, such as a named NHS Data Dictionary item, e-RS action or SNOMED CT. Null for OLIDS events while original terminology is unavailable.
+{% enddocs %}
+
+{% docs navigation_event_snomed_code %}
+SNOMED code for the same event attribute. ECDS referred-service milestones copy their recorded SNOMED code. OLIDS retains the existing referral-inclusion SNOMED code under OLIDS concept map. Administrative codes receive no inferred SNOMED equivalent.
+{% enddocs %}
+
+{% docs navigation_medication_authorisation_type %}
+Authorisation type from the currently linked, non-deleted statement for the same OLIDS person. It is current statement context, not historical authorisation evidence. Null outside medication records with this context.
 {% enddocs %}

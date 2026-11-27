@@ -31,7 +31,8 @@ macros:
       Returns clinical_record_id for an invalid populated SNOMED mapping or a mapping
       that replaces a recognised source SNOMED code. A full-refresh build also fails
       when a recognised source SNOMED code has no mapping. Requires clinical_record_id,
-      source_code, source_coding_system, mapped_code and mapped_coding_system.
+      source_code, source_coding_system, mapped_code, mapped_coding_system and snomed_mapping_method.
+      The method must be null exactly when the selected SNOMED code is null.
       Unmapped historical deliveries may remain unmapped after reference additions
       until their next full refresh; ordinary incremental builds do not assert
       historical mapping completeness against newly added reference entries.
@@ -39,3 +40,12 @@ macros:
       - name: model
         type: Relation
         description: Clinical adapter using the shared SNOMED concept reference.
+  - name: test_navigation_snomed_method
+    description: Returns rows whose SNOMED code and mapping method disagree about whether a target exists.
+    arguments:
+      - name: model
+        type: Relation
+        description: Relation with a selected SNOMED code and snomed_mapping_method.
+      - name: code_column
+        type: string
+        description: Selected target column; defaults to snomed_code.

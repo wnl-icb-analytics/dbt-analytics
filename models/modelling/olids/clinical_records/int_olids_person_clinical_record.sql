@@ -20,16 +20,16 @@ select
     'clinical_effective_date'::varchar as clinical_time_basis,
     source_code,
     source_code_name,
-    source_coding_system,
-    mapped_code,
-    mapped_code_name,
-    mapped_coding_system,
+    decode(source_coding_system, 'EMIS_CodeID_cs', 'EMIS', 'snomed_info_sct', 'SNOMED CT', source_coding_system) as source_coding_system,
+    iff(s.mapped_coding_system in ('snomed_info_sct', 'SNOMED CT'), s.mapped_code, null) as mapped_code,
+    iff(s.mapped_coding_system in ('snomed_info_sct', 'SNOMED CT'), s.mapped_code_name, null) as mapped_code_name,
+    decode(mapped_coding_system, 'snomed_info_sct', 'SNOMED CT', mapped_coding_system) as mapped_coding_system,
     result_value::varchar as result_value,
     try_to_decimal(result_value::varchar, 38, 9) as result_value_numeric,
     case
-        when result_value is null then 'value_missing'
-        when result_value_numeric is null then 'not_numeric_or_out_of_range'
-        when result_value_numeric::float <> result_value then 'numeric_rounded'
+        when result_value is null then 'no value'
+        when result_value_numeric is null then 'not numeric or out of range'
+        when result_value_numeric::float <> result_value then 'numeric (rounded)'
         else 'numeric'
     end as result_value_parse_status,
     result_date,
@@ -59,5 +59,7 @@ select
     iff(parent_record_id is not null, 'encounter', null)::varchar as parent_record_type,
     iff(parent_record_id is not null, 'stg_olids_encounter', null)::varchar as parent_model_name,
     iff(parent_record_id is not null, 'recorded_parent', null)::varchar as relationship_type,
-    source_extraction_date as source_received_at
-from {{ ref('fct_gp_clinical_record') }}
+    source_extraction_date as source_received_at,
+    iff(s.mapped_code is not null and s.mapped_coding_system in ('snomed_info_sct', 'SNOMED CT'),
+        'OLIDS concept map', null)::varchar as snomed_mapping_method
+from {{ ref('fct_gp_clinical_record') }} as s
