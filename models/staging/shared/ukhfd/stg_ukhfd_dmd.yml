@@ -20,10 +20,15 @@ models:
         description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
       - name: combination_product_code
         description: Supplied dm+d combination-product lookup code; null when absent.
+      - name: unit_dose_form_size
+        description: dm+d unit-dose form size, such as the volume of one vial; null when not supplied.
+      - name: unit_dose_form_size_unit_code
+        description: SNOMED CT unit code for unit_dose_form_size; null when not supplied.
       - name: is_in_latest_source
         description: Whether UKHFD reports this retained record in its latest source data.
     config:
       meta:
+        primary_key: [vpid]
         owner:
           name: Eddie Davison
   - name: stg_ukhfd_dmd_amp
@@ -46,6 +51,7 @@ models:
         description: Whether UKHFD reports this retained record in its latest source data.
     config:
       meta:
+        primary_key: [apid]
         owner:
           name: Eddie Davison
   - name: stg_ukhfd_dmd_vmp_drug_form
@@ -64,6 +70,7 @@ models:
         description: Whether UKHFD reports this retained record in its latest source data.
     config:
       meta:
+        primary_key: [vpid]
         owner:
           name: Eddie Davison
   - name: stg_ukhfd_dmd_lookup_form
@@ -82,6 +89,7 @@ models:
         description: Whether UKHFD reports this retained record in its latest source data.
     config:
       meta:
+        primary_key: [form_code]
         owner:
           name: Eddie Davison
   - name: stg_ukhfd_dmd_vmp_ingredient
@@ -118,6 +126,7 @@ models:
               - ingredient_substance_id
     config:
       meta:
+        primary_key: [vpid, ingredient_substance_id]
         owner:
           name: Eddie Davison
   - name: stg_ukhfd_dmd_vtm
@@ -139,6 +148,7 @@ models:
         description: Whether UKHFD reports this retained record in its latest source data.
     config:
       meta:
+        primary_key: [vtm_id]
         owner:
           name: Eddie Davison
 
@@ -149,7 +159,7 @@ unit_tests:
   - input: ref('raw_ukhfd_dmd_vmp')
     format: sql
     rows: |-
-      select k as vpid, 'SYN_' || label as vtmid, label as nm, iff(k='SYN_V2',1,0) as invalid, null::varchar as combprodcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+      select 100::float as udfs, '258773002'::varchar as udfs_uomcd, k as vpid, 'SYN_' || label as vtmid, label as nm, iff(k='SYN_V2',1,0) as invalid, null::varchar as combprodcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
        from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
        ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
        ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),

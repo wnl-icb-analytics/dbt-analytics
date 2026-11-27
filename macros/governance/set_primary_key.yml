@@ -1,0 +1,13 @@
+macros:
+  - name: primary_key_columns
+    description: >
+      Returns the model's config.meta.primary_key as a list, or an empty list. CI
+      (scripts/primary_keys/primary_keys.py check) allows a declared key only when unique and
+      not_null tests enforce it.
+  - name: set_primary_key_constraint
+    description: >
+      Adds a NORELY primary key constraint from config.meta.primary_key to table and incremental
+      models, so tools that read constraints show the key. Snowflake does not enforce it; the dbt
+      tests do. Views cannot hold constraints and get only the PRIMARY_KEY tag. On incremental
+      models it replaces any earlier key, and removes the key and tag when none is declared.
+      Applied to every model, before ownership moves to ANALYST.

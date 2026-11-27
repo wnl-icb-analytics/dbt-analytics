@@ -1,3 +1,9 @@
+{{
+    config(
+        materialized='table',
+        tags=['cltcs', 'daily'])
+}}
+
 -- open cases stay on the patient list, at their status log area, until closed, removed or rejected
 select patient_id
     , area_code

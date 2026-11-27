@@ -1,0 +1,45 @@
+version: 2
+
+macros:
+  - name: distinct_observation_history_readings
+    description: >
+      Distinct readings within one biomarker input for int_observation_events_long.
+      Prunes the source lookup by mapped concept and ranks before the history union.
+      Keeps source patient context, original and standardised values, units and unknown-day ids.
+    arguments:
+      - name: model
+        description: Observation input model with id, person_id, concept_code and clinical_effective_date.
+      - name: value
+        description: Standardised value expression used by the history branch.
+      - name: unit
+        description: Standardised unit expression used by the history branch.
+      - name: condition
+        description: The branch's inclusion condition, applied before deduplication.
+      - name: extra_lookup_cluster
+        description: Optional source concepts for calculated readings. BMI uses WEIGHT because it retains the weight observation id.
+  - name: is_unknown_clinical_day
+    description: Missing clinical date or a 1900-01-01 or 1899-12-31 placeholder. Separate observation ids must remain distinct on these days.
+    arguments:
+      - name: column
+        description: Clinical date expression to check.
+  - name: observation_reading_key
+    description: >
+      Person, mapped concept, clinical calendar date and recorded value for
+      distinct observation counts. Null results remain countable. Missing dates and
+      the 1900-01-01 and 1899-12-31 placeholders retain separate observation ids.
+      Use the corrected clinical date supplied by the observation model. Serial
+      history in int_observation_events_long extends reading identity with
+      observation type, standardised value, unit, source patient record and publisher.
+      HbA1c trajectories in biomarker_trajectories_input_features use standardised IFCC value and unit,
+      with IFCC scale preference within each calendar day.
+    arguments:
+      - name: alias
+        description: Optional table alias for the reading columns.
+      - name: clinical_date
+        description: Corrected clinical date column, compared as a calendar date.
+      - name: value
+        description: Original result column; pass none for value-free events with no populated result column.
+      - name: record_context
+        description: Optional source-record context column. NDH counts use the source patient record to preserve cross-practice entries.
+      - name: observation_id
+        description: Source observation identifier column, retained separately when the clinical day is unknown.
