@@ -43,6 +43,7 @@ FROM {{ ref('stg_lsacm_latest')}} acm
 WHERE dv_financial_year >= '202425' 
 AND acm.dv_provider_code IN (
         'RAP','RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS',
+        --Out of Sector OOS providers
         'R1H', -- Barts
         'RJ1', -- GSTT
         'RJ7', -- St George's
@@ -109,13 +110,14 @@ SELECT
         WHEN dv_provider_code = 'RYJ' AND point_of_delivery_further_detail_code LIKE '%PTS%' THEN 'Patient Transport Service'
         ELSE pod_group
     END AS podgroupoverview,
-    point_of_delivery_further_detail_code,
+    acm.point_of_delivery_further_detail_code,
     acm.local_point_of_delivery_description,
-    point_of_delivery_further_detail_description,
-    tariff_code,
-    dv_actual_market_forces_factor,
-    activity_treatment_function_code,
-    main_specialty_code,
+    acm.point_of_delivery_further_detail_description,
+    acm.tariff_code,
+    acm.dv_actual_market_forces_factor,
+    acm.activity_treatment_function_code,
+    -- this specialty code is null but keep in as placeholder
+    acm.main_specialty_code,
     to_varchar(local_sub_specialty_code) AS local_sub_specialty_code,
     to_varchar(
         decode(
@@ -134,7 +136,8 @@ SELECT
             12, '12-Mar'
         )
     ) AS finmonth_label,
-
+    --add latest month for filtering pages in the dashboard
+    acm.latest_month,
     acm.dv_financial_month AS dv_financialmonth,
     acm.dv_financial_year AS dv_financialyear,
     acm.dv_financial_year AS financialyear,
@@ -158,7 +161,7 @@ SELECT
     acm.dv_actual_price AS price,
     dv_planned_activity AS activity_plan,
     dv_planned_price AS price_plan,
-    tariff_code_description AS tariff_description,
+    hrg.hrg_description as tariff_description,
     hrg.hrg_chapter,
     hrg.hrg_subchapter,
     sp.specialty_name,
@@ -241,6 +244,7 @@ LEFT JOIN {{ ref('stg_dictionary_dbo_specialties')}} sp
         ACM.ACTIVITY_TREATMENT_FUNCTION_CODE,
         LEFT(ACM.LOCAL_SUB_SPECIALTY_CODE, 3)
     ) = SP.BK_SPECIALTY_CODE
+    
 LEFT JOIN {{ ref('stg_reference_wnl_reporting_names') }} prov
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES prov
     on IFF(

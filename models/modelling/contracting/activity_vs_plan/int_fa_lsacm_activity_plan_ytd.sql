@@ -10,14 +10,37 @@ WITH wnl_reporting_names AS (
         provider_code,
         provider_shorthand,
         provider_name
-    FROM {{ ref('stg_reference_wnl_reporting_names') }}
+        FROM {{ ref('stg_reference_wnl_reporting_names') }}
     --FROM STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES
+)
+,expected_providers as (
+/*    Using current provider list rather than historical is safer because providers may enter or leave the submission programme. */
+    select distinct
+        l.provider_code,
+        l.provider_type,
+        l.organisation_name as provider_name,
+        CASE 
+            WHEN l.provider_code = 'R1H' THEN 'Barts'
+            WHEN l.provider_code = 'RJ1' THEN 'GSTT'
+            WHEN l.provider_code = 'RJ7' THEN 'St Georges'
+            WHEN l.provider_code = 'RJZ' THEN 'Kings'
+            WHEN l.provider_code = 'RQX' THEN 'Homerton'
+            WHEN l.provider_code = 'RPY' THEN 'Royal Marsden'
+            WHEN l.provider_code = 'RTK' THEN 'Ashford St Peters'
+            WHEN l.provider_code = 'RWG' THEN 'West Herts'
+            WHEN l.provider_code = 'RWH' THEN 'East North Herts'
+            WHEN l.provider_code = 'RDU' THEN 'Frimley'
+            ELSE n.provider_shorthand END AS provider_shorthand
+        FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }} l
+    --FROM MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD_LATEST l
+    LEFT JOIN wnl_reporting_names n  using (provider_code)
 )
 --USE STAGED LSacm DATA JOINING TO LATEST SUBMISSION DATA BY META_FILE_ID
 ,latest_submissions AS (
 SELECT
 acm.meta_file_id,
 acm.dv_provider_code as provider_code,
+org.provider_type,
 org.provider_name,
 org.provider_shorthand,
 acm.dv_financial_month as financial_month,
@@ -108,7 +131,7 @@ LEFT JOIN {{ ref('pss_service_code') }} ser on UPPER(acm.service_code) = ser.ser
 --LEFT JOIN REFERENCE.DATA_DICTIONARY.PSS_SERVICE_CODE ser on UPPER(acm.service_code) = ser.service_code
 LEFT JOIN {{ ref('nhs_dd_commissioned_service_category') }} cs on acm.commissioned_service_category_code = cs.code
 --LEFT JOIN REFERENCE.DATA_DICTIONARY.NHS_DD_COMMISSIONED_SERVICE_CATEGORY cs on acm.commissioned_service_category_code = cs.code
-LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
+INNER JOIN expected_providers org on acm.dv_provider_code = org.provider_code
 LEFT JOIN {{ ref('stg_reference_pod_group_mapping')}} pod
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_POD_GROUP_MAPPING POD
     on CONCAT(

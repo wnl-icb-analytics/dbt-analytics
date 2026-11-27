@@ -25,7 +25,7 @@ FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
         FROM {{ ref('int_fa_lsacm_activity_plan_ytd') }} fa
         --FROM MODELLING.CONTRACTING.INT_FA_LSACM_activity_plan_YTD fa
        INNER JOIN latestmonth l on fa.provider_code = l.provider_code and fa.financial_month <= l.financial_month
-        WHERE fa.comm_group = 'WNL'
+        WHERE fa.comm_group = 'WNL' and provider_type = 'WNL'
         GROUP BY ALL
 )
 ---get POD activity and plan from IAP plans submitted 202627 YTD.

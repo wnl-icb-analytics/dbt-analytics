@@ -12,6 +12,7 @@ FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 
 SELECT
    fa.provider_shorthand,
+   fa.provider_type,
     fa.meta_file_id,
     l.financial_month as Latest_month,
     fa.comm_group,
