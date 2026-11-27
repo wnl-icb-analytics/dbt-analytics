@@ -19,10 +19,8 @@
 --     AND NOT controlled at stage 1 thresholds -
 --     clinic <= 140/90, home/ABPM <= 135/85.
 --
--- Because EMIS excludes the controlled rather than including the uncontrolled,
--- gated patients whose monitoring codes have no resolvable paired reading are
--- INCLUDED via the PG2a arm. Controlled checks use the single latest paired
--- BP event (int_blood_pressure_latest, the established rs convention).
+-- Unresolved latest readings remain included, as the XML excludes only controlled readings.
+-- BP uses date-linked clinic/home components, ordered by clinical date, save time and ID.
 
 with
 -- Parent population: Patients currently on hypertension register
@@ -45,39 +43,20 @@ rule_1_bp_code as (
     where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
--- Latest paired BP event within 12 months
-latest_bp as (
-    select
-        person_id,
-        systolic_value,
-        diastolic_value,
-        coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date > dateadd(month, -12, current_date())
-),
-
 -- PG2a exclusion: latest reading controlled at stage 2
 -- Clinic: SBP <= 160 and DBP <= 100; Home/ABPM: SBP <= 150 and DBP <= 95
 pg2a_bp_controlled as (
     select person_id
-    from latest_bp
-    where (
-        (not is_home_or_abpm and systolic_value <= 160 and diastolic_value <= 100)
-        or
-        (is_home_or_abpm and systolic_value <= 150 and diastolic_value <= 95)
-    )
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
+    where {{ ltc_lcs_bp_is_controlled(160, 100, 150, 95) }}
 ),
 
 -- PG2b exclusion: latest reading controlled at stage 1
 -- Clinic: SBP <= 140 and DBP <= 90; Home/ABPM: SBP <= 135 and DBP <= 85
 pg2b_bp_controlled as (
     select person_id
-    from latest_bp
-    where (
-        (not is_home_or_abpm and systolic_value <= 140 and diastolic_value <= 90)
-        or
-        (is_home_or_abpm and systolic_value <= 135 and diastolic_value <= 85)
-    )
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
+    where {{ ltc_lcs_bp_is_controlled(140, 90, 135, 85) }}
 ),
 
 -- PG2b: Ethnicity (vs3)

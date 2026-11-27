@@ -41,6 +41,7 @@ WITH classified_observations AS (
         obs.person_id,
         obs.clinical_effective_date,
         obs.concept_code,
+        obs.result_value,
         obs.concept_display,
         obs.status,
         obs.category
@@ -76,9 +77,9 @@ person_summary AS (
             AS earliest_qualifying_date,
         MAX(CASE WHEN status = 'QUALIFYING' THEN clinical_effective_date END)
             AS latest_qualifying_date,
-        COUNT(CASE WHEN status = 'QUALIFYING' THEN 1 END) AS qualifying_record_count,
-        COUNT(CASE WHEN status = 'RESOLVING' THEN 1 END) AS resolving_record_count,
-        COUNT(*) AS total_record_count
+        COUNT(DISTINCT IFF(status = 'QUALIFYING', {{ observation_reading_key() }}, NULL)) AS qualifying_record_count,
+        COUNT(DISTINCT IFF(status = 'RESOLVING', {{ observation_reading_key() }}, NULL)) AS resolving_record_count,
+        COUNT(DISTINCT {{ observation_reading_key() }}) AS total_record_count
     FROM classified_observations
     GROUP BY person_id
 )

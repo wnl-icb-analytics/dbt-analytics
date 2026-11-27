@@ -2,13 +2,16 @@ models:
   - name: dq_hba1c_issues
     description: >
       HbA1c observations failing plausibility checks, one row per id and source_cluster_id:
-      IFCC outside 20-200 mmol/mol, DCCT outside 3-20%, unknown type or invalid upstream.
+      IFCC outside 20-195 mmol/mol inclusive, DCCT below 3.979993595% or at least 20%,
+      unknown type or invalid upstream. Range flags and reasons use the recorded
+      value before display rounding and reuse upstream NDA validity.
       Observations without a recorded result value are excluded, preserving the
       numeric-result audit scope when the shared input retains value-free tests.
       Source is int_hba1c_all, clusters IFCCHBAM_COD and DCCTHBA1C_COD. Invalid upstream includes
       values capped to null because they were negative or above 1000. int_hba1c_all assigns
       the scale mainly by value: above 25 is IFCC, below 20 is DCCT, 20-25 falls back to
-      cluster and unit. An IFCC-coded value below 20 is therefore treated as DCCT.
+      cluster and unit. Recorded mmol/mol values from 13 to below 20 remain IFCC
+      and invalid; other values below 20 are read as DCCT.
       is_date_missing and is_future_date are always false because upstream removes those
       rows. is_extreme_outlier marks IFCC values above 150 mmol/mol or DCCT values above
       15%.
@@ -42,7 +45,7 @@ models:
         description: Source cluster identifier (IFCC or DCCT)
 
       - name: is_hba1c_out_of_range
-        description: Whether HbA1c is outside valid range for detected scale
+        description: Numeric result outside the NDA cleaning range for its inferred scale, before display rounding. False for non-numeric results or unknown scale.
 
       - name: is_date_missing
         description: Whether clinical effective date is missing
@@ -65,3 +68,51 @@ models:
             combination_of_columns:
               - id
               - source_cluster_id
+
+unit_tests:
+  - name: hba1c_quality_report_uses_nda_validity
+    model: dq_hba1c_issues
+    overrides:
+      macros:
+        # Fusion cannot infer UUID types from the unmocked schema probe.
+        get_empty_subquery_sql: |
+          SELECT NULL::VARCHAR id, NULL::NUMBER person_id,
+                 NULL::TIMESTAMP_NTZ clinical_effective_date,
+                 NULL::FLOAT hba1c_original_value, NULL::VARCHAR original_result_value,
+                 NULL::VARCHAR result_unit_display, NULL::VARCHAR concept_code,
+                 NULL::VARCHAR concept_display, NULL::VARCHAR source_cluster_id,
+                 NULL::BOOLEAN is_ifcc, NULL::BOOLEAN is_dcct, NULL::BOOLEAN is_valid_hba1c,
+                 NULL::VARCHAR hba1c_display, NULL::VARCHAR hba1c_category,
+                 NULL::BOOLEAN is_hba1c_out_of_range, NULL::BOOLEAN is_date_missing,
+                 NULL::BOOLEAN is_future_date, NULL::BOOLEAN is_extreme_outlier,
+                 NULL::BOOLEAN is_measurement_type_ambiguous,
+                 NULL::VARCHAR hba1c_category_with_issues WHERE FALSE
+    given:
+      - input: ref('int_hba1c_all')
+        format: sql
+        rows: |
+          SELECT column1::VARCHAR id, -241439::NUMBER person_id,
+                 '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+                 ROUND(TRY_TO_DOUBLE(column2), 2)::NUMBER(10,2) hba1c_original_value,
+                 column2::VARCHAR original_result_value, column3::BOOLEAN is_ifcc,
+                 NOT column3::BOOLEAN is_dcct, column4::BOOLEAN is_valid_hba1c,
+                 'SYN_unit'::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR concept_code,
+                 'Synthetic HbA1c'::VARCHAR concept_display,
+                 IFF(column3, 'IFCCHBAM_COD', 'DCCTHBA1C_COD')::VARCHAR source_cluster_id,
+                 'SYN_display'::VARCHAR hba1c_display, 'Invalid'::VARCHAR hba1c_category
+          FROM VALUES
+              ('SYN_IFCC_BELOW', '19.999', TRUE, FALSE),
+              ('SYN_IFCC_MIN', '20', TRUE, TRUE),
+              ('SYN_IFCC_MAX', '195', TRUE, TRUE),
+              ('SYN_IFCC_ABOVE', '195.001', TRUE, FALSE),
+              ('SYN_DCCT_BELOW', '3.979993594', FALSE, FALSE),
+              ('SYN_DCCT_MIN', '3.979993595', FALSE, TRUE),
+              ('SYN_DCCT_INSIDE', '19.999', FALSE, TRUE),
+              ('SYN_DCCT_MAX', '20', FALSE, FALSE),
+              ('SYN_NO_VALUE', NULL, TRUE, FALSE)
+    expect:
+      rows:
+        - {id: SYN_IFCC_BELOW, is_hba1c_out_of_range: true, hba1c_category_with_issues: 'IFCC Below Valid Range'}
+        - {id: SYN_IFCC_ABOVE, is_hba1c_out_of_range: true, hba1c_category_with_issues: 'IFCC Above Valid Range'}
+        - {id: SYN_DCCT_BELOW, is_hba1c_out_of_range: true, hba1c_category_with_issues: 'DCCT Below Valid Range'}
+        - {id: SYN_DCCT_MAX, is_hba1c_out_of_range: true, hba1c_category_with_issues: 'DCCT Above Valid Range'}

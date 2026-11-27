@@ -30,6 +30,7 @@ def main():
     parser.add_argument("--target", choices=["dev", "prod"], default="dev")
     parser.add_argument("--state")
     parser.add_argument("--select", nargs="+", required=True)
+    parser.add_argument("--full-refresh", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     common = ["--target", args.target, "--profiles-dir", "."]
@@ -60,6 +61,8 @@ def main():
                "--indirect-selection", "cautious"]
     if args.state and args.target == "dev":
         command += ["--defer", "--favor-state"]
+    if args.full_refresh:
+        command.append("--full-refresh")
     if args.dry_run:
         print(json.dumps(command))
     else:

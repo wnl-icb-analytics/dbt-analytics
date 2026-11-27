@@ -10,8 +10,10 @@
 --
 -- Rule chain (include on pass, all rules):
 -- - Rule 1: EMIS library item ee5b135f-b9b2-4ef7-8b51-939a754cf935 (not in the
---   XML export; assumed to be the QOF COPD register - empirically adds < 10
---   people over rules 2-6)
+--   XML export), taken as the QOF COPD register. Follows QOF v51 (2026/27),
+--   which also admits people coded only through monitoring, review or
+--   invitation codes in the last two years. Earlier QOF releases lacked
+--   this administrative-code route.
 -- - Rule 2: earliest COPD-family code (COPD_COD + COPDRES_COD) dated before
 --   1 year ago is a diagnosis (COPD_COD), and COPD is active
 -- - Rule 3: COPD-family code in last year with linked spirometry

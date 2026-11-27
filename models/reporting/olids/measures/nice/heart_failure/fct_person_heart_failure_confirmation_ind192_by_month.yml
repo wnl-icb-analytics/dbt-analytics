@@ -8,10 +8,13 @@ models:
     People registered at the month-end on the heart failure register with an earliest unresolved
     diagnosis 3 to 15 months before the month-end, allowing confirmation to finish. Diagnosis
     must also be recorded by that date. A diagnosis on the resolution date remains unresolved.
-    Achieved with an echocardiogram or specialist assessment within 3 months before or after
-    diagnosis. No personalised care adjustments are applied. Recalculated for each of the last
-    60 month-ends with current rules, code lists and records, so later corrections can change
-    past months. Based on NICE NG106. Code lists: HF_COD, HFRES_COD, ECOG_COD (PCD).
+    Counts all national ECOG_COD records, including echo requests and referrals, within
+    3 months either side of diagnosis; QOF uses a different window. Completed imaging is
+    reported separately. Specialist assessment is not counted: ECOG_COD has no completed
+    specialist-assessment codes. No personalised care adjustments are applied. Recalculated
+    for each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Based on NICE NG106. Code lists: HF_COD, HFRES_COD,
+    ECOG_COD (PCD).
   config:
     meta:
       owner:
@@ -44,8 +47,8 @@ models:
     description: "Name of the registration practice at the reporting month-end."
   - name: latest_record_date
     description: >-
-      Latest echocardiogram or specialist assessment from 3 months before to 3 months after
-      diagnosis, inclusive; null if absent.
+      Latest ECOG_COD record from 3 months before to 3 months after diagnosis, inclusive,
+      including requests and referrals; null if absent.
   - name: is_in_denominator
     description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator

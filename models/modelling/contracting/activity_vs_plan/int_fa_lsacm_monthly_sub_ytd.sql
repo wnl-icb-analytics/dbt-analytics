@@ -6,10 +6,14 @@
 /* this tables pulls all records of monthly submissions into LSACM for every month of the latest financial year, for a fixed list of 10 providers. 
 This can be used to track submissions, flag overdue and check versions for the current month and historically. 
 No filtering by latest version or latest financial month applied.
+--This table is being extended to include the Out of Sector (OOS) providers.
  */
 WITH ALL_SUBMISSIONS AS (
 SELECT 
 r.dv_provider_code as provider_code, 
+CASE 
+WHEN dv_provider_code in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS') THEN 'WNL'
+ELSE 'OOS' END AS provider_type,
 o.organisation_name,
 file_id as meta_file_id, 
 TO_CHAR(DATEADD(MONTH,r.financial_month + 2,TO_DATE(r.financial_year || '-01-01')),'YYYY-MM') AS activity_month,
@@ -18,7 +22,7 @@ s.financial_year,
 r.file_version,
 s.submission_date as required_submission_date,
 DATE(r.created_datetime) AS date_received,
-DATE(r.sent_datetime) AS date_submitted,
+COALESCE(DATE(r.sent_datetime),DATE(r.created_datetime)) AS date_submitted,
 r.row_count as submitted_row_count
 FROM {{ ref('stg_sdl_meta_file_registry') }} r
 --FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY r
@@ -27,7 +31,21 @@ LEFT JOIN {{ ref('stg_dictionary_dbo_organisation') }} o on r.dv_provider_code =
 LEFT JOIN {{ ref('fa_lsacm_submission_dates') }} s on s.submission_year = r.financial_year and s.fy_submission_month_number = r.financial_month
 --LEFT JOIN DEV__MODELLING.CONTRACTING.FA_LSACM_SUBMISSION_DATES s on s.submission_year = r.financial_year and s.fy_submission_month_number = r.financial_month
 WHERE r.feed = 'LSACM'
-AND r.dv_provider_code in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS')
+AND r.dv_provider_code in (
+--WNL providers
+    'RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS',
+--OOS
+        'R1H', -- Barts
+        'RJ1', -- GSTT
+        'RJ7', -- St George's
+        'RJZ', -- King's
+        'RQX',  -- Homerton
+        'RPY', -- The Royal Marsden NHS Foundation Trust
+        'RTK', -- Ashford AND St Peter's Hospitals NHS Foundation Trust
+        'RWG', -- West Hertfordshire Teaching Hospitals NHS Trust
+        'RWH', -- East AND North Hertfordshire Teaching NHS Trust
+        'RDU' -- Frimley Health NHS Foundation Trust
+)
 --AND r.financial_year >= (select max(financial_year) from STAGING.SDL.STG_SDL_META_FILE_REGISTRY where feed = 'LSACM')
 AND r.financial_year = (select max(financial_year) from {{ ref('stg_sdl_meta_file_registry') }} where feed = 'LSACM' )
 --keep submission version history and all months for now. Latest version and latest financial month can be filtered for in downstream tables

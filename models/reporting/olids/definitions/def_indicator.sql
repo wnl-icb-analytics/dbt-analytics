@@ -12,6 +12,13 @@ The post-hook stores daily-grain history and repairs duplicate current versions.
 */
 
 {%- set metadata = extract_indicator_metadata() -%}
+{%- set validation_results = {
+    'matches': 'Matches',
+    'difference_explained': 'Matches once a known difference is allowed for',
+    'difference_not_tested': 'Plausible difference, not tested',
+    'related_figure_only': 'Only a related published figure',
+    'no_comparator': 'No published figure'
+} -%}
 
 WITH indicators AS (
     {% if metadata.indicators %}
@@ -36,6 +43,17 @@ WITH indicators AS (
                 NULL AS qof_indicator,
             {% endif %}
             '{{ ind.sort_order | replace("'", "''") }}' AS sort_order,
+            {% if ind.validation_status %}
+                {{ 'TRUE' if ind.validation_status == 'validated' else 'FALSE' }} AS is_externally_validated,
+                '{{ validation_results.get(ind.validation_result, ind.validation_result) }}' AS external_validation_result,
+                {% if ind.validation_comparator %}'{{ ind.validation_comparator | replace("'", "''") }}'{% else %}NULL{% endif %} AS external_validation_comparator,
+                {% if ind.validation_note %}'{{ ind.validation_note | replace("'", "''") }}'{% else %}NULL{% endif %} AS external_validation_note,
+            {% else %}
+                NULL AS is_externally_validated,
+                NULL AS external_validation_result,
+                NULL AS external_validation_comparator,
+                NULL AS external_validation_note,
+            {% endif %}
             CURRENT_TIMESTAMP() AS metadata_extracted_at
         {% if not loop.last %}UNION ALL{% endif %}
         {% endfor %}
@@ -52,6 +70,10 @@ WITH indicators AS (
             NULL AS is_qof,
             NULL AS qof_indicator,
             NULL AS sort_order,
+            NULL AS is_externally_validated,
+            NULL AS external_validation_result,
+            NULL AS external_validation_comparator,
+            NULL AS external_validation_note,
             CURRENT_TIMESTAMP() AS metadata_extracted_at
         WHERE FALSE  -- Empty result set
     {% endif %}
@@ -72,6 +94,10 @@ SELECT
     i.is_qof,
     i.qof_indicator,
     i.sort_order,
+    i.is_externally_validated::BOOLEAN AS is_externally_validated,
+    i.external_validation_result::VARCHAR AS external_validation_result,
+    i.external_validation_comparator::VARCHAR AS external_validation_comparator,
+    i.external_validation_note::VARCHAR AS external_validation_note,
     i.metadata_extracted_at
 FROM indicators i
 LEFT JOIN {{ ref('indicator_classification') }} c ON i.indicator_id = c.indicator_id

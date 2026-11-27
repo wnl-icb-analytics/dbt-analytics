@@ -16,6 +16,7 @@ select
     result_value_units_source_concept_id as result_units_source_concept_id,
     result_date,
     result_text,
+    is_result_header,
     allergy_medication_name,
     is_problem,
     is_review,

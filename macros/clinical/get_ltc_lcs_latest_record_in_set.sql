@@ -14,7 +14,7 @@
 select latest.person_id, latest.observation_id, latest.clinical_effective_date, latest.result_value
 from (
     select distinct person_id, observation_id, clinical_effective_date, date_recorded, result_value
-    from ({{ get_ltc_lcs_observations(inclusion_valuesets, include_date_recorded=true) }})
+    from ({{ get_ltc_lcs_observations(inclusion_valuesets, include_date_recorded=true, exclude_result_headers=true) }})
     qualify row_number() over (
         partition by person_id
         order by

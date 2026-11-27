@@ -9,6 +9,7 @@
 WITH ALC as (
 SELECT
     obs.id,
+    obs.date_recorded,
     obs.person_id,
     obs.clinical_effective_date,
     obs.mapped_concept_code AS concept_code,
@@ -19,7 +20,9 @@ WHERE obs.clinical_effective_date IS NOT NULL
 AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 )
 --select all to then deduplicate by person, code and date
-select person_id
+select id AS observation_id
+,date_recorded
+,person_id
 ,clinical_effective_date
 ,concept_code
 ,concept_display
@@ -30,4 +33,8 @@ WHEN cluster_id = 'SMI_LONGER_LIVES_ALCOHOL_EDUCATION' AND concept_code <> '2112
 WHEN cluster_id = 'SMI_LONGER_LIVES_ALCOHOL_EDUCATION' AND concept_code = '21121000175100' THEN 'Declined'
 END AS alcohol_advice_services
 from ALC
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY PERSON_ID) = 1
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY person_id, concept_code, DATE(clinical_effective_date)
+    ORDER BY CASE alcohol_advice_services WHEN 'Yes' THEN 1 WHEN 'Declined' THEN 2 ELSE 3 END,
+        date_recorded DESC NULLS LAST, id DESC, cluster_id DESC
+) = 1

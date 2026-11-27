@@ -44,6 +44,7 @@ select
      /* Time and date */
     , core.appointment_date as start_date
     , core.appointment_time as start_time
+    , {{ fin_year_from_date('core.appointment_date') }} as financial_year
     , core.appointment_expected_duration as expected_duration
     , core.appointment_consultation_medium as consultation_medium_used_code
     , medium.description as consultation_medium_used_name
@@ -63,9 +64,9 @@ select
         when core.appointment_commissioning_grouping_core_hrg in ('WF01C','WF02C') then 'OPFUP-NFTF'
         when core.appointment_commissioning_grouping_core_hrg in ('WF01D','WF02D') then 'OPFA-NFTF'
         when left(core.appointment_commissioning_grouping_core_hrg, 1) not in ('W', 'U')
-            and dict_att_t.attendant_type_desc = 'First' then 'OPPROC-FA'
+            and dict_att_t.attendant_type = 'First' then 'OPPROC-FA'
         when left(core.appointment_commissioning_grouping_core_hrg, 1) not in ('W', 'U')
-            and dict_att_t.attendant_type_desc = 'Follow-up' then 'OPPROC-FU'
+            and dict_att_t.attendant_type = 'Follow-up' then 'OPPROC-FU'
         when core.appointment_commissioning_grouping_core_hrg is null then 'UNKNOWN'
         else 'OPPROC'
         end as pod
@@ -78,6 +79,7 @@ select
     ,dict_proc.description AS primary_procedure_name
 
     /* Clinician information */
+    , core.appointment_care_professional_consultant as consultant_code
     , core.appointment_care_professional_main_specialty as main_specialty_code
     , dict_spec.specialty_name as main_specialty_name
     , dict_spec.specialty_category as main_specialty_category
@@ -94,6 +96,21 @@ select
     , dict_appt_priority.priority_type_desc as referral_acuity_desc
 
     /* Commissioning information */
+    , coalesce(
+        core.appointment_commissioning_commissioner_assignment_commissioner
+        , core.appointment_commissioning_service_agreement_commissioner
+    ) as commissioner_code_at_event
+    , case
+        when core.appointment_commissioning_commissioner_assignment_commissioner is not null
+            then {{ sus_commissioner_organisation_name('cam_commissioner') }}
+        else {{ sus_commissioner_organisation_name('service_commissioner') }}
+      end as commissioner_name_at_event
+    , case
+        when core.appointment_commissioning_commissioner_assignment_commissioner is not null
+            then 'CAM'
+        when core.appointment_commissioning_service_agreement_commissioner is not null
+            then 'DSCRO'
+      end as commissioner_source_at_event
     , iff(core.spec_comm_code is null, 'N','Y') as spec_comm_flag -- Adding Spec_comm   
     , core.spec_comm_code as spec_comm_code
     , dict_pss_sc.spec_comm_desc
@@ -188,6 +205,16 @@ left join ethnicity_codes as eth
 
 left join gender_codes as gen
     on core.appointment_patient_identity_gender = gen.gender_code
+
+{{ join_sus_commissioner_organisation(
+    'core.appointment_commissioning_commissioner_assignment_commissioner',
+    'cam_commissioner'
+) }}
+
+{{ join_sus_commissioner_organisation(
+    'core.appointment_commissioning_service_agreement_commissioner',
+    'service_commissioner'
+) }}
 
 left join
     {{ ref('pss_spec_comm')}} as dict_pss_sc

@@ -150,15 +150,11 @@ rule_6_acr_range as (
     where result_value >= 3 and result_value <= 30
 ),
 
--- Rule 7: Latest BP ≥140 systolic OR ≥90 diastolic (any BP type)
--- EMIS uses BP_COD (all BP) with linked systolic/diastolic pairing on DATE.
--- Unlike HTN which separates clinic vs home/ABPM thresholds, DM applies
--- a single 140/90 threshold regardless of BP type.
+-- Diabetes uses its own XML component pools and the same-date BP_COD link.
 rule_7_bp_high as (
     select person_id
-    from {{ ref('int_blood_pressure_all') }}
-    qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
-      and (systolic_value >= 140 or diastolic_value >= 90)
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
+    where diabetes_systolic_value >= 140 or diabetes_diastolic_value >= 90
 ),
 
 -- Combine rule results

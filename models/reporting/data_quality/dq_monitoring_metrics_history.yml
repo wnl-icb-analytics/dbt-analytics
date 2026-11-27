@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: dq_monitoring_metrics_history
+    description: >
+      Historical monitoring measurements for configured datasets.
+      Stores a snapshot of row counts and freshness metrics
+      collected during each dbt run.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+    columns:
+
+      - name: measurement_date
+        description: Date the measurement was collected.
+        tests:
+          - not_null
+
+      - name: measured_at
+        description: Timestamp the measurement was collected.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Monitoring object identifier.
+        tests:
+          - not_null
+
+      - name: row_count
+        description: Observed row count.
+
+      - name: refresh_date
+        description: Most recent refresh date observed.
+
+      - name: days_since_refresh
+        description: Days between refresh date and measurement date.
+
+      - name: frequency_type
+        description: Declared refresh frequency.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['DAILY', 'WEEKLY', 'MONTHLY']
