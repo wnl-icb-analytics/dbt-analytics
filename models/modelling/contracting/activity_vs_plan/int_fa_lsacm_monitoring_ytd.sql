@@ -15,8 +15,20 @@ WITH wnl_reporting_names AS (
 /*    Using current provider list rather than historical is safer because providers may enter or leave the submission programme. */
     select distinct
         l.provider_code,
-        n.provider_name,
-        n.provider_shorthand
+        l.provider_type,
+        l.organisation_name as provider_name,
+        CASE 
+            WHEN l.provider_code = 'R1H' THEN 'Barts'
+            WHEN l.provider_code = 'RJ1' THEN 'GSTT'
+            WHEN l.provider_code = 'RJ7' THEN 'St Georges'
+            WHEN l.provider_code = 'RJZ' THEN 'Kings'
+            WHEN l.provider_code = 'RQX' THEN 'Homerton'
+            WHEN l.provider_code = 'RPY' THEN 'Royal Marsden'
+            WHEN l.provider_code = 'RTK' THEN 'Ashford St Peters'
+            WHEN l.provider_code = 'RWG' THEN 'West Herts'
+            WHEN l.provider_code = 'RWH' THEN 'East North Herts'
+            WHEN l.provider_code = 'RDU' THEN 'Frimley'
+            ELSE n.provider_shorthand END AS provider_shorthand
         FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }} l
     --FROM MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD_LATEST l
     LEFT JOIN wnl_reporting_names n  using (provider_code)
@@ -55,6 +67,7 @@ provider_submissions as (
 monitor as (
     SELECT
         p.provider_code,
+        p.provider_type,
         p.provider_name,
         p.provider_shorthand,
         s.meta_file_id,

@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer: First-version Read v2 code and term to SNOMED CT concept maps, including historical revisions. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Read_Data_Migration.dim_RC_SCT_Map_SCD \ndbt: source(''ukhfd_read_data_migration'', ''read_v2_to_snomed_map_v1'') \nColumns:\n  Map_ID -> map_id\n  Read_Code -> read_code\n  Term_Code -> term_code\n  Concept_ID -> concept_id\n  Effective_Date -> effective_date\n  Map_Status -> map_status\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
+        description="Raw layer: First-version Read v2 code and term to SNOMED CT concept maps, including historical revisions.. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Read_Data_Migration.dim_RC_SCT_Map_SCD \ndbt: source(''ukhfd_read_data_migration'', ''read_v2_to_snomed_map_v1'') \nColumns:\n  Map_ID -> map_id\n  Read_Code -> read_code\n  Term_Code -> term_code\n  Concept_ID -> concept_id\n  Effective_Date -> effective_date\n  Map_Status -> map_status\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
     )
 }}
 select

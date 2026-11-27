@@ -74,9 +74,12 @@ conn = snowflake.connector.connect(
 )
 try:
     cur = conn.cursor()
-    uploads = [(manifest, True), ("target/meta.json", False)]
+    # meta.json goes first: if a later upload fails, latest/ pairs this run's
+    # build_status with the older manifest, so the next deploy rebuilds from
+    # the older baseline rather than trusting a stale success.
+    uploads = [("target/meta.json", False), (manifest, True)]
     if os.path.exists(run_results):
-        uploads.insert(1, (run_results, True))
+        uploads.append((run_results, True))
     else:
         print(f"{run_results} not found - skipping")
 

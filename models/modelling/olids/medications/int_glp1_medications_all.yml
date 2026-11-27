@@ -3,6 +3,7 @@ models:
     description: 'All GLP-1 receptor agonist medication orders using the GLP1RA_RX umbrella cluster, categorised to active ingredient via per-drug sub-clusters (SEMAGLUTIDE_RX, DULAGLUTIDE_RX, LIRAGLUTIDE_RX, EXENATIDE_RX, LIXISENATIDE_RX, ALBIGLUTIDE_RX, TIRZEPATIDE_RX). Captures orders regardless of indication; bnf fields retained to split diabetes (6.1) from obesity (4.5). Date filtering applied by consumers.'
     config:
       meta:
+        primary_key: [medication_order_id]
         owner:
           name: EddieDavison92
     data_tests:
@@ -60,14 +61,16 @@ models:
       - name: is_diabetes_indication
         description: 'Flag for orders under BNF 6.1 (diabetes); false for obesity/other indications'
       - name: is_recent_3m
-        description: 'Order dated in the last 3 months up to today; false for future-dated orders'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order dated in the last 6 months up to today; false for future-dated orders'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order dated in the last 12 months up to today; false for future-dated orders'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
       - name: rolling_order_count_12m
         description: 'Count of GLP-1 orders per person in the 12 months up to each order date'
       - name: current_practice_id
         description: 'Current practice identifier'
       - name: total_patients
         description: 'Total patients count'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.

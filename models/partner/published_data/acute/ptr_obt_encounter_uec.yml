@@ -15,6 +15,7 @@ models:
 
     config:
       meta:
+        primary_key: [visit_occurrence_id]
         owner:
           name: Partner Manager
 
@@ -464,7 +465,9 @@ models:
 
       - name: disease_notification_code
         description: >
-          ECDS disease-notification code recorded for the attendance.
+          SNOMED CT notifiable disease code. Uses the newer SUS code field first,
+          then a trimmed 6-18 digit legacy code. Legacy descriptions are excluded;
+          null when neither field supplies a code.
 
       - name: attendance_category_code
         description: >
@@ -565,14 +568,20 @@ models:
         description: >
           Human-readable name of the residence geography.
 
-      - name: assigned_commissioner_code_at_event
+      - name: commissioner_code_at_event
         description: >
-          Service-agreement commissioner code submitted for the attendance. This is not
-          the ECDS Commissioner Assignment Method field.
+          Commissioner Assignment Method (CAM) commissioner when supplied; otherwise
+          the service-agreement/DSCRO commissioner.
 
-      - name: assigned_commissioner_name_at_event
+      - name: commissioner_name_at_event
         description: >
-          Latest dictionary name for the submitted service-agreement commissioner code.
+          Latest available organisation name for commissioner_code_at_event, not the
+          name at the activity date.
+
+      - name: commissioner_source_at_event
+        description: >
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO. Null when neither source supplied a code.
 
       - name: patient_type_code_at_event
         description: >

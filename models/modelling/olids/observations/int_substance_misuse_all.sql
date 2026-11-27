@@ -5,6 +5,7 @@ SELECT
     observation.id,
     observation.person_id,
     observation.clinical_effective_date,
+    observation.result_value,
     observation.date_recorded,
     observation.mapped_concept_code AS concept_code,
     observation.mapped_concept_display AS concept_display,

@@ -40,7 +40,12 @@ models:
       - name: stroke_tia_observation_type
         description: 'Categorised stroke/TIA observation type (Stroke Diagnosis or TIA Diagnosis)'
 
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
       - dbt_utils.at_least_one:
           column_name: id
       - cluster_ids_exist:

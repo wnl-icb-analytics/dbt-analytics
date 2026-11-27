@@ -32,11 +32,8 @@ base_observations AS (
     SELECT
         obs.id,
         obs.person_id,
-        -- Match the shared get_observations date correction.
-        CASE WHEN obs.clinical_effective_date > obs.date_recorded
-            THEN obs.date_recorded
-            ELSE COALESCE(obs.clinical_effective_date, '1900-01-01')
-        END AS clinical_effective_date,
+        -- Shared observation date rule; 1900-01-01 marks a missing clinical date.
+        COALESCE({{ observation_clinical_date('obs') }}, '1900-01-01') AS clinical_effective_date,
         obs.date_recorded,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS code_description,

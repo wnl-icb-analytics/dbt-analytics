@@ -11,6 +11,7 @@ models:
       v4.0.6 was loaded from two file variants and appears once, from the UnmergedCells file, which alone carries search terms.
     config: &owner
       meta:
+        primary_key: [code_set_name, snomed_code, etos_version]
         owner:
           name: Eddie Davison
     data_tests:
@@ -147,7 +148,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -179,7 +184,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -215,7 +224,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -249,7 +262,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -281,7 +298,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -317,7 +338,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live. Includes the ETOS sex, injury and pain flags.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -361,7 +386,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -376,6 +405,12 @@ models:
         description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
       - name: notes
         description: 'ETOS notes on the code.'
+      - name: snomed_term
+        description: 'SNOMED term from the release supplying the definition, used as a fallback in older releases.'
+      - name: snomed_description
+        description: 'Older SNOMED description from the release supplying the definition, used when preferred and older terms are absent.'
+      - name: source_file_name
+        description: 'UKHFD file supplying the definition. Can be an older live release when the code was later deprecated.'
       - name: ecds_unique_id
         description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
       - name: valid_from_date
@@ -395,7 +430,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -431,7 +470,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -446,6 +489,12 @@ models:
         description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
       - name: notes
         description: 'ETOS notes on the code.'
+      - name: snomed_term
+        description: 'SNOMED term from the release supplying the definition, used as a fallback in older releases.'
+      - name: snomed_description
+        description: 'Older SNOMED description from the release supplying the definition, used when preferred and older terms are absent.'
+      - name: source_file_name
+        description: 'UKHFD file supplying the definition. Can be an older live release when the code was later deprecated.'
       - name: ecds_unique_id
         description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
       - name: valid_from_date
@@ -465,7 +514,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live. Includes the ICD-10 codes and Charlson and Elixhauser membership of each comorbidity.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -507,7 +560,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live. Includes ICD-10 and ICD-11 mappings and the ETOS diagnosis flags.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -571,7 +628,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -603,7 +664,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -635,7 +700,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -669,7 +738,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live. ETOS dropped this code set after v3.1.1, so no code is in the latest release.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -705,7 +778,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -741,7 +818,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -777,7 +858,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -813,7 +898,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -849,7 +938,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -885,7 +978,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -921,7 +1018,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -957,7 +1058,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live. Includes Payment by Results category and CDS mappings used for HRG grouping.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -997,7 +1102,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -1033,7 +1142,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -1069,7 +1182,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -1105,7 +1222,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -1141,7 +1262,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
@@ -1177,7 +1302,11 @@ models:
       One row per SNOMED code ever published in the code set, including
       deprecated and retired codes for historical joins. Descriptions come from
       the newest release that lists the code as live. Most codes are published only as deprecated codes kept for historical data.
-    config: *owner
+    config:
+      meta:
+        primary_key: [snomed_code]
+        owner:
+          name: Eddie Davison
     columns:
       - name: snomed_code
         description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'

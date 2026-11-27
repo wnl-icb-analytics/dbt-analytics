@@ -4,6 +4,7 @@ models:
     description: "Event history for emergency encounters from SUS data. More information: https://digital.nhs.uk/data-and-information/data-collections-and-data-sets/data-sets/emergency-care-data-set-ecds/ecds-guidance"
     config:
       meta:
+        primary_key: [visit_occurrence_id]
         owner:
           name: Emily Baldwin
     columns:
@@ -198,7 +199,10 @@ models:
 
       - name: disease_notification_code
         data_type: varchar
-        description: "ECDS disease-notification code recorded for the attendance."
+        description: >-
+          SNOMED CT notifiable disease code. Uses the newer SUS code field first,
+          then a trimmed 6-18 digit legacy code. Legacy descriptions are excluded;
+          null when neither field supplies a code.
 
       - name: primary_diagnosis_code_snomed
         data_type: varchar
@@ -393,7 +397,9 @@ models:
 
       - name: commissioner_name_at_event
         data_type: varchar
-        description: Latest dictionary name for commissioner_code_at_event.
+        description: >-
+          Latest available organisation name for commissioner_code_at_event,
+          not the name at the activity date.
 
       - name: commissioner_source_at_event
         data_type: varchar

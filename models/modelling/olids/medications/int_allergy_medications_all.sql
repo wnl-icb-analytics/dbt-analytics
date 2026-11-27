@@ -31,9 +31,7 @@ SELECT
     CASE WHEN bo.bnf_code LIKE '030403%' THEN TRUE ELSE FALSE END AS is_anaphylaxis_treatment,
 
     -- Recency flags for monitoring (order-level only)
-    bo.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-    bo.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-    bo.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+    {{ medication_date_flags('bo.order_date') }}
 
 FROM ({{ get_medication_orders(bnf_code='0304') }}) bo
 

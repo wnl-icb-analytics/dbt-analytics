@@ -30,9 +30,7 @@ SELECT
     bnf_code,
     bnf_name,
     cluster_id,
-    order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-    order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-    order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+    {{ medication_date_flags('order_date') }}
 FROM (
     {{ get_medication_orders(cluster_id='EPILDRUG_COD') }}
 ) base_orders

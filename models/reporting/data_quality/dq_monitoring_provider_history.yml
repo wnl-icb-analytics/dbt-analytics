@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: dq_monitoring_provider_history
+    description: >
+      Daily provider-level monitoring history for configured datasets.
+      Records the providers present within each monitored table and their
+      associated row volumes. Supports detection of missing providers and
+      unexpected provider-level volume changes.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+
+    columns:
+      - name: measurement_date
+        description: Date on which the provider-level measurement was collected.
+        tests:
+          - not_null
+
+      - name: measured_at
+        description: Timestamp at which the provider-level measurement was collected.
+        tests:
+          - not_null
+
+      - name: table_id
+        description: Identifier of the monitored dataset.
+        tests:
+          - not_null
+
+      - name: provider_code
+        description: Provider organisation code represented within the monitored dataset.
+        tests:
+          - not_null
+
+      - name: provider_name
+        description: Provider organisation name represented within the monitored dataset.
+
+      - name: row_count
+        description: Number of rows contributed by the provider within the monitored dataset.
+        tests:
+          - not_null
+
+      - name: latest_actual_financial_year
+        description: >
+          Latest financial year containing actual provider activity where
+          financial-period monitoring is applicable.
+
+      - name: latest_actual_financial_month
+        description: >
+          Latest financial month containing actual provider activity within
+          the provider's latest financial year where financial-period
+          monitoring is applicable.
+
+      - name: latest_update_date
+        description: >
+          Latest source processing or update date observed for the provider.

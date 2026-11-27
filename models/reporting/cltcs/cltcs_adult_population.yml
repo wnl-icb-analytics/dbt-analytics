@@ -1,8 +1,10 @@
 models:
   - name: cltcs_adult_population
     description: >
-      C-LTCS complex adult cohort, one row per sk_patient_id, of living adults registered in
-      C-LTCS neighbourhoods with over 2 conditions and a complexity marker. Feeds
+      Living adults actively registered in C-LTCS neighbourhoods, one row per sk_patient_id.
+      Use is_case_finding_eligible for case finding: applicable_cohort selects
+      meets_original_criteria (over 2 conditions and a complexity marker) at legacy practices
+      and meets_adults_with_complexity elsewhere. Feeds
       cltcs_patient_list and the C-LTCS sub-score models. People must map to an OLIDS
       person_id, be active current registrants at a practice in the C-LTCS neighbourhood
       mapping and have turned 18 before the start of the current month. A person is excluded
@@ -12,8 +14,8 @@ models:
       frailty by eFI2 category or frailty register, more than 3 A&E attendances in the last
       12 months, or more than 1 non-elective admission for an ambulatory care sensitive
       condition in the last 12 months. The sk_patient_id to person_id mapping is a local
-      stopgap, see the model header. fragmented_sk_patient_id_flag and
-      fragmented_person_id_flag mark identifiers that map to more than one OLIDS person or
+      stopgap, see the model header. has_fragmented_sk_patient_id and
+      has_fragmented_person_id mark identifiers that map to more than one OLIDS person or
       patient.
     config:
       meta:
@@ -28,14 +30,14 @@ models:
           - not_null
 
       - name: person_id
-        description: "OLIDS person key (via dim_person_pseudo, deduped to one per sk_patient_id). Null if unmapped."
+        description: "OLIDS person key (via dim_person_pseudo, deduped to one per sk_patient_id). Always populated; unmapped people are excluded."
         data_tests:
           - unique
           - not_null
 
       - name: neighbourhood_code
         data_type: varchar
-        description: "C-LTCS local neighbourhood code (z-score scaling group). Null for practices outside the Haringey/Camden mapping."
+        description: "C-LTCS neighbourhood code from cltcs_practice_neighbourhood (z-score scaling group). Always populated; practices without a neighbourhood in that mapping are excluded."
 
       - name: practice_code
         data_type: varchar

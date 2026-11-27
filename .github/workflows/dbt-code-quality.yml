@@ -33,17 +33,14 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          {
-            echo 'files<<CHANGED_FILES_EOF'
-            git diff --name-only "$BASE"...HEAD | grep -E '\.(sql)$' | grep -E '^(models|macros|analyses)/' || true
-            echo 'CHANGED_FILES_EOF'
-          } >> "$GITHUB_OUTPUT"
+          # Pass the list as a file: a large diff exceeds the 128 KB limit on one
+          # env var or argument.
+          { git diff --name-only "$BASE"...HEAD | grep -E '\.(sql)$' | grep -E '^(models|macros|analyses)/' || true; } > "$RUNNER_TEMP/changed_files.txt"
+          if [ -s "$RUNNER_TEMP/changed_files.txt" ]; then echo 'any=true' >> "$GITHUB_OUTPUT"; fi
       - name: Run check
-        if: steps.changed.outputs.files != ''
-        env:
-          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        if: steps.changed.outputs.any == 'true'
         run: |
-          mapfile -t files <<< "$CHANGED_FILES"
+          mapfile -t files < "$RUNNER_TEMP/changed_files.txt"
           bash scripts/ci/check_hardcoded_refs.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
@@ -66,17 +63,14 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          {
-            echo 'files<<CHANGED_FILES_EOF'
-            git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true
-            echo 'CHANGED_FILES_EOF'
-          } >> "$GITHUB_OUTPUT"
+          # Pass the list as a file: a large diff exceeds the 128 KB limit on one
+          # env var or argument.
+          { git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true; } > "$RUNNER_TEMP/changed_files.txt"
+          if [ -s "$RUNNER_TEMP/changed_files.txt" ]; then echo 'any=true' >> "$GITHUB_OUTPUT"; fi
       - name: Run check
-        if: steps.changed.outputs.files != ''
-        env:
-          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        if: steps.changed.outputs.any == 'true'
         run: |
-          mapfile -t files <<< "$CHANGED_FILES"
+          mapfile -t files < "$RUNNER_TEMP/changed_files.txt"
           bash scripts/ci/check_staging_refs.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
@@ -103,17 +97,14 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          {
-            echo 'files<<CHANGED_FILES_EOF'
-            git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true
-            echo 'CHANGED_FILES_EOF'
-          } >> "$GITHUB_OUTPUT"
+          # Pass the list as a file: a large diff exceeds the 128 KB limit on one
+          # env var or argument.
+          { git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true; } > "$RUNNER_TEMP/changed_files.txt"
+          if [ -s "$RUNNER_TEMP/changed_files.txt" ]; then echo 'any=true' >> "$GITHUB_OUTPUT"; fi
       - name: Run check
-        if: steps.changed.outputs.files != ''
-        env:
-          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        if: steps.changed.outputs.any == 'true'
         run: |
-          mapfile -t files <<< "$CHANGED_FILES"
+          mapfile -t files < "$RUNNER_TEMP/changed_files.txt"
           python3 scripts/ci/check_model_descriptions.py "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
@@ -140,17 +131,14 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          {
-            echo 'files<<CHANGED_FILES_EOF'
-            git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true
-            echo 'CHANGED_FILES_EOF'
-          } >> "$GITHUB_OUTPUT"
+          # Pass the list as a file: a large diff exceeds the 128 KB limit on one
+          # env var or argument.
+          { git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true; } > "$RUNNER_TEMP/changed_files.txt"
+          if [ -s "$RUNNER_TEMP/changed_files.txt" ]; then echo 'any=true' >> "$GITHUB_OUTPUT"; fi
       - name: Run check
-        if: steps.changed.outputs.files != ''
-        env:
-          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        if: steps.changed.outputs.any == 'true'
         run: |
-          mapfile -t files <<< "$CHANGED_FILES"
+          mapfile -t files < "$RUNNER_TEMP/changed_files.txt"
           bash scripts/ci/check_model_tests.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
@@ -167,6 +155,8 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install pyyaml
+      - name: Test cluster checker
+        run: python3 -m unittest discover -s scripts/ci/tests -v
       - name: Get changed files
         id: changed
         env:
@@ -178,17 +168,34 @@ jobs:
           # merge_group has no base_ref; diff against the candidate's base SHA.
           # YAML changes are included so removing a test from a model is caught.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          {
-            echo 'files<<CHANGED_FILES_EOF'
-            git diff --name-only "$BASE"...HEAD | grep -E '\.(sql|yml|yaml)$' | grep -E '^models/' || true
-            echo 'CHANGED_FILES_EOF'
-          } >> "$GITHUB_OUTPUT"
+          # Pass the list as a file: a large diff exceeds the 128 KB limit on one
+          # env var or argument.
+          { git diff --name-only "$BASE"...HEAD | grep -E '^models/.*\.(sql|yml|yaml)$|^macros/clinical/observation_evidence_cluster_ids\.sql$|^scripts/ci/check_cluster_tests\.py$' || true; } > "$RUNNER_TEMP/changed_files.txt"
+          if [ -s "$RUNNER_TEMP/changed_files.txt" ]; then echo 'any=true' >> "$GITHUB_OUTPUT"; fi
       - name: Run check
-        if: steps.changed.outputs.files != ''
-        env:
-          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        if: steps.changed.outputs.any == 'true'
         run: |
-          mapfile -t files <<< "$CHANGED_FILES"
+          mapfile -t files < "$RUNNER_TEMP/changed_files.txt"
           python3 scripts/ci/check_cluster_tests.py "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
+          grep -q "^FAILED" result.txt && exit 1 || exit 0
+
+  primary-keys:
+    name: Declared Primary Keys
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Python deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pyyaml
+      - name: Test primary key checker
+        run: python3 -m unittest discover -s scripts/primary_keys/tests -v
+      - name: Run check
+        # Every model: removing a test from any YAML must fail if a declared key depends on it.
+        run: |
+          python3 scripts/primary_keys/primary_keys.py check | tee result.txt
+          grep -v '^::' result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0

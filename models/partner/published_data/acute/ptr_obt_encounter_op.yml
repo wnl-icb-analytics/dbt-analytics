@@ -7,7 +7,9 @@ models:
       when the patient is registered with a practice in, or resident in, that borough.
       Rows without an sk_patient_id, or whose patient has no in-area registered or
       residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR to
-      match the policy; all other columns are as in obt_encounter_op. One row per latest
+      match the policy. consultant_code is excluded because partner approval for
+      clinician identifiers has not been confirmed; all other columns are as in
+      obt_encounter_op. One row per latest
       SUS outpatient appointment recorded as attended with attendance code 5 or 6.
       Includes attended activity without a submitted appointment identifier or linked
       patient key. Current PCN, neighbourhood and health borough fields use the latest
@@ -16,6 +18,7 @@ models:
 
     config:
       meta:
+        primary_key: [visit_occurrence_id]
         owner:
           name: Partner Manager
 
@@ -59,6 +62,11 @@ models:
       - name: start_date
         description: >
           The date the appointment took place or will take place if in the future
+
+      - name: financial_year
+        description: >
+          NHS April-to-March financial year of start_date, formatted YYYYYY, for
+          example 202425.
 
       - name: start_time
         description: >
@@ -175,6 +183,21 @@ models:
           Desc: The priority of a request for services as assessed by or on behalf of
           the consultant
 
+      - name: commissioner_code_at_event
+        description: >
+          Commissioner Assignment Method (CAM) commissioner when supplied; otherwise
+          the service-agreement/DSCRO commissioner.
+
+      - name: commissioner_name_at_event
+        description: >
+          Latest available organisation name for commissioner_code_at_event, not the
+          name at the activity date.
+
+      - name: commissioner_source_at_event
+        description: >
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO. Null when neither source supplied a code.
+
       - name: spec_comm_flag
         description: >
           Specialised Commission Flag
@@ -217,7 +240,7 @@ models:
 
       - name: cost
         description: >
-          The final calculated national SUS listed price
+          Final calculated price supplied by SUS+. This is not an actual provider cost.
 
       - name: age_at_event
         description: >

@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Aggregates neurology-related events for each person, providing analytics-ready person-level neurology event status and history.') }}
+    description="Neurology evidence for the OLIDS valproate programme, one row per person with an observation coded in the programme's NEUROLOGY category. No date, current-registration or recent-valproate filter applies.") }}
 
 WITH person_level_neurology_aggregation AS (
     SELECT

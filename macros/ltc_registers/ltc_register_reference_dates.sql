@@ -44,6 +44,27 @@
 {% endmacro %}
 
 
+{% macro ltc_register_age_at(person_alias, reference_date_column) %}
+{#-
+    Age in whole years at a reference date for a dim_person_birth_death row
+    (person_alias), matching dim_person_age: month-based from the approximate
+    birth date and stopping at death. A death date on or before the reference
+    date is used in its place, so someone who died earlier is not aged forward.
+    Someone recorded as deceased without a usable death date has no age, as in
+    dim_person_age, so age-restricted rules leave them out.
+-#}
+    FLOOR(DATEDIFF(
+        'month',
+        {{ person_alias }}.birth_date_approx,
+        CASE
+            WHEN {{ person_alias }}.is_deceased AND {{ person_alias }}.death_date_approx IS NULL THEN NULL
+            WHEN {{ person_alias }}.death_date_approx <= {{ reference_date_column }} THEN {{ person_alias }}.death_date_approx
+            ELSE {{ reference_date_column }}
+        END
+    ) / 12)
+{% endmacro %}
+
+
 {% macro ltc_relation_built_on(relation) %}
 {#-
     Day a table was last built (its created_on, as dbt replaces tables on each

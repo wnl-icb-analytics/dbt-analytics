@@ -3,6 +3,7 @@ models:
     description: 'All DPP-4 inhibitor (gliptin) medication orders using the DPP4I_RX umbrella cluster, categorised to active ingredient via per-drug sub-clusters (SITAGLIPTIN_RX, LINAGLIPTIN_RX, SAXAGLIPTIN_RX, VILDAGLIPTIN_RX, ALOGLIPTIN_RX). Includes fixed-dose combinations. Membership is cluster-driven and date-independent; date filtering applied by consumers.'
     config:
       meta:
+        primary_key: [medication_order_id]
         owner:
           name: EddieDavison92
     data_tests:
@@ -56,14 +57,16 @@ models:
       - name: dpp4_drug
         description: 'DPP-4 inhibitor active ingredient (SITAGLIPTIN, LINAGLIPTIN, SAXAGLIPTIN, VILDAGLIPTIN, ALOGLIPTIN, OTHER_DPP4I)'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
       - name: rolling_order_count_12m
         description: 'Count of DPP-4 orders per person in the 12 months up to each order date'
       - name: current_practice_id
         description: 'Current practice identifier'
       - name: total_patients
         description: 'Total patients count'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.

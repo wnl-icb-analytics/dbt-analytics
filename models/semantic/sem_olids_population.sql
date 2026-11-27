@@ -76,7 +76,7 @@ FACTS(
     conditions.neurology_conditions AS neurology_conditions COMMENT = 'Count of neurology conditions (Epilepsy, Stroke/TIA, Parkinsons, Cerebral Palsy, MND, MS)',
     conditions.geriatric_conditions AS geriatric_conditions COMMENT = 'Count of geriatric conditions (Frailty)',
     ccms.cambridge_comorbidity_score AS cambridge_comorbidity_score WITH SYNONYMS = ('CCMS', 'comorbidity score', 'Cambridge score') COMMENT = 'Cambridge Comorbidity Score (2022 modified, 20-category weighted sum). Higher = greater comorbidity burden; can be negative. Continuous score per the CCMS literature — no external clinical cut-points exist. Only populated for persons aged 16+.',
-    status.medication_count AS medication_count COMMENT = 'Number of current medications',
+    status.medication_count AS medication_count COMMENT = 'Count of distinct current nine-character BNF chemicals in scope',
     status.behavioural_risk_count AS behavioural_risk_count COMMENT = 'Count of behavioural risk factors',
     demographics.esp_weight AS esp_weight COMMENT = 'ESP 2013 population weight for this persons age band (out of 100,000 total). Use with age_band_esp for age-standardised rate calculation.',
     demographics.esp_proportion AS esp_proportion COMMENT = 'ESP 2013 weight as proportion (esp_weight / 100,000). Multiply stratum-specific rate by this and SUM across bands to get the ASR.'
@@ -105,7 +105,7 @@ DIMENSIONS(
     demographics.interpreter_needed AS interpreter_needed COMMENT = 'Whether interpreter is required',
 
     -- Registration Status
-    demographics.is_active AS is_active COMMENT = 'Currently registered with NCL GP practice',
+    demographics.is_active AS is_active COMMENT = 'Currently registered with a GP practice',
     demographics.is_deceased AS is_deceased COMMENT = 'Deceased status',
 
     -- Practice/Organisation
@@ -217,8 +217,8 @@ DIMENSIONS(
     status.alcohol_requires_intervention AS alcohol_requires_intervention COMMENT = 'Requires alcohol intervention (AUDIT score >=5)',
 
     -- Polypharmacy
-    status.is_polypharmacy_5plus AS is_polypharmacy_5plus COMMENT = 'Has 5+ current medications',
-    status.is_polypharmacy_10plus AS is_polypharmacy_10plus COMMENT = 'Has 10+ current medications (severe polypharmacy)',
+    status.is_polypharmacy_5plus AS is_polypharmacy_5plus COMMENT = 'Local flag for at least five current BNF chemicals',
+    status.is_polypharmacy_10plus AS is_polypharmacy_10plus COMMENT = 'Flag for at least ten current BNF chemicals, supporting medication review prioritisation',
     status.medication_count_band AS medication_count_band COMMENT = 'Medication count band (0, 1-4, 5-9, 10-14, 15+)',
 
     -- Pregnancy
@@ -315,11 +315,11 @@ METRICS(
     status.vulnerable_count AS COUNT(DISTINCT CASE WHEN status.has_vulnerability_flag THEN status.person_id END) COMMENT = 'Patients with any vulnerability',
 
     -- Polypharmacy
-    status.avg_medication_count AS AVG(status.medication_count) COMMENT = 'Average medications per patient',
-    status.polypharmacy_5plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_5plus THEN status.person_id END) COMMENT = 'Patients with 5+ medications',
-    status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'Patients with 10+ medications'
+    status.avg_medication_count AS AVG(status.medication_count) COMMENT = 'Average current BNF chemical count per person',
+    status.polypharmacy_5plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_5plus THEN status.person_id END) COMMENT = 'People with the local flag for at least five current BNF chemicals',
+    status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'People with at least ten current BNF chemicals, supporting medication review prioritisation'
 )
 
-COMMENT = 'OLIDS Population Health Semantic View - NCL registered population with demographics, QOF v51 condition registers, non-QOF conditions (CYP asthma, anxiety, osteoarthritis, Parkinson''s, cerebral palsy, MND, MS, learning disability under 14, autism, ADHD, hypothyroidism, NAFLD, chronic liver disease, sickle cell disease, thalassaemia, familial hypercholesterolaemia, frailty and gestational diabetes), diabetes type, vulnerability factors, and risk behaviours. Source: OLIDS (One London Integrated Data Set — primary care data from system suppliers, unified by the One London team). Grain: one row per person (current state). ESP 2013 weights available via age_band_esp for age-standardised rate calculation.'
+COMMENT = 'Current population health measures for OLIDS, one row per person in dim_person_demographics with linked conditions, statuses and Cambridge Comorbidity Scores. Includes inactive and deceased people; is_active identifies current registrants. Conditions use QOF v51 and project non-QOF definitions. Cambridge scores apply from age 16; ESP 2013 groups and weights support standardisation. person_id supports cohort linkage; final results must be aggregate-only.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person. Example: SELECT borough_resident, AGG(patient_count) FROM SEM_OLIDS_POPULATION WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce active diabetes people here and SGLT2 exposure in sem_olids_prescribing before joining. Use sk_patient_id, not person_id, for sem_sus_acute_activity, sem_cost_index and sem_resource_index. Use borough_registered for practice geography and borough_resident for residence. Prefer IMD 2025. Filter is_active = TRUE unless the user asks about inactive or deceased patients. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
 AI_QUESTION_CATEGORIZATION 'Use this view for questions about: condition prevalence (all 40 conditions), diabetes type (T1/T2), demographics, multimorbidity, Cambridge Comorbidity Score (CCMS), vulnerability, smoking, polypharmacy, and population counts. CCMS (cambridge_comorbidity_score) is a continuous weighted score (higher = greater comorbidity burden, can be negative) with NO published risk bands and is NULL for under-16s — report it as a number or average, do not invent thresholds. For clinical biomarkers (BP, HbA1c, BMI, cholesterol) use sem_olids_observations. For serial/over-time biomarker readings use sem_olids_observations_history. For trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. condition x medication, condition x biomarker control, condition x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

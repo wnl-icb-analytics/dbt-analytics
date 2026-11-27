@@ -23,7 +23,7 @@ Source
   Full AUDIT 0..40 bands map naturally to six categories.
 
 Score-to-category mapping (Full AUDIT 0..40 -> cat6), shared with
-qadmissions_input_features_history through the qadmissions_alcohol_cat6 macro:
+qadmissions_input_features_validation through the qadmissions_alcohol_cat6 macro:
   0       -> 0  (NonDrinker)
   >0..3   -> 1  (Trivial)
   >3..7   -> 2  (Light)

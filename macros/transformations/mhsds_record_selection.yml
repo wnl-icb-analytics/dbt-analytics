@@ -28,9 +28,27 @@ macros:
 
   - name: select_accepted_mhsds_period_records
     description: >-
-      Filters rows to the accepted file for each provider and reporting period.
-      The calling staging model must resolve and test its published grain.
+      Filters rows to the accepted file for each provider and reporting period
+      and keeps one row per source record identifier, removing repeated
+      deliveries of the same row. The calling staging model must resolve and
+      test its published grain.
     arguments:
       - name: mhsds_table
         type: relation
-        description: MHSDS relation containing uniq_submission_id.
+        description: MHSDS relation containing uniq_submission_id, effective_from and dmic_date_added.
+      - name: record_id
+        type: string
+        description: Source record identifier column, such as mhs008_uniq_id.
+
+  - name: mhsds_one_row_per_record
+    description: >-
+      Qualify clause keeping one row per MHSDS source record identifier,
+      preferring the latest load. The LDS share can deliver the same source row
+      more than once.
+    arguments:
+      - name: record_id
+        type: string
+        description: Qualified record identifier column, such as c.mhs201_uniq_id.
+      - name: alias
+        type: string
+        description: Alias of the source relation holding effective_from and dmic_date_added.

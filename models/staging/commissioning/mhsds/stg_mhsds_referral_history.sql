@@ -69,6 +69,7 @@ with active_referrals as (
     from {{ ref('raw_mhsds_mhs101referral') }} as r
     inner join {{ ref('stg_mhsds_activesubmission') }} as a
         on r.uniq_submission_id = a.uniq_submission_id
+    {{ mhsds_one_row_per_record('r.mhs101_uniq_id', 'r') }}
 
 )
 
