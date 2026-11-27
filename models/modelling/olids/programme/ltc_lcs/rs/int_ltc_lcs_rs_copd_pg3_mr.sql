@@ -27,7 +27,8 @@ with
 -- Parent population: Patients currently on copd register
 copd_register as (
     select distinct person_id
-    from {{ ref('int_ltc_lcs_copd_register') }} -- LTC LCS COPD register (EMIS definition)
+    from {{ ref('fct_person_copd_register') }} -- QOF v51 COPD register
+    where is_on_register = true
 ),
 -- Rule 1: Exclude patients already in PG1 (HRC)
 pg1_exclusions as (

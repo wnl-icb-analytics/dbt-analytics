@@ -7,14 +7,20 @@ models:
 
       Same ICS_HTN_21 denominator and NICE targets as fct_person_ltc_lcs_outcomes_htn_bp_control
       (see that model for exclusions and thresholds), but the latest BP window is the previous complete
-      financial year (1 April -> 31 March). Provides the fixed end-of-year achievement baseline
-      to compare against the rolling and current-FY views.
-      Exclusions are assessed on the build date.
+      financial year (1 April -> 31 March): the previous year's readings among today's eligible
+      register members, for comparison with the rolling and current-FY views. It is not a frozen
+      year-end position, because membership, age and exclusions follow the build date.
       BP components link by calendar date before ranking by raw clinical date, save time and
       observation ID. Only the home-setting wrapper ranks before linking. Values must be >=1,
       without plausibility fallback.
-      Frailty uses raw clinical dates and the same tie order, then tests only the moderate/severe
-      finding codes. Missing clinical dates do not qualify. Same-second entry order is unknown.
+      Frailty uses raw clinical dates and the same tie order over frailty findings and Clinical
+      Frailty Scale levels 1-8, then tests only the moderate/severe finding codes. Missing clinical
+      dates do not qualify. Same-second entry order is unknown. EMIS R6 has no search for the
+      last completed FY; this view applies the R6 v4_NICE rules, including strict targets, to that
+      year. For 2025-26 that differs from R5 [ICS_HTN_21 v3 FYYTD] in two ways: R5 used <=
+      targets, so a reading exactly on a target counts as controlled in R5 but not here, and
+      the R5 parent had no frailty rule. Register, age and exclusions are assessed on the
+      build date, not as at 31 March.
     config:
       meta:
         primary_key: [person_id]
