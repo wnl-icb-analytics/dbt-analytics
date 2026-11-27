@@ -1,0 +1,57 @@
+models:
+  - name: fct_person_post_viral_fatigue_register
+    description: >
+      Post-viral fatigue syndrome register: one row per person with a recorded post-viral fatigue syndrome diagnosis
+      (PVFS_COD ever recorded). Post acute infection syndromes, non-QOF. PVFS_COD covers post-viral fatigue syndrome, which SNOMED CT has held separately from ME/CFS since 2015 (ICD-10 G93.3 groups them).
+      No age restriction. Counts recorded diagnosis, not current symptoms or the
+      triggering infection.
+
+      Observation counts include each person, concept and clinical calendar date once.
+      Missing clinical days keep separate observation ids.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "POST_VIRAL_FATIGUE"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Post Acute Infection Syndromes"
+          name_short: "Post-viral fatigue syndrome"
+          description_short: "Post-viral fatigue syndrome register (non-QOF)"
+          description_long: >
+            Persons with a recorded post-viral fatigue syndrome diagnosis (PVFS_COD ever recorded). PVFS_COD: << 51771007 |Postviral fatigue syndrome|.
+            Grouped under post acute infection syndromes (NIHR umbrella term). No age restriction.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_PAIS_POST_VIRAL_FATIGUE"
+          code_clusters:
+            - cluster_id: "PVFS_COD"
+              category: "INCLUSION"
+
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in years
+      - name: is_on_register
+        description: Always true; only people on the register are included
+      - name: earliest_diagnosis_date
+        description: Earliest post-viral fatigue syndrome diagnosis
+      - name: latest_diagnosis_date
+        description: Latest post-viral fatigue syndrome diagnosis
+      - name: total_post_viral_fatigue_diagnoses
+        description: Distinct post-viral fatigue syndrome diagnosis readings (person, concept, clinical date)
+      - name: all_post_viral_fatigue_concept_codes
+        description: Distinct post-viral fatigue syndrome diagnosis concept codes recorded
+      - name: all_post_viral_fatigue_concept_displays
+        description: Distinct post-viral fatigue syndrome diagnosis concept descriptions recorded

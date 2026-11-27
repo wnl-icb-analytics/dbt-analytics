@@ -1,6 +1,6 @@
 # Monthly LTC register history
 
-`models/reporting/olids/disease_registers/history/` holds 39 monthly register tables and `fct_person_ltc_summary_by_month`.
+`models/reporting/olids/disease_registers/history/` holds 44 monthly register tables and `fct_person_ltc_summary_by_month`.
 They evaluate the live register rule family at past month-ends, then retain people alive and registered on those dates.
 See [LTC and QOF registers](ltc-registers.md) for rule locations, spec versions, local differences and the upgrade checklist.
 
@@ -9,7 +9,7 @@ See [LTC and QOF registers](ltc-registers.md) for rule locations, spec versions,
 | Object | One row represents | Contents |
 |---|---|---|
 | `fct_person_*_by_month` | One register member at one month-end | `person_id`, `month_end_date`, `practice_code`, clinical dates and condition fields |
-| `fct_person_ltc_summary_by_month` | One member, month-end and condition code | The 39 registers with seed name, domain and QOF label |
+| `fct_person_ltc_summary_by_month` | One member, month-end and condition code | The 44 registers with seed name, domain and QOF label |
 | `int_segmentation_person_month_spine` | One person in `dim_person_demographics` at one retained month-end | Birth, death, registration, age and practice state |
 
 Monthly register tables contain members only. An absent row can mean no membership or no active spine row.

@@ -1,0 +1,57 @@
+models:
+  - name: fct_person_me_cfs_register
+    description: >
+      ME/CFS register: one row per person with a recorded ME/CFS diagnosis
+      (MECFS_COD ever recorded). Post acute infection syndromes, non-QOF. MECFS_COD covers myalgic encephalomyelitis/chronic fatigue syndrome at any recorded severity (mild, moderate, severe, very severe; NICE NG206).
+      No age restriction. Counts recorded diagnosis, not current symptoms or the
+      triggering infection.
+
+      Observation counts include each person, concept and clinical calendar date once.
+      Missing clinical days keep separate observation ids.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "ME_CFS"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Post Acute Infection Syndromes"
+          name_short: "ME/CFS"
+          description_short: "ME/CFS register (non-QOF)"
+          description_long: >
+            Persons with a recorded ME/CFS diagnosis (MECFS_COD ever recorded). MECFS_COD: << 52702003 |Chronic fatigue syndrome|.
+            Grouped under post acute infection syndromes (NIHR umbrella term). No age restriction.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_PAIS_ME_CFS"
+          code_clusters:
+            - cluster_id: "MECFS_COD"
+              category: "INCLUSION"
+
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in years
+      - name: is_on_register
+        description: Always true; only people on the register are included
+      - name: earliest_diagnosis_date
+        description: Earliest ME/CFS diagnosis
+      - name: latest_diagnosis_date
+        description: Latest ME/CFS diagnosis
+      - name: total_me_cfs_diagnoses
+        description: Distinct ME/CFS diagnosis readings (person, concept, clinical date)
+      - name: all_me_cfs_concept_codes
+        description: Distinct ME/CFS diagnosis concept codes recorded
+      - name: all_me_cfs_concept_displays
+        description: Distinct ME/CFS diagnosis concept descriptions recorded

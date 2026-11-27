@@ -475,6 +475,66 @@ WITH condition_union AS (
         latest_diagnosis_date
     FROM {{ ref('fct_person_thalassaemia_register') }}
     WHERE is_on_register = TRUE
+
+    UNION ALL
+
+    -- Long COVID
+    SELECT
+        person_id,
+        'LCOVID' AS condition_code,
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
+    FROM {{ ref('fct_person_long_covid_register') }}
+    WHERE is_on_register = TRUE
+
+    UNION ALL
+
+    -- ME/CFS
+    SELECT
+        person_id,
+        'MECFS' AS condition_code,
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
+    FROM {{ ref('fct_person_me_cfs_register') }}
+    WHERE is_on_register = TRUE
+
+    UNION ALL
+
+    -- Post-viral fatigue syndrome
+    SELECT
+        person_id,
+        'PVFS' AS condition_code,
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
+    FROM {{ ref('fct_person_post_viral_fatigue_register') }}
+    WHERE is_on_register = TRUE
+
+    UNION ALL
+
+    -- Fibromyalgia
+    SELECT
+        person_id,
+        'FIBRO' AS condition_code,
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
+    FROM {{ ref('fct_person_fibromyalgia_register') }}
+    WHERE is_on_register = TRUE
+
+    UNION ALL
+
+    -- POTS
+    SELECT
+        person_id,
+        'POTS' AS condition_code,
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
+    FROM {{ ref('fct_person_pots_register') }}
+    WHERE is_on_register = TRUE
 ),
 
 condition_metadata AS (

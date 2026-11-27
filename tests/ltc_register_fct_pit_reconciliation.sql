@@ -45,7 +45,12 @@
     ('osteoarthritis', ref('fct_person_osteoarthritis_register'), calculate_osteoarthritis_register(ltc_live_register_as_of(ref('fct_person_osteoarthritis_register'), age_built_on, as_of_cache))),
     ('parkinsons', ref('fct_person_parkinsons_register'), calculate_parkinsons_register(ltc_live_register_as_of(ref('fct_person_parkinsons_register'), age_built_on, as_of_cache))),
     ('sickle_cell', ref('fct_person_sickle_cell_register'), calculate_sickle_cell_register(ltc_live_register_as_of(ref('fct_person_sickle_cell_register'), age_built_on, as_of_cache))),
-    ('thalassaemia', ref('fct_person_thalassaemia_register'), calculate_thalassaemia_register(ltc_live_register_as_of(ref('fct_person_thalassaemia_register'), age_built_on, as_of_cache)))
+    ('thalassaemia', ref('fct_person_thalassaemia_register'), calculate_thalassaemia_register(ltc_live_register_as_of(ref('fct_person_thalassaemia_register'), age_built_on, as_of_cache))),
+    ('long_covid', ref('fct_person_long_covid_register'), calculate_long_covid_register(ltc_live_register_as_of(ref('fct_person_long_covid_register'), age_built_on, as_of_cache))),
+    ('me_cfs', ref('fct_person_me_cfs_register'), calculate_me_cfs_register(ltc_live_register_as_of(ref('fct_person_me_cfs_register'), age_built_on, as_of_cache))),
+    ('post_viral_fatigue', ref('fct_person_post_viral_fatigue_register'), calculate_post_viral_fatigue_register(ltc_live_register_as_of(ref('fct_person_post_viral_fatigue_register'), age_built_on, as_of_cache))),
+    ('fibromyalgia', ref('fct_person_fibromyalgia_register'), calculate_fibromyalgia_register(ltc_live_register_as_of(ref('fct_person_fibromyalgia_register'), age_built_on, as_of_cache))),
+    ('pots', ref('fct_person_pots_register'), calculate_pots_register(ltc_live_register_as_of(ref('fct_person_pots_register'), age_built_on, as_of_cache)))
 ] %}
 
 {% set register_sources = {
@@ -90,7 +95,12 @@
     'osteoarthritis': [(ref('int_osteoarthritis_diagnoses_all'), 'clinical_effective_date')],
     'parkinsons': [(ref('int_parkinsons_diagnoses_all'), 'clinical_effective_date')],
     'sickle_cell': [(ref('int_sickle_cell_diagnoses_all'), 'clinical_effective_date')],
-    'thalassaemia': [(ref('int_thalassaemia_diagnoses_all'), 'clinical_effective_date')]
+    'thalassaemia': [(ref('int_thalassaemia_diagnoses_all'), 'clinical_effective_date')],
+    'long_covid': [(ref('int_long_covid_diagnoses_all'), 'clinical_effective_date')],
+    'me_cfs': [(ref('int_me_cfs_diagnoses_all'), 'clinical_effective_date')],
+    'post_viral_fatigue': [(ref('int_post_viral_fatigue_diagnoses_all'), 'clinical_effective_date')],
+    'fibromyalgia': [(ref('int_fibromyalgia_diagnoses_all'), 'clinical_effective_date')],
+    'pots': [(ref('int_pots_diagnoses_all'), 'clinical_effective_date')]
 } %}
 
 {# Live facts filtered to currently registered patients; their PIT members are compared on the same population. #}
@@ -122,7 +132,12 @@
     'parkinsons',
     'rheumatoid_arthritis',
     'sickle_cell',
-    'thalassaemia'
+    'thalassaemia',
+    'long_covid',
+    'me_cfs',
+    'post_viral_fatigue',
+    'fibromyalgia',
+    'pots'
 ] %}
 
 {#
