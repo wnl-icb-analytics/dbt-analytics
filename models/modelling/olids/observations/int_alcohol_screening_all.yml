@@ -2,11 +2,11 @@ models:
   - name: int_alcohol_screening_all
     description: >
       Alcohol screening records from the PCD clusters FAST_COD, AUDITC_COD and
-      AUDIT_COD, one row per observation for all people including inactive and
+      AUDIT_COD, one row per observation and source cluster for all people, including inactive and
       deceased. Observations dated after the build date are excluded. score_value
-      holds a numeric result within the tool's range. is_positive_screen applies
+      holds a whole-number total within the tool's range. is_positive_screen applies
       the NICE hazardous-drinking thresholds, FAST 3 or more and AUDIT-C 5 or
-      more, plus full AUDIT 8 or more as a local extension. An assessment code
+      more, plus full AUDIT 8 or more as a local extension. AUDIT-PC (SNOMED 774089008 or 774090004) is positive at 5 or more under government guidance. An assessment code
       without a score is a screen but not a positive one. int_alcohol_audit_scores
       remains the risk-banded AUDIT model used by the SMI programme.
     config:
@@ -33,13 +33,13 @@ models:
       - name: clinical_effective_date
         description: Date of the screen.
       - name: screening_tool
-        description: FAST, AUDIT-C or AUDIT.
+        description: FAST, AUDIT-C, AUDIT-PC or AUDIT.
         data_tests:
           - accepted_values:
               arguments:
-                values: ['FAST', 'AUDIT-C', 'AUDIT']
+                values: ['FAST', 'AUDIT-C', 'AUDIT-PC', 'AUDIT']
       - name: score_value
-        description: Score within the tool's range; null when missing or out of range.
+        description: Whole-number total within FAST 0-16, AUDIT-C 0-12, AUDIT-PC 0-20 or AUDIT 0-40. Null when missing, fractional or out of range.
       - name: original_result_value
         description: Result as recorded.
       - name: is_positive_screen
@@ -50,3 +50,79 @@ models:
         description: Description of the record.
       - name: source_cluster_id
         description: Cluster that matched the code.
+
+unit_tests:
+  - name: alcohol_screening_whole_number_boundaries
+    model: int_alcohol_screening_all
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR id, -221439::NUMBER person_id,
+                 '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date,
+                 column2::VARCHAR result_value, column3::VARCHAR cluster_id,
+                 'SYN_CODE'::VARCHAR mapped_concept_code,
+                 'Synthetic alcohol screen'::VARCHAR mapped_concept_display
+          FROM VALUES
+              ('SYN_FAST_COD_ZERO', '0', 'FAST_COD'),
+              ('SYN_FAST_COD_BELOW', '2', 'FAST_COD'),
+              ('SYN_FAST_COD_THRESHOLD', '3', 'FAST_COD'),
+              ('SYN_FAST_COD_MAX', '16', 'FAST_COD'),
+              ('SYN_FAST_COD_ABOVE', '17', 'FAST_COD'),
+              ('SYN_FAST_COD_NEGATIVE', '-1', 'FAST_COD'),
+              ('SYN_FAST_COD_FRACTION', '3.5', 'FAST_COD'),
+              ('SYN_FAST_COD_FINE_FRACTION', '3.001', 'FAST_COD'),
+              ('SYN_FAST_COD_NULL', NULL, 'FAST_COD'),
+              ('SYN_FAST_COD_NON_NUMERIC', 'SYN_missing', 'FAST_COD'),
+              ('SYN_AUDITC_COD_ZERO', '0', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_BELOW', '4', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_THRESHOLD', '5', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_MAX', '12', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_ABOVE', '13', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_NEGATIVE', '-1', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_FRACTION', '5.5', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_FINE_FRACTION', '5.001', 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_NULL', NULL, 'AUDITC_COD'),
+              ('SYN_AUDITC_COD_NON_NUMERIC', 'SYN_missing', 'AUDITC_COD'),
+              ('SYN_AUDIT_COD_ZERO', '0', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_BELOW', '7', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_THRESHOLD', '8', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_MAX', '40', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_ABOVE', '41', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_NEGATIVE', '-1', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_FRACTION', '8.5', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_FINE_FRACTION', '8.001', 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_NULL', NULL, 'AUDIT_COD'),
+              ('SYN_AUDIT_COD_NON_NUMERIC', 'SYN_missing', 'AUDIT_COD')
+    given: []
+    expect:
+      rows:
+        - {id: SYN_FAST_COD_ZERO, score_value: 0, is_positive_screen: false}
+        - {id: SYN_FAST_COD_BELOW, score_value: 2, is_positive_screen: false}
+        - {id: SYN_FAST_COD_THRESHOLD, score_value: 3, is_positive_screen: true}
+        - {id: SYN_FAST_COD_MAX, score_value: 16, is_positive_screen: true}
+        - {id: SYN_FAST_COD_ABOVE, score_value: null, is_positive_screen: false}
+        - {id: SYN_FAST_COD_NEGATIVE, score_value: null, is_positive_screen: false}
+        - {id: SYN_FAST_COD_FRACTION, score_value: null, is_positive_screen: false}
+        - {id: SYN_FAST_COD_FINE_FRACTION, score_value: null, is_positive_screen: false}
+        - {id: SYN_FAST_COD_NULL, score_value: null, is_positive_screen: false}
+        - {id: SYN_FAST_COD_NON_NUMERIC, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_ZERO, score_value: 0, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_BELOW, score_value: 4, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_THRESHOLD, score_value: 5, is_positive_screen: true}
+        - {id: SYN_AUDITC_COD_MAX, score_value: 12, is_positive_screen: true}
+        - {id: SYN_AUDITC_COD_ABOVE, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_NEGATIVE, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_FRACTION, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_FINE_FRACTION, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_NULL, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDITC_COD_NON_NUMERIC, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_ZERO, score_value: 0, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_BELOW, score_value: 7, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_THRESHOLD, score_value: 8, is_positive_screen: true}
+        - {id: SYN_AUDIT_COD_MAX, score_value: 40, is_positive_screen: true}
+        - {id: SYN_AUDIT_COD_ABOVE, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_NEGATIVE, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_FRACTION, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_FINE_FRACTION, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_NULL, score_value: null, is_positive_screen: false}
+        - {id: SYN_AUDIT_COD_NON_NUMERIC, score_value: null, is_positive_screen: false}
