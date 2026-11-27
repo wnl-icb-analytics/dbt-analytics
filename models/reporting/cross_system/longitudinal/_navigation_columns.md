@@ -88,7 +88,7 @@ Retained source or reference label for status_code.
 {% enddocs %}
 
 {% docs navigation_attendance_code %}
-Recorded attendance status. A null value means no attendance status is supplied in this branch.
+Recorded attendance status. A null value means no attendance status is supplied for this source milestone.
 OLIDS uses its national mapping. A mapped DNA category can include incomplete written work or an unanswered call and does not prove literal non-attendance.
 {% enddocs %}
 
@@ -278,7 +278,7 @@ Date-valued OLIDS result. This is the result content, not a replacement clinical
 {% enddocs %}
 
 {% docs navigation_result_unit_code %}
-Recorded measurement-unit code or source unit token. Interpret with its label and detailed source provenance.
+Recorded measurement-unit code or source unit token. Interpret with its label and detailed source provenance. A populated label does not prove that values use compatible units; some observation concepts do not need a unit.
 {% enddocs %}
 
 {% docs navigation_result_unit_name %}
@@ -323,4 +323,8 @@ Recorded ECDS diagnosis qualifier, such as confirmed or suspected, in SNOMED CT.
 
 {% docs navigation_qualifier_name %}
 Retained SNOMED CT label for the recorded diagnosis qualifier.
+{% enddocs %}
+
+{% docs navigation_coverage_status %}
+accepted_submission_observed means an accepted MHSDS/CSDS file was observed for the reporting month. no_accepted_submission_observed means none was observed for those feeds. submission_completeness_unknown applies to feeds without submission evidence in this diagnostic. None certifies period completeness; an intervening gap is no observed submission/activity, not proof that a required submission was omitted.
 {% enddocs %}

@@ -1,0 +1,63 @@
+version: 2
+models:
+  - name: dq_person_activity_provider_period
+    description: >-
+      Observed activity and submission evidence, one row per source dataset,
+      provider authority, provider code and activity month in the last 24 completed
+      calendar months. Includes day/timestamp-precision milestones from the five
+      event adapters; SUS includes APC, OP and ECDS. IAPT is excluded.
+      Accepted MHSDS/CSDS submission months also contribute rows, even without
+      activity. Intervening months between observed endpoints are retained.
+      Providers absent from both inputs remain unknown. Missing providers and local
+      authorities are retained, without substituting current practice.
+      Matching activity and submission months does not certify completeness:
+      submitted contacts can describe other activity months, and accepted files
+      can have section shortfalls. Use the metric's expected provider-period grid,
+      source notices and successful loads/builds to assess observation windows.
+      Rebuilt monthly as a table; refresh before analysis when newer evidence is
+      needed. See docs/longitudinal-analysis-guide.md.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [source_dataset, provider_code_authority, provider_organisation_code, activity_month]
+    columns:
+      - name: source_dataset
+        description: "{{ doc('navigation_source_dataset') }}"
+        data_tests: [not_null]
+      - name: provider_code_authority
+        description: "{{ doc('navigation_provider_code_authority') }}"
+      - name: provider_organisation_code
+        description: "{{ doc('navigation_provider_organisation_code') }}"
+      - name: activity_month
+        description: First day of the activity calendar month. Submission evidence uses the same calendar month of its reporting-period end.
+        data_tests: [not_null]
+      - name: event_record_count
+        description: All retained milestones in this month, including scheduled care; not a count of encounters or distinct people. Zero for an intervening gap or submission-only month.
+      - name: unlinked_event_record_count
+        description: Milestones without sk_patient_id in this activity month.
+      - name: scheduled_milestone_record_count
+        description: appointment_booking, appointment_rebooked and appointment_slot milestones, even when an extract-current status records attendance.
+      - name: first_event_date
+        description: First supported event day in this month; null without observed activity.
+      - name: last_event_date
+        description: Last supported event day in this month; null without observed activity. Does not establish continuous delivered-care coverage.
+      - name: latest_source_received_at
+        description: Latest receipt, import or extraction among this month's milestones; null without activity or supplied delivery evidence.
+      - name: accepted_submission_count
+        description: Accepted submissions for this reporting month. Zero means none observed for MHSDS/CSDS; null for sources without submission evidence here.
+      - name: provider_latest_submission_period
+        description: Latest accepted reporting-period end observed for this provider, including periods outside the activity scope. Null without provider submission evidence.
+      - name: dataset_latest_submission_period
+        description: Dataset's latest reporting-period end from the submission diagnostic, including periods outside the activity scope. Null for sources without submission evidence here.
+      - name: provider_months_behind_dataset
+        description: Calendar months between provider and dataset latest accepted reporting periods. Null when either is unknown; zero does not certify completeness.
+      - name: submitted_contact_record_count
+        description: Submitted contact rows in this reporting month, not contacts occurring in this activity month. Zero without observed submissions for MHSDS/CSDS; null for other sources.
+      - name: coverage_status
+        description: "{{ doc('navigation_coverage_status') }}"
+      - name: profiled_at
+        description: Time this table was rebuilt. Its rolling month scope is relative to that build date.

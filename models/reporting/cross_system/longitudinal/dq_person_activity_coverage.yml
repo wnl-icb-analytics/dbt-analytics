@@ -8,6 +8,11 @@ models:
       Different source windows and OLIDS NCL coverage limit comparisons. This summary
       records missing linkage, absent or partial dates and the latest received delivery.
       Source date extremes remain visible, including implausible supplied dates.
+      Applicability counts distinguish fields supplied by each source/type from
+      missing evidence for covered types. Some source types have no explicit
+      applicability rules; a zero denominator for those types does not establish
+      that the source lacks the field. Counts do not certify completeness.
+      See docs/longitudinal-analysis-guide.md for the types without explicit rules.
     config:
       meta:
         owner:
@@ -49,3 +54,66 @@ models:
         description: Latest source receipt, import or extraction timestamp in this group.
       - name: profiled_at
         description: Time this aggregate summary was rebuilt.
+      - name: site_applicable_record_count
+        description: >-
+          Site-capable milestones: MHSDS/CSDS care contacts, acute milestones and e-RS actions or slots. OLIDS has no site field here.
+      - name: site_record_count
+        description: >-
+          Applicable milestones with a recorded site code.
+      - name: referral_direction_applicable_record_count
+        description: >-
+          MHSDS/CSDS referral milestones, e-RS referral actions, SUS OP slots and ECDS arrivals. ECDS records attendance origin, which need not be a referral.
+      - name: referring_organisation_record_count
+        description: >-
+          Applicable milestones with a recorded referring or attendance-origin organisation.
+      - name: receiving_organisation_record_count
+        description: >-
+          Applicable milestones with a provider organisation code, used as the receiving organisation. This does not prove a transfer or referral link.
+      - name: status_applicable_record_count
+        description: >-
+          OLIDS appointment slots, whose source status is extract-current. Bookings and other branches do not supply a general status code.
+      - name: status_record_count
+        description: >-
+          Applicable OLIDS slots with their original source status code, separate from mapped national attendance. A status does not by itself prove attendance.
+      - name: attendance_applicable_record_count
+        description: >-
+          MHSDS/CSDS care contacts and SUS OP slots with national attendance status codes, plus OLIDS slots with mapped national attendance. OLIDS bookings are excluded.
+      - name: attendance_record_count
+        description: >-
+          Applicable milestones with an attendance status code, including recorded non-attendance and cancellation. OLIDS uses its national mapping; a mapped DNA category does not prove literal non-attendance.
+      - name: outcome_applicable_record_count
+        description: >-
+          SUS OP slots, APC discharges, ECDS departures and e-RS actions or slots. e-RS actions 1426/1428 supply the assessment outcome; other actions and slots supply the action reason. These are not universal care outcomes.
+      - name: outcome_record_count
+        description: >-
+          Applicable milestones with their source outcome, e-RS assessment outcome or action-reason code.
+      - name: parent_applicable_record_count
+        description: >-
+          Clinical items whose adapters can carry recorded parent context. Zero for events.
+      - name: recorded_parent_record_count
+        description: >-
+          Clinical items with a parent ID and recorded_parent relationship. This counts context, not inferred temporal links.
+      - name: mapping_applicable_record_count
+        description: >-
+          Clinical items with a SNOMED CT, Read v2 or CTV3 source code, or a supplied map. ICD-10 and OPCS-4 have no inferred reverse map. A missing map is not a failed person link.
+      - name: mapped_record_count
+        description: >-
+          Clinical items with a supplied or recognised mapped code, including historical concepts. Check clinical_mapping_coverage for target recognition.
+      - name: unlabelled_mapped_record_count
+        description: >-
+          Clinical items with a mapped code and no mapped label.
+      - name: result_applicable_record_count
+        description: >-
+          MHSDS/CSDS observations and referral/activity/clustering assessments, plus OLIDS observations. ECDS observations and scored assessments are not yet included in this diagnostic.
+      - name: result_value_record_count
+        description: >-
+          Applicable clinical items with a result value. Presence does not establish a usable score.
+      - name: numeric_parse_failure_record_count
+        description: >-
+          Applicable populated results marked not_numeric_or_out_of_range. Enumerated non-score responses can legitimately be non-numeric; numeric_rounded is not counted as a parse failure.
+      - name: unit_applicable_record_count
+        description: >-
+          MHSDS/CSDS/OLIDS observations with a populated result value. This checks the unit-capable record type, not whether a particular concept needs a unit.
+      - name: missing_unit_record_count
+        description: >-
+          Unit-applicable observations without a result unit code or source token. Assess concept-specific requirements before treating this as a defect; a unit label does not prove compatible units.
