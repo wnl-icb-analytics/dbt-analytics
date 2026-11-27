@@ -42,6 +42,32 @@ reviews:
           explaining why the change is being made or what problem it solves is
           enough. Do not require headings, templates, test details or a
           file-by-file summary. Allow draft descriptions to remain incomplete.
+      - name: "New reporting model overlap"
+        mode: warning
+        instructions: |
+          Apply only when the PR adds a model under models/reporting/. For each
+          new model, read the existing models in the same folder and name any
+          that cover the same subject and grain. For example, obt_encounter_op,
+          obt_appointment_op, obt_encounter_apc and obt_encounter_uec already
+          hold SUS activity in models/reporting/acute/. Warn when the PR does
+          not say what the new model gives analysts that the existing one
+          cannot, or why the existing model cannot be extended. Two tables for
+          the same activity with different column names, rules or refresh lag
+          give analysts different answers, and analysts choose tables by name.
+          Matching a legacy output column by column or table by table is not a
+          reason on its own; ask what analysts need and where it belongs in the
+          existing models. Also warn when another open PR adds a raw or staging
+          model with the same name. Pass when the PR adds no reporting model,
+          or when it states a distinct subject, grain, scope or consumer.
+      - name: "No person-level detail in PR text"
+        mode: warning
+        instructions: |
+          The PR title and description become the squash commit message on
+          main in a public repository. Warn when they describe one person's
+          case in a way that could identify them, such as dates of birth or
+          death, an age and a condition for one individual, even without an
+          identifier. Broad aggregates and descriptions of a mechanism are
+          fine. Do not repeat the values; name the section that contains them.
   finishing_touches:
     docstrings:
       enabled: false
@@ -62,7 +88,9 @@ reviews:
         be resolved before merge.
         Check seeds, test data, examples, logs, exports, screenshots, comments,
         documentation and hardcoded SQL values. Column names and clearly
-        synthetic examples are not patient data by themselves. High-level
+        synthetic examples are not patient data by themselves. Names in
+        config.meta.owner and maintainer or author attribution are not
+        person-level data. High-level
         aggregates such as broad counts, rates, distributions and validation
         totals are not person-level data and must not be flagged merely because
         they were calculated from patient data. Flag aggregates only when small
@@ -254,9 +282,40 @@ reviews:
           identify the contradiction and ask which contract is authoritative.
           Do not prescribe a population-changing fix without evidence of the
           intended business rule.
+        - Clinical and programme rules are often not written down anywhere you
+          can read, and you cannot check external specifications. Propose a
+          change to who or what a model includes only when the rule is stated
+          in the PR, the model's description or a file in this repository.
+          Otherwise say which records the code would include or drop and ask
+          the author which rule applies. The model's previous behaviour is not
+          evidence of the intended rule.
+        - When a change adds or alters a selection that keeps one row, such as
+          ROW_NUMBER or QUALIFY, check what happens with tied and null sort
+          keys. Where the winner affects results, ask for a final tie-break
+          that always gives the same row. When it changes a date cut-off or
+          as-at date, check a case just before, on and after the boundary:
+          a timestamp later on an inclusive cut-off day compared with a date,
+          and evidence dated after the as-at date.
+        - Flag a filter on an optional enrichment field, such as a patient key
+          or a looked-up code, that drops otherwise valid activity rows, unless
+          the description says those rows are out of scope.
         - Folder configuration in dbt_project.yml supplies database, schema,
           materialisation, tags and hooks. Request a model override only for a
           stated exception.
+        - Model tags add to the folder's tags; they do not replace them. The
+          scheduled runs in .github/workflows/dbt-scheduled.yml select
+          +tag:daily, +staging+ and tag:indicator_definitions+, and exclude
+          tag:monthly-full from the daily and weekly builds. Flag a model tag
+          meant to change when a model builds that no scheduled run uses, such
+          as monthly on a model in a daily-tagged folder. Point to monthly-full
+          when the model should build only in the run on the 1st. That run
+          uses --full-refresh, so an incremental model whose history cannot be
+          rebuilt from source needs full_refresh=false. A test that reads
+          models built on different schedules fails between builds; ask for
+          the schedules to match. If one side is monthly-full, the test can
+          carry monthly-full too, so it runs only in the build on the 1st,
+          which rebuilds both sides. The reconciliation tag does not help here:
+          it only keeps tests out of partial deploys and PR validation.
 
         From staging onward, every output column name must be unquoted
         snake_case except in published models. Flag quoted output aliases or
@@ -359,6 +418,10 @@ reviews:
         programme prefix when the repository already has a family to follow.
         Disease registers use fct_person_{condition}_register and their
         established indicator metadata.
+        Partner models under models/partner/ often select * from a reporting
+        model, so a column added here reaches partner tables too. When a PR adds
+        a column, check those partner models. Ask for identifiers to be
+        excluded there unless the PR says the partner agreement covers them.
 
     # Published layer
     - path: "models/published/**"
@@ -431,6 +494,10 @@ reviews:
         - Column descriptions should explain units, code systems, selection
           rules, dates, null meaning, derivation or non-obvious relationships;
           do not require prose that merely repeats a column name.
+        - In reporting models, flag column descriptions that only restate the
+          source field name, such as "As supplied in source field X". They are
+          published as Snowflake comments, so they should give the business
+          meaning, or say plainly that the meaning is not yet confirmed.
         - A semantic change must update the affected SQL, descriptions and
           existing contract tests together. Ask for a new test only under the
           rules above.
@@ -449,6 +516,12 @@ reviews:
         auto_ files are generated. Manual source declarations are the editable
         registry for opted-in tables and must match live identifiers and column
         types. Snowflake database, schema and identifiers are quoted.
+        scripts/sources/2_generate_sources.py writes one
+        auto_<database>_<schema>.yml file per database and schema. Flag a new
+        auto_ file that combines several schemas or whose name does not follow
+        that pattern: it was made by hand, and the next regeneration would
+        declare the same sources again in a second file. Ask for the file to be
+        regenerated from scripts/sources/source_mappings.yml.
 
     # Seeds
     - path: "seeds/**"
