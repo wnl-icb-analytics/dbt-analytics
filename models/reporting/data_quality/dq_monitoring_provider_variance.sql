@@ -7,6 +7,7 @@ select
     provider_code,
     provider_name,
     row_count,
+
     latest_refresh_date,
     latest_actual_financial_year,
     latest_actual_financial_month,
