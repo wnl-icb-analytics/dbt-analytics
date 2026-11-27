@@ -61,7 +61,7 @@ AND acm.dv_provider_code IN (
 -- filtered acm simplified to remove the UNION 
 ,filtered_acm AS (
 
- SELECT acm.*
+ SELECT acm.*,lf.financial_month as latest_month
     FROM {{ ref('stg_lsacm')}} acm
     --FROM STAGING.SLAM.STG_LSACM acm
     INNER JOIN freeze_files fr
@@ -244,7 +244,7 @@ LEFT JOIN {{ ref('stg_dictionary_dbo_specialties')}} sp
         ACM.ACTIVITY_TREATMENT_FUNCTION_CODE,
         LEFT(ACM.LOCAL_SUB_SPECIALTY_CODE, 3)
     ) = SP.BK_SPECIALTY_CODE
-    
+
 LEFT JOIN {{ ref('stg_reference_wnl_reporting_names') }} prov
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES prov
     on IFF(
