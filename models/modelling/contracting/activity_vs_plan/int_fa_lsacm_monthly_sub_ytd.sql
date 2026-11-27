@@ -13,7 +13,7 @@ SELECT
 r.dv_provider_code as provider_code, 
 CASE 
 WHEN dv_provider_code in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS') THEN 'WNL'
-ELSE 'Major OOS' END AS provider_type,
+ELSE 'OOS' END AS provider_type,
 o.organisation_name,
 file_id as meta_file_id, 
 TO_CHAR(DATEADD(MONTH,r.financial_month + 2,TO_DATE(r.financial_year || '-01-01')),'YYYY-MM') AS activity_month,
