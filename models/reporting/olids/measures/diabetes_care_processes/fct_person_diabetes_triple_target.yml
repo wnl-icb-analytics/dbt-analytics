@@ -21,7 +21,8 @@ models:
             National Diabetes Audit treatment targets in the 12 calendar months ending in the
             reporting month: latest HbA1c at or below 58 mmol/mol, latest blood pressure at or
             below 140/90 mmHg, and a statin prescribed for people aged 40 to 80 or with CVD.
-            The NDA rate excludes people without a valid HbA1c or blood pressure reading.
+            The NDA rate excludes people without a valid HbA1c or blood pressure reading:
+            divide all_three_targets_met by is_in_nda_denominator.
           is_qof: false
           source_column: "all_three_targets_met"
           usage_contexts:
@@ -35,7 +36,27 @@ models:
               category: "INCLUSION"
             - cluster_id: "IFCCHBAM_COD"
               category: "CALCULATION"
+            - cluster_id: "DCCTHBA1C_COD"
+              category: "CALCULATION"
             - cluster_id: "BP_COD"
+              category: "CALCULATION"
+            - cluster_id: "SYSBP_COD"
+              category: "CALCULATION"
+            - cluster_id: "DIASBP_COD"
+              category: "CALCULATION"
+            - cluster_id: "HOMEBP_COD"
+              category: "CALCULATION"
+            - cluster_id: "HOMEAMBBP_COD"
+              category: "CALCULATION"
+            - cluster_id: "ABPM_COD"
+              category: "CALCULATION"
+            - cluster_id: "STAT_COD"
+              category: "CALCULATION"
+            - cluster_id: "CHD_COD"
+              category: "CALCULATION"
+            - cluster_id: "STIA_COD"
+              category: "CALCULATION"
+            - cluster_id: "PAD_COD"
               category: "CALCULATION"
           thresholds:
             - population_group: "DIABETES"
@@ -59,6 +80,25 @@ models:
               threshold_unit: "mmHg"
               description: "NDA diastolic blood pressure treatment target"
               sort_order: 3
+            - population_group: "DIABETES"
+              threshold_type: "AGE_ELIGIBILITY"
+              threshold_value: "40"
+              threshold_operator: "AT_OR_ABOVE"
+              threshold_unit: "years"
+              description: "Minimum age for the statin target without CVD"
+              sort_order: 4
+            - population_group: "DIABETES"
+              threshold_type: "AGE_ELIGIBILITY"
+              threshold_value: "80"
+              threshold_operator: "AT_OR_BELOW"
+              threshold_unit: "years"
+              description: "Maximum age for the statin target without CVD; any age with CVD"
+              sort_order: 5
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "NDA 2024-25 all three treatment targets (Mar 2025, NCL)"
+            note: "Type 2 and other matches the audit; type 1 is lower, mostly on statins, because CVD comes from GP registers, not hospital admissions"
         owner:
           name: EddieDavison92
     data_tests:
