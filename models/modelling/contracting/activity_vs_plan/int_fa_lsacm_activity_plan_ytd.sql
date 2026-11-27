@@ -1,9 +1,10 @@
---get all latest data for plan activity checking every month by joining to latest data meta_file_id
+
 {{
     config(
         materialized='table',
         tags=['fa_checks'])
 }}
+--get all latest data for plan activity checking every month by joining to latest data meta_file_id
 WITH wnl_reporting_names AS (
     SELECT DISTINCT
         provider_code,
@@ -27,6 +28,29 @@ acm.commissioner_code,
 o.organisation_name as commissioner_name,
 acm.point_of_delivery_code,
 acm.local_point_of_delivery_description,
+--POD GROUP
+CASE --outpatients
+    WHEN acm.tariff_code ILIKE any ('WF01B%','WF02B%','WF01D%','WF02D%') then 'Outpatient Firsts'
+    WHEN acm.tariff_code ILIKE any ('WF01A%','WF02A%','WF01C%','WF02C%') then 'Outpatient Follow-ups'
+    WHEN pod.pod_group = 'Outpatients' then iff(hrg.hrg_code is not null,'Outpatient Procedures','Outpatient Other')
+    --maternity/NELNE
+    WHEN left(acm.tariff_code,4) in ('NZ01','NZ02','NZ03','NZ11','NZ12','NZ13','NZ14','NZ15','NZ25'
+                                 ,'NZ30','NZ31','NZ32','NZ33','NZ34','NZ40','NZ41','NZ42','NZ43'
+                                 ,'NZ44','NZ50','NZ51')
+                                 then 'Maternity - Deliveries'
+    WHEN acm.tariff_code ILIKE 'NZ%' then 'Maternity - Non-deliveries'
+    WHEN acm.point_of_delivery_code in ('NELNE','NELNEXBD') or acm.point_of_delivery_code = 'NEL' AND acm.tariff_code ILIKE 'PB%' then 'Neonates AND Transfers'
+    WHEN pod.pod_group = 'Maternity' then 'Maternity - Pathways'
+    --ambulatory AND SDEC
+    WHEN acm.dv_provider_code = 'RKE' AND acm.local_sub_specialty_code in ('100AMB','300AMB') then 'Ambulatory Care'
+    WHEN acm.dv_provider_code = 'RRV' AND acm.point_of_delivery_further_detail_code in ('SDEC','CYPSDEC') then 'Same Day Emergency Care'
+    WHEN acm.dv_provider_code = 'RYJ' AND acm.tariff_code = 'AEC' then 'Same Day Emergency Care'
+    WHEN acm.dv_provider_code = 'RAL' AND acm.tariff_code = 'SDECED' then 'Same Day Emergency Care'
+    WHEN acm.dv_provider_code = 'RAS' AND acm.tariff_code = 'SDEC' then 'Same Day Emergency Care'
+    --ICH PTS
+    WHEN acm.dv_provider_code = 'RYJ' AND acm.point_of_delivery_further_detail_code LIKE '%PTS%' THEN 'Patient Transport Service'
+    ELSE pod.pod_group
+END AS pod_group,
 --commissioned service category codes
 acm.commissioned_service_category_code,
 CASE 
@@ -55,14 +79,20 @@ WHEN acm.service_code IS NULL THEN 'Missing Code'
 ELSE 'Valid' END AS service_code_dq,
  --define SPEC_COMM_FLAG for reporting. icb_delegation_26_27 = 'BLUE' is locally commissioned so use the CSSC code for Funding Status
 CASE
-     WHEN acm.commissioner_code in ('13Q','13R') then 'Retained'
+        WHEN acm.commissioner_code in ('13Q','13R') then 'Retained'
         WHEN acm.service_code = 'NULL' or acm.service_code is null or acm.service_code = '99999' then 'ICB-commissioned'
         WHEN upper(acm.service_code) like '%XXX' AND ser.service_code is not null then cs.funding_status
         WHEN ser.icb_delegation_26_27 <> 'BLUE' then ser.current_funding_status
         WHEN ser.icb_delegation_26_27 = 'BLUE' then cs.funding_status
-    ELSE 'Invalid Service Code' 
-    END AS spec_comm_flag
-,IFF(acm.commissioner_code IN ('07X','07M','08H','08D','07R','93C','07P','07W','07Y','08C','08E','08G','08Y','09A','W2U3Z','Y05','T04','Z9B2Z'),'WNL','Other') comm_group,
+        ELSE 'Invalid Service Code' END AS spec_comm_flag,
+CASE
+        WHEN acm.commissioner_code in (
+            '07X','07M','08H','08D','07R','93C','07P','07W','07Y',
+            '08C','08E','08G','08Y','09A','W2U3Z','Y05','T04',
+            'Z9B2Z','QMJ','QRV'
+        ) THEN 'WNL'
+        WHEN acm.commissioner_code in ('13R','13Q') THEN 'NHSE'
+        ELSE 'Other' END AS comm_group,
 acm.dv_actual_activity as activity_actual,
 acm.dv_planned_activity as activity_plan,
 acm.dv_actual_price AS price_actual,
@@ -79,7 +109,17 @@ LEFT JOIN {{ ref('pss_service_code') }} ser on UPPER(acm.service_code) = ser.ser
 LEFT JOIN {{ ref('nhs_dd_commissioned_service_category') }} cs on acm.commissioned_service_category_code = cs.code
 --LEFT JOIN REFERENCE.DATA_DICTIONARY.NHS_DD_COMMISSIONED_SERVICE_CATEGORY cs on acm.commissioned_service_category_code = cs.code
 LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
+LEFT JOIN {{ ref('stg_reference_pod_group_mapping')}} pod
+--LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_POD_GROUP_MAPPING POD
+    on CONCAT(
+        coalesce(acm.point_of_delivery_code, '?'),
+        coalesce(acm.local_point_of_delivery_code, '?'),
+        coalesce(acm.local_point_of_delivery_description, '?')
+    ) = pod.pod_lookup
+LEFT JOIN {{ ref('stg_dictionary_dbo_hrg')}} hrg on left(acm.tariff_code,5) = hrg.hrg_code
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_HRG HRG on left(acm.tariff_code,5) = hrg.hrg_code
 )
 select *
 from latest_submissions
-where comm_group = 'WNL'
+--add in NHSE activity as well as WNL
+where comm_group in ('WNL','NHSE')

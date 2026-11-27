@@ -1,8 +1,7 @@
-{{
-    config(
-        materialized='table',
-        tags=['cltcs'])
-}}
+{{ config(
+    materialized='table', 
+    tags=['cltcs', 'daily']) 
+    }}
 
 {% set in_scope_borough_list = ['Haringey', 'Camden'] %}
 {% set in_scope_neighbourhood_list = [] %}

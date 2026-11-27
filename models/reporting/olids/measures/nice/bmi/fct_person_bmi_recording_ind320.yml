@@ -20,8 +20,12 @@ models:
       unavailable. No personalised care adjustments are applied. Based on NICE NG246. Code
       lists: BMIVAL_COD, HEIGHT, WEIGHT, LDLCCHOL_COD, HDLCCHOL_COD, TRIGLYC_COD (PCD); 0212
       (BNF).
+
+
+      External validation: matches NDA BMI recording (diabetes subgroup) (2025/26, by practice).
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind320
@@ -54,6 +58,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND320"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "NDA BMI recording (diabetes subgroup) (2025/26, by practice)"
+            note: "Compared for people with diabetes, about half of those covered"
+            reference: docs/nice-benchmarks.md
     columns:
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
@@ -105,6 +115,7 @@ models:
       Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
     columns:

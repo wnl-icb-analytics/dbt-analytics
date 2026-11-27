@@ -3,6 +3,9 @@ models:
     description: >
       Deceased status and approximate death date for each OLIDS patient_id, including
       patients with no death record, from OLIDS, PDS and registry deaths.
+      A registry death is used only when its birth month matches the OLIDS patient's
+      birth month, to exclude deaths linked to the wrong person. A genuine registry
+      death is also excluded when the OLIDS birth month is wrong or missing.
       final_date_of_death takes the registry date, then the PDS date, then the midpoint of
       the OLIDS death month. A registry or PDS date in or before the birth month is skipped
       when another source dates the death later, as it is a mis-keyed birth date.
@@ -14,6 +17,7 @@ models:
 
     config:
       meta:
+        primary_key: [patient_id]
         owner:
           name: EddieDavison92
 
@@ -51,7 +55,10 @@ models:
       - name: pds_date_of_death
         description: Date of death on the latest PDS person record version (NULL if alive or the death was reversed)
       - name: reg_date_of_death
-        description: Date of death from registry feed (NULL if alive)
+        description: >
+          Date of death from the registry feed. NULL when there is no registry death
+          record, including deaths known only from PDS or OLIDS, or when the registry
+          birth month does not match the OLIDS birth month or either is missing.
       - name: final_date_of_death
         description: > 
           Registry date of death where present, otherwise the PDS date, otherwise

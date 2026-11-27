@@ -21,6 +21,7 @@ WITH valproate_from_prog_codes AS (
         NULL AS medication_statement_id,
         mo.person_id,
         mo.clinical_effective_date::DATE AS order_date,
+        mo.date_recorded,
         mo.medication_name AS order_medication_name,
         mo.dose AS order_dose,
         mo.quantity_value AS order_quantity_value,
@@ -57,6 +58,7 @@ valproate_from_cluster AS (
         medication_statement_id,
         person_id,
         order_date::DATE AS order_date,
+        date_recorded,
         order_medication_name,
         order_dose,
         order_quantity_value,
@@ -80,6 +82,7 @@ base_medication_orders AS (
         COALESCE(pc.medication_statement_id, cl.medication_statement_id) AS medication_statement_id,
         COALESCE(pc.person_id, cl.person_id) AS person_id,
         COALESCE(pc.order_date, cl.order_date) AS order_date,
+        COALESCE(pc.date_recorded, cl.date_recorded) AS date_recorded,
         COALESCE(pc.order_medication_name, cl.order_medication_name) AS order_medication_name,
         COALESCE(pc.order_dose, cl.order_dose) AS order_dose,
         COALESCE(pc.order_quantity_value, cl.order_quantity_value) AS order_quantity_value,
@@ -143,33 +146,6 @@ valproate_enhanced AS (
         -- Clinical risk assessment flags
         TRUE AS is_high_teratogenic_risk,
 
-        -- Pregnancy risk assessment
-        CASE
-            WHEN
-                vo.valproate_product_type IN ('SODIUM_VALPROATE', 'EPILIM')
-                THEN 'ANTI_EPILEPTIC'
-            WHEN
-                vo.valproate_product_type IN ('DEPAKOTE')
-                THEN 'MOOD_STABILISER'
-            ELSE 'UNSPECIFIED'
-        END AS clinical_indication,
-
-        -- Dosage categorisation for monitoring
-        CASE
-            WHEN vo.order_dose ILIKE '%MG%'
-                THEN
-                    CASE
-                        WHEN
-                            REGEXP_SUBSTR(vo.order_dose, '[0-9]+')::INT <= 500
-                            THEN 'LOW_DOSE'
-                        WHEN
-                            REGEXP_SUBSTR(vo.order_dose, '[0-9]+')::INT <= 1000
-                            THEN 'MODERATE_DOSE'
-                        ELSE 'HIGH_DOSE'
-                    END
-            ELSE 'UNKNOWN_DOSE'
-        END AS dose_category,
-
         -- Keep the published label vocabulary; exact dm+d form is available separately.
         CASE
             WHEN dmd.form_description ILIKE 'Modified-release%'
@@ -201,6 +177,7 @@ SELECT
     ve.medication_statement_id,
     ve.person_id,
     ve.order_date,
+    ve.date_recorded,
     ve.order_medication_name,
     ve.order_dose,
     ve.order_quantity_value,
@@ -218,8 +195,6 @@ SELECT
     ve.matched_on_concept_id,
     ve.valproate_product_type,
     ve.is_high_teratogenic_risk,
-    ve.clinical_indication,
-    ve.dose_category,
     ve.formulation_type,
     ve.is_recent_3m,
     ve.is_recent_6m,

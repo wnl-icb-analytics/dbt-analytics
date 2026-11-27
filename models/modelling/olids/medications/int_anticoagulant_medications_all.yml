@@ -1,10 +1,14 @@
 models:
   - name: int_anticoagulant_medications_all
     description: >-
-      Oral anticoagulant orders for all people, one row per dated order. Legacy BNF 020802
-      membership and category labels remain pending interface approval. National DOAC and
-      vitamin K antagonist refsets identify supported products; heparins and INR test
-      strips are not included in those lists.
+      Oral anticoagulant orders for all people, one row per dated order. Selection uses
+      national DIRECTORANTICOAGDRUG_COD and VITKANTAGDRUG_COD lists, plus the existing BNF
+      chemicals for apixaban, dabigatran, edoxaban, rivaroxaban, warfarin, acenocoumarol,
+      phenindione and phenprocoumon when a code does not match the lists. This includes pack codes whose parent product is listed
+      and genuine list omissions such as phenprocoumon. INR testing strips
+      and pentosan are excluded. Combinations qualify when nationally listed.
+      Type and class flags use national membership first, then the retained BNF chemical.
+      National-membership fields remain false or null for unmatched codes.
     config:
       meta:
         owner:
@@ -48,11 +52,11 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: anticoagulant_type
-        description: 'BNF-based anticoagulant type (DOAC, VKA, other)'
+        description: 'DOAC or VKA from national refsets, then the retained BNF chemical when the code is unmatched.'
       - name: is_doac
-        description: 'Flag for Direct Oral Anticoagulants'
+        description: 'DOAC by national membership, or by retained BNF chemical when the code is unmatched.'
       - name: is_vka
-        description: 'Flag for Vitamin K Antagonists'
+        description: 'VKA by national membership, or by retained BNF chemical when the code is unmatched.'
       - name: is_recent_3m
         description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
