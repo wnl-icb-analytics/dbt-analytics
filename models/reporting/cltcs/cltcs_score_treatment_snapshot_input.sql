@@ -1,7 +1,7 @@
 {{
     config(
-        materialized='view'
-    )
+        materialized='view',
+        tags=['cltcs', 'daily'])
 }}
 
 /*

@@ -230,18 +230,18 @@ select
     -- Outpatient
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPFA-F2F', 'OPFA-NFTF') then encounters else 0 end) as op_fa_encounters
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPFUP-F2F', 'OPFUP-NFTF') then encounters else 0 end) as op_fup_encounters
-    , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPPROC') then encounters else 0 end) as op_proc_encounters
+    , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPPROC', 'OPPROC-FA', 'OPPROC-FU') then encounters else 0 end) as op_proc_encounters
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('spec_comm') then encounters else 0 end) as op_spec_comm_encounters
 
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPFA-F2F', 'OPFA-NFTF') then cost else 0 end) as op_fa_cost
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPFUP-F2F', 'OPFUP-NFTF') then cost else 0 end) as op_fup_cost
-    , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPPROC') then cost else 0 end) as op_proc_cost
+    , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPPROC', 'OPPROC-FA', 'OPPROC-FU') then cost else 0 end) as op_proc_cost
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('spec_comm') then cost else 0 end) as op_spec_comm_cost
 
 
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPFA-F2F', 'OPFA-NFTF') then duration else 0 end) as op_fa_duration
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPFUP-F2F', 'OPFUP-NFTF') then duration else 0 end) as op_fup_duration
-    , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPPROC') then duration else 0 end) as op_proc_duration
+    , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('OPPROC', 'OPPROC-FA', 'OPPROC-FU') then duration else 0 end) as op_proc_duration
     , sum(case when activity_type = 'Outpatient'  and activity_subtype in ('spec_comm') then duration else 0 end) as op_spec_comm_duration
 
     -- MH

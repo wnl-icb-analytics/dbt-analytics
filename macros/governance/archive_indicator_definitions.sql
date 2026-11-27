@@ -20,6 +20,10 @@
     is_qof BOOLEAN,
     qof_indicator STRING,
     sort_order STRING,
+    is_externally_validated BOOLEAN,
+    external_validation_result STRING,
+    external_validation_comparator STRING,
+    external_validation_note STRING,
     metadata_extracted_at TIMESTAMP,
     version_number INT,
     valid_from DATE,
@@ -33,6 +37,10 @@
   -- Existing history keeps its versions; new fields remain null in older versions.
   ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS programme STRING;
   ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS clinical_subdomain STRING;
+  ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS is_externally_validated BOOLEAN;
+  ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS external_validation_result STRING;
+  ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS external_validation_comparator STRING;
+  ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS external_validation_note STRING;
 
   -- Add table comment using existing macro pattern
   COMMENT ON TABLE {{ history_table }} IS '{{ generate_history_table_comment("def_indicator", "Historical versions of indicator definitions with daily granularity. Tracks changes to indicator definitions across different days only. Multiple runs on the same day update the existing record rather than creating new versions.") }}';
@@ -90,6 +98,10 @@
           OR COALESCE(curr.is_qof, FALSE) != COALESCE({{ history_table }}.is_qof, FALSE)
           OR COALESCE(curr.qof_indicator, '') != COALESCE({{ history_table }}.qof_indicator, '')
           OR curr.sort_order != {{ history_table }}.sort_order
+          OR COALESCE(curr.is_externally_validated::VARCHAR, '') != COALESCE({{ history_table }}.is_externally_validated::VARCHAR, '')
+          OR COALESCE(curr.external_validation_result, '') != COALESCE({{ history_table }}.external_validation_result, '')
+          OR COALESCE(curr.external_validation_comparator, '') != COALESCE({{ history_table }}.external_validation_comparator, '')
+          OR COALESCE(curr.external_validation_note, '') != COALESCE({{ history_table }}.external_validation_note, '')
         )
     );
 
@@ -112,6 +124,10 @@
     is_qof = curr.is_qof,
     qof_indicator = curr.qof_indicator,
     sort_order = curr.sort_order,
+    is_externally_validated = curr.is_externally_validated,
+    external_validation_result = curr.external_validation_result,
+    external_validation_comparator = curr.external_validation_comparator,
+    external_validation_note = curr.external_validation_note,
     metadata_extracted_at = curr.metadata_extracted_at,
     archived_at = CURRENT_TIMESTAMP(),
     archived_by = '{{ target.user }}',
@@ -131,6 +147,10 @@
     is_qof,
     qof_indicator,
     sort_order,
+    is_externally_validated,
+    external_validation_result,
+    external_validation_comparator,
+    external_validation_note,
     metadata_extracted_at,
     version_number,
     valid_from,
@@ -154,6 +174,10 @@
     curr.is_qof,
     curr.qof_indicator,
     curr.sort_order,
+    curr.is_externally_validated,
+    curr.external_validation_result,
+    curr.external_validation_comparator,
+    curr.external_validation_note,
     curr.metadata_extracted_at,
     COALESCE(
       (SELECT MAX(version_number) + 1 

@@ -3,14 +3,15 @@ version: 2
 models:
   - name: qadmissions_predictions
     description: >-
-      Latest QAdmissions one-year emergency-admission risk from ClinRisk 2013 v4.1,
-      one row per active, non-deceased OLIDS person aged 18-100 with recorded sex male
-      or female. Scoring uses GP and linked SUS features. Inputs remain available,
+      Latest one-year emergency-admission risk from QAdmissions (ClinRisk 2013 v4.1),
+      recalibrated on WNL data from model version V5. One row per active,
+      non-deceased OLIDS person aged 18-100 with recorded sex male or female. Scoring uses GP and linked SUS features. Inputs remain available,
       including BMI imputation details. Rejected inputs remain with is_scored false
       and error text. Build timestamps and monthly-history safeguards are documented
       on scored_at.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: Thomas Shallcross
     data_tests:
@@ -46,7 +47,10 @@ models:
 
       - name: model_version
         data_type: varchar
-        description: "Version of the registered QAdmissions model that produced the score."
+        description: >-
+          Version of the registered QAdmissions model that produced the score. V1 to V3
+          give the published QAdmissions risk; V5 and later give the risk recalibrated on
+          WNL data.
 
       - name: is_scored
         data_type: boolean
@@ -58,7 +62,8 @@ models:
         data_type: float
         description: >
           Predicted risk of an emergency admission within the surv horizon, as a
-          percentage (0-100). NULL when is_scored is FALSE.
+          percentage (0-100). From model version V5 it is recalibrated on WNL data,
+          so it is not the published QAdmissions risk. NULL when is_scored is FALSE.
         data_tests:
           - dbt_utils.not_null_proportion:
               arguments:

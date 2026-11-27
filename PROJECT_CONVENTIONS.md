@@ -28,7 +28,11 @@ This repository is public. Never commit real patient- or person-level data,
 direct identifiers, combinations of values that could identify a person,
 row-level extracts, logs or screenshots containing real data. This applies to
 seeds, test data, examples, documentation and hardcoded SQL values as well as
-model files.
+model files. It also applies to pull request, issue and commit text: a pull
+request description becomes the squash commit message on `main`. Describing
+one person's case with dates, age and condition can identify them without any
+identifier. Explain the mechanism instead, such as "a registry death date
+repeats the date of birth".
 
 Treat suspected disclosure as a critical blocking finding. Identify the file,
 location and data category without repeating the value. Remove the data and
@@ -145,6 +149,13 @@ it.
 - Folder placement supplies database, schema, materialisation, tags and hooks
   through `dbt_project.yml`. Check models in the same folder or model family
   before adding a local config override.
+- The scheduled build on the 1st of each month runs with `--full-refresh`. An
+  incremental model that keeps history it cannot rebuild from source, such as
+  a monthly capture, needs `full_refresh=false`.
+- Partner models that select `*` from a shared model receive every column
+  added to it. When adding a column to a shared reporting model, check the
+  partner models that read it and exclude the column there unless the partner
+  agreement covers it.
 - Use established model vocabulary. Names normally combine a role prefix, a
   domain subject and a suffix only when it explains shape, time or grain, such
   as `_all`, `_latest`, `_current`, `_historical`, `_register` or `_summary`.
@@ -339,6 +350,15 @@ reviewers must still confirm that it covers the stated key or key combination.
 - New non-raw models need `config.meta.owner.name`. The owner is the business
   stakeholder or group accountable for the model's meaning and use, not a
   repository maintainer or code author merely because they made the change.
+- Declare the grain key as `config.meta.primary_key: [column, ...]` when tests
+  enforce it. Each key column needs `not_null`, and the key needs `unique` (one
+  column) or `dbt_utils.unique_combination_of_columns` on exactly its columns.
+  The tests must be enabled, at error severity, with no `where` filter and the
+  default failure calculation and threshold. Spell columns as listed under
+  `columns`. CI fails a declared key without these tests. When the model builds,
+  it gets a `PRIMARY_KEY` tag in Snowflake; tables and incremental models also
+  get a `NORELY` primary key constraint. Declaring a key is optional; a bot
+  suggests it on changed models whose tests already enforce one key.
 - Document columns when units, code systems, dates, null
   meaning, derivation or relationships affect interpretation.
 - New and changed test blocks use `data_tests`. Do not require an enhancement to

@@ -17,8 +17,14 @@ models:
       XCLO_COD,
       TXCLO_COD, XORANTICOAG_COD, TXORANTICOAG_COD, XORANTICOAGGENCON_COD,
       TXORANTICOAGGENCON_COD (PCD); CHD_COD (PCD).
+
+
+      External validation: matches QOF CHD005 (2025/26, by practice) once a known difference
+      is allowed for. NICE leaves out people who cannot take these medicines; QOF's figure
+      keeps them.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind132-angina-and-coronary-heart-disease-anti-platelet-or-anticoagulation
@@ -49,6 +55,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND132"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF CHD005 (2025/26, by practice)"
+            note: "NICE leaves out people who cannot take these medicines; QOF's figure keeps them"
+            reference: docs/nice-benchmarks.md
     columns: &antithrombotic_columns
       - name: person_id
         description: "Identifier of the person in the indicator denominator."
@@ -114,8 +126,14 @@ models:
       TXCLO_COD, XORANTICOAG_COD, TXORANTICOAG_COD, XORANTICOAGGENCON_COD,
       TXORANTICOAGGENCON_COD (PCD); XDIPY_COD, TXDIPY_COD, STRK_COD, TIA_COD, OSTR_COD
       (PCD).
+
+
+      External validation: matches QOF STIA007 (2025/26, by practice) once a known difference
+      is allowed for. NICE leaves out people who cannot take these medicines; QOF's figure
+      keeps them.
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind133-stroke-and-ischaemic-attack-anti-platelet-or-anticoagulation
@@ -148,6 +166,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND133"
+          external_validation:
+            status: validated
+            result: difference_explained
+            comparator: "QOF STIA007 (2025/26, by practice)"
+            note: "NICE leaves out people who cannot take these medicines; QOF's figure keeps them"
+            reference: docs/nice-benchmarks.md
     columns: *antithrombotic_columns
   - name: fct_person_antithrombotic_therapy_ind94
     description: >-
@@ -163,8 +187,12 @@ models:
       care adjustments are applied. Based on NICE CG147. Code lists: OSAL_COD, CLO_COD,
       ORANTICOAG_COD (PCD); 0209 (BNF); DIRECTORANTICOAGDRUG_COD, VITKANTAGDRUG_COD (NHS
       drug refsets); retained 0208020 DOAC/VKA chemicals (BNF); PAD_COD (PCD).
+
+
+      External validation: matches Retired QOF PAD004 (Mar 2021 / Mar 2022, by practice).
     config:
       meta:
+        primary_key: [person_id]
         owner:
           name: EddieDavison92
         clinical_source: https://www.nice.org.uk/indicators/ind94-peripheral-arterial-disease-antiplatelets
@@ -190,6 +218,12 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND94"
+          external_validation:
+            status: validated
+            result: matches
+            comparator: "Retired QOF PAD004 (Mar 2021 / Mar 2022, by practice)"
+            note: "The published figure is from March 2021; ours is from March 2022"
+            reference: docs/nice-benchmarks.md
     columns: *antithrombotic_columns
   - name: fct_person_antithrombotic_therapy_nice_indicators
     description: >-
@@ -243,6 +277,7 @@ models:
       Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
+        primary_key: [person_id, indicator_id]
         owner:
           name: EddieDavison92
     data_tests:

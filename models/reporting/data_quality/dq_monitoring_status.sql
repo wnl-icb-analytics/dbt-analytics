@@ -112,7 +112,7 @@ end as status_rank,
 
     end as overall_status,
 
-    -- Human-readable explanation
+    -- Explanatory message for overall status
     case
 
         when v.days_since_refresh > c.critical_stale_days

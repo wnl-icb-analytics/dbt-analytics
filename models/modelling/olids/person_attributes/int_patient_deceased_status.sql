@@ -89,6 +89,7 @@ where pds.date_of_death is not null
 
 UNION
 --3. Deaths from registry feed. This is one month behind PDS
+--Registry deaths must also match the patient's birth month (YYYYMM), so a death linked to the wrong NHS number is not used
 select  distinct
 p.id as patient_id, 
 p.sk_patient_id, 
@@ -102,6 +103,7 @@ DATE(d.reg_date_of_death) as reg_date_of_death
 FROM {{ ref('stg_olids_patient') }} p
 --LEFT JOIN MODELLING.DBT_STAGING.STG_REGISTRIES_DEATHS d on d.sk_patient_id = p.sk_patient_id
 LEFT JOIN {{ ref('stg_registries_deaths') }} d on d.sk_patient_id = p.sk_patient_id
+    and d.dmic_dec_month_of_birth = TO_CHAR(p.birth_year) || LPAD(TO_CHAR(p.birth_month), 2, '0')
 ) a
 group by all
 )

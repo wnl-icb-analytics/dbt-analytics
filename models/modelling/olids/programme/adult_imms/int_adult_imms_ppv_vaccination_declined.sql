@@ -16,5 +16,5 @@
          --in case there are multiple records for declined on the same day.
         ,ROW_NUMBER() OVER (PARTITION BY PERSON_ID ORDER BY VACCINATION_DATE ASC) AS rownum
         FROM {{ ref('int_adult_imms_vaccination_status_current') }} 
-    WHERE VACCINE_ID in ('PPV_1','PPV_1B') AND VACCINATION_STATUS in ('Declined')
+    WHERE VACCINE_ID LIKE ('PPV_1%') AND VACCINATION_STATUS in ('Declined')
     QUALIFY rownum = 1
