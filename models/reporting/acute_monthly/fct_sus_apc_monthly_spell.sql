@@ -1,0 +1,253 @@
+with spell_encounters as (
+
+    select *
+    from {{ ref('stg_sus_ip_monthly_encounterdenormalised_daterange') }}
+    where dv_is_spell = 1
+
+)
+
+select
+     encounters.sk_encounter_id
+    ,  encounters.dv_extract_type
+    ,  encounters.dv_query_id
+    ,  encounters.dv_fin_year
+    ,  encounters.dv_fin_month
+    ,  encounters.dv_activity_period_date
+    ,  encounters.generated_record_id
+    ,  encounters.spell_identifier
+    ,  encounters.unique_cds_identifier
+    ,  encounters.hospital_provider_spell_no
+    ,  encounters.referrer_code
+    ,  encounters.referring_organisation_code
+    ,  encounters.organisation_code_patient_pathway_identifier
+    ,  encounters.rtt_patient_pathway_identifier
+    ,  encounters.rtt_period_end_date
+    ,  encounters.rtt_period_start_date
+    ,  encounters.dv_rtt_length_derived
+    ,  encounters.rtt_status
+    ,  encounters.decided_to_admit_date
+    ,  encounters.episode_start_date
+    ,  encounters.episode_end_date
+    ,  encounters.dv_episode_gross_length_of_stay
+    ,  encounters.episode_number
+    ,  encounters.last_episode_in_spell_indicator
+    ,  encounters.start_date_hospital_provider_spell
+    ,  encounters.start_time_hospital_provider_spell
+    ,  encounters.end_date_hospital_provider_spell
+    ,  encounters.discharge_time_hospital_provider_spell
+    ,  encounters.ready_for_discharge_date
+    ,  encounters.dv_length_of_stay_gross
+    ,  encounters.dv_cds_activity_date
+    ,  encounters.source_of_admission_hospital_provider_spell
+    ,  encounters.discharge_destination_hospital_provider_spell
+    ,  encounters.discharge_method_hospital_provider_spell
+    ,  encounters.administrative_category_on_admission
+    ,  encounters.first_regular_day_night_admission
+    ,  encounters.intended_management
+    ,  encounters.patient_classification
+    ,  encounters.admission_method_hospital_provider_spell
+    ,  encounters.age_group_intended_at_epiend
+    ,  encounters.neonatal_level_of_care
+    ,  encounters.dv_number_diagnoses
+    ,  encounters.dv_number_procedures
+    ,  encounters.dv_number_unbundled_hr_gs
+    ,  encounters.sk_patient_id
+    ,  encounters.local_patient_identifier
+    ,  encounters.carer_support_indicator
+    ,  encounters.ethnic_category_code
+    ,  encounters.age_at_cds_activity_date as age_at_event
+    ,  encounters.birth_date
+    ,  encounters.dv_year_of_birth
+    ,  encounters.gender_code
+    ,  encounters.postcode_of_usual_address
+    ,  encounters.dv_lsoa_code
+    ,  encounters.legal_status_classification_code
+    ,  encounters.gp_code_original_data
+    ,  encounters.gp_practice_code_original_data
+    ,  encounters.gp_practice_code_derived
+    ,  encounters.dv_practice_code_validated
+    ,  encounters.provider_reference_no
+    ,  encounters.commissioner_reference_no
+    ,  encounters.commissioner_serial_no_agreement_no
+    ,  encounters.nhs_service_agreement_line_no
+    ,  encounters.consultant_code
+    ,  encounters.main_specialty_code
+    ,  encounters.treatment_function_code
+    ,  encounters.local_sub_specialty_code
+    ,  encounters.ward_code_at_episode_start_date
+    ,  encounters.ward_code_at_episode_end_date
+    ,  encounters.dv_ward_code_at_admission
+    ,  encounters.dv_ward_code_at_discharge
+    ,  encounters.dv_spec_com_service_code_national_episode
+    ,  encounters.dv_spec_com_service_code_national_spell
+    ,  encounters.dv_spec_com_service_code_local_episode
+    ,  encounters.dv_spec_com_service_code_local_spell
+    ,  encounters.organisation_code_code_of_provider as organisation_id
+    ,  encounters.organisation_code_code_of_commissioner as submitted_commissioner_code
+    ,  encounters.site_code_of_treatment_at_start_of_episode
+    ,  encounters.organisation_code_pct_of_residence as residence_commissioning_area_code
+    ,  encounters.commissioner_code_original_data
+    ,  encounters.pct_derived_from_gp_practice as practice_commissioning_area_code
+    ,  encounters.patient_postcode_derived_pct
+    ,  encounters.dv_ccam_sel
+    ,  encounters.dv_ccam_swl
+    ,  encounters.dv_commissioner_code_of_residence
+    ,  encounters.dv_purchaser_id
+    ,  encounters.dv_contract_suffix
+    ,  encounters.dv_cost_method_description
+    ,  encounters.programme_budgeting_category
+    ,  encounters.core_hrg_calculated
+    ,  encounters.spell_core_hrg
+    ,  encounters.dv_hrg
+    ,  encounters.dv_local_cost_code
+    ,  encounters.dv_reason_for_difference
+    ,  encounters.spell_in_pbr_not_in_pbr
+    ,  encounters.dv_is_pbr
+    ,  encounters.dv_applicable_tariff
+    ,  encounters.dv_base_cost
+    ,  encounters.dv_is_short_stay
+    ,  encounters.dv_special_service_id
+    ,  encounters.dv_service_adjustment_cost
+    ,  encounters.dv_best_practice_tariff_code
+    ,  encounters.dv_specialist_palliative_care_days
+    ,  encounters.dv_rehab_days
+    ,  encounters.dv_delayed_discharge_days
+    ,  encounters.dv_tariff_type
+    ,  encounters.dv_length_of_stay_net
+    ,  encounters.dv_excess_bed_days
+    ,  encounters.dv_excess_bed_days_cost
+    ,  encounters.dv_mff_index_applied
+    ,  encounters.pbr_final_tariff
+    ,  encounters.dv_total_cost_inc_mff
+    ,  encounters.primary_diagnosis_code
+    ,  encounters.dv_is_spell
+    ,  encounters.secondary_diagnosis_code_1
+    ,  encounters.secondary_diagnosis_code_2
+    ,  encounters.secondary_diagnosis_code_3
+    ,  encounters.secondary_diagnosis_code_4
+    ,  encounters.secondary_diagnosis_code_5
+    ,  encounters.secondary_diagnosis_code_6
+    ,  encounters.secondary_diagnosis_code_7
+    ,  encounters.secondary_diagnosis_code_8
+    ,  encounters.secondary_diagnosis_code_9
+    ,  encounters.secondary_diagnosis_code_10
+    ,  encounters.secondary_diagnosis_code_11
+    ,  encounters.secondary_diagnosis_code_12
+    ,  encounters.operation_status
+    ,  encounters.primary_procedure_code
+    ,  encounters.primary_procedure_date
+    ,  encounters.secondary_procedure_code_1
+    ,  encounters.secondary_procedure_date_1
+    ,  encounters.secondary_procedure_code_2
+    ,  encounters.secondary_procedure_date_2
+    ,  encounters.secondary_procedure_code_3
+    ,  encounters.secondary_procedure_date_3
+    ,  encounters.secondary_procedure_code_4
+    ,  encounters.secondary_procedure_date_4
+    ,  encounters.secondary_procedure_code_5
+    ,  encounters.secondary_procedure_date_5
+    ,  encounters.secondary_procedure_code_6
+    ,  encounters.secondary_procedure_date_6
+    ,  encounters.secondary_procedure_code_7
+    ,  encounters.secondary_procedure_date_7
+    ,  encounters.secondary_procedure_code_8
+    ,  encounters.secondary_procedure_date_8
+    ,  encounters.secondary_procedure_code_9
+    ,  encounters.secondary_procedure_date_9
+    ,  encounters.secondary_procedure_code_10
+    ,  encounters.secondary_procedure_date_10
+    ,  encounters.secondary_procedure_code_11
+    ,  encounters.secondary_procedure_date_11
+    ,  encounters.secondary_procedure_code_12
+    ,  encounters.secondary_procedure_date_12
+    ,  encounters.dv_unbundled_hrg_1
+    ,  encounters.dv_unbundled_hrg_2
+    ,  encounters.dv_unbundled_hrg_3
+    ,  encounters.dv_unbundled_hrg_4
+    ,  encounters.dv_unbundled_hrg_5
+    ,  encounters.dv_unbundled_hrg_6
+    ,  encounters.dv_unbundled_hrg_7
+    ,  encounters.dv_unbundled_hrg_8
+    ,  encounters.dv_unbundled_hrg_9
+    ,  encounters.dv_unbundled_hrg_10
+    ,  encounters.dv_unbundled_hrg_11
+    ,  encounters.dv_unbundled_hrg_12
+    ,  encounters.dv_unbundled_days_total
+    ,  encounters.dv_unbundled_cost_total
+    ,  encounters.dv_critical_care_day_count
+    , pbr.admission_subtype_derived
+    , pbr.admission_type_derived
+    , pbr.age_at_end_of_spell
+    , pbr.age_at_start_of_spell
+    , pbr.aggregate_un_bundled_adjustment_national
+    , pbr.applicable_costing_period
+    , pbr.applicable_date
+    , pbr.applied_mff_elective
+    , pbr.applied_mff_non_elective
+    , pbr.bpt_indicator_1
+    , pbr.bpt_indicator_1_action
+    , pbr.cds_schema_version
+    , pbr.code_cleaning
+    , pbr.core_hrg_version_calculated
+    , pbr.duration_of_elective_wait
+    , pbr.excluded_episodes_in_hospital_provider_spell
+    , pbr.extract_date
+    , pbr.final_tariff_applied
+    , pbr.gp_practice_derived_from_pds
+    , pbr.grouping_algorithm_version
+    , pbr.grouping_method
+    , pbr.length_of_stay_hospital_provider_spell
+    , pbr.marital_status
+    , pbr.mff_adjustment
+    , pbr.nhs_number_status_indicator
+    , pbr.number_bpt_indicators
+    , pbr.number_diagnosis
+    , pbr.number_of_commissioners_in_pb_r_spell
+    , pbr.number_ss_cs
+    , pbr.number_unbundled_non_priced_hr_gs
+    , pbr.number_unbundled_priced_hr_gs
+    , pbr.org_code_local_patient_identifier
+    , pbr.patient_postcode_derived_pct_type as patient_postcode_commissioning_area_type
+    , pbr.patient_type
+    , pbr.pb_r_days_beyond_trimpoint
+    , pbr.pb_r_final_adjusted_length_of_stay
+    , pbr.pb_r_spell_error_status
+    , pbr.pb_r_spell_trimpoint_days
+    , pbr.postcode_sector_of_usual_address
+    , pbr.provider_code_original_data
+    , pbr.provider_site_code
+    , pbr.reason_access_provided
+    , pbr.sha_commissioner as commissioner_area_code
+    , pbr.sha_provider as provider_area_code
+    , pbr.significant_specialised_service_code
+    , pbr.specialised_service_code_1
+    , pbr.specialised_service_code_2
+    , pbr.specialised_service_code_3
+    , pbr.spell_acc_length_of_stay
+    , pbr.spell_age
+    , pbr.spell_dominant_procedure
+    , pbr.spell_exclusion_reason
+    , pbr.spell_ncc_length_of_stay
+    , pbr.spell_npoc
+    , pbr.spell_pcc_length_of_stay
+    , pbr.spell_primary_diagnosis
+    , pbr.spell_programme_budgeting_category
+    , pbr.spell_service_line
+    , pbr.sus_version
+    , pbr.tariff_initial_amount_national
+    , pbr.tariff_long_stay_payment_national
+    , pbr.tariff_long_stay_rate_national
+    , pbr.tariff_pre_mff_adjusted_national
+    , pbr.tariff_service_adjustment_national
+    , pbr.tariff_total_payment_national
+    , encounters.end_date_hospital_provider_spell::date as activity_date
+    , {{ fin_year_from_date('encounters.end_date_hospital_provider_spell') }} as financial_year
+    , provider.organisation_name as organisation_name
+    , commissioner.organisation_name as submitted_commissioner_name
+from spell_encounters as encounters
+left join {{ ref('stg_sus_ip_monthly_pbr_preprocess_sp_daterange') }} as pbr
+    on encounters.sk_encounter_id = pbr.sk_encounter_id
+left join {{ ref('organisation') }} as provider
+    on upper(trim(encounters.organisation_code_code_of_provider)) = provider.organisation_code
+left join {{ ref('organisation') }} as commissioner
+    on upper(trim(encounters.organisation_code_code_of_commissioner)) = commissioner.organisation_code
